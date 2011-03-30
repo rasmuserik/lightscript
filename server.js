@@ -1,6 +1,7 @@
 require.paths.push("./mui/js");
 require("xmodule").def("muiSampleMain",function(){
 
+
 // bind the main function
 require("mui").setMain(main);
 
