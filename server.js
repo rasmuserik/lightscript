@@ -8,7 +8,15 @@ require("mui").setMain(main);
 function main(mui) {
     // sample ui-page
     mui.showPage(["page", 
-        ["text", "hello world"]]);
+        ["section",
+            ["input", {"type": "textbox", "label": "cql query", "name": "query"}], 
+            ["button", {fn: search}, "search"]
+        ],
+        ["text", "sample widgets below..."], 
+        ["choice", {"name": "foo", "label": "ffkkfk"},
+            ["option", {"value": "1"}, "a"],
+            ["option", {"value": "2"}, "b"]
+        ]]);
 }
 
 
