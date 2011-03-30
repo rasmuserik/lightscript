@@ -1,6 +1,4 @@
 require.paths.push("./mui/js");
-// define as module using the xmodule system for
-// module support in both browsers and ssjs
 require("xmodule").def("muiSampleMain",function(){
 
 // bind the main function
