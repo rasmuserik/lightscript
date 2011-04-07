@@ -1,4 +1,3 @@
-require.paths.push("./mui/js");
 require("xmodule").def("main",function(){
 require("mui");
 
