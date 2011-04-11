@@ -36,8 +36,7 @@ function settings(mui) {
   var answer = mui.storage.getItem('answer');
   mui.showPage(["page", {title: "Indstillinger"},
       ["section",
-        ["choice", {name: "answer", value: answer},
-          ["option", {value: "choose"}, "Jeg vil have svar p\xe5..."],
+        ["choice", {name: "answer", value: answer, label: "Jeg vil have svar p\xe5..."},
           ["option", {value: "email"}, "Email"],
           ["option", {value: "sms"}, "SMS"], ],
         ["input", {type: "email", name: "email", label: "Min emailadresse", value: email}],
