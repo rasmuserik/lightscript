@@ -1,6 +1,3 @@
-require("xmodule").def("main",function(){
-require("mui");
-
 function main(mui) {
   var email = mui.storage.getItem('email');
   var mobile = mui.storage.getItem('mobile');
@@ -38,7 +35,7 @@ function settings(mui) {
       ["section",
         ["choice", {name: "answer", value: answer, label: "Jeg vil have svar p\xe5..."},
           ["option", {value: "email"}, "Email"],
-          ["option", {value: "sms"}, "SMS"], ],
+          ["option", {value: "sms"}, "SMS"]],
         ["input", {type: "email", name: "email", label: "Min emailadresse", value: email}],
         ["input", {type: "tel", name: "mobile", label: "Mit mobilnummer", value: mobile}] ],
         ["button", {fn: saveSettings}, "Gem indstillinger"] ]);
@@ -127,5 +124,4 @@ function ask(mui) {
     });
 }
 
-require("mui").setMain(main);
-});
+mui.setMain(main);
