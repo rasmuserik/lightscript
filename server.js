@@ -30,6 +30,7 @@ require('jsdom').jsdom.env( '<div id="container"><div id="current"></div></div>'
         app.listen(8080);
         console.log("Listening on port 8080");
     }
+    console.log(require.paths);
 });
 
 clients = {};
