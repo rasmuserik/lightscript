@@ -13,8 +13,9 @@ app.configure(function(){
 });
 
 
+
 require('jsdom').jsdom.env( '<div id="container"><div id="current"></div></div>',
-        [ 'mui/jquery16min.js', "mui/jsonml.js", "mui/mui.js", "../../sporgetjeneste/code/main.js" ], function(errors, window) {
+        [ 'mui/jquery16min.js', "mui/jsonml.js", "mui/mui.js", "main.js" ], function(errors, window) {
 
     var mui = window.mui;
     window.mui = undefined;
