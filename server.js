@@ -1,4 +1,5 @@
 // # Server setup - express
+
 var express = require('express');
 
 var app = express.createServer();
@@ -34,7 +35,7 @@ require('jsdom').jsdom.env( '<div id="container"><div id="current"></div></div>'
 clients = {};
 
 function handleRequest(req, res, window, mui) {
-    console.log("Request:", req);
+    console.log("Request");
     var muiObject, sid, fn;
     
     var params = req.body || req.query;
