@@ -24,14 +24,17 @@ require('jsdom').jsdom.env( '<div id="container"><div id="current"></div></div>'
 
     try {
         app.listen(80);
+        console.log("Listening on port 80");
     } catch(e) {
         app.listen(8080);
+        console.log("Listening on port 8080");
     }
 });
 
 clients = {};
 
 function handleRequest(req, res, window, mui) {
+    console.log("Request:", req);
     var muiObject, sid, fn;
     
     var params = req.body || req.query;
@@ -77,6 +80,7 @@ function handleRequest(req, res, window, mui) {
             muiObject.fns[name] = fn;
         },
         send: function() {
+            console.log("Send result");
             res.header("Content-Type", "text/html;charset=UTF-8");
             res.end('<!doctype html><html>'
                 + '<head>'
