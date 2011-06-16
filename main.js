@@ -100,7 +100,7 @@ function ask(mui) {
   } else if (answer === "sms" && mobile) {
     answerText = " via sms til " + mobile;
   }
-  mui.callJsonpWebservice("http://didicas.dbc.dk/openquestion.addi.dk/trunk/", "callback", 
+  mui.callJsonpWebservice("http://openquestion.addi.dk/0.1/", "callback", 
     { action: "createQuestion",
       agencyId: "150024",
       qandaServiceName: "Biblioteksvagten",
