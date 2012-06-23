@@ -87,7 +87,7 @@ function handleRequest(req, res, window, mui) {
             res.header("Content-Type", "text/html;charset=UTF-8");
             res.end('<!doctype html><html>'
                 + '<head>'
-                + '<title>' + window.$("h1").text() + '</title>'
+                + '<title>test ' + window.$("h1").text() + '</title>'
                 + '<link rel="stylesheet" href="mui/mui.css">'
                 + '<meta http-equiv="Content-Type" content="text/html;charset=UTF-8">'
                 + '<meta name="MobileOptimized" content="320"/>'
