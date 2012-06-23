@@ -7,7 +7,7 @@ app.configure(function(){
     //app.use(express.methodOverride());
     //app.use(express.bodyParser());
     //app.use(express.cookieParser());
-    app.use("/", express.static(__dirname + '/static'));
+    app.use("/", express.static(__dirname + ''));
     //app.use(app.router);
 });
 
