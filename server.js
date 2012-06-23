@@ -1,21 +1,15 @@
-// # Server setup - express
 var express = require('express');
-
+var fs = require('fs');
 var app = express.createServer();
-
-app.configure(function(){
-    //app.use(express.methodOverride());
-    //app.use(express.bodyParser());
-    //app.use(express.cookieParser());
-    app.use("/", express.static(__dirname + ''));
-    //app.use(app.router);
+app.get('/', function(req, res){
+    fs.readFile('log.md', 'utf8', function(err, data) {
+        res.send(
+            "<html><body>"
+            + require( "markdown" ).markdown.toHTML( data )
+            + "</body></html>");
+    });
 });
-
-
-try {
-    app.listen(80);
-    console.log("Listening on port 80");
-} catch(e) {
-    app.listen(8080);
-    console.log("Listening on port 8080");
-}
+app.configure(function(){
+    app.use("/", express.static(__dirname + ''));
+});
+app.listen(process.env.PORT || 80);

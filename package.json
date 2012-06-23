@@ -1,0 +1,11 @@
+{
+  "name": "rasmuserik.com",
+  "version": "0.0.1",
+  "author": "Rasmus Erik Voel Jensen",
+  "homepage": "http://rasmuserik.com",
+  "description": "rasmuserik.com web application",
+  "dependencies": {
+    "express": "*"
+  },
+  "engines": {"node": "*"}
+}
