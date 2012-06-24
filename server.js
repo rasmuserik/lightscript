@@ -14,6 +14,13 @@ app.get('/', function(req, res){
     });
 });
 
+app.get('/http', function(req, res) {
+    res.redirect('http://' + req.originalUrl.slice(6));
+});
+app.get('/https', function(req, res) {
+    res.redirect('https://' + req.originalUrl.slice(7));
+});
+
 app.configure(function(){
     app.use("/", express.static(__dirname + ''));
 });
