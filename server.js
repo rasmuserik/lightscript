@@ -3,7 +3,7 @@ var fs = require('fs');
 var app = express.createServer();
 var logger = require('express-logger');
 
-app.use(logger({path: "./httpd.log"}));
+app.use(logger({path: process.env.HOME + "/httpd.log"}));
 
 app.get('/', function(req, res){
     fs.readFile('log.md', 'utf8', function(err, data) {
