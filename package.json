@@ -5,6 +5,7 @@
   "homepage": "http://rasmuserik.com",
   "description": "rasmuserik.com web application",
   "dependencies": {
+    "mustache": "*",
     "express": "*",
     "express-logger": "*"
   },
