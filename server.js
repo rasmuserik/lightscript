@@ -1,6 +1,10 @@
 var express = require('express');
 var fs = require('fs');
 var app = express.createServer();
+var logger = require('express-logger');
+
+app.use(logger({path: "./httpd.log"}));
+
 app.get('/', function(req, res){
     fs.readFile('log.md', 'utf8', function(err, data) {
         res.send(
@@ -9,6 +13,7 @@ app.get('/', function(req, res){
             + "</body></html>");
     });
 });
+
 app.configure(function(){
     app.use("/", express.static(__dirname + ''));
 });
