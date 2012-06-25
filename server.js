@@ -8,12 +8,16 @@ app.use(logger({path: process.env.HOME + "/httpd.log"}));
 
 htmlTemplate = fs.readFileSync('html.mustache', 'utf8');
 
+function fixLinks(html) {
+    return html.replace(/href="http(s?):\/\/([^"]*)/, function(_,s,url) { return 'href="/http' + s + '?' + url });
+}
+
 app.get('/', function(req, res){
     fs.readFile('log.md', 'utf8', function(err, data) {
-        res.send(
+        res.send(fixLinks(
             mustache.to_html(htmlTemplate, {
                 title: 'solsort', 
-                body: require( "markdown" ).markdown.toHTML( data ) }));
+                body: require( "markdown" ).markdown.toHTML( data ) })));
     });
 });
 
