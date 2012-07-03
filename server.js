@@ -8,7 +8,9 @@ app.use(logger({path: process.env.HOME + "/httpd.log"}));
 
 htmlTemplate = fs.readFileSync('html.mustache', 'utf8');
 
-
+function name2url(name) {
+    return name.replace(/[^a-zA-Z0-9._~:/?#\[\]@!$&'()*+,;=-]/g, '_');
+}
 function file2entries(filename) {
     var result = {};
     fs.readFileSync(filename, 'utf8')
@@ -20,19 +22,36 @@ function file2entries(filename) {
             }
             result[title] = {
                 title: title,
-                markdown: '# ' + elem
+                url: name2url(title),
+                html: require( "markdown" ).markdown.toHTML( '# ' + elem)
             };
          });
     return result;
 }
-var log = file2entries('log.md');
-
+var info = file2entries('info.md');
 var notes = file2entries('notes.md');
 
-console.log(log);
+Object.keys(info).forEach(function(key) {
+    app.get('/'+info[key].url, function(req, res) {
+        res.send(fixLinks(mustache.to_html(htmlTemplate, {
+            title: key,
+            body: info[key].html
+        })));
+    });
+});
+
+Object.keys(notes).forEach(function(key) {
+    app.get('/'+notes[key].url, function(req, res) {
+        res.send(fixLinks(mustache.to_html(htmlTemplate, {
+            title: key,
+            body: notes[key].html
+        })));
+    });
+});
+
 
 function fixLinks(html) {
-    return html.replace(/href="http(s?):\/\/([^"]*)/, function(_,s,url) { return 'href="/http' + s + '?' + url });
+    return html.replace(/href="http(s?):\/\/([^"]*)/g, function(_,s,url) { return 'href="/http' + s + '?' + url });
 }
 
 app.get('/', function(req, res){
@@ -41,15 +60,11 @@ app.get('/', function(req, res){
             mustache.to_html(frontpage, {
                 notes: Object.keys(notes).map(function(noteName) {
                     var title = notes[noteName].title;
-                    return '<a href="/' + title + '">' + title + '</a>';
+                    return '<a href="/' + notes[noteName].url + '">' + title.replace(/:/g, ':<br/>') + '</a>';
                 }).join(''),
-                log: Object.keys(log).map(function(logPage) {
-                    var title = log[logPage].title;
-                    return '<a href="/' + title + '">' +
-                        title.split(/\s+/).slice(0,2).join(' ') +
-                        '<br />' +
-                        title.split(/\s+/).slice(2).join(' ') +
-                        '</a>';
+                info: Object.keys(info).map(function(page) {
+                    var title = info[page].title;
+                    return '<a href="/' + info[page].url + '">' + title.replace(/:/g, ':<br/>') + '</a>';
                 }).join('')
             })
         ));
