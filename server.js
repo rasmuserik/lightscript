@@ -8,18 +8,49 @@ app.use(logger({path: process.env.HOME + "/httpd.log"}));
 
 htmlTemplate = fs.readFileSync('html.mustache', 'utf8');
 
+
+function file2entries(filename) {
+    var result = {};
+    fs.readFileSync('log.md', 'utf8')
+        .split('\n# ')
+        .forEach(function(elem){
+            var title = elem.split('\n')[0].trim();
+            result[title] = {
+                title: title,
+                markdown: '# ' + elem
+            };
+         });
+    return result;
+}
+var log = file2entries('log.md');
+
+var notes = file2entries('notes.md');
+
+console.log(log);
+
 function fixLinks(html) {
     return html.replace(/href="http(s?):\/\/([^"]*)/, function(_,s,url) { return 'href="/http' + s + '?' + url });
 }
 
+
 app.get('/', function(req, res){
+    fs.readFile('frontpage.html.mustache', 'utf8', function(err, frontpage) {
+        res.send(fixLinks(
+            mustache.to_html(frontpage, {
+                notes: 'foo bar', 
+                log: 'baz quux'
+                })));
+    });
+});
+
+/* app.get('/', function(req, res){
     fs.readFile('log.md', 'utf8', function(err, data) {
         res.send(fixLinks(
             mustache.to_html(htmlTemplate, {
                 title: 'solsort', 
                 body: require( "markdown" ).markdown.toHTML( data ) })));
     });
-});
+}); */
 
 app.get('/http', function(req, res) {
     res.redirect('http://' + req.originalUrl.slice(6));
