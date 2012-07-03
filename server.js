@@ -11,10 +11,13 @@ htmlTemplate = fs.readFileSync('html.mustache', 'utf8');
 
 function file2entries(filename) {
     var result = {};
-    fs.readFileSync('log.md', 'utf8')
-        .split('\n# ')
+    fs.readFileSync(filename, 'utf8')
+        .split('\n# ').slice(1)
         .forEach(function(elem){
             var title = elem.split('\n')[0].trim();
+            if(result[title]) {
+                throw 'duplicate title in "' + filename + '": ' + title
+            }
             result[title] = {
                 title: title,
                 markdown: '# ' + elem
@@ -32,14 +35,24 @@ function fixLinks(html) {
     return html.replace(/href="http(s?):\/\/([^"]*)/, function(_,s,url) { return 'href="/http' + s + '?' + url });
 }
 
-
 app.get('/', function(req, res){
     fs.readFile('frontpage.html.mustache', 'utf8', function(err, frontpage) {
         res.send(fixLinks(
             mustache.to_html(frontpage, {
-                notes: 'foo bar', 
-                log: 'baz quux'
-                })));
+                notes: Object.keys(notes).map(function(noteName) {
+                    var title = notes[noteName].title;
+                    return '<a href="/' + title + '">' + title + '</a>';
+                }).join(''),
+                log: Object.keys(log).map(function(logPage) {
+                    var title = log[logPage].title;
+                    return '<a href="/' + title + '">' +
+                        title.split(/\s+/).slice(0,2).join(' ') +
+                        '<br />' +
+                        title.split(/\s+/).slice(2).join(' ') +
+                        '</a>';
+                }).join('')
+            })
+        ));
     });
 });
 
