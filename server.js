@@ -29,17 +29,7 @@ function file2entries(filename) {
          });
     return result;
 }
-var info = file2entries('info.md');
 var notes = file2entries('notes.md');
-
-Object.keys(info).forEach(function(key) {
-    app.get('/'+info[key].url, function(req, res) {
-        res.send(fixLinks(mustache.to_html(htmlTemplate, {
-            title: key,
-            body: info[key].html
-        })));
-    });
-});
 
 Object.keys(notes).forEach(function(key) {
     app.get('/'+notes[key].url, function(req, res) {
@@ -62,10 +52,6 @@ app.get('/', function(req, res){
                 notes: Object.keys(notes).map(function(noteName) {
                     var title = notes[noteName].title;
                     return '<a href="/' + notes[noteName].url + '">' + title.replace(/:/g, ':<br/>') + '</a>';
-                }).join(''),
-                info: Object.keys(info).map(function(page) {
-                    var title = info[page].title;
-                    return '<a href="/' + info[page].url + '">' + title.replace(/:/g, ':<br/>') + '</a>';
                 }).join('')
             })
         ));
