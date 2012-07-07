@@ -4,6 +4,7 @@ var fs = require('fs');
 var app = express.createServer();
 var logger = require('express-logger');
 
+app.use(express.static(__dirname + ''));
 app.use(logger({path: process.env.HOME + "/httpd.log"}));
 
 htmlTemplate = fs.readFileSync('html.mustache', 'utf8');
@@ -55,7 +56,7 @@ function fixLinks(html) {
 }
 
 app.get('/', function(req, res){
-    fs.readFile('frontpage.html.mustache', 'utf8', function(err, frontpage) {
+    fs.readFile('index.html.mustache', 'utf8', function(err, frontpage) {
         res.send(fixLinks(
             mustache.to_html(frontpage, {
                 notes: Object.keys(notes).map(function(noteName) {
@@ -71,25 +72,12 @@ app.get('/', function(req, res){
     });
 });
 
-/* app.get('/', function(req, res){
-    fs.readFile('log.md', 'utf8', function(err, data) {
-        res.send(fixLinks(
-            mustache.to_html(htmlTemplate, {
-                title: 'solsort', 
-                body: require( "markdown" ).markdown.toHTML( data ) })));
-    });
-}); */
-
 app.get('/http', function(req, res) {
     res.redirect('http://' + req.originalUrl.slice(6));
 });
 
 app.get('/https', function(req, res) {
     res.redirect('https://' + req.originalUrl.slice(7));
-});
-
-app.configure(function(){
-    app.use("/", express.static(__dirname + ''));
 });
 
 app.get('*', function(req, res){
