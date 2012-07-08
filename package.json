@@ -6,6 +6,7 @@
   "description": "rasmuserik.com web application",
   "dependencies": {
     "mustache": "*",
+    "markdown": "*",
     "express": "*",
     "express-logger": "*"
   },
