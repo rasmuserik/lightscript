@@ -10,7 +10,19 @@ app.use(logger({path: process.env.HOME + "/httpd.log"}));
 htmlTemplate = fs.readFileSync('html.mustache', 'utf8');
 
 function name2url(name) {
-    return name.replace(/[^a-zA-Z0-9._~:/?#\[\]@!$&'()*+,;=-]/g, '_');
+    return name.replace(/[^a-zA-Z0-9._~:/?#\[\]@!$&'()*+,;=-]/g, 
+        function(c) {
+            ({
+                'Æ': 'AE',
+                'Ø': 'O',
+                'Å': 'AA',
+                'æ': 'ae',
+                'ø': 'o',
+                'å': 'aa',
+                'é': 'e',
+                ' ': '_'
+            })[c] || '_';
+        });
 }
 function file2entries(filename) {
     var result = {};
