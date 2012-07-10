@@ -12,7 +12,7 @@ htmlTemplate = fs.readFileSync('html.mustache', 'utf8');
 function name2url(name) {
     return name.replace(/[^a-zA-Z0-9._~/#\[\]@!$&'()*+,;=-]/g, 
         function(c) {
-            return ({
+            var subs = {
                 'Æ': 'AE',
                 'Ø': 'O',
                 'Å': 'AA',
@@ -23,7 +23,13 @@ function name2url(name) {
                 '?': '',
                 ':': '',
                 ' ': '_'
-            })[c] || '_';
+            };
+            if(subs[c] === undefined) {
+                return '_';
+            } else {
+                return subs[c];
+            }
+
         });
 }
 function file2entries(filename) {
