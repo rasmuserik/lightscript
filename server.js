@@ -12,7 +12,7 @@ htmlTemplate = fs.readFileSync('html.mustache', 'utf8');
 function name2url(name) {
     return name.replace(/[^a-zA-Z0-9._~:/?#\[\]@!$&'()*+,;=-]/g, 
         function(c) {
-            ({
+            return ({
                 'Æ': 'AE',
                 'Ø': 'O',
                 'Å': 'AA',
