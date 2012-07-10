@@ -10,7 +10,7 @@ app.use(logger({path: process.env.HOME + "/httpd.log"}));
 htmlTemplate = fs.readFileSync('html.mustache', 'utf8');
 
 function name2url(name) {
-    return name.replace(/[^a-zA-Z0-9._~:/?#\[\]@!$&'()*+,;=-]/g, 
+    return name.replace(/[^a-zA-Z0-9._~/#\[\]@!$&'()*+,;=-]/g, 
         function(c) {
             return ({
                 'Æ': 'AE',
@@ -20,6 +20,8 @@ function name2url(name) {
                 'ø': 'o',
                 'å': 'aa',
                 'é': 'e',
+                '?': '',
+                ':': '',
                 ' ': '_'
             })[c] || '_';
         });
