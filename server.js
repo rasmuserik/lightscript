@@ -3,7 +3,12 @@ var mustache = require('mustache');
 var fs = require('fs');
 var app = express.createServer();
 var logger = require('express-logger');
+var sqlite3 = require('sqlite3');
 
+var db = new sqlite3.Database(process.env.HOME + '/db.sqlite3');
+db.run('CREATE TABLE IF NOT EXISTS userdata (store, key, val, timestamp, PRIMARY KEY (store, key))');
+
+app.use(express.bodyParser());
 app.use(express.static(__dirname + ''));
 app.use(logger({path: process.env.HOME + "/httpd.log"}));
 
@@ -32,6 +37,7 @@ function name2url(name) {
 
         });
 }
+
 function file2entries(filename) {
     var result = {};
     fs.readFileSync(filename, 'utf8')
@@ -64,6 +70,60 @@ Object.keys(notes).forEach(function(key) {
 function fixLinks(html) {
     return html.replace(/href="http(s?):\/\/([^"]*)/g, function(_,s,url) { return 'href="/http' + s + '?' + url });
 }
+
+app.get('/store', storeHandle);
+app.post('/store', storeHandle);
+
+function storeHandle(req, res){
+    console.log(req.query, req.body);
+    var query = req.query || {};
+    var body = req.body || {};
+    var store = query.store|| body.store;
+    var key = query.key || body.key;
+    var newVal = query.val || body.val;
+    var prevVal = query.prev || body.prev;
+
+    if(!store) {
+        return res.send('Parameters: store, key[, val, prev]\nReturns current store/key-value, or sets it if val+prev is set (prev must be the current value in the database and val the new one).', {'Content-Type':'text/plain'}, 400);
+    }
+    if(!key) {
+        var result = [];
+        db.all('SELECT key, timestamp FROM userdata WHERE store=$store;', {$store: store}, function(err, val) {
+            if(err) {
+                return res.send(String(err), {'Content-Type':'text/plain'}, 500);
+            }
+            res.send(val, {'Content-Type':'text/plain'});
+        });
+        return;
+    }
+    db.get('SELECT * FROM userdata WHERE store=$store AND key=$key;', 
+        {$store: store, $key: key},
+        function(err, row) {
+            if(err) {
+                return res.send(String(err), {'Content-Type':'text/plain'}, 500);
+            }
+            var val = row && row.val;
+            if(newVal !== undefined) {
+                console.log({val: val, prevVal: prevVal});
+                if(prevVal != val) {
+                    return res.send(val, {'Content-Type':'text/plain'}, 409);
+                }
+                return db.run('INSERT OR REPLACE INTO userdata VALUES ($store, $key, $val, $timestamp);',
+                    {$store: store, $key: key, $val: newVal, $timestamp: Date.now()}, function(err) {
+                        if(err) {
+                            return res.send(String(err), {'Content-Type':'text/plain'}, 500);
+                        }
+                        res.send('ok', {'Content-Type':'text/plain'});
+                    });
+            }
+
+            if(!row) {
+                return res.send('', {'Content-Type':'text/plain'}, 404);
+            }
+            res.send(val, {'Content-Type':'text/plain'});
+        });
+};
+
 
 app.get('/', function(req, res){
     fs.readFile('index.html.mustache', 'utf8', function(err, frontpage) {
