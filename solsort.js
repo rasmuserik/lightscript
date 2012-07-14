@@ -54,16 +54,10 @@ solsort = {};
         window.location = 'https://github.com/login/oauth/authorize?client_id=cc14f7f75ff01bdbb1e7';
     }
 
-    solsort.loginTwitter = function() {
-        localStorage.setItem('logging in', 'twitter');
-        window.location='https://oauth.twitter.com/2/authorize?oauth_callback_url=http://solsort.com/&oauth_mode=flow_web_client&oauth_client_identifier=WzcFlvqd3GskSoFsOt25A&redirect_uri=http://solsort.com/&response_type=token&client_id=WzcFlvqd3GskSoFsOt25A'
-    }
-
     solsort.loginGoogle = function() {
         localStorage.setItem('logging in', 'google');
         window.location = 'https://accounts.google.com/o/oauth2/auth?scope=https://www.googleapis.com/auth/userinfo.profile&state=&redirect_uri=http://solsort.com/&response_type=token&client_id=500223099774.apps.googleusercontent.com';
     }
-
 
     function loginAs(user, name) {
         localStorage.setItem('userId', user);
@@ -101,24 +95,29 @@ solsort = {};
                 });
             }
 
-            if(loggingIn === 'twitter') {
-                var access_token = location.hash.replace(/.*oauth_access_token=/, '').replace(/&.*/, '');
-                solsort.jsonp('https://api.twitter.com/1/account/verify_credentials.json', {oauth_access_token: access_token}, function(data) {
-                    console.log(data);
-                    if(data.id) { 
-                        loginAs('facebook:' + data.id, data.name);
-                    }
-                });
-            }
-
             if(loggingIn === 'google') {
                 var access_token = location.hash.replace(/.*access_token=/, '').replace(/&.*/, '');
                 solsort.jsonp('https://www.googleapis.com/oauth2/v1/userinfo', {access_token: access_token}, function(data) {
-                    console.log(data);
                     if(data.id) { 
                         loginAs('google:' + data.id, data.name);
                     }
                 });
+            }
+        }
+    }();
+
+    !function() {
+        var loginElem = document.getElementById('solsortLogin');
+        if(loginElem) {
+            var userId = localStorage.getItem('userId');
+            var userName = localStorage.getItem('userName');
+            if(!userId) {
+                solsortLogin.innerHTML = 'login: ' +
+                    '<img src="/img/font-awesome/github.png" alt="GitHub" onclick="solsort.loginGitHub()"/> ' +
+                    '<img src="/img/font-awesome/facebook.png" alt="Facebook" onclick="solsort.loginFacebook()"/> ' +
+                    '<img src="/img/font-awesome/google.png" alt="Google" onclick="solsort.loginGoogle()"/> ';
+            } else {
+                solsortLogin.innerHTML = '<span onclick="solsort.logout();">logout</span>';
             }
         }
     }();
