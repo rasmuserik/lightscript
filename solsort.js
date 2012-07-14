@@ -78,8 +78,9 @@ solsort = {};
                 });
             }
             if(loggingIn === 'facebook') {
-                var args = solsort.getVars();
-                solsort.jsonp('https://graph.facebook.com/me', {access_token: args.access_token}, function(data) {
+                var access_token = location.hash.slice(1).replace(/&.*/, '');
+                console.log(access_token);
+                solsort.jsonp('https://graph.facebook.com/me', {access_token: access_token}, function(data) {
                     console.log(data);
                 });
             }
