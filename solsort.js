@@ -36,6 +36,11 @@ solsort = {};
         throw err;
     };
 
+    solsort.logout = function() {
+        localStorage.removeItem('userId');
+        localStorage.removeItem('userName');
+    }
+
     solsort.login = function(callback) {
         var user = localStorage.getItem('userId');
         if(user) {
@@ -117,7 +122,7 @@ solsort = {};
                     '<img src="/img/font-awesome/facebook.png" alt="Facebook" onclick="solsort.loginFacebook()"/> ' +
                     '<img src="/img/font-awesome/google.png" alt="Google" onclick="solsort.loginGoogle()"/> ';
             } else {
-                solsortLogin.innerHTML = '<span onclick="solsort.logout();">logout</span>';
+                solsortLogin.innerHTML = '<a onclick="solsort.logout();">logout</a>';
             }
         }
     }();
