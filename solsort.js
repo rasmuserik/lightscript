@@ -45,7 +45,7 @@ solsort = {};
     }
 
     solsort.loginFacebook = function() {
-        window.location = "https://www.facebook.com/dialog/oauth?client_id=201142456681777&redirect_uri=solsort.com&scope=user_about_me&response_type=token";
+        window.location = "https://www.facebook.com/dialog/oauth?client_id=201142456681777&redirect_uri=http://solsort.com/&scope=&response_type=token";
     }
 
     solsort.loginGitHub = function() {
