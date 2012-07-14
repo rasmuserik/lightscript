@@ -44,6 +44,10 @@ solsort = {};
         throw 'not implemented yet';
     }
 
+    solsort.loginFacebook = function() {
+        window.location = "https://www.facebook.com/dialog/oauth?client_id=201142456681777&redirect_uri=solsort.com&scope=user_about_me&response_type=token";
+    }
+
     solsort.loginGitHub = function() {
         localStorage.setItem('logging in', 'github');
         window.location = 'https://github.com/login/oauth/authorize?client_id=cc14f7f75ff01bdbb1e7';
@@ -54,7 +58,7 @@ solsort = {};
         var loginFromUrl = localStorage.getItem('loginFromUrl');
         if(loginFromUrl) {
             localStorage.removeItem('loginFromUrl');
-            location.href = loginFromUrl;
+            window.location = loginFromUrl;
         }
     }
 
