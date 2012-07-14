@@ -78,7 +78,7 @@ solsort = {};
                 });
             }
             if(loggingIn === 'facebook') {
-                var access_token = location.hash.slice(1).replace(/&.*/, '');
+                var access_token = location.hash.replace(/.*access_token=/, '').replace(/&.*/, '');
                 console.log(access_token);
                 solsort.jsonp('https://graph.facebook.com/me', {access_token: access_token}, function(data) {
                     console.log(data);
