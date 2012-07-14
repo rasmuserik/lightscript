@@ -45,9 +45,9 @@ solsort = {};
             var userName = localStorage.getItem('userName');
             if(!userId) {
                 solsortLogin.innerHTML = 
-                    '<img src="/img/fontawesome/github.png" alt="GitHub" onclick="solsort.loginGitHub()"/> ' +
-                    '<img src="/img/fontawesome/facebook.png" alt="Facebook" onclick="solsort.loginFacebook()"/> ' +
-                    '<img src="/img/fontawesome/google.png" alt="Google" onclick="solsort.loginGoogle()"/> ' +
+                    '<img src="/img/fontawesome/github.png" title="GitHub" alt="GitHub" onclick="solsort.loginGitHub()"/> ' +
+                    '<img src="/img/fontawesome/facebook.png" title="Facebook" alt="Facebook" onclick="solsort.loginFacebook()"/> ' +
+                    '<img src="/img/fontawesome/google.png" title="Google" alt="Google" onclick="solsort.loginGoogle()"/> ' +
                     '<span>&#8592; click <br/>to login</span>';
             } else {
                 solsortLogin.innerHTML = '<a onclick="solsort.logout();">' +
