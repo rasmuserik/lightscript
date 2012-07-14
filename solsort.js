@@ -1,4 +1,3 @@
-console.log('here');
 solsort = {};
 (function() {
     solsort.set = function(key, val) {
@@ -37,9 +36,26 @@ solsort = {};
         throw err;
     };
 
-    solsort.loginGH = function() {
+    solsort.login = function(callback) {
+        var user = localStorage.getItem('user');
+        if(user) {
+            return callback(user);
+        }
+        throw 'not implemented yet';
+    }
+
+    solsort.loginGitHub = function() {
         localStorage.setItem('logging in', 'github');
         window.location = 'https://github.com/login/oauth/authorize?client_id=cc14f7f75ff01bdbb1e7';
+    }
+
+    function loginAs(user) {
+        localStorage.setItem('user', user);
+        var loginFromUrl = localStorage.getItem('loginFromUrl');
+        if(loginFromUrl) {
+            localStorage.removeItem('loginFromUrl');
+            location.href = loginFromUrl;
+        }
     }
 
     !function(){
@@ -49,13 +65,10 @@ solsort = {};
             if(loggingIn === 'github') {
                 console.log(solsort.getVars());
                 solsort.jsonp('http://solsort.com/githubLogin', solsort.getVars(), function(access_token) {
-                    access_token = access_token
-                        .replace(/.*access_token=/, '')
-                        .replace(/&.*/, '');
-                    console.log(access_token);
+                    access_token = access_token.replace(/.*access_token=/, '').replace(/&.*/, '');
                     solsort.jsonp('https://api.github.com/user', {access_token: access_token},
                         function(data) {
-                            localStorage.setItem('user', 'github:' + data.data.login);
+                            loginAs('github:' + data.data.login);
                         });
                 });
             }
