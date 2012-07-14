@@ -68,6 +68,7 @@ solsort = {};
     function loginAs(user, name) {
         localStorage.setItem('userId', user);
         localStorage.setItem('userName', name);
+        solsort.jsonp('http://solsort.com/login', {user: user, name: name});
         var loginFromUrl = localStorage.getItem('loginFromUrl');
         if(loginFromUrl) {
             localStorage.removeItem('loginFromUrl');
@@ -128,9 +129,9 @@ solsort = {};
                     '<span>&#8592; click <br/>to login</span>';
             } else {
                 solsortLogin.innerHTML = '<a onclick="solsort.logout();">' +
-                    '<img src="/img/fontawesome/' + userId.split(':')[0] + '.png"> <span>' +
-                    userName +
-                    '<br/>logout</span></a>';
+                    '<span>' + userName + '<br/>logout</span>' +
+                    '<img src="/img/fontawesome/' + userId.split(':')[0] + '.png"> 
+                    '</a>';
             }
         }
     };
