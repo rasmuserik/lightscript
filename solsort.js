@@ -110,6 +110,13 @@ solsort = {};
                     }
                 });
             }
+
+            if(loggingIn === 'google') {
+                var access_token = location.hash.replace(/.*access_token=/, '').replace(/&.*/, '');
+                solsort.jsonp('https://www.googleapis.com/auth/userinfo.profile', {access_token: access_token}, function(data) {
+                    console.log(data);
+                });
+            }
         }
     }();
 })();
