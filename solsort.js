@@ -39,7 +39,7 @@ solsort = {};
 
     solsort.loginGH = function() {
         localStorage.setItem('logging in', 'github');
-        window.location = 'https://github.com/login/oauth/authorize?client_id=cc14f7f75ff01bdbb1e7' + location.href.replace(/\?.*/, '');
+        window.location = 'https://github.com/login/oauth/authorize?client_id=cc14f7f75ff01bdbb1e7';
     }
 
     !function(){
