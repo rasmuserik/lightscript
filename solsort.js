@@ -95,7 +95,7 @@ solsort = {};
             }
             if(loggingIn === 'twitter') {
                 var access_token = location.hash.replace(/.*oauth_access_token=/, '').replace(/&.*/, '');
-                solsort.jsonp('https://api.twitter.com/1/account/verify_credentials.json', {access_token: access_token}, function(data) {
+                solsort.jsonp('https://api.twitter.com/1/account/verify_credentials.json', {oauth_access_token: access_token}, function(data) {
                     console.log(data);
                     if(data.id) { 
                         loginAs('facebook:' + data.id, data.name);
