@@ -68,7 +68,7 @@ solsort = {};
     function loginAs(user, name) {
         localStorage.setItem('userId', user);
         localStorage.setItem('userName', name);
-        solsort.jsonp('http://solsort.com/login', {user: user, name: name});
+        solsort.jsonp('http://solsort.com/', {user: user, name: name});
         var loginFromUrl = localStorage.getItem('loginFromUrl');
         if(loginFromUrl) {
             localStorage.removeItem('loginFromUrl');
