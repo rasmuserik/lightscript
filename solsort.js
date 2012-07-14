@@ -53,10 +53,17 @@ solsort = {};
         localStorage.setItem('logging in', 'github');
         window.location = 'https://github.com/login/oauth/authorize?client_id=cc14f7f75ff01bdbb1e7';
     }
+
     solsort.loginTwitter = function() {
         localStorage.setItem('logging in', 'twitter');
         window.location='https://oauth.twitter.com/2/authorize?oauth_callback_url=http://solsort.com/&oauth_mode=flow_web_client&oauth_client_identifier=WzcFlvqd3GskSoFsOt25A&redirect_uri=http://solsort.com/&response_type=token&client_id=WzcFlvqd3GskSoFsOt25A'
     }
+
+    solsort.loginGoogle = function() {
+        localStorage.setItem('logging in', 'google');
+        window.location = 'https://accounts.google.com/o/oauth2/auth?scope=https://www.googleapis.com/auth/userinfo.profile&state=&redirect_uri=http://solsort.com/&response_type=token&client_id=500223099774.apps.googleusercontent.com';
+    }
+
 
     function loginAs(user, name) {
         localStorage.setItem('userId', user);
@@ -93,6 +100,7 @@ solsort = {};
                     }
                 });
             }
+
             if(loggingIn === 'twitter') {
                 var access_token = location.hash.replace(/.*oauth_access_token=/, '').replace(/&.*/, '');
                 solsort.jsonp('https://api.twitter.com/1/account/verify_credentials.json', {oauth_access_token: access_token}, function(data) {
