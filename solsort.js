@@ -39,6 +39,7 @@ solsort = {};
     solsort.logout = function() {
         localStorage.removeItem('userId');
         localStorage.removeItem('userName');
+        loginUI();
     }
 
     solsort.login = function(callback) {
@@ -111,7 +112,7 @@ solsort = {};
         }
     }();
 
-    !function() {
+    function loginUI() {
         var loginElem = document.getElementById('solsortLogin');
         if(loginElem) {
             var userId = localStorage.getItem('userId');
