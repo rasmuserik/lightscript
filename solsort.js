@@ -61,7 +61,7 @@ solsort = {};
 
     solsort.loginGoogle = function() {
         localStorage.setItem('logging in', 'google');
-        window.location = 'https://accounts.google.com/o/oauth2/auth?scope=https://www.googleapis.com/auth/userinfo.profile&state=&redirect_uri=http://solsort.com/&response_type=token&client_id=500223099774.apps.googleusercontent.com';
+        window.location = 'https://accounts.google.com/o/oauth2/auth?scope=https://www.googleapis.com/auth/userinfo.email&state=&redirect_uri=http://solsort.com/&response_type=token&client_id=500223099774.apps.googleusercontent.com';
     }
 
 
@@ -115,6 +115,9 @@ solsort = {};
                 var access_token = location.hash.replace(/.*access_token=/, '').replace(/&.*/, '');
                 solsort.jsonp('https://www.googleapis.com/oauth2/v1/userinfo', {access_token: access_token}, function(data) {
                     console.log(data);
+                    if(data.id) { 
+                        loginAs('google:' + data.id, data.name);
+                    }
                 });
             }
         }
