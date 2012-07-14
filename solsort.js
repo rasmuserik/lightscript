@@ -129,5 +129,6 @@ solsort = {};
                 solsortLogin.innerHTML = '<a onclick="solsort.logout();">logout</a>';
             }
         }
-    }();
+    };
+    loginUI();
 })();
