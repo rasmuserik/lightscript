@@ -125,12 +125,12 @@ solsort = {};
                     '<img src="/img/fontawesome/github.png" alt="GitHub" onclick="solsort.loginGitHub()"/> ' +
                     '<img src="/img/fontawesome/facebook.png" alt="Facebook" onclick="solsort.loginFacebook()"/> ' +
                     '<img src="/img/fontawesome/google.png" alt="Google" onclick="solsort.loginGoogle()"/> ' +
-                    '&#8592; click <br/>to login';
+                    '<span>&#8592; click <br/>to login</span>';
             } else {
                 solsortLogin.innerHTML = '<a onclick="solsort.logout();">' +
-                    '<img src="/img/fontawesome/' + userId.split(':')[0] + '.png"> ' +
+                    '<img src="/img/fontawesome/' + userId.split(':')[0] + '.png"> <span>' +
                     userName +
-                    '<br/>logout</a>';
+                    '<br/>logout</span></a>';
             }
         }
     };
