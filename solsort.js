@@ -37,7 +37,7 @@ solsort = {};
     };
 
     solsort.login = function(callback) {
-        var user = localStorage.getItem('user');
+        var user = localStorage.getItem('userId');
         if(user) {
             return callback(user);
         }
@@ -54,8 +54,9 @@ solsort = {};
         window.location = 'https://github.com/login/oauth/authorize?client_id=cc14f7f75ff01bdbb1e7';
     }
 
-    function loginAs(user) {
-        localStorage.setItem('user', user);
+    function loginAs(user, name) {
+        localStorage.setItem('userId', user);
+        localStorage.setItem('userName', name);
         var loginFromUrl = localStorage.getItem('loginFromUrl');
         if(loginFromUrl) {
             localStorage.removeItem('loginFromUrl');
@@ -73,15 +74,19 @@ solsort = {};
                     access_token = access_token.replace(/.*access_token=/, '').replace(/&.*/, '');
                     solsort.jsonp('https://api.github.com/user', {access_token: access_token},
                         function(data) {
-                            loginAs('github:' + data.data.login);
+                            if(data.data.login) {
+                                console.log(data.data);
+                                loginAs('github:' + data.data.login);
+                            };
                         });
                 });
             }
             if(loggingIn === 'facebook') {
                 var access_token = location.hash.replace(/.*access_token=/, '').replace(/&.*/, '');
-                console.log(access_token);
                 solsort.jsonp('https://graph.facebook.com/me', {access_token: access_token}, function(data) {
-                    console.log(data);
+                    if(data.id) { 
+                        loginAs('facebook:' + data.id, data.name);
+                    }
                 });
             }
         }
