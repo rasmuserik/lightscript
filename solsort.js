@@ -75,8 +75,7 @@ solsort = {};
                     solsort.jsonp('https://api.github.com/user', {access_token: access_token},
                         function(data) {
                             if(data.data.login) {
-                                console.log(data.data);
-                                loginAs('github:' + data.data.login);
+                                loginAs('github:' + data.data.login, data.data.name);
                             };
                         });
                 });
