@@ -130,7 +130,7 @@ solsort = {};
             } else {
                 solsortLogin.innerHTML = '<a onclick="solsort.logout();">' +
                     '<span>' + userName + '<br/>logout</span>' +
-                    '<img src="/img/fontawesome/' + userId.split(':')[0] + '.png"> 
+                    '<img src="/img/fontawesome/' + userId.split(':')[0] + '.png">' +
                     '</a>';
             }
         }
