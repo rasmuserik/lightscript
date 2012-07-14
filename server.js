@@ -4,6 +4,7 @@ var fs = require('fs');
 var app = express.createServer();
 var logger = require('express-logger');
 var sqlite3 = require('sqlite3');
+var https = require('https');
 
 var db = new sqlite3.Database(process.env.HOME + '/db.sqlite3');
 db.run('CREATE TABLE IF NOT EXISTS userdata (store, key, val, timestamp, PRIMARY KEY (store, key))');
@@ -70,6 +71,16 @@ Object.keys(notes).forEach(function(key) {
 function fixLinks(html) {
     return html.replace(/href="http(s?):\/\/([^"]*)/g, function(_,s,url) { return 'href="/http' + s + '?' + url });
 }
+
+app.get('/githubLogin', function(req, res) {
+    https.get({host: 'github.com', path: '/login/oauth/access_token?client_id=cc14f7f75ff01bdbb1e7&client_secret=d978cb4e2e1cdb35d4ae9e194b9c36fa0c2f607e&code=' + req.query.code + '&state=' + req.query.state},
+        function(con) {
+            con.on('data', function(data) {
+                res.send(req.query.callback + '("' + data + '");', {'Content-Type':'application/javascript'});
+            });
+        });
+
+});
 
 app.get('/store', storeHandle);
 app.post('/store', storeHandle);
