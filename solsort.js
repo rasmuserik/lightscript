@@ -121,12 +121,16 @@ solsort = {};
             var userId = localStorage.getItem('userId');
             var userName = localStorage.getItem('userName');
             if(!userId) {
-                solsortLogin.innerHTML = 'login: ' +
+                solsortLogin.innerHTML = 
                     '<img src="/img/fontawesome/github.png" alt="GitHub" onclick="solsort.loginGitHub()"/> ' +
                     '<img src="/img/fontawesome/facebook.png" alt="Facebook" onclick="solsort.loginFacebook()"/> ' +
-                    '<img src="/img/fontawesome/google.png" alt="Google" onclick="solsort.loginGoogle()"/> ';
+                    '<img src="/img/fontawesome/google.png" alt="Google" onclick="solsort.loginGoogle()"/> ' +
+                    '&#8592; click <br/>to login';
             } else {
-                solsortLogin.innerHTML = '<a onclick="solsort.logout();">logout</a>';
+                solsortLogin.innerHTML = '<a onclick="solsort.logout();">' +
+                    '<img src="/img/fontawesome/' + userId.split(':')[0] + 'github.png"> ' +
+                    userName +
+                    '<br/>logout</a>';
             }
         }
     };
