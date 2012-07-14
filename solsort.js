@@ -128,7 +128,7 @@ solsort = {};
                     '&#8592; click <br/>to login';
             } else {
                 solsortLogin.innerHTML = '<a onclick="solsort.logout();">' +
-                    '<img src="/img/fontawesome/' + userId.split(':')[0] + 'github.png"> ' +
+                    '<img src="/img/fontawesome/' + userId.split(':')[0] + '.png"> ' +
                     userName +
                     '<br/>logout</a>';
             }
