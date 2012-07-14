@@ -45,6 +45,7 @@ solsort = {};
     }
 
     solsort.loginFacebook = function() {
+        localStorage.setItem('logging in', 'facebook');
         window.location = "https://www.facebook.com/dialog/oauth?client_id=201142456681777&redirect_uri=http://solsort.com/&scope=&response_type=token";
     }
 
@@ -66,14 +67,20 @@ solsort = {};
         var loggingIn = localStorage.getItem('logging in');
         if(loggingIn) {
             localStorage.removeItem('logging in');
+
             if(loggingIn === 'github') {
-                console.log(solsort.getVars());
                 solsort.jsonp('http://solsort.com/githubLogin', solsort.getVars(), function(access_token) {
                     access_token = access_token.replace(/.*access_token=/, '').replace(/&.*/, '');
                     solsort.jsonp('https://api.github.com/user', {access_token: access_token},
                         function(data) {
                             loginAs('github:' + data.data.login);
                         });
+                });
+            }
+            if(loggingIn === 'facebook') {
+                var args = solsort.getVars();
+                solsort.jsonp('https://graph.facebook.com/me', {access_token: args.access_token}, function(data) {
+                    console.log(data);
                 });
             }
         }
