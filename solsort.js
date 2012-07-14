@@ -87,6 +87,7 @@ solsort = {};
                         function(data) {
                             if(data.data.login) {
                                 loginAs('github:' + data.data.login, data.data.name);
+                                loginUI();
                             };
                         });
                 });
@@ -97,6 +98,7 @@ solsort = {};
                 solsort.jsonp('https://graph.facebook.com/me', {access_token: access_token}, function(data) {
                     if(data.id) { 
                         loginAs('facebook:' + data.id, data.name);
+                        loginUI();
                     }
                 });
             }
@@ -106,6 +108,7 @@ solsort = {};
                 solsort.jsonp('https://www.googleapis.com/oauth2/v1/userinfo', {access_token: access_token}, function(data) {
                     if(data.id) { 
                         loginAs('google:' + data.id, data.name);
+                        loginUI();
                     }
                 });
             }
