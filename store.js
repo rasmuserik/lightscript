@@ -64,6 +64,6 @@ if(!solsort) {
         xhr.addEventListener("error", error);
         xhr.addEventListener("abort", error);
         xhr.setRequestHeader("Content-type","application/x-www-form-urlencoded");
-        xhr.send('store=' + store + '&key=' + key + '&val=' + val + '&prevVal=' + prevVal);
+        xhr.send('store=' + store + '&key=' + key + '&val=' + val + '&prev=' + prevVal);
     }
 })();
