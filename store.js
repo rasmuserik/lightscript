@@ -51,6 +51,7 @@ if(!solsort) {
 
         function done(a) {
             try {
+                console.log(a);
                 callback(null, xhr.responseText);
             } catch(e) {
                 callback(e || 'xhr-parsing-error', a);
@@ -64,6 +65,6 @@ if(!solsort) {
         xhr.addEventListener("error", error);
         xhr.addEventListener("abort", error);
         xhr.setRequestHeader("Content-type","application/x-www-form-urlencoded");
-        xhr.send('store=' + store + '&key=' + key + '&val=' + val + '&prev=' + prevVal);
+        xhr.send('store=' + store + '&key=' + key + '&val=' + JSON.stringify(val) + '&prev=' + JSON.stringify(prevVal));
     }
 })();
