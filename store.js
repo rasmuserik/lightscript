@@ -11,8 +11,8 @@ if(!solsort) {
         xhr.addEventListener("load", done);
         xhr.addEventListener("error", error);
         xhr.addEventListener("abort", error);
-        xhr.onload(function
-        function retrieve(a) {
+        
+        function done(a) {
             window.a = a;
             console.log(a);
         }
