@@ -50,8 +50,8 @@ if(!solsort) {
         xhr.open('POST','http://solsort.com/store');
 
         function done(a) {
+            console.log(xhr, a);
             try {
-                console.log(a);
                 callback(null, xhr.responseText);
             } catch(e) {
                 callback(e || 'xhr-parsing-error', a);
