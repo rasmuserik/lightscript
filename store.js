@@ -46,6 +46,7 @@ if(!solsort) {
         xhr.send();
     }
     solsort.storeSet = function(store, key, val, prevVal, callback) {
+        var xhr = new XMLHttpRequest();
         xhr.open('POST','http://solsort.com/store');
 
         function done(a) {
