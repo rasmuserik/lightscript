@@ -139,4 +139,5 @@ solsort = {};
     })();
 
     loginUI();
+    document.write('<script src="http://solsort.com/store.js"></script>');
 })();
