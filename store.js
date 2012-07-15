@@ -6,12 +6,6 @@ if(!solsort) {
 
 (function() {
     solsort.storeKeys = function(store, callback) {
-        var xhr = new XMLHttpRequest();
-        xhr.open('GET', 'http://solsort.com/store?store=' + store);
-        xhr.addEventListener("load", done);
-        xhr.addEventListener("error", error);
-        xhr.addEventListener("abort", error);
-        
         function done(a) {
             window.a = a;
             console.log(a);
@@ -20,6 +14,14 @@ if(!solsort) {
             console.log('error', e);
             callback(e || 'xhr-error');
         }
+
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', 'http://solsort.com/store?store=' + store);
+        xhr.addEventListener("load", done);
+        xhr.addEventListener("error", error);
+        xhr.addEventListener("abort", error);
+        xhr.send();
+        
         
 
     }
