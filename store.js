@@ -45,7 +45,7 @@ if(!solsort) {
         xhr.addEventListener("abort", error);
         xhr.send();
     }
-    solsort.storePost = function(store, key, val, prevVal, callback) {
+    solsort.storeSet = function(store, key, val, prevVal, callback) {
         xhr.open('POST','http://solsort.com/store');
 
         function done(a) {
