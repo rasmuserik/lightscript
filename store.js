@@ -51,7 +51,7 @@ if(!solsort) {
 
         function done(a) {
             try {
-                callback(null, JSON.parse(xhr.responseText));
+                callback(null, xhr.responseText);
             } catch(e) {
                 callback(e || 'xhr-parsing-error', a);
             }
