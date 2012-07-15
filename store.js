@@ -46,5 +46,23 @@ if(!solsort) {
         xhr.send();
     }
     solsort.storePost = function(store, key, val, prevVal, callback) {
+        xhr.open('POST','http://solsort.com/store');
+
+        function done(a) {
+            try {
+                callback(null, JSON.parse(xhr.responseText));
+            } catch(e) {
+                callback(e || 'xhr-parsing-error', a);
+            }
+        }
+        function error(e) {
+            callback(e || 'xhr-error');
+        }
+
+        xhr.addEventListener("load", done);
+        xhr.addEventListener("error", error);
+        xhr.addEventListener("abort", error);
+        xhr.setRequestHeader("Content-type","application/x-www-form-urlencoded");
+        xhr.send('store=' + store + '&key=' + key + '&val=' + val + '&prevVal=' + prevVal);
     }
 })();
