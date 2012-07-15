@@ -11,7 +11,7 @@ if(!solsort) {
 
         function done(a) {
             try {
-                callback(null, JSON.parse(xhr.responseText));
+                callback(null, xhr.responseText);
             } catch(e) {
                 callback(e || 'xhr-parsing-error', a);
             }
@@ -31,7 +31,7 @@ if(!solsort) {
 
         function done(a) {
             try {
-                callback(null, JSON.parse(xhr.responseText));
+                callback(null, xhr.responseText);
             } catch(e) {
                 callback(e || 'xhr-parsing-error', a);
             }
@@ -51,11 +51,13 @@ if(!solsort) {
 
         function done(a) {
             console.log(xhr, a);
-            try {
-                callback(null, xhr.responseText);
-            } catch(e) {
-                callback(e || 'xhr-parsing-error', a);
+            if(xhr.status === 409) {
+                return callback('conflict', xhr.responseText);
             }
+            if(xhr.status === 200) {
+                return callback(null);
+            }
+            callback(a, xhr);
         }
         function error(e) {
             callback(e || 'xhr-error');
@@ -65,6 +67,6 @@ if(!solsort) {
         xhr.addEventListener("error", error);
         xhr.addEventListener("abort", error);
         xhr.setRequestHeader("Content-type","application/x-www-form-urlencoded");
-        xhr.send('store=' + store + '&key=' + key + '&val=' + JSON.stringify(val) + '&prev=' + JSON.stringify(prevVal));
+        xhr.send('store=' + store + '&key=' + key + '&val=' + val + '&prev=' + prevVal);
     }
 })();
