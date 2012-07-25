@@ -9,9 +9,9 @@ var https = require('https');
 var db = new sqlite3.Database(process.env.HOME + '/db.sqlite3');
 db.run('CREATE TABLE IF NOT EXISTS userdata (store, key, val, timestamp, PRIMARY KEY (store, key))');
 
+app.use(logger({path: process.env.HOME + "/httpd.log"}));
 app.use(express.bodyParser());
 app.use(express.static(__dirname + ''));
-app.use(logger({path: process.env.HOME + "/httpd.log"}));
 
 htmlTemplate = fs.readFileSync('html.mustache', 'utf8');
 
