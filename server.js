@@ -5,16 +5,17 @@ var app = express.createServer();
 var logger = require('express-logger');
 var sqlite3 = require('sqlite3');
 var https = require('https');
-require('./theodorelias/genindex.js');
 
 var db = new sqlite3.Database(process.env.HOME + '/db.sqlite3');
 db.run('CREATE TABLE IF NOT EXISTS userdata (store, key, val, timestamp, PRIMARY KEY (store, key))');
+
+htmlTemplate = fs.readFileSync('html.mustache', 'utf8');
+require('./theodorelias/genindex.js').gen(htmlTemplate);
 
 app.use(logger({path: process.env.HOME + "/httpd.log"}));
 app.use(express.bodyParser());
 app.use(express.static(__dirname + ''));
 
-htmlTemplate = fs.readFileSync('html.mustache', 'utf8');
 
 function name2url(name) {
     return name.replace(/[^a-zA-Z0-9._~/\[\]@!$&'()*+,;=-]/g, 
