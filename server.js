@@ -149,6 +149,10 @@ app.get('/', function(req, res){
     });
 });
 
+app.get('/te_fodsel', function(req, res) {
+    res.redirect('/theodorelias/?fodsel');
+});
+
 app.get('/http', function(req, res) {
     res.redirect('http://' + req.originalUrl.slice(6));
 });
