@@ -5,6 +5,7 @@ var app = express.createServer();
 var logger = require('express-logger');
 var sqlite3 = require('sqlite3');
 var https = require('https');
+require('./theodorelias/genindex.js');
 
 var db = new sqlite3.Database(process.env.HOME + '/db.sqlite3');
 db.run('CREATE TABLE IF NOT EXISTS userdata (store, key, val, timestamp, PRIMARY KEY (store, key))');
