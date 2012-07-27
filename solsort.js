@@ -4,6 +4,13 @@ solsort = {};
 (function() {
     "use strict";
     // # Utility functions {{{1
+    // ## load an external .js file {{{2
+    // TODO: callback parameter (+onreadychange etc.)
+    solsort.loadJS = function(url) {
+        var scriptElem = document.createElement('script');
+        scriptElem.src = url;
+        document.body.appendChild(scriptElem);
+    };
     // ## identity function {{{2
     solsort.id = function(a) { return a; };
     // ## Throttle a function {{{2
@@ -51,11 +58,17 @@ solsort = {};
             args[callbackName] = 'solsortJSONP0';
             window.solsortJSONP0 = callback;
         }
+        solsort.loadJS(uri + '?' +
+            Object.keys(args).map(function(key) {
+                return key + '=' + args[key];
+            }).join('&'));
+        /*
         document.write('<script src="'+ uri + '?' +
             Object.keys(args).map(function(key) {
                 return key + '=' + args[key];
             }).join('&') + 
             '"></script>');
+            */
     };
     solsort.error = function(err) {
         solsort.jsonp('http://solsort.com/clientError', {error: String(err)});
@@ -204,5 +217,6 @@ solsort = {};
     })();
     // # Various initialisation on page
     loginUI();
-    document.write('<script src="http://solsort.com/store.js"></script>');
+    solsort.loadJS('http://solsort.com/store.js');
+    /* document.write('<script src="http://solsort.com/store.js"></script>'); */
 })();
