@@ -1,13 +1,37 @@
+// # Module setup {{{1
 solsort = {};
-/*global solsort:true, localStorage:true, window:true, document:true, alert:true, location:true */
+/*global setTimeout:true, solsort:true, localStorage:true, window:true, document:true, alert:true, location:true */
 (function() {
     "use strict";
-    solsort.set = function(key, val) {
-        return localStorage.getItem(key);
+    // # Utility functions {{{1
+    // ## identity function {{{2
+    solsort.id = function(a) { return a; };
+    // ## Throttle a function {{{2
+    solsort.throttledFn = function(fn, delay) {
+        var lastRun = 0;
+        var scheduled = false;
+        var callbacks = [];
+        return function(callback) {
+            callbacks.push(callback || solsort.id);
+            if(scheduled) { return; }
+
+            function run() {
+                var result = fn();
+                scheduled = false;
+                callbacks.forEach(function(callback) { callback(result); });
+                callbacks = [];
+            }
+
+            var now = Date.now();
+            if(now-lastRun < delay) {
+                scheduled = true;
+                setTimeout(run, delay - (now-lastRun));
+            } else {
+                run();
+            }
+        };
     };
-    solsort.get = function(key) {
-        return localStorage.getItem(key);
-    };
+    // ## extract url parameters {{{2
     solsort.getVars = function() {
         // TODO: unencode urlencoding
         var result = {};
@@ -17,6 +41,7 @@ solsort = {};
         });
         return result;
     };
+    // ## jsonp {{{2
     solsort.jsonp = function(uri, args, callback, callbackName) {
         // TODO: urlencode args
         // TODO: make reentrant
@@ -33,11 +58,37 @@ solsort = {};
             '"></script>');
     };
     solsort.error = function(err) {
-        solsort.jsonp('http://solsort.com/clientError', {error: err});
+        solsort.jsonp('http://solsort.com/clientError', {error: String(err)});
         alert('Error on solsort.com: \n' + err + '\nSorry, not quite bug free, if you are online, then the error has been reported...');
         throw err;
     };
+    // # Storage  {{{1
+    solsort.Storage = function(storageName, mergeFunction) {
+        function sync(callback) {
+            callback = callback || solsort.id;
+        }
+        function set(key, val) {
+        }
+        function get(key) {
+        }
+        function getSynced(key) {
+        }
+        
+        return {
+            sync: sync,
+            set: set,
+            get: get
+        };
+    };
+    solsort.set = function(key, val) {
+        return localStorage.getItem(key);
+    };
+    solsort.get = function(key) {
+        return localStorage.getItem(key);
+    };
 
+    // # Login system {{{1
+    // ## Update user interface: add loginbuttons to `#solsortLogin` {{{2
     function loginUI() {
         var solsortLogin= document.getElementById('solsortLogin');
         if(solsortLogin) {
@@ -57,13 +108,21 @@ solsort = {};
             }
         }
     }
+    // ## Logout {{{2
     solsort.logout = function() {
         localStorage.removeItem('userId');
         localStorage.removeItem('userName');
         loginUI();
     };
 
-    solsort.login = function(callback) {
+    // ## solsort.login {{{2
+    solsort.login = function() {
+        var callback;
+        for(var i = 0; i < arguments.length; ++i) {
+            if(typeof arguments[i] === 'function') {
+                callback = arguments[i];
+            }
+        }
         var user = localStorage.getItem('userId');
         if(user) {
             return callback(user);
@@ -71,21 +130,26 @@ solsort = {};
         throw 'not implemented yet';
     };
 
+    // ## Internal utility functions {{{2
+    // ### Log in to facebook {{{3
     solsort.loginFacebook = function() {
         localStorage.setItem('logging in', 'facebook');
         window.location = "https://www.facebook.com/dialog/oauth?client_id=201142456681777&redirect_uri=http://solsort.com/&scope=&response_type=token";
     };
 
+    // ### Log in to github {{{3
     solsort.loginGitHub = function() {
         localStorage.setItem('logging in', 'github');
         window.location = 'https://github.com/login/oauth/authorize?client_id=cc14f7f75ff01bdbb1e7';
     };
 
+    // ### Log in to google {{{3
     solsort.loginGoogle = function() {
         localStorage.setItem('logging in', 'google');
         window.location = 'https://accounts.google.com/o/oauth2/auth?scope=https://www.googleapis.com/auth/userinfo.profile&state=&redirect_uri=http://solsort.com/&response_type=token&client_id=500223099774.apps.googleusercontent.com';
     };
 
+    // ### Utility for setting userid/username when logged in {{{3
     function loginAs(user, name) {
         localStorage.setItem('userId', user);
         localStorage.setItem('userName', name);
@@ -97,6 +161,7 @@ solsort = {};
         }
     }
 
+    // ### Handle second part of login, if magic cookie {{{3
     (function(){
         var loggingIn = localStorage.getItem('logging in');
         var access_token;
@@ -137,7 +202,7 @@ solsort = {};
             }
         }
     })();
-
+    // # Various initialisation on page
     loginUI();
     document.write('<script src="http://solsort.com/store.js"></script>');
 })();

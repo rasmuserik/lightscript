@@ -16,7 +16,6 @@ app.use(logger({path: process.env.HOME + "/httpd.log"}));
 app.use(express.bodyParser());
 app.use(express.static(__dirname + ''));
 
-
 function name2url(name) {
     return name.replace(/[^a-zA-Z0-9._~/\[\]@!$&'()*+,;=-]/g, 
         function(c) {
