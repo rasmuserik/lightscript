@@ -17,25 +17,15 @@ solsort = {};
     solsort.throttledFn = function(fn, delay) {
         var lastRun = 0;
         var scheduled = false;
-        var callbacks = [];
         return function(callback) {
-            callbacks.push(callback || solsort.id);
             if(scheduled) { return; }
-
             function run() {
-                var result = fn();
                 scheduled = false;
-                callbacks.forEach(function(callback) { callback(result); });
-                callbacks = [];
+                lastRun = Date.now();
+                fn();
             }
-
-            var now = Date.now();
-            if(now-lastRun < delay) {
-                scheduled = true;
-                setTimeout(run, delay - (now-lastRun));
-            } else {
-                run();
-            }
+            scheduled = true;
+            setTimeout(run, Math.max(0, delay - (Date.now()-lastRun)));
         };
     };
     // ## extract url parameters {{{2
@@ -62,13 +52,6 @@ solsort = {};
             Object.keys(args).map(function(key) {
                 return key + '=' + args[key];
             }).join('&'));
-        /*
-        document.write('<script src="'+ uri + '?' +
-            Object.keys(args).map(function(key) {
-                return key + '=' + args[key];
-            }).join('&') + 
-            '"></script>');
-            */
     };
     solsort.error = function(err) {
         solsort.jsonp('http://solsort.com/clientError', {error: String(err)});
@@ -76,28 +59,59 @@ solsort = {};
         throw err;
     };
     // # Storage  {{{1
+    var stores = {};
     solsort.Storage = function(storageName, mergeFunction) {
-        function sync(callback) {
-            callback = callback || solsort.id;
+        if(stores[storageName]) {
+            return stores[storageName];
         }
+
+        // ## Private data {{{2
+        var data = localStorage.getItem(storageName) || '{}';
+        data = JSON.parse(storage.store);
+        var serverData;
+        var syncCallbacks = [];
+
+        // ## Synchronise with localStorage and server {{{2
+        function sync() {
+            function execSyncCallbacks() {
+                while(syncCallbacks.length) {
+                    syncCallbacks.pop()();
+                }
+            }
+            localStorage.setItem(storageName, JSON.stringify(data));
+            var user = localStorage.getItem('userId');
+            if(!user) {
+                execSyncCallbacks();
+                return;
+            }
+            // TODO: implement server-side sync
+            execSyncCallbacks();
+        }
+        // ## Throttled version of synchronisation function {{{2
+        var sync5s = solsort.throttledFn(sync, 5000);
+        var throttledSync = function(callback) {
+            if(callback) {
+                syncCallbacks.push(callback);
+            }
+            sync5s();
+        };
+        // ## setters/getters {{{2
         function set(key, val) {
+            data[key] = JSON.stringify(val);
+            throttledSync();
         }
         function get(key) {
+            return JSON.parse(data[key]);
         }
-        function getSynced(key) {
-        }
-        
-        return {
-            sync: sync,
+
+        // ## Create and return+cache store object {{{2
+        var storage = {
+            sync: throttledSync,
             set: set,
             get: get
         };
-    };
-    solsort.set = function(key, val) {
-        return localStorage.getItem(key);
-    };
-    solsort.get = function(key) {
-        return localStorage.getItem(key);
+        stores[storageName] = storage;
+        return storage;
     };
 
     // # Login system {{{1
@@ -218,5 +232,4 @@ solsort = {};
     // # Various initialisation on page
     loginUI();
     solsort.loadJS('http://solsort.com/store.js');
-    /* document.write('<script src="http://solsort.com/store.js"></script>'); */
 })();
