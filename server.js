@@ -59,6 +59,10 @@ var notes = file2entries('notes.md');
 
 // # Web content/server configuration {{{1
 function configureApp(app) { 
+    app.use(function (req, res, next) {
+        res.removeHeader("X-Powered-By");
+        next();
+    });
     app.use(logger({path: process.env.HOME + '/data/httpd.' + app.get('serviceId') + '.log'}));
     app.use(express.bodyParser());
     app.use(express.static(__dirname + ''));
