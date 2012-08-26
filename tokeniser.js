@@ -2,54 +2,55 @@
 /*globals exports:true*/
 'use strict';
 
-var createToken = function(kind, val, start, end) {
+var createToken = function(kind, val, pos) {
     return {
         kind: kind, 
         val: val,
-        start: start,
-        end: end
+        pos: pos
     };
 };
 
 exports.tokenise = function(buffer) {
     var pos = 0;
     var start;
+    var lineno = 0;
     
-    function one_of(str) {
+    var one_of = function(str) {
         return str.indexOf(peek()) !== -1;
     }
     
-    function starts_with(str) {
+    var starts_with = function(str) {
         return peek(str.length) === str;
     }
     
-    function peek(n, delta) {
+    var peek = function(n, delta) {
         n = n || 1;
         delta = delta || 0;
         return buffer.slice(pos+delta, pos+delta+n);
     }
     
-    function pop(n) {
+    var pop = function(n) {
         n = n || 1;
         var result = buffer.slice(pos, pos+n);
+        for(var i = 0; i < result.length; ++i) {
+            if(result[i] === '\n') {
+                ++lineno;
+            }
+        }
         pos += n;
         return result;
     }
     
-    function current_position() {
-        return pos;
+    var begin_token = function() {
+        start = {lineno: lineno, pos: pos};
     }
     
-    function begin_token() {
-        start = current_position();
-    }
-    
-    function newToken(kind, val) {
-        var result = createToken(kind, val, start, current_position);
+    var newToken = function(kind, val) {
+        var result = createToken(kind, val, {line: lineno, start: start, end: {lineno: lineno, pos: pos} });
         return result;
     }
     
-    function next() {
+    var next = function() {
         var whitespace = ' \t\r\n';
         var single_symbol = '(){}[]:;,`?';
         var joined_symbol = '=+-*/<>%!|&^~#.@';

@@ -1,13 +1,10 @@
-var EOFToken = {};
-
 // Util
-function extend(a, b) { Object.keys(b).forEach(function(key) { a[key] = b[key]; }); return a; }
+var extend = function(a, b) { Object.keys(b).forEach(function(key) { a[key] = b[key]; }); return a; }
 
 // Current token
 // Token prototype
 var defaultToken = {
     nud: function() { },
-    led: function(left) { this.syntaxError('not an operator'); },
     bp: 0,
     children: [],
     syntaxError: function(desc) {
@@ -19,7 +16,7 @@ var defaultToken = {
 var token;
 var nextToken;
 
-function tokenLookup(orig) {
+var tokenLookup = function(orig) {
     var proto;
     if(orig.kind === 'symbol') {
         proto = symb[orig.val] || symb[orig.val[orig.val.length - 1]];
@@ -32,7 +29,7 @@ function tokenLookup(orig) {
 }
 
 var nudPrefix = function() { this.children = [parse()];};
-function ledFn(fn) {
+var ledFn = function(fn) {
     return function(bp) { 
         var result = Object.create(defaultToken);
         result.led = fn;
@@ -47,17 +44,17 @@ var infix = ledFn(function(left) {
 });
 var infixr = ledFn(function(left) { 
     infix = true;
-    this.children = [left, parse(this.bp - 1)]; console.log(1234, this)
+    this.children = [left, parse(this.bp - 1)]; 
 });
 
-function rparen() {
+var rparen = function() {
     return extend(Object.create(defaultToken), {rparen: true, 
                   nud: function() { this.syntaxError('unmatched rparen')}});
 }
-function prefix() { return extend(Object.create(defaultToken), {nud: nudPrefix})}
-function sep() { return extend(Object.create(defaultToken), {sep:true});}
-function list(rparen) { 
-    function readList(obj) {
+var prefix = function() { return extend(Object.create(defaultToken), {nud: nudPrefix})}
+var sep = function() { return extend(Object.create(defaultToken), {sep:true});}
+var list = function(rparen) { 
+    var readList = function(obj) {
         while (!token.rparen) { obj.children.push(parse()); }
         if(token.val !== rparen) {
             obj.syntaxError('Paren mismatch begin');
@@ -86,7 +83,8 @@ var symb = {
     '#': [prefix], '@': [prefix],
     '++': [prefix], '--': [prefix],
     '!': [prefix], '~': [prefix],
-    'return': [prefix],
+    'return': [prefix], 'throw': [prefix],
+    'var': [prefix],
     '*': [infix, 900], '/': [infix, 900], '%': [infix, 900],
     '-': [infix, 800], '+': [infix, 800],
     '>>>': [infix, 700], '>>': [infix, 700], '<<': [infix, 700],
@@ -105,7 +103,7 @@ Object.keys(symb).forEach(function(id){
     symb[id] = t[0](t[1]);
 });
 
-function parse(rbp) {
+var parse = function(rbp) {
     rbp = rbp || 0;
     var left;
     var t = token;
@@ -124,7 +122,8 @@ function parse(rbp) {
 exports.parse = function(tokens) {
     var pos = 0;
     nextToken = function() {
-        token = tokenLookup(pos === tokens.length ? {kind: 'eof', rparen: true} : tokens[pos++]);
+        token = tokenLookup(pos === tokens.length ? {kind: 'eof', rparen: true} : tokens[pos]);
+        ++pos;
         return tokenLookup(token);
     }
     nextToken();
