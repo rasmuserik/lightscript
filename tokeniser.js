@@ -51,8 +51,8 @@ exports.tokenise = function(buffer) {
     
     function next() {
         var whitespace = ' \t\r\n';
-        var single_symbol = '(){}[].:;,@`';
-        var joined_symbol = '=+-*/<>%!|&^~?#';
+        var single_symbol = '(){}[]:;,`?';
+        var joined_symbol = '=+-*/<>%!|&^~#.@';
         var ident = '_qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM$';
         var digits = '0123456789';
         var hexdigits = digits + 'abcdefABCDEF';
