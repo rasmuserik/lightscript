@@ -11,7 +11,7 @@ db.run('CREATE TABLE IF NOT EXISTS userdata (store, key, val, timestamp, PRIMARY
 
 // # Pages from markdown {{{1
 htmlTemplate = fs.readFileSync('html.mustache', 'utf8');
-require('./theodorelias/genindex.js').gen(htmlTemplate);
+require('./public/theodorelias/genindex.js').gen(htmlTemplate);
 
 function name2url(name) {
     return name.replace(/[^a-zA-Z0-9._~/\[\]@!$&'()*+,;=-]/g, 
@@ -65,7 +65,7 @@ function configureApp(app) {
     });
     app.use(logger({path: process.env.HOME + '/data/httpd.' + app.get('serviceId') + '.log'}));
     app.use(express.bodyParser());
-    app.use(express.static(__dirname + ''));
+    app.use(express.static(__dirname + '/public'));
     
     
     Object.keys(notes).forEach(function(key) {
