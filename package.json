@@ -10,7 +10,7 @@
     "gm": "*",
     "sqlite3": "*",
     "markdown": "*",
-    "express": "*",
+    "express"             : "2.5.x",
     "express-logger": "*"
   },
   "engines": {"node": "*"}

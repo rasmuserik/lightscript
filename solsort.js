@@ -62,7 +62,7 @@ function configureApp(app) {
         res.removeHeader("X-Powered-By");
         next();
     });
-    app.use(logger({path: process.env.HOME + '/data/httpd.log'}));
+    app.stack.unshift({route: '', handle: logger({path: process.env.HOME + '/data/httpd.log'})});
     app.use(express.bodyParser());
     
     Object.keys(notes).forEach(function(key) {
@@ -169,7 +169,7 @@ function configureApp(app) {
         res.redirect('https://' + req.originalUrl.slice(7));
     });
     
-    app.use("*", express.static(__dirname + '/public'));
+    app.get('*', express.static(__dirname + '/public'));
     app.get('*', function(req, res){
         res.send(
             mustache.to_html(htmlTemplate, {
@@ -192,6 +192,7 @@ exports.expressCreateServer = function(hook_name, args, callback) {
         return ['/', '/favicon.ico', '/robots.txt'].indexOf(route.path) === -1;
     });
     configureApp(app);
+    console.log(require('util').inspect(app, false, 6));
     callback();
 }
 
