@@ -145,7 +145,6 @@ function configureApp(app) {
     
     app.get('/', function(req, res){
         fs.readFile(__dirname + '/index.html.mustache', 'utf8', function(err, frontpage) {
-            console.log(frontpage);
             res.send(fixLinks(
                 mustache.to_html(frontpage, {
                     notes: Object.keys(notes).map(function(noteName) {
@@ -170,6 +169,7 @@ function configureApp(app) {
     });
     
     app.get('*', express.static(__dirname + '/public'));
+    /*
     app.get('*', function(req, res){
         res.send(
             mustache.to_html(htmlTemplate, {
@@ -182,6 +182,7 @@ function configureApp(app) {
                     '<p>(or see if you can find the page your were looking for <a href="/">here</a>)</p>'}),
             404);
     });
+    */
 }
 
 // # Setup the servers {{{1
@@ -192,7 +193,7 @@ exports.expressCreateServer = function(hook_name, args, callback) {
         return ['/', '/favicon.ico', '/robots.txt'].indexOf(route.path) === -1;
     });
     configureApp(app);
-    console.log(require('util').inspect(app, false, 6));
+    //console.log(require('util').inspect(app, false, 6));
     callback();
 }
 
