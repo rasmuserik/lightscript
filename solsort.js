@@ -11,7 +11,6 @@ db.run('CREATE TABLE IF NOT EXISTS userdata (store, key, val, timestamp, PRIMARY
 
 // # Pages from markdown {{{1
 htmlTemplate = fs.readFileSync(__dirname + '/html.mustache', 'utf8');
-require('./public/theodorelias/genindex.js').gen(htmlTemplate);
 
 function name2url(name) {
     return name.replace(/[^a-zA-Z0-9._~/\[\]@!$&'()*+,;=-]/g, 
@@ -58,6 +57,7 @@ var notes = file2entries(__dirname + '/notes.md');
 
 // # Web content/server configuration {{{1
 function configureApp(app) { 
+    require('./public/theodorelias/genindex.js').gen(htmlTemplate);
     app.use(function (req, res, next) {
         res.removeHeader("X-Powered-By");
         next();
@@ -149,7 +149,7 @@ function configureApp(app) {
                 mustache.to_html(frontpage, {
                     notes: Object.keys(notes).map(function(noteName) {
                         var title = notes[noteName].title;
-                        return '<a href="/' + notes[noteName].url + '">' + title.replace(/:/g, ':<br/>') + '</a>';
+                        return '<a class="solsortBtn" href="/' + notes[noteName].url + '">' + title.replace(/:/g, ':<br/>') + '</a>';
                     }).join('')
                 })
             ));
