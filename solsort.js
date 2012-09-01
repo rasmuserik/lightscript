@@ -159,6 +159,10 @@ function configureApp(app) {
     app.get('/te_fodsel', function(req, res) {
         res.redirect('/theodorelias/?fodsel');
     });
+
+    app.get('/skolevangen', function(req, res) {
+        res.redirect('https://www.facebook.com/groups/520346057991618');
+    });
     
     app.get('/http', function(req, res) {
         res.redirect('http://' + req.originalUrl.slice(6));
