@@ -76,32 +76,27 @@ var list = function(rparen) {
 }
 
 var symb = {
-    '.': [infix, 1000],
-    '[': [list(']'), 1000], ']': [rparen],
-    '{': [list('}'), 1000], '}': [rparen],
-    '(': [list(')'), 1000], ')': [rparen],
-    '#': [prefix], '@': [prefix],
-    '++': [prefix], '--': [prefix],
-    '!': [prefix], '~': [prefix],
-    'return': [prefix], 'throw': [prefix],
-    'var': [prefix],
-    '*': [infix, 900], '/': [infix, 900], '%': [infix, 900],
-    '-': [infix, 800], '+': [infix, 800],
-    '>>>': [infix, 700], '>>': [infix, 700], '<<': [infix, 700],
-    '<=': [infix, 600], '>=': [infix, 600], '>': [infix, 600], '<': [infix, 600],
-    '==': [infix, 500], '!=': [infix, 500], '!==': [infix, 500], '===': [infix, 500],
-    '^': [infix, 400], '|': [infix, 400], '&': [infix, 400],
-    '&&': [infix, 300], '||': [infix, 300],
-    ':': [infixr, 200], '?': [infixr, 200],
-    'else': [infixr, 200], 
-    '=': [infixr, 100],
-    ',': [sep], ';': [sep],
+    '.': infix(1000),
+    '[': list(']')(1000), ']': rparen(),
+    '{': list('}')(1000), '}': rparen(),
+    '(': list(')')(1000), ')': rparen(),
+    '#': prefix(), '@': prefix(),
+    '++': prefix(), '--': prefix(),
+    '!': prefix(), '~': prefix(),
+    'return': prefix(), 'throw': prefix(),
+    'var': prefix(),
+    '*': infix(900), '/': infix(900), '%': infix(900),
+    '-': infix(800), '+': infix(800),
+    '>>>': infix(700), '>>': infix(700), '<<': infix(700),
+    '<=': infix(600), '>=': infix(600), '>': infix(600), '<': infix(600),
+    '==': infix(500), '!=': infix(500), '!==': infix(500), '===': infix(500),
+    '^': infix(400), '|': infix(400), '&': infix(400),
+    '&&': infix(300), '||': infix(300),
+    ':': infixr(200), '?': infixr(200),
+    'else': infixr(200), 
+    '=': infixr(100),
+    ',': sep(), ';': sep(),
 };
-
-Object.keys(symb).forEach(function(id){
-    var t = symb[id];
-    symb[id] = t[0](t[1]);
-});
 
 var parse = function(rbp) {
     rbp = rbp || 0;
