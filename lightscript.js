@@ -1,2 +1,2 @@
 exports.tokenise = require('./tokeniser').tokenise;
-exports.parse = require('./parser').parse;
+exports.parse = require('./syntax').parse;

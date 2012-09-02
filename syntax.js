@@ -1,8 +1,7 @@
-// Util
+// Util {{{1
 var extend = function(a, b) { Object.keys(b).forEach(function(key) { a[key] = b[key]; }); return a; }
 
-// Current token
-// Token prototype
+// Symbol/token lookup/construction {{{1
 var defaultToken = {
     nud: function() { },
     bp: 0,
@@ -11,10 +10,6 @@ var defaultToken = {
         console.log({error: 'syntax', desc: desc, token: this});
     }
 };
-
-// current token and function go get it
-var token;
-var nextToken;
 
 var tokenLookup = function(orig) {
     var proto;
@@ -28,6 +23,7 @@ var tokenLookup = function(orig) {
     return extend(Object.create(proto), orig);
 }
 
+// Syntax {{{1
 var nudPrefix = function() { this.children = [parse()];};
 var ledFn = function(fn) {
     return function(bp) { 
@@ -75,6 +71,7 @@ var list = function(rparen) {
     } 
 }
 
+// Symbol definition table {{{2
 var symb = {
     '.': infix(1000),
     '[': list(']')(1000), ']': rparen(),
@@ -97,6 +94,9 @@ var symb = {
     '=': infixr(100),
     ',': sep(), ';': sep(),
 };
+// Parser {{{1
+var token;
+var nextToken;
 
 var parse = function(rbp) {
     rbp = rbp || 0;
