@@ -6,23 +6,59 @@ var treeMap = function(tree, fn) {
     return node;
 }
 
+// Pretty print {{{1
+var defaultPP = function(acc, indent) {
+    if(this.kind === 'string' || this.kind === 'number' || this.kind === 'annotation') {
+        acc.push(this.val);
+        if(this.children.length > 0) {
+            this.syntaxError('prettyprinting, but has children');
+        }
+    } else if(this.val === ';') {
+    } else {
+        if(this.kind === 'call') {
+            if(this.val === '()') {
+                tokenLookup(this.children[0]).pp(acc, indent);
+                acc.push('(');
+                var sep = '';
+                this.children.slice(1).forEach(function(child){
+                    acc.push(sep);
+                    tokenLookup(child).pp(acc, indent);
+                    sep = ', ';
+                });
+                acc.push(')');
+            } else {
+                tokenLookup(this.children[0]).pp(acc, indent);
+                acc.push('.' + this.val + '(');
+                var sep = '';
+                this.children.slice(1).forEach(function(child){
+                    acc.push(sep);
+                    tokenLookup(child).pp(acc, indent);
+                    sep = ', ';
+                });
+                acc.push(')');
+
+            }
+        } else if(this.kind === 'identifier') {
+            acc.push(this.val);
+        } else {
+            this.children.forEach(function(child) {
+                tokenLookup(child).pp(acc, indent);
+            });
+        }
+    }
+};
+exports.prettyprint = function(obj) {
+    acc = [];
+    tokenLookup(obj).pp(acc, 0);
+    return acc.join('');
+}
+
 // Symbol/token lookup/construction {{{1
 var defaultToken = {
     nud: function() { },
     bp: 0,
     children: [],
-    pp: function(acc, indent) {
-        var i;
-        acc.push('[');
-        acc.push(this.kind);
-        acc.push(':');
-        acc.push(this.val);
-        this.children.forEach(function(child) {
-            acc.push(' ');
-            tokenLookup(child).pp(acc, indent);
-        });
-        acc.push(']');
-    },
+    pp: defaultPP,
     syntaxError: function(desc) {
         console.log({error: 'syntax', desc: desc, token: this});
     }
@@ -35,23 +71,26 @@ var tokenLookup = function(orig) {
 
 // Syntax {{{1
 var nudPrefix = function() { this.children = [parse()];};
-var ledFn = function(fn) {
-    return function(bp) { 
-        var result = Object.create(defaultToken);
-        result.led = fn;
-        result.nud = nudPrefix;
-        result.bp = bp; 
-        return result;
-    }
+var infix = function(bp) {
+    return extend(Object.create(defaultToken), {
+        led: function(left) { 
+            this.infix = true;
+            this.children = [left, parse(this.bp)]; 
+        },
+        nud: nudPrefix,
+        bp: bp
+    });
 }
-var infix = ledFn(function(left) { 
-    this.infix = true;
-    this.children = [left, parse(this.bp)];
-});
-var infixr = ledFn(function(left) { 
-    this.infix = true;
-    this.children = [left, parse(this.bp - 1)]; 
-});
+var infixr = function(bp) {
+    return extend(Object.create(defaultToken), {
+        led: function(left) { 
+            this.infix = true;
+            this.children = [left, parse(this.bp - 1)]; 
+        },
+        nud: nudPrefix,
+        bp: bp
+    });
+}
 
 var rparen = function() {
     return extend(Object.create(defaultToken), {rparen: true, 
@@ -104,12 +143,6 @@ var symb = {
     '=': infixr(100),
     ',': sep(), ';': sep(),
 };
-// Pretty print {{{1
-exports.prettyprint = function(obj) {
-    acc = [];
-    tokenLookup(obj).pp(acc, 0);
-    return acc.join('');
-}
 // Parser {{{1
 var token;
 var nextToken;

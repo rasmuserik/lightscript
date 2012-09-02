@@ -9,5 +9,5 @@ toList = function(ast) {
 }
 //console.log('RST:', require('./listpp')(rst.map(toList)));
 //console.log('AST:', require('./listpp')(rst.map(rst2ast).map(toList)));
-console.log(rst.map(rst2ast).map(ls.prettyprint));
+console.log(rst.map(rst2ast).map(ls.prettyprint).join('\n'));
 //console.log(util.inspect(rst, false, 100));
