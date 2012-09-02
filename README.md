@@ -21,14 +21,15 @@ Data representations
 - Raw syntax tree - generic syntax 
     - `kind` required, kind of node: `symbol`, `identifier`, `string`, `comment`, `number`
     - `val` required, data connected to the node, ie symbol/identifier/string/...
-    - `infix` optional, true if this node comes from an infix operation, ie. `child[0]` is to the right of the node
+    - `infix` optional, true if this node comes from an infix operation, ie. `children[0]` is to the right of the node
     - `pos` position in the source file of the node
     - `children` required, array of child nodes
-- Simplified syntax tree - cleaned up for code generation
-    - `kind`: `call`, `identifier`, `string`, `annotation`, `number`, `block`, `if-else`, `do-while`, `function`
-    - `val`: method-name on `call`, value on `identifier`, `string`, `comment` and `number`
+- Advanced syntax tree - tree which is prettyprinted
+    - `kind`: `call`, `identifier`, `string`, `annotation`, `number`, `block`
+    - `val`: method-name on `call`, value on `identifier`, `string`, `annotation` and `number`
     - `children`
     - `pos`
+- Simplified syntax tree - cleaned up for code generation
     - language elements
         - method-invocations
             - most things are method invocations, including subscript, comparison, fn-call, assignment, throw

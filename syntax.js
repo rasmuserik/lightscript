@@ -6,6 +6,8 @@ var defaultToken = {
     nud: function() { },
     bp: 0,
     children: [],
+    pp: function(acc, indent) {
+    }
     syntaxError: function(desc) {
         console.log({error: 'syntax', desc: desc, token: this});
     }
