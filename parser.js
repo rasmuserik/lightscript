@@ -39,11 +39,11 @@ var ledFn = function(fn) {
     }
 }
 var infix = ledFn(function(left) { 
-    infix = true;
+    this.infix = true;
     this.children = [left, parse(this.bp)];
 });
 var infixr = ledFn(function(left) { 
-    infix = true;
+    this.infix = true;
     this.children = [left, parse(this.bp - 1)]; 
 });
 
@@ -93,7 +93,7 @@ var symb = {
     '^': [infix, 400], '|': [infix, 400], '&': [infix, 400],
     '&&': [infix, 300], '||': [infix, 300],
     ':': [infixr, 200], '?': [infixr, 200],
-    'else': [infixr, 200], 'catch': [infixr, 200],
+    'else': [infixr, 200], 
     '=': [infixr, 100],
     ',': [sep], ';': [sep],
 };
