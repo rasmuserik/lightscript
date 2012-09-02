@@ -1,5 +1,10 @@
 // Util {{{1
 var extend = function(a, b) { Object.keys(b).forEach(function(key) { a[key] = b[key]; }); return a; }
+var treeMap = function(tree, fn) {
+    var node = fn(tree);
+    node.children = node.children.map(fn);
+    return node;
+}
 
 // Symbol/token lookup/construction {{{1
 var defaultToken = {
@@ -7,6 +12,16 @@ var defaultToken = {
     bp: 0,
     children: [],
     pp: function(acc, indent) {
+        var i;
+        acc.push('[');
+        acc.push(this.kind);
+        acc.push(':');
+        acc.push(this.val);
+        this.children.forEach(function(child) {
+            acc.push(' ');
+            tokenLookup(child).pp(acc, indent);
+        });
+        acc.push(']');
     },
     syntaxError: function(desc) {
         console.log({error: 'syntax', desc: desc, token: this});
@@ -14,14 +29,7 @@ var defaultToken = {
 };
 
 var tokenLookup = function(orig) {
-    var proto;
-    if(orig.kind === 'symbol') {
-        proto = symb[orig.val] || symb[orig.val[orig.val.length - 1]];
-    } else if(orig.kind === 'identifier') {
-        proto = symb[orig.val] || defaultToken;
-    } else {
-        proto = defaultToken;
-    }
+    var proto = symb[orig.val] || (orig.val && symb[orig.val[orig.val.length - 1]]) || defaultToken;
     return extend(Object.create(proto), orig);
 }
 
@@ -96,6 +104,12 @@ var symb = {
     '=': infixr(100),
     ',': sep(), ';': sep(),
 };
+// Pretty print {{{1
+exports.prettyprint = function(obj) {
+    acc = [];
+    tokenLookup(obj).pp(acc, 0);
+    return acc.join('');
+}
 // Parser {{{1
 var token;
 var nextToken;

@@ -79,6 +79,7 @@ exports.tokenise = function(buffer) {
                 while(peek() && peek() !== '\n') {
                     s += pop();
                 }
+                s += pop();
                 return newToken('comment', s);
 
             // /* Comment
@@ -87,6 +88,7 @@ exports.tokenise = function(buffer) {
                 while(peek() && peek(2) !== '*/') {
                     s += pop();
                 }
+                s += pop(2);
                 return newToken('comment', s);
     
             // String
@@ -102,7 +104,7 @@ exports.tokenise = function(buffer) {
                 }
     
                 // remove end-quote
-                pop();
+                s += pop();
                 return newToken('string', s);
     
             // Number
