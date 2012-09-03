@@ -79,7 +79,7 @@ exports.tokenise = function(buffer) {
                 while(peek() && peek() !== '\n') {
                     s += pop();
                 }
-                s += pop();
+                pop();
                 return newToken('comment', s);
 
             // /* Comment
