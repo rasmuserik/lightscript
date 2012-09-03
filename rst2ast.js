@@ -11,7 +11,8 @@ var rst2ast = function(ast) {
 };
 // Main rst2ast function{{{1
 var rst2astUnsafe = function(ast) {
-    var children, lhs;
+    var children;
+    var lhs;
     if(ast.infix) {
         // function/method-call `(` {{{1
         if(ast.val === '(') {

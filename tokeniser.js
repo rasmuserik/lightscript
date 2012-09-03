@@ -1,4 +1,4 @@
-(function(){
+!function(){
 /*globals exports:true*/
 'use strict';
 
@@ -32,11 +32,11 @@ exports.tokenise = function(buffer) {
     var pop = function(n) {
         n = n || 1;
         var result = buffer.slice(pos, pos+n);
-        for(var i = 0; i < result.length; ++i) {
-            if(result[i] === '\n') {
+        result.split('').forEach(function(c) {
+            if(c === '\n') {
                 ++lineno;
             }
-        }
+        });
         pos += n;
         return result;
     }
@@ -57,7 +57,9 @@ exports.tokenise = function(buffer) {
         var ident = '_qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM$';
         var digits = '0123456789';
         var hexdigits = digits + 'abcdefABCDEF';
-        var s, c, quote;
+        var s;
+        var c;
+        var quote;
     
         // repeat until token parsed
         while(true) {
@@ -79,7 +81,7 @@ exports.tokenise = function(buffer) {
                 while(peek() && peek() !== '\n') {
                     s += pop();
                 }
-                pop();
+                s += pop();
                 return newToken('comment', s);
 
             // /* Comment
@@ -143,7 +145,7 @@ exports.tokenise = function(buffer) {
                 return newToken('identifier', s);
     
             } else {
-                throw 'Tokenisation error: ' + peek().charCodeAt(0) + ' at pos ' + pos;
+                throw 'Tokenisation error: ' + peek().charCodeAt(0) + ' (' + peek() + ') at pos ' + pos;
             }
         }
     }
@@ -156,4 +158,4 @@ exports.tokenise = function(buffer) {
     return result;
 };
 
-})();
+}();

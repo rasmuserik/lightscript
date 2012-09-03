@@ -10,7 +10,7 @@ var treeMap = function(tree, fn) {
     
 var ppInfix; 
 var prettyprint;
-(function() {
+!(function() {
     var acc = [];
     var indent = 0;
     var newline = function() {
@@ -114,6 +114,10 @@ var prettyprint;
         } else if(node.kind === 'string') {
             acc.push(JSON.stringify(node.val.slice(1, -1)));
             node.assert(node.children.length === 0, 'prettyprinting, string with children');
+
+        } else if(node.kind === 'annotation' && node.val.slice(0,2) === '//') {
+            acc.push(node.val.slice(0,-1));
+            node.assert(node.children.length === 0, 'prettyprinting, but has children');
         } else if(node.kind === 'number' || node.kind === 'annotation') {
             acc.push(node.val);
             node.assert(node.children.length === 0, 'prettyprinting, but has children');
@@ -174,7 +178,7 @@ var prettyprint;
         } else if(this.children.length === 2) {
             ppPrio(this.children[0], this.bp);
             acc.push(this.space + this.val + this.space);
-            ppPrio(this.children[1], this.bp + 1);
+            ppPrio(this.children[1], this.bp + 1 - this.dbp);
         } else {
             this.syntaxError('cannot prettyprint infix mus have 1 <= parameters <= 2');
         }
@@ -204,8 +208,18 @@ var defaultToken = {
     }
 };
 
+var objectPropertyToken = {
+    constructor: defaultToken,
+    valueOf: defaultToken,
+    toString: defaultToken,
+    toLocaleString: defaultToken,
+    hasOwnProperty: defaultToken,
+    isPrototypeOf: defaultToken,
+    propertyIsEnumerable: defaultToken
+}
+
 var tokenLookup = function(orig) {
-    var proto = symb[orig.val] || (orig.val && symb[orig.val[orig.val.length - 1]]) || defaultToken;
+    var proto = objectPropertyToken[orig.val] || symb[orig.val] || (orig.val && symb[orig.val[orig.val.length - 1]]) || defaultToken;
     return extend(Object.create(proto), orig);
 }
 
@@ -261,7 +275,7 @@ var list = function(rparen) {
     } 
 }
 
-// Symbol definition table {{{2
+// Symbol definition table {{{1
 var symb = {
     '.': infix(1000),
     '[': list(']')(1000), ']': rparen(),

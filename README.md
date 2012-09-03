@@ -5,6 +5,9 @@ New version of lightscript in progress
 - prettyprinter
 - split syntax into syntax, parser and prettyprinter
 - fix pos in tokeniser
+- js-syntax
+    - (function() {...})()
+    - for(;;)
 - ast2sst
 - sst2ast
 - type inference
