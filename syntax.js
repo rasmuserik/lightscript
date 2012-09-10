@@ -1,15 +1,8 @@
 // Util {{{1
 var extend = function(a, b) { Object.keys(b).forEach(function(key) { a[key] = b[key]; }); return a; }
-var treeMap = function(tree, fn) {
-    var node = fn(tree);
-    node.children = node.children.map(fn);
-    return node;
-}
-
 // Pretty print {{{1
     
 var ppInfix; 
-var prettyprint;
 !(function() {
     var acc = [];
     var indent = 0;

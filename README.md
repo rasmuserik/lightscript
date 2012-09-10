@@ -2,7 +2,6 @@
 New version of lightscript in progress
 
 ## TODO
-- prettyprinter
 - split syntax into syntax, parser and prettyprinter
 - fix pos in tokeniser
 - js-syntax
