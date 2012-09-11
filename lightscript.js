@@ -257,6 +257,9 @@ def("prettyprint", function(exports, module) {
         } else if(node.kind === "string") {
             acc.push(JSON.stringify(node.val.slice(1,  - 1)));
             node.assert(node.children.length === 0, "prettyprinting, string with children");
+        } else if(node.kind === "annotation" && node.val.slice(0, 2) === "/*") {
+            acc.push(node.val);
+            node.assert(node.children.length === 0, "prettyprinting, but has children");
         } else if(node.kind === "annotation" && node.val.slice(0, 2) === "//") {
             acc.push(node.val.slice(0,  - 1));
             node.assert(node.children.length === 0, "prettyprinting, but has children");
@@ -478,7 +481,8 @@ def("syntax", function(exports, module) {
         hasOwnProperty : defaultToken,
         isPrototypeOf : defaultToken,
         propertyIsEnumerable : defaultToken,
-        "comment" : sep()
+        "comment" : sep(),
+        "annotation" : sep()
     };
     symb["."].space = "";
     var token;
