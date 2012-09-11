@@ -11,12 +11,17 @@ var def = function(name, fn) {
     fn(module.exports, module);
     modules[name] = module.exports;
 };
-// LightScript {{{1
-// trycatch {{{2
-// Try/catch only supported as a function in lightscript, here implemented in javascript...
-def("trycatch", function(exports, module) {
-    module.exports = Function("return function trycatch(fn,handle){try{return fn();}catch(e){return handle(e);}}")();
+// lightscript util/system-library {{{1
+def("lightscript", function(exports, module) {
+    exports.trycatch = Function("return function trycatch(fn,handle){try{return fn();}catch(e){return handle(e);}}")();
+    exports.extend = function(a, b) {
+        Object.keys(b).forEach(function(key) {
+            a[key] = b[key];
+        });
+        return a;
+    };
 });
+// LightScript programming language {{{1
 // tokeniser {{{2
 def("tokeniser", function(exports, module) {
     "use strict";
@@ -329,12 +334,8 @@ def("prettyprint", function(exports, module) {
 });
 // syntax {{{2
 def("syntax", function(exports, module) {
-    var extend = function(a, b) {
-        Object.keys(b).forEach(function(key) {
-            a[key] = b[key];
-        });
-        return a;
-    };
+    exports.errors = [];
+    var extend = use("lightscript").extend;
     var defaultToken = {
         nud : function() {
         },
@@ -348,7 +349,7 @@ def("syntax", function(exports, module) {
             };
         },
         error : function(desc) {
-            console.log({
+            exports.errors.push({
                 error : "syntax",
                 desc : desc,
                 token : this
@@ -514,7 +515,7 @@ def("syntax", function(exports, module) {
 });
 // rst2ast {{{2
 def("rst2ast", function(exports, module) {
-    var trycatch = use("trycatch");
+    var trycatch = use("lightscript").trycatch;
     var clearSep = function(arr) {
         return arr.filter(function(elem) {
             return !elem.sep;
@@ -621,6 +622,7 @@ def("rst2ast", function(exports, module) {
 });
 // Runner {{{2
 def("runner", function(exports, module) {
+    /*
     ls = {};
     ls.tokenise = use("tokeniser").tokenise;
     ls.parse = use("syntax").parse;
@@ -634,4 +636,31 @@ def("runner", function(exports, module) {
     console.log(ls.prettyprint({kind : "block", children : rst.map(rst2ast).filter(function(elem) {
         return elem.val !== ";";
     })}).replace(RegExp("\n    ", "g"), "\n").slice(2,  - 2));
+    */
+});
+// main {{{1
+def("main", function(exports, module) {
+    var commands = {prettyprint : function() {
+        var ls = {};
+        ls.tokenise = use("tokeniser").tokenise;
+        var syntax = use('syntax');
+        ls.parse = syntax.parse;
+        ls.prettyprint = use("prettyprint").prettyprint;
+        rst2ast = use("rst2ast");
+        var filename = process.argv[1];
+        var rst = ls.parse(ls.tokenise(require("fs").readFileSync(filename, "utf8")));
+        var newCode = ls.prettyprint({kind : "block", children : rst.map(rst2ast).filter(function(elem) {
+            return elem.val !== ";";
+        })}).replace(RegExp("\n    ", "g"), "\n").slice(2,  - 2);
+        if(syntax.errors.length ){
+            console.log('errors:', syntax.errors);
+        } else {
+            console.log(newCode);
+        }
+    }};
+    if(commands[process.argv[2]]) {
+        commands[process.argv[2]]();
+    } else {
+        console.log('usage: node lightscript.js [one of: ' + Object.keys(commands).join(' ') + ']');
+    }
 });
