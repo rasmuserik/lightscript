@@ -585,7 +585,7 @@ def("rst2ast", function(exports, module) {
                 return rst2ast(ast.children[0]);
             };
             if(ast.val === "(" || ast.val === "{" || ast.val === "[") {
-                var children = clearSep(ast.children).map(rst2ast);
+                children = clearSep(ast.children).map(rst2ast);
                 children.unshift({
                     pos : ast.pos,
                     kind : "identifier",
@@ -644,9 +644,10 @@ def("main", function(exports, module) {
             require("fs").writeFileSync(filename, newCode);
         };
     }};
-    if(commands[process.argv[2]]) {
-        commands[process.argv[2]]();
+    var commandName = (typeof process !== 'undefined'? process.argv[2]:window.location.hash.slice(1)) || 'default';
+    if(commands[commandName]) {
+        commands[commandName]();
     } else {
-        console.log("usage: node lightscript.js [one of: " + Object.keys(commands).join(" ") + "]");
-    };
+        console.log('unknown command:', commandName);
+    }
 });
