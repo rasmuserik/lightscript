@@ -620,9 +620,6 @@ def("rst2ast", function(exports, module) {
     };
     module.exports = rst2ast;
 });
-// Runner {{{2
-def("runner", function(exports, module) {
-});
 // main {{{1
 def("main", function(exports, module) {
     var commands = {prettyprint : function() {
