@@ -655,7 +655,7 @@ def("main", function(exports, module) {
         if(syntax.errors.length ){
             console.log('errors:', syntax.errors);
         } else {
-            console.log(newCode);
+            require('fs').writeFileSync(filename, newCode);
         }
     }};
     if(commands[process.argv[2]]) {
