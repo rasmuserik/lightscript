@@ -622,28 +622,13 @@ def("rst2ast", function(exports, module) {
 });
 // Runner {{{2
 def("runner", function(exports, module) {
-    /*
-    ls = {};
-    ls.tokenise = use("tokeniser").tokenise;
-    ls.parse = use("syntax").parse;
-    ls.prettyprint = use("prettyprint").prettyprint;
-    rst2ast = use("rst2ast");
-    var filename = process.argv[2];
-    if(!filename) {
-        console.log("usage: node pp.js filename\nprints to stdout");
-    };
-    var rst = ls.parse(ls.tokenise(require("fs").readFileSync(filename, "utf8")));
-    console.log(ls.prettyprint({kind : "block", children : rst.map(rst2ast).filter(function(elem) {
-        return elem.val !== ";";
-    })}).replace(RegExp("\n    ", "g"), "\n").slice(2,  - 2));
-    */
 });
 // main {{{1
 def("main", function(exports, module) {
     var commands = {prettyprint : function() {
         var ls = {};
         ls.tokenise = use("tokeniser").tokenise;
-        var syntax = use('syntax');
+        var syntax = use("syntax");
         ls.parse = syntax.parse;
         ls.prettyprint = use("prettyprint").prettyprint;
         rst2ast = use("rst2ast");
@@ -651,16 +636,16 @@ def("main", function(exports, module) {
         var rst = ls.parse(ls.tokenise(require("fs").readFileSync(filename, "utf8")));
         var newCode = ls.prettyprint({kind : "block", children : rst.map(rst2ast).filter(function(elem) {
             return elem.val !== ";";
-        })}).replace(RegExp("\n    ", "g"), "\n").slice(2,  - 2);
-        if(syntax.errors.length ){
-            console.log('errors:', syntax.errors);
+        })}).replace(RegExp("\n    ", "g"), "\n").slice(2,  - 2) + "\n";
+        if(syntax.errors.length) {
+            console.log("errors:", syntax.errors);
         } else {
-            require('fs').writeFileSync(filename, newCode);
-        }
+            require("fs").writeFileSync(filename, newCode);
+        };
     }};
     if(commands[process.argv[2]]) {
         commands[process.argv[2]]();
     } else {
-        console.log('usage: node lightscript.js [one of: ' + Object.keys(commands).join(' ') + ']');
-    }
+        console.log("usage: node lightscript.js [one of: " + Object.keys(commands).join(" ") + "]");
+    };
 });
