@@ -2,16 +2,14 @@
 New version of lightscript in progress
 
 ## TODO
-- split syntax into syntax, parser and prettyprinter
-- fix pos in tokeniser
-- js-syntax
-    - (function() {...})()
-    - for(;;)
 - ast2sst
 - sst2ast
 - type inference
 - sst2js
 - sst2java
+- js-syntax
+    - (function() {...})()
+    - for(;;)
 
 ## (Intended) Features
 
@@ -51,15 +49,17 @@ Data representations
     - `pos`
 - Simplified syntax tree - cleaned up for code generation
     - language elements
+        - annotation (first child skipped, second child emitted)
         - method-invocations
-            - most things are method invocations, including subscript, comparison, fn-call, assignment, throw
+            - most things are method invocations, including subscript, comparison, fn-call, throw
         - if-else
             - includes or/and
-        - do-while
+        - while
         - code blocks
         - function-closure
-        - assignment
-        - literals (string, num, array)
+        - identifier (resolution)
+        - assignment (identifier)
+        - literals (string, num)
 - Stack language
 - Executable
 

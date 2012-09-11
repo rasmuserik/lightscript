@@ -46,7 +46,7 @@ exports.tokenise = function(buffer) {
     }
     
     var newToken = function(kind, val) {
-        var result = createToken(kind, val, {line: lineno, start: start, end: {lineno: lineno, pos: pos} });
+        var result = createToken(kind, val, {start: start, end: {lineno: lineno, pos: pos} });
         return result;
     }
     

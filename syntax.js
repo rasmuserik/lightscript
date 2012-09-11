@@ -9,31 +9,28 @@ var defaultToken = {
     children: [],
     assert: function(ok, desc) {
         if(!ok) {
-            this.syntaxError(desc);
+            this.error(desc);
         }
     },
-    syntaxError: function(desc) {
+    error: function(desc) {
         console.log({error: 'syntax', desc: desc, token: this});
     }
 };
 
-var objectPropertyToken = {
-    constructor: defaultToken,
-    valueOf: defaultToken,
-    toString: defaultToken,
-    toLocaleString: defaultToken,
-    hasOwnProperty: defaultToken,
-    isPrototypeOf: defaultToken,
-    propertyIsEnumerable: defaultToken
-}
-
 var tokenLookup = exports.tokenLookup = function(orig) {
-    var proto = objectPropertyToken[orig.val] || symb[orig.val] || (orig.val && symb[orig.val[orig.val.length - 1]]) || defaultToken;
+    var proto = symb[orig.kind] || symb[orig.val] || (orig.val && symb[orig.val[orig.val.length - 1]]) || defaultToken;
     return extend(Object.create(proto), orig);
 }
 
 // Syntax {{{1
-var nudPrefix = function() { this.children = [parse()];};
+var nudPrefix = function() { 
+    var child = parse();
+    if(parse.sep) {
+        this.error('should be followed by a value, not a separator');
+        child.error('missing something before this element');
+    }
+    this.children = [child];
+};
 var infixLed = function(left) { 
     this.infix = true;
     this.children = [left, parse(this.bp - this.dbp)]; 
@@ -58,7 +55,7 @@ var infixr = function(bp) {
 
 var rparen = function() {
     return extend(Object.create(defaultToken), {rparen: true, 
-        nud: function() { this.syntaxError('unmatched rparen')}});
+        nud: function() { this.error('unmatched rparen')}});
 }
 var prefix = function() { return extend(Object.create(defaultToken), {nud: nudPrefix})}
 var sep = function() { return extend(Object.create(defaultToken), {sep:true});}
@@ -66,8 +63,8 @@ var list = function(rparen) {
     var readList = function(obj) {
         while (!token.rparen) { obj.children.push(parse()); }
         if(token.val !== rparen) {
-            obj.syntaxError('Paren mismatch begin');
-            token.syntaxError('Paren mismatch end');
+            obj.error('Paren mismatch begin');
+            token.error('Paren mismatch end');
         }
         nextToken();
     }
@@ -107,6 +104,14 @@ var symb = {
     'else': infixr(200), 
     '=': infixr(100),
     ',': sep(), ';': sep(),
+    constructor: defaultToken,
+    valueOf: defaultToken,
+    toString: defaultToken,
+    toLocaleString: defaultToken,
+    hasOwnProperty: defaultToken,
+    isPrototypeOf: defaultToken,
+    propertyIsEnumerable: defaultToken,
+    comment: sep()
 };
 symb['.'].space = '';
 // Parser {{{1

@@ -144,7 +144,7 @@ var pp = function(node) {
     } else if(node.kind === 'identifier') {
         acc.push(node.val);
     } else {
-        node.syntaxError('cannot prettyprint');
+        node.error('cannot prettyprint');
         acc.push(node.kind + ':' + node.val + ' ');
         node.children.forEach(function(child) {
             require('./syntax').tokenLookup(child).pp(acc, indent);
@@ -169,7 +169,7 @@ exports.ppInfix = function() {
         acc.push(this.space + this.val + this.space);
         ppPrio(this.children[1], this.bp + 1 - this.dbp);
     } else {
-        this.syntaxError('cannot prettyprint infix mus have 1 <= parameters <= 2');
+        this.error('cannot prettyprint infix mus have 1 <= parameters <= 2');
     }
 }
 exports.prettyprint = function(obj) {

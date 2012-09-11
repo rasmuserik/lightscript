@@ -7,7 +7,7 @@ var clearSep = function(arr) {
 // error handling {{{1
 var rst2ast = function(ast) {
     return trycatch(function() { return rst2astUnsafe(ast) },
-            function(err) { ast.syntaxError('Could not do rst2ast transformation; ' + err); return ast; });
+            function(err) { ast.error('Could not do rst2ast transformation; ' + err); return ast; });
 };
 // Main rst2ast function{{{1
 var rst2astUnsafe = function(ast) {
