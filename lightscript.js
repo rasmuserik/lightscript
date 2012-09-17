@@ -544,9 +544,9 @@ def("compiler", function(exports, module) {
     });
     def("rst2ast", function(exports, module) {
         var trycatch = use("util").trycatch;
-        var clearSep = function(arr) {
+        var clearSep = function(sepVal, arr) {
             return arr.filter(function(elem) {
-                return !elem.sep;
+                return !elem.sep && elem.val === sepVal;
             });
         };
         var rst2ast = function(ast) {
@@ -564,7 +564,7 @@ def("compiler", function(exports, module) {
                 if(ast.val === "(") {
                     lhs = ast.children[0];
                     if(lhs.infix && lhs.val === "." && lhs.children[1].kind === "identifier") {
-                        children = clearSep(ast.children).map(rst2ast);
+                        children = clearSep(",", ast.children).map(rst2ast);
                         children[0] = lhs.children[0];
                         return {
                             pos : ast.pos,
@@ -577,7 +577,7 @@ def("compiler", function(exports, module) {
                         pos : ast.pos,
                         kind : "call",
                         val : "()",
-                        children : clearSep(ast.children).map(rst2ast)
+                        children : clearSep(",", ast.children).map(rst2ast)
                     };
                 };
                 if(ast.val === "else") {
@@ -587,7 +587,7 @@ def("compiler", function(exports, module) {
                             pos : ast.children[1].pos,
                             kind : "block",
                             val : "block",
-                            children : clearSep(ast.children[1].children).map(rst2ast)
+                            children : clearSep(";", ast.children[1].children).map(rst2ast)
                         });
                     } else {
                         lhs.children.push(rst2ast(ast.children[1]));
@@ -600,7 +600,7 @@ def("compiler", function(exports, module) {
                         pos : ast.pos,
                         kind : "block",
                         val : "block",
-                        children : clearSep(ast.children).slice(1).map(rst2ast)
+                        children : clearSep(";", ast.children).slice(1).map(rst2ast)
                     });
                     return lhs;
                 };
@@ -609,7 +609,7 @@ def("compiler", function(exports, module) {
                     return rst2ast(ast.children[0]);
                 };
                 if(ast.val === "(" || ast.val === "{" || ast.val === "[") {
-                    children = clearSep(ast.children).map(rst2ast);
+                    children = clearSep(",", ast.children).map(rst2ast);
                     children.unshift({
                         pos : ast.pos,
                         kind : "identifier",
@@ -643,7 +643,7 @@ def("compiler", function(exports, module) {
             if(ast.kind === "symbol") {
                 ast.kind = "call";
             };
-            ast.children = clearSep(ast.children).map(rst2ast);
+            ast.children = clearSep(";", ast.children).map(rst2ast);
             return ast;
         };
         module.exports = rst2ast;
