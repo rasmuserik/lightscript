@@ -2,6 +2,7 @@
 New version of lightscript in progress
 
 ## TODO
+- bug: prefix-parenthesis
 - ast2sst
 - sst2ast
 - type inference

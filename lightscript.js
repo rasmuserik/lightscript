@@ -251,7 +251,7 @@ def("compiler", function(exports, module) {
         var mPrefix = function(node) {
             acc.push(node.val);
             node.assert(node.children.length === 1, "prettyprint");
-            pp(node.children[0]);
+            ppPrio(node.children[0], node.bp);
         };
         var specialFn = {
             "function" : fBlock,
@@ -428,7 +428,7 @@ def("compiler", function(exports, module) {
             }});
         };
         var prefix = function() {
-            return extend(Object.create(defaultToken), {nud : nudPrefix});
+            return extend(Object.create(defaultToken), {nud : nudPrefix, bp : 1000});
         };
         var sep = function() {
             return extend(Object.create(defaultToken), {sep : true});
@@ -552,10 +552,7 @@ def("compiler", function(exports, module) {
         var trycatch = use("util").trycatch;
         var clearSep = function(sepVal, arr) {
             return arr.filter(function(elem) {
-                if(elem.sep && elem.val !== sepVal) {
-                    console.log(elem.val);
-                };
-                return !elem.sep || elem.val !== sepVal;
+                return !(elem.sep && elem.val === sepVal);
             });
         };
         var rst2ast = function(ast) {
