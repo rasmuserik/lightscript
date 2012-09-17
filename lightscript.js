@@ -634,7 +634,7 @@ def("compiler", function(exports, module) {
                         children : children
                     };
                 };
-                if(ast.val === "var" || ast.val === "return" || ast.val === "throw") {
+                if(ast.val === "var" || ast.val === "return" || ast.val === "throw" || ast.val === "new") {
                     return {
                         pos : ast.pos,
                         kind : "call",
@@ -830,24 +830,25 @@ body: '<h1>The end of the Internet</h1>' +
             exports.expressCreateServer = function(hook_name, args, callback) {
                 var app = args.app;
                 if(app.routes.routes.get) {
-                app.routes.routes.get = app.routes.routes.get.filter(function(route) {
-                    return [
-                        "/",
-                        "/favicon.ico",
-                        "/robots.txt"
-                    ].indexOf(route.path) ===  - 1;
-                });
-                }
+                    app.routes.routes.get = app.routes.routes.get.filter(function(route) {
+                        return [
+                            "/",
+                            "/favicon.ico",
+                            "/robots.txt"
+                        ].indexOf(route.path) ===  - 1;
+                    });
+                };
                 configureApp(app);
                 //console.log(require('util').inspect(app, false, 6));
                 callback();
             };
-if(process.env.PORT) {
-    var app = express.createServer();
-    console.log(app);
-    exports.expressCreateServer(undefined, {app: app}, function() {
-    app.listen(process.env.PORT)});
-}
+            if(process.env.PORT) {
+                var app = express.createServer();
+                console.log(app);
+                exports.expressCreateServer(undefined, {app : app}, function() {
+                    app.listen(process.env.PORT);
+                });
+            };
             /*
 if(!process.env.PORT) {
 https.createServer({
