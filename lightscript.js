@@ -258,6 +258,7 @@ def("compiler", function(exports, module) {
             "while" : fBlock,
             "var" : fPrefix,
             "return" : fPrefix,
+            "new" : fPrefix,
             "throw" : fPrefix,
             "if" : ifelse,
             "{" : list("}"),
@@ -510,6 +511,7 @@ def("compiler", function(exports, module) {
             propertyIsEnumerable : defaultToken,
             "return" : prefix(0),
             "throw" : prefix(0),
+            "new" : prefix(0),
             "var" : prefix(0),
             "comment" : sep(),
             "annotation" : sep()
@@ -658,20 +660,6 @@ def("compiler", function(exports, module) {
         module.exports = rst2ast;
     });
 });
-// Main {{{1
-def("main", function(exports, module) {
-    var platform = use("util").platform;
-    var commandName;
-    if(platform === "node") {
-        commandName = process.argv[2];
-    };
-    if(platform === "web") {
-        commandName = window.location.hash.slice(1);
-    };
-    if(commandName && modules[commandName] && modules[commandName].main) {
-        modules[commandName].main();
-    };
-});
 // Server {{{1
 def("server", function(exports, module) {
     if(use("util").platform === "node") {
@@ -683,7 +671,7 @@ def("server", function(exports, module) {
             var logger = require("express-logger");
             var sqlite3 = require("sqlite3");
             var https = require("https");
-            var db = new(sqlite3.Database(process.env.HOME + "/data/db.sqlite3"));
+            var db = new sqlite3.Database(process.env.HOME + "/data/db.sqlite3");
             db.run("CREATE TABLE IF NOT EXISTS userdata (store, key, val, timestamp, PRIMARY KEY (store, key))");
             // # Pages from markdown {{{2
             htmlTemplate = fs.readFileSync(__dirname + "/html.mustache", "utf8");
@@ -826,13 +814,13 @@ def("server", function(exports, module) {
 app.get('*', function(req, res){
 res.send(
 mustache.to_html(htmlTemplate, {
-    title: 'Page not found :(', 
-    body: '<h1>The end of the Internet</h1>' +
-        '<p>Sorry, no page found (404) on this url</p>' +
-        '<p>You have reached the end of the internet</p>' +
-        '<p>Hope you enjoyed the web</p>' +
-        '<p>You may now turn off your device and go out in the world</p>' +
-        '<p>(or see if you can find the page your were looking for <a href="/">here</a>)</p>'}),
+title: 'Page not found :(', 
+body: '<h1>The end of the Internet</h1>' +
+'<p>Sorry, no page found (404) on this url</p>' +
+'<p>You have reached the end of the internet</p>' +
+'<p>Hope you enjoyed the web</p>' +
+'<p>You may now turn off your device and go out in the world</p>' +
+'<p>(or see if you can find the page your were looking for <a href="/">here</a>)</p>'}),
 404);
 });
 */
@@ -841,6 +829,7 @@ mustache.to_html(htmlTemplate, {
             //
             exports.expressCreateServer = function(hook_name, args, callback) {
                 var app = args.app;
+                if(app.routes.routes.get) {
                 app.routes.routes.get = app.routes.routes.get.filter(function(route) {
                     return [
                         "/",
@@ -848,10 +837,17 @@ mustache.to_html(htmlTemplate, {
                         "/robots.txt"
                     ].indexOf(route.path) ===  - 1;
                 });
+                }
                 configureApp(app);
                 //console.log(require('util').inspect(app, false, 6));
                 callback();
             };
+if(process.env.PORT) {
+    var app = express.createServer();
+    console.log(app);
+    exports.expressCreateServer(undefined, {app: app}, function() {
+    app.listen(process.env.PORT)});
+}
             /*
 if(!process.env.PORT) {
 https.createServer({
@@ -861,5 +857,19 @@ cert: fs.readFileSync('/root/ssl-keys/server.crt', 'ascii')
 }
 */
         };
+    };
+});
+// Main {{{1
+def("main", function(exports, module) {
+    var platform = use("util").platform;
+    var commandName;
+    if(platform === "node") {
+        commandName = process.argv[2];
+    };
+    if(platform === "web") {
+        commandName = window.location.hash.slice(1);
+    };
+    if(commandName && modules[commandName] && modules[commandName].main) {
+        modules[commandName].main();
     };
 });
