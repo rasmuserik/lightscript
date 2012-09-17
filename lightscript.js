@@ -11,6 +11,7 @@ var def = function(name, fn) {
     fn(module.exports, module);
     modules[name] = module.exports;
 };
+// Util {{{1
 def("util", function(exports, module) {
     exports.trycatch = Function("return function trycatch(fn,handle){try{return fn();}catch(e){return handle(e);}}")();
     exports.extend = function(a, b) {
@@ -27,7 +28,9 @@ def("util", function(exports, module) {
         exports.platform = "node";
     };
 });
+// Compiler {{{1
 def("compiler", function(exports, module) {
+    // Tokeniser {{{2
     def("tokeniser", function(exports, module) {
         "use strict";
         var createToken = function(kind, val, pos) {
@@ -157,6 +160,7 @@ def("compiler", function(exports, module) {
             return result;
         };
     });
+    // Prettyprint {{{2
     def("prettyprint", function(exports, module) {
         exports.main = function() {
             if(use("util").platform === "node") {
@@ -361,6 +365,7 @@ def("compiler", function(exports, module) {
             return acc.join("");
         };
     });
+    // Syntax {{{2
     def("syntax", function(exports, module) {
         exports.errors = [];
         var extend = use("util").extend;
@@ -542,6 +547,7 @@ def("compiler", function(exports, module) {
             return result;
         };
     });
+    // Rst2Ast {{{2
     def("rst2ast", function(exports, module) {
         var trycatch = use("util").trycatch;
         var clearSep = function(sepVal, arr) {
@@ -649,6 +655,7 @@ def("compiler", function(exports, module) {
         module.exports = rst2ast;
     });
 });
+// Main {{{1
 def("main", function(exports, module) {
     var platform = use("util").platform;
     var commandName;
