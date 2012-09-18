@@ -27,6 +27,12 @@ def("util", function(exports, module) {
     if(typeof(process) !== "undefined" && process.versions && process.versions.node) {
         exports.platform = "node";
     };
+
+    if(exports.platform === 'node') {
+        exports.nextTick = process.nextTick;
+    } else {
+        exports.nextTick = function(f) { setTimeout(f, 0); }
+    }
 });
 // Compiler {{{1
 def("compiler", function(exports, module) {
@@ -843,6 +849,7 @@ body: '<h1>The end of the Internet</h1>' +
 });
 // Main {{{1
 def("main", function(exports, module) {
+    use('util').nextTick(function() {
     var platform = use("util").platform;
     var commandName;
     if(platform === "node") {
@@ -851,7 +858,14 @@ def("main", function(exports, module) {
     if(platform === "web") {
         commandName = window.location.hash.slice(1);
     };
-    if(commandName && modules[commandName] && modules[commandName].main) {
-        modules[commandName].main();
+    if(commandName && use(commandName) && use(commandName).main) {
+        use(commandName).main();
+    } else {
+        use('main').main();
     };
+    });
+    // Default main function, if no parameter is passed to the execution {{{2
+    exports.main = function() {
+        console.log('here');
+    }
 });
