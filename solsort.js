@@ -266,6 +266,7 @@ def("compiler", function(exports, module) {
             "var" : fPrefix,
             "return" : fPrefix,
             "new" : fPrefix,
+            "typeof" : fPrefix,
             "throw" : fPrefix,
             "if" : ifelse,
             "{" : list("}"),
@@ -519,6 +520,7 @@ def("compiler", function(exports, module) {
             "return" : prefix(0),
             "throw" : prefix(0),
             "new" : prefix(0),
+            "typeof" : prefix(0),
             "var" : prefix(0),
             "comment" : sep(),
             "annotation" : sep()
@@ -641,7 +643,7 @@ def("compiler", function(exports, module) {
                         children : children
                     };
                 };
-                if(ast.val === "var" || ast.val === "return" || ast.val === "throw" || ast.val === "new") {
+                if(ast.val === "var" || ast.val === "return" || ast.val === "throw" || ast.val === "new" || ast.val === 'typeof') {
                     return {
                         pos : ast.pos,
                         kind : "call",
@@ -1006,7 +1008,7 @@ def("web", function(exports, module) {
         while(i < arguments.length) {
             if(typeof arguments[i] === 'function') {
                 callback = arguments[i];
-            }
+            };
             ++i;
         }
         var user = localStorage.getItem('userId');
