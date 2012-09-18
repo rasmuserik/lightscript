@@ -27,12 +27,13 @@ def("util", function(exports, module) {
     if(typeof(process) !== "undefined" && process.versions && process.versions.node) {
         exports.platform = "node";
     };
-
-    if(exports.platform === 'node') {
+    if(exports.platform === "node") {
         exports.nextTick = process.nextTick;
     } else {
-        exports.nextTick = function(f) { setTimeout(f, 0); }
-    }
+        exports.nextTick = function(f) {
+            setTimeout(f, 0);
+        };
+    };
 });
 // Compiler {{{1
 def("compiler", function(exports, module) {
@@ -838,34 +839,34 @@ body: '<h1>The end of the Internet</h1>' +
                 configureApp(app);
                 callback();
             };
-                var app = express.createServer();
-                console.log(app);
-                exports.expressCreateServer(undefined, {app : app}, function() {
-                    app.listen(8080);
-                    console.log('listening on port 8080');
-                });
+            var app = express.createServer();
+            console.log(app);
+            exports.expressCreateServer(undefined, {app : app}, function() {
+                app.listen(8080);
+                console.log("listening on port 8080");
+            });
         };
     };
 });
 // Main {{{1
 def("main", function(exports, module) {
-    use('util').nextTick(function() {
-    var platform = use("util").platform;
-    var commandName;
-    if(platform === "node") {
-        commandName = process.argv[2];
-    };
-    if(platform === "web") {
-        commandName = window.location.hash.slice(1);
-    };
-    if(commandName && use(commandName) && use(commandName).main) {
-        use(commandName).main();
-    } else {
-        use('main').main();
-    };
+    use("util").nextTick(function() {
+        var platform = use("util").platform;
+        var commandName;
+        if(platform === "node") {
+            commandName = process.argv[2];
+        };
+        if(platform === "web") {
+            commandName = window.location.hash.slice(1);
+        };
+        if(commandName && use(commandName) && use(commandName).main) {
+            use(commandName).main();
+        } else {
+            use("main").main();
+        };
     });
     // Default main function, if no parameter is passed to the execution {{{2
     exports.main = function() {
-        console.log('here');
-    }
+        console.log("here");
+    };
 });
