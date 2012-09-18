@@ -829,17 +829,7 @@ body: '<h1>The end of the Internet</h1>' +
             //
             exports.expressCreateServer = function(hook_name, args, callback) {
                 var app = args.app;
-                if(app.routes.routes.get) {
-                    app.routes.routes.get = app.routes.routes.get.filter(function(route) {
-                        return [
-                            "/",
-                            "/favicon.ico",
-                            "/robots.txt"
-                        ].indexOf(route.path) ===  - 1;
-                    });
-                };
                 configureApp(app);
-                //console.log(require('util').inspect(app, false, 6));
                 callback();
             };
                 var app = express.createServer();
@@ -848,14 +838,6 @@ body: '<h1>The end of the Internet</h1>' +
                     app.listen(8080);
                     console.log('listening on port 8080');
                 });
-            /*
-if(!process.env.PORT) {
-https.createServer({
-key: fs.readFileSync('/root/ssl-keys/server.key', 'ascii'),
-cert: fs.readFileSync('/root/ssl-keys/server.crt', 'ascii')
-}, app).listen(443);
-}
-*/
         };
     };
 });
