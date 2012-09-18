@@ -1002,10 +1002,12 @@ def("web", function(exports, module) {
     // ## solsort.login {{{3
     exports.login = function() {
         var callback;
-        for(var i = 0; i < arguments.length; ++i) {
+        var i = 0;
+        while(i < arguments.length) {
             if(typeof arguments[i] === 'function') {
                 callback = arguments[i];
             }
+            ++i;
         }
         var user = localStorage.getItem('userId');
         if(user) {
