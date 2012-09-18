@@ -842,13 +842,12 @@ body: '<h1>The end of the Internet</h1>' +
                 //console.log(require('util').inspect(app, false, 6));
                 callback();
             };
-            if(process.env.PORT) {
                 var app = express.createServer();
                 console.log(app);
                 exports.expressCreateServer(undefined, {app : app}, function() {
-                    app.listen(process.env.PORT);
+                    app.listen(8080);
+                    console.log('listening on port 8080');
                 });
-            };
             /*
 if(!process.env.PORT) {
 https.createServer({
