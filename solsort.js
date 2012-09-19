@@ -51,22 +51,14 @@ def("main", function(exports) {
         if(platform === "web") {
             commandName = window.location.hash.slice(1);
         };
-        if(commandName && use(commandName) && use(commandName).main) {
-            use(commandName).main();
+        if(use(commandName) && use(commandName)[platform + 'main']) {
+            use(commandName)[platform + 'main']();
+        } else if(use(commandName) && use(commandName).main) {
+            use(commandName)[platform + 'main']();
         } else if(use(platform) && use(platform).main) {
             use(platform).main();
         };
     });
-    // Default main function, if no parameter is passed to the execution {{{2
-    exports.main = function() {
-        if(util.platform === "web") {
-            webmain();
-        } else if(util.platform === "node") {
-            console.log("Usage: node solsort.js [command]\nInvalid command passed");
-        };
-    };
-    var webmain = function() {
-    };
 });
 use("main");
 // Test {{{1
@@ -743,7 +735,7 @@ def("rst2ast", function(exports) {
 // Server {{{1
 def("server", function(exports) {
     if(use("util").platform === "node") {
-        exports.main = function() {
+        exports.nodemain = function() {
             // # includes and initialisation {{{2
             var express = require("express");
             var mustache = require("mustache");
@@ -920,6 +912,28 @@ body: '<h1>The end of the Internet</h1>' +
             });
         };
     };
+});
+// rest-api {{{1
+def('restapi', function(exports) {
+    var platform = use('util').platform;
+    exports.nodemain = function() {
+        console.log('hello world');
+        // setup server
+    }
+    if(platform === 'node') {
+        exports.call = function(module, name, param, callback) {
+            // call function directly a la
+            if(use(module) && use(module).restable && use(module).restable[name] && typeof use(module)[name] === 'function') {
+                use(module)[name](param, callback);
+            } else {
+                callback({error: 'no such call'});
+            }
+        }
+    } else if(platform === 'web') {
+        exports.call = function(module, param, callback) {
+            // send jsonp-request to api.solsort.com
+        }
+    }
 });
 // web {{{1
 def("web", function(exports) {

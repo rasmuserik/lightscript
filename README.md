@@ -2,17 +2,18 @@
 
 # Solsort
 TODO:
+- webapi-dispatch
 - sync'ed storage
     - open(owner, storageName, mergeFn);
     - get(key), set(key, val)
 - file upload
 - several domains with common base
     - domains
-        - lightscript.net
-            - list of pages, with screenshot overlayed with url and description (solsort.dk first)
+        - api.solsort.com
             - database/dynamic content.
         - solsort.com / solsort.dk
             - konsulentvirksomhed
+            - list of pages, with screenshot overlayed with url and description (solsort.dk first)
         - rasmuserik.com
             - personlig side m. noter etc.
         - skolevangen.dk
@@ -24,6 +25,7 @@ TODO:
         - evt. techtutor.dk
         - evt. minna tegning freelance
         - evt. quiz.solsort.com
+        - evt. lightscript.net
 - image catalog
 - content-editor
     - content editing with mercury
