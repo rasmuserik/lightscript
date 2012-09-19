@@ -61,7 +61,7 @@ def("main", function(exports) {
     exports.main = function() {
         if(util.platform === "web") {
             webmain();
-        } else if(util.platform === 'node') {
+        } else if(util.platform === "node") {
             console.log("Usage: node solsort.js [command]\nInvalid command passed");
         };
     };
@@ -70,43 +70,43 @@ def("main", function(exports) {
 });
 use("main");
 // Test {{{1
-def('test', function(exports) {
+def("test", function(exports) {
     var test = {};
     test.name = "";
     test.error = function(description) {
-        console.log('test error', this.name, description);
-    }
-    test.assert = function(result, description} ){
+        console.log("test error", this.name, description);
+    };
+    test.assert = function(result, description) {
         if(!result) {
-            this.error('assert error: ' + description);
-        }
-    }
+            this.error("assert error: " + description);
+        };
+    };
     test.done = function() {
         this.finished = true;
-    }
+    };
     test.create = function(name, timeout) {
         var self = Object.create(test);
         timeout = timeout || 60000;
         self.name = this.name + name;
         setTimeout(function() {
             if(!self.finished) {
-                self.error('test timed out after ' + timeout + 'ms');
+                self.error("test timed out after " + timeout + "ms");
                 self.done();
-            }
+            };
         }, timeout);
-    }
+    };
     exports.main = function() {
         Object.keys(modules).forEach(function(moduleName) {
             var module = use(moduleName);
             if(module.test) {
                 module.test(test.create(moduleName));
-            }
-            pname = 'test'+use('util').platform;
+            };
+            pname = "test" + use("util").platform;
             if(module[pname]) {
-                module[pname](test.create(use('util'.platform)+':'+moduleName ));
-            }
+                module[pname](test.create(use("util".platform) + ":" + moduleName));
+            };
         });
-    }
+    };
 });
 // Compiler {{{1
 // Tokeniser {{{2
