@@ -1,4 +1,35 @@
-# LightScript
+# General
+
+# Solsort
+TODO:
+- sync'ed storage
+    - open(owner, storageName, mergeFn);
+    - get(key), set(key, val)
+- file upload
+- several domains with common base
+    - domains
+        - lightscript.net
+            - list of pages, with screenshot overlayed with url and description (solsort.dk first)
+            - database/dynamic content.
+        - solsort.com / solsort.dk
+            - konsulentvirksomhed
+        - rasmuserik.com
+            - personlig side m. noter etc.
+        - skolevangen.dk
+        - evt. spirekor.dk
+        - evt. eventyrheksen.dk
+        - evt. lightscript.net
+        - evt. annevoel.dk
+            - evt. + galleri
+        - evt. techtutor.dk
+        - evt. minna tegning freelance
+        - evt. quiz.solsort.com
+- image catalog
+- content-editor
+    - content editing with mercury
+- static via nginx
+
+# LightScript Language
 New version of lightscript in progress
 
 ## TODO
