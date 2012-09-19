@@ -980,8 +980,7 @@ def("web", function(exports, module) {
                         github : "github",
                         facebook : "facebook-sign",
                         google : "google-plus-sign"
-                    }[userId.split(":")[0]] + " icon-large\"></span>" + "logout" + //'<img src="/img/fontawesome/' + userId.split(':')[0] + '.png">' +;;;;
-                    "</a></li></ul>";
+                    }[userId.split(":")[0]] + " icon-large\"></span>" + "logout" + "</a></li></ul>";
                 };
             };
         };
