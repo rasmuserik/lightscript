@@ -1,18 +1,22 @@
 // Module system {{{1
 var modules = {};
 use = function(name) {
-    return modules[name];
+    var result = modules[name];
+    if(typeof result === 'function') {
+        result = {};
+        modules[name](result);
+        modules[name] = result;
+    }
+    return result;
 };
 def = function(name, fn) {
     if(modules[name]) {
         throw name + " already defined";
     };
-    var module = {exports : {}};
-    fn(module.exports, module);
-    modules[name] = module.exports;
+    modules[name] = fn;
 };
 // Util {{{1
-def("util", function(exports, module) {
+def("util", function(exports) {
     exports.trycatch = Function("return function trycatch(fn,handle){try{return fn();}catch(e){return handle(e);}}")();
     exports.extend = function(a, b) {
         Object.keys(b).forEach(function(key) {
@@ -36,9 +40,9 @@ def("util", function(exports, module) {
     };
 });
 // Compiler {{{1
-def("compiler", function(exports, module) {
+def("compiler", function(exports) {
     // Tokeniser {{{2
-    def("tokeniser", function(exports, module) {
+    def("tokeniser", function(exports) {
         "use strict";
         var createToken = function(kind, val, pos) {
             return {
@@ -168,7 +172,7 @@ def("compiler", function(exports, module) {
         };
     });
     // Prettyprint {{{2
-    def("prettyprint", function(exports, module) {
+    def("prettyprint", function(exports) {
         exports.main = function() {
             if(use("util").platform === "node") {
                 var ls = {};
@@ -176,7 +180,7 @@ def("compiler", function(exports, module) {
                 var syntax = use("syntax");
                 ls.parse = syntax.parse;
                 ls.prettyprint = use("prettyprint").prettyprint;
-                rst2ast = use("rst2ast");
+                rst2ast = use("rst2ast").rst2ast;
                 var filename = process.argv[1];
                 var rst = ls.parse(ls.tokenise(require("fs").readFileSync(filename, "utf8")));
                 var newCode = ls.prettyprint({kind : "block", children : rst.map(rst2ast).filter(function(elem) {
@@ -375,7 +379,7 @@ def("compiler", function(exports, module) {
         };
     });
     // Syntax {{{2
-    def("syntax", function(exports, module) {
+    def("syntax", function(exports) {
         exports.errors = [];
         var extend = use("util").extend;
         var defaultToken = {
@@ -562,7 +566,7 @@ def("compiler", function(exports, module) {
         };
     });
     // Rst2Ast {{{2
-    def("rst2ast", function(exports, module) {
+    def("rst2ast", function(exports) {
         var trycatch = use("util").trycatch;
         var clearSep = function(sepVal, arr) {
             return arr.filter(function(elem) {
@@ -666,11 +670,11 @@ def("compiler", function(exports, module) {
             ast.children = ast.children.map(rst2ast);
             return ast;
         };
-        module.exports = rst2ast;
+        exports.rst2ast = rst2ast;
     });
 });
 // Server {{{1
-def("server", function(exports, module) {
+def("server", function(exports) {
     if(use("util").platform === "node") {
         exports.main = function() {
             // # includes and initialisation {{{2
@@ -851,7 +855,7 @@ body: '<h1>The end of the Internet</h1>' +
     };
 });
 // web {{{1
-def("web", function(exports, module) {
+def("web", function(exports) {
     exports.main = function() {
         console.log("here");
         // TODO: remove the following line
@@ -1074,7 +1078,7 @@ def("web", function(exports, module) {
     };
 });
 // Main {{{1
-def("main", function(exports, module) {
+def("main", function(exports) {
     var util = use("util");
     util.nextTick(function() {
         var platform = util.platform;
