@@ -17,6 +17,14 @@ TODO:
         - rasmuserik.com
             - personlig side m. noter etc.
         - skolevangen.dk
+        - blaagaard-kdas.dk
+            - dybe links til portal.ucc.dk, webmail etc.
+            - links til facebook for kdas-grupper
+            - link til techtutorer.blogspot.dk
+            - pad.blaagaard-kdas.dk
+            - shoutbox
+                - shout-text, then login via github/facebook/google
+            - announce
         - evt. spirekor.dk
         - evt. eventyrheksen.dk
         - evt. lightscript.net
