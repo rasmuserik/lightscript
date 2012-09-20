@@ -746,7 +746,7 @@ def("server", function(exports) {
             var db = new sqlite3.Database(process.env.HOME + "/data/db.sqlite3");
             db.run("CREATE TABLE IF NOT EXISTS userdata (store, key, val, timestamp, PRIMARY KEY (store, key))");
             // # Pages from markdown {{{2
-            htmlTemplate = fs.readFileSync(__dirname + "/template/html.mustache", "utf8");
+            htmlTemplate = fs.readFileSync(__dirname + "/solsort/template/html.mustache", "utf8");
             var name2url = function(name) {
                 return name.replace(RegExp("[^a-zA-Z0-9._~/\\[\\]@!$&'()*+,;=-]", "g"), function(c) {
                     var subs = {
@@ -862,7 +862,7 @@ def("server", function(exports) {
                     });
                 };
                 app.get("/", function(req, res) {
-                    fs.readFile(__dirname + "/template/index.html.mustache", "utf8", function(err, frontpage) {
+                    fs.readFile(__dirname + "/solsort/template/index.html.mustache", "utf8", function(err, frontpage) {
                         res.send(fixLinks(mustache.to_html(frontpage, {notes : Object.keys(notes).map(function(noteName) {
                             var title = notes[noteName].title;
                             return "<a class=\"solsortBtn\" href=\"/" + notes[noteName].url + "\">" + title.replace(RegExp(":", "g"), ":<br/>") + "</a>";
