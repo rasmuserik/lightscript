@@ -24,6 +24,7 @@ TODO:
             - pad.blaagaard-kdas.dk
             - shoutbox
                 - shout-text, then login via github/facebook/google
+            - kalender
             - announce
         - evt. spirekor.dk
         - evt. eventyrheksen.dk
@@ -31,6 +32,11 @@ TODO:
         - evt. annevoel.dk
             - evt. + galleri
         - evt. techtutor.dk
+            - om techtutor
+                - Hvad
+                - kontakt /info
+                - ...
+            - kurser
         - evt. minna tegning freelance
         - evt. quiz.solsort.com
         - evt. lightscript.net
