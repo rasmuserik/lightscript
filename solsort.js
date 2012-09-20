@@ -746,7 +746,7 @@ def("server", function(exports) {
             var db = new sqlite3.Database(process.env.HOME + "/data/db.sqlite3");
             db.run("CREATE TABLE IF NOT EXISTS userdata (store, key, val, timestamp, PRIMARY KEY (store, key))");
             // # Pages from markdown {{{2
-            htmlTemplate = fs.readFileSync(__dirname + "/solsort/template/html.mustache", "utf8");
+            htmlTemplate = fs.readFileSync(__dirname + "/sites/solsort/template/html.mustache", "utf8");
             var name2url = function(name) {
                 return name.replace(RegExp("[^a-zA-Z0-9._~/\\[\\]@!$&'()*+,;=-]", "g"), function(c) {
                     var subs = {
@@ -783,10 +783,10 @@ def("server", function(exports) {
                 });
                 return result;
             };
-            var notes = file2entries(__dirname + "/solsort/notes.md");
+            var notes = file2entries(__dirname + "/sites/solsort/notes.md");
             // # Web content/server configuration {{{2
             var configureApp = function(app) {
-                require("./solsort/theodorelias/genindex.js").gen(htmlTemplate);
+                require("./sites/solsort/theodorelias/genindex.js").gen(htmlTemplate);
                 app.use(function(req, res, next) {
                     res.removeHeader("X-Powered-By");
                     next();
@@ -862,7 +862,7 @@ def("server", function(exports) {
                     });
                 };
                 app.get("/", function(req, res) {
-                    fs.readFile(__dirname + "/solsort/template/index.html.mustache", "utf8", function(err, frontpage) {
+                    fs.readFile(__dirname + "/sites/solsort/template/index.html.mustache", "utf8", function(err, frontpage) {
                         res.send(fixLinks(mustache.to_html(frontpage, {notes : Object.keys(notes).map(function(noteName) {
                             var title = notes[noteName].title;
                             return "<a class=\"solsortBtn\" href=\"/" + notes[noteName].url + "\">" + title.replace(RegExp(":", "g"), ":<br/>") + "</a>";
@@ -881,7 +881,7 @@ def("server", function(exports) {
                 app.get("/https", function(req, res) {
                     res.redirect("https://" + req.originalUrl.slice(7));
                 });
-                app.get("*", express.static(__dirname + "/solsort"));
+                app.get("*", express.static(__dirname + "/sites/solsort"));
                 /*
 app.get('*', function(req, res){
 res.send(
