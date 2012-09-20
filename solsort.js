@@ -783,10 +783,10 @@ def("server", function(exports) {
                 });
                 return result;
             };
-            var notes = file2entries(__dirname + "/notes.md");
+            var notes = file2entries(__dirname + "/solsort/notes.md");
             // # Web content/server configuration {{{2
             var configureApp = function(app) {
-                require("./public/theodorelias/genindex.js").gen(htmlTemplate);
+                require("./solsort/theodorelias/genindex.js").gen(htmlTemplate);
                 app.use(function(req, res, next) {
                     res.removeHeader("X-Powered-By");
                     next();
@@ -881,7 +881,7 @@ def("server", function(exports) {
                 app.get("/https", function(req, res) {
                     res.redirect("https://" + req.originalUrl.slice(7));
                 });
-                app.get("*", express.static(__dirname + "/public"));
+                app.get("*", express.static(__dirname + "/solsort"));
                 /*
 app.get('*', function(req, res){
 res.send(
