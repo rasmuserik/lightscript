@@ -329,7 +329,11 @@ def("syntax", function(exports) {
     var stringpp = function() {
         return JSON.stringify(this.val.slice(1, - 1));
     };
-    // default token {{{3
+    // token lookup + default token {{{3
+    var tokenLookup = exports.tokenLookup = function(orig) {
+        var proto = symb[orig.kind + ":"] || symb[orig.val] || (orig.val && symb[orig.val[orig.val.length - 1]]) || defaultToken;
+        return extend(Object.create(proto), orig);
+    };
     var defaultToken = {
         nud : function() {
         },
@@ -364,11 +368,6 @@ def("syntax", function(exports) {
                 token : this,
             });
         },
-    };
-    // token lookup {{{3
-    var tokenLookup = exports.tokenLookup = function(orig) {
-        var proto = symb[orig.kind + ":"] || symb[orig.val] || (orig.val && symb[orig.val[orig.val.length - 1]]) || defaultToken;
-        return extend(Object.create(proto), orig);
     };
     // nud/led-functions {{{3
     var nudPrefix = function() {
