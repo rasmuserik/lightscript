@@ -237,7 +237,7 @@ def("prettyprint", function(exports) {
         if(use("util").platform === "node") {
             var ls = {};
             ls.tokenise = use("tokeniser").tokenise;
-            var syntax = use("syntax");
+            var syntax = use("oldsyntax");
             ls.parse = syntax.parse;
             ls.prettyprint = use("prettyprint").prettyprint;
             rst2ast = use("rst2ast").rst2ast;
@@ -354,7 +354,7 @@ def("prettyprint", function(exports) {
         "[" : mSubscript
     };
     var pp = function(node) {
-        node = use("syntax").tokenLookup(node);
+        node = use("oldsyntax").tokenLookup(node);
         if(node.oldpp) {
             node.oldpp();
         } else if(node.kind === "string") {
@@ -406,7 +406,7 @@ def("prettyprint", function(exports) {
             node.error("cannot prettyprint");
             acc.push(node.kind + ":" + node.val + " ");
             node.children.forEach(function(child) {
-                use("syntax").tokenLookup(child).oldpp(acc, indent);
+                use("oldsyntax").tokenLookup(child).oldpp(acc, indent);
             });
         };
     };
@@ -438,28 +438,28 @@ def("prettyprint", function(exports) {
         return acc.join("");
     };
 });
-// Syntax {{{2
-def("syntax", function(exports) {
+// oldSyntax {{{2
+def("oldsyntax", function(exports) {
     var indent = 0;
     var pp = function(node) {
         node = tokenLookup(node);
         if(!node.pp) {
-            console.log('cannot prettyprint', node.kind, node.val);
+            console.log("cannot prettyprint", node.kind, node.val);
         } else {
             return node.pp();
-        }
-    }
+        };
+    };
     exports.nodemain = function() {
-            var tokenise = use("tokeniser").tokenise;
-            var filename = process.argv[1];
-            var rsts = exports.parse(tokenise(require("fs").readFileSync(filename, "utf8")));
-            if(exports.errors.length) {
-                console.log("errors:", exports.errors);
-            } else {
-                rsts.forEach(function(rst) {
-                    console.log(pp(rst));
-                });
-            };
+        var tokenise = use("tokeniser").tokenise;
+        var filename = process.argv[1];
+        var rsts = exports.parse(tokenise(require("fs").readFileSync(filename, "utf8")));
+        if(exports.errors.length) {
+            console.log("errors:", exports.errors);
+        } else {
+            rsts.forEach(function(rst) {
+                console.log(pp(rst));
+            });
+        };
     };
     exports.errors = [];
     var extend = use("util").extend;
@@ -484,7 +484,7 @@ def("syntax", function(exports) {
         }
     };
     var tokenLookup = exports.tokenLookup = function(orig) {
-        var proto = symb[orig.kind] || symb[orig.val] || (orig.val && symb[orig.val[orig.val.length - 1]]) || defaultToken;
+        var proto = symb[orig.kind + ":"] || symb[orig.val] || (orig.val && symb[orig.val[orig.val.length - 1]]) || defaultToken;
         return extend(Object.create(proto), orig);
     };
     var nudPrefix = function() {
@@ -525,7 +525,12 @@ def("syntax", function(exports) {
         return extend(Object.create(defaultToken), {nud : nudPrefix, bp : bp});
     };
     var sep = function() {
-        return extend(Object.create(defaultToken), {sep : true});
+        return extend(Object.create(defaultToken), {sep : true, pp : function() {
+            return "";
+        }});
+    };
+    var special = function(ext) {
+        return extend(Object.create(defaultToken), ext);
     };
     var list = function(rparen) {
         var readList = function(obj) {
@@ -607,8 +612,225 @@ def("syntax", function(exports) {
         "new" : prefix(0),
         "typeof" : prefix(0),
         "var" : prefix(0),
-        "comment" : sep(),
-        "annotation" : sep()
+        "comment:" : special({sep : true, pp : function() {
+            return this.val;
+        }}),
+        "annotation:" : sep()
+    };
+    symb["."].space = "";
+    var token;
+    var nextToken;
+    var parse = function(rbp) {
+        rbp = rbp || 0;
+        var left;
+        var t = token;
+        nextToken();
+        t.nud();
+        left = t;
+        while(rbp < token.bp && !t.sep) {
+            t = token;
+            nextToken();
+            if(!t.led) {
+                t.error("expect led, which doesn't exists");
+            };
+            t.led(left);
+            left = t;
+        };
+        return left;
+    };
+    exports.parse = function(tokens) {
+        var pos = 0;
+        nextToken = function() {
+            token = tokenLookup(pos === tokens.length ? {kind : "eof", rparen : true} : tokens[pos]);
+            ++pos;
+            return tokenLookup(token);
+        };
+        nextToken();
+        var result = [];
+        while(token.kind !== "eof") {
+            result.push(parse());
+        };
+        return result;
+    };
+});
+// Syntax {{{2
+def("syntax", function(exports) {
+    var indent = 0;
+    var pp = function(node) {
+        node = tokenLookup(node);
+        if(!node.pp) {
+            console.log("cannot prettyprint", node.kind, node.val);
+        } else {
+            return node.pp();
+        };
+    };
+    exports.nodemain = function() {
+        var tokenise = use("tokeniser").tokenise;
+        var filename = process.argv[1];
+        var rsts = exports.parse(tokenise(require("fs").readFileSync(filename, "utf8")));
+        if(exports.errors.length) {
+            console.log("errors:", exports.errors);
+        } else {
+            rsts.forEach(function(rst) {
+                console.log(pp(rst));
+            });
+        };
+    };
+    exports.errors = [];
+    var extend = use("util").extend;
+    var defaultToken = {
+        nud : function() {
+        },
+        bp : 0,
+        dbp : 0,
+        space : " ",
+        children : [],
+        assert : function(ok, desc) {
+            if(!ok) {
+                this.error(desc);
+            };
+        },
+        error : function(desc) {
+            exports.errors.push({
+                error : "syntax",
+                desc : desc,
+                token : this
+            });
+        }
+    };
+    var tokenLookup = exports.tokenLookup = function(orig) {
+        var proto = symb[orig.kind + ":"] || symb[orig.val] || (orig.val && symb[orig.val[orig.val.length - 1]]) || defaultToken;
+        return extend(Object.create(proto), orig);
+    };
+    var nudPrefix = function() {
+        var child = parse();
+        if(parse.sep) {
+            this.error("should be followed by a value, not a separator");
+            child.error("missing something before this element");
+        };
+        this.children = [child];
+    };
+    var infixLed = function(left) {
+        this.infix = true;
+        this.children = [left, parse(this.bp - this.dbp)];
+    };
+    var infix = function(bp) {
+        return extend(Object.create(defaultToken), {
+            led : infixLed,
+            oldpp : use("prettyprint").ppInfix,
+            nud : nudPrefix,
+            bp : bp
+        });
+    };
+    var infixr = function(bp) {
+        return extend(Object.create(defaultToken), {
+            led : infixLed,
+            nud : nudPrefix,
+            oldpp : use("prettyprint").ppInfix,
+            bp : bp,
+            dbp : 1
+        });
+    };
+    var rparen = function() {
+        return extend(Object.create(defaultToken), {rparen : true, nud : function() {
+            this.error("unmatched rparen");
+        }});
+    };
+    var prefix = function(bp) {
+        return extend(Object.create(defaultToken), {nud : nudPrefix, bp : bp});
+    };
+    var sep = function() {
+        return extend(Object.create(defaultToken), {sep : true, pp : function() {
+            return "";
+        }});
+    };
+    var special = function(ext) {
+        return extend(Object.create(defaultToken), ext);
+    };
+    var list = function(rparen) {
+        var readList = function(obj) {
+            while(!token.rparen) {
+                obj.children.push(parse());
+            };
+            if(token.val !== rparen) {
+                obj.error("Paren mismatch begin");
+                token.error("Paren mismatch end");
+            };
+            nextToken();
+        };
+        return function(bp) {
+            return extend(Object.create(defaultToken), {
+                led : function(left) {
+                    this.children = [left];
+                    this.infix = true;
+                    readList(this);
+                },
+                nud : function() {
+                    this.children = [];
+                    readList(this);
+                },
+                bp : bp
+            });
+        };
+    };
+    var symb = {
+        "." : infix(1000),
+        "[" : list("]")(1000),
+        "]" : rparen(),
+        "{" : list("}")(1000),
+        "}" : rparen(),
+        "(" : list(")")(1000),
+        ")" : rparen(),
+        "#" : prefix(1000),
+        "@" : prefix(1000),
+        "++" : prefix(1000),
+        "--" : prefix(1000),
+        "!" : prefix(1000),
+        "~" : prefix(1000),
+        "`" : prefix(1000),
+        "*" : infix(900),
+        "/" : infix(900),
+        "%" : infix(900),
+        "-" : infix(800),
+        "+" : infix(800),
+        ">>>" : infix(700),
+        ">>" : infix(700),
+        "<<" : infix(700),
+        "<=" : infix(600),
+        ">=" : infix(600),
+        ">" : infix(600),
+        "<" : infix(600),
+        "==" : infix(500),
+        "!=" : infix(500),
+        "!==" : infix(500),
+        "===" : infix(500),
+        "^" : infix(400),
+        "|" : infix(400),
+        "&" : infix(400),
+        "&&" : infix(300),
+        "||" : infix(300),
+        ":" : infixr(200),
+        "?" : infixr(200),
+        "else" : infixr(200),
+        "=" : infixr(100),
+        "," : sep(),
+        ";" : sep(),
+        constructor : defaultToken,
+        valueOf : defaultToken,
+        toString : defaultToken,
+        toLocaleString : defaultToken,
+        hasOwnProperty : defaultToken,
+        isPrototypeOf : defaultToken,
+        propertyIsEnumerable : defaultToken,
+        "return" : prefix(0),
+        "throw" : prefix(0),
+        "new" : prefix(0),
+        "typeof" : prefix(0),
+        "var" : prefix(0),
+        "comment:" : special({sep : true, pp : function() {
+            return this.val;
+        }}),
+        "annotation:" : sep()
     };
     symb["."].space = "";
     var token;
