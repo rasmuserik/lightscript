@@ -440,6 +440,18 @@ def("prettyprint", function(exports) {
 });
 // Syntax {{{2
 def("syntax", function(exports) {
+    exports.nodemain = function() {
+            var tokenise = use("tokeniser").tokenise;
+            var filename = process.argv[1];
+            var rsts = exports.parse(tokenise(require("fs").readFileSync(filename, "utf8")));
+            if(exports.errors.length) {
+                console.log("errors:", exports.errors);
+            } else {
+                rsts.forEach(function(rst) {
+                    console.log(rst);
+                });
+            };
+    };
     exports.errors = [];
     var extend = use("util").extend;
     var defaultToken = {
