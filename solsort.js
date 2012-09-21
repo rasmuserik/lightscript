@@ -662,18 +662,10 @@ def("syntax", function(exports) {
         if(exports.errors.length) {
             console.log("errors:", exports.errors);
         } else {
-            console.log(pplistlines(rsts, ';'));
-            /*
-            rsts.forEach(function(rst) {
-                //        console.log(require('util').inspect(rst, true, null));
-            });
-            rsts.forEach(function(rst) {
-                console.log(pp(rst));
-            });
-            */
+            console.log(pplistlines(rsts, ";"));
         };
     };
-    var indent = -4;
+    var indent =  - 4;
     var pp = function(node) {
         return tokenLookup(node).pp();
     };
@@ -692,10 +684,19 @@ def("syntax", function(exports) {
             };
         },
         pp : function() {
-            if(this.kind === "identifier") {
+            if(this.children.length === 0) {
                 return this.val;
+            } else if(this.children.length === 1) {
+                return this.space + this.val + this.space + pp(this.children[0]);
+            } else if(this.children.length === 2) {
+                var result = "";
+                result += ppPrio(this.children[0], this.bp);
+                result += this.space + this.val + this.space;
+                result += ppPrio(this.children[1], this.bp + 1 - this.dbp);
+                return result;
+            } else {
+                this.error("cannot prettyprint...");
             };
-            return this.kind + ":" + this.val;
         },
         error : function(desc) {
             exports.errors.push({
@@ -728,19 +729,6 @@ def("syntax", function(exports) {
         };
         return result;
     };
-    var ppInfix = function() {
-        if(this.children.length === 1) {
-            return this.space + this.val + this.space + pp(this.children[0]);
-        } else if(this.children.length === 2) {
-            var result = "";
-            result += ppPrio(this.children[0], this.bp);
-            result += this.space + this.val + this.space;
-            result += ppPrio(this.children[1], this.bp + 1 - this.dbp);
-            return result;
-        } else {
-            this.error("cannot prettyprint infix mus have 1 <= parameters <= 2");
-        };
-    };
     var infixLed = function(left) {
         this.infix = true;
         this.children = [left, parse(this.bp - this.dbp)];
@@ -749,7 +737,6 @@ def("syntax", function(exports) {
         return extend(Object.create(defaultToken), {
             led : infixLed,
             oldpp : use("prettyprint").ppInfix,
-            pp : ppInfix,
             nud : nudPrefix,
             bp : bp
         });
@@ -759,7 +746,6 @@ def("syntax", function(exports) {
             led : infixLed,
             nud : nudPrefix,
             oldpp : use("prettyprint").ppInfix,
-            pp : ppInfix,
             bp : bp,
             dbp : 1
         });
@@ -814,19 +800,15 @@ def("syntax", function(exports) {
                     return this.val + listpp(this.children) + rparen;
                 }
             });
-            /*function() {
-                console.log(this.kind, this.val);
-                return "xxxx";
-            }*/
         };
     };
     var listpp = function(nodes) {
         if(nodes.length > 2) {
-            return pplistlines(nodes, ',');
+            return pplistlines(nodes, ",");
         } else {
             return compactlistpp(nodes);
-        }
-    }
+        };
+    };
     var compactlistpp = function(nodes) {
         var args = nodes.filter(function(elem) {
             return elem.val !== "," || elem.kind !== "symbol";
@@ -839,7 +821,7 @@ def("syntax", function(exports) {
     var newline = function() {
         var result = "\n";
         var n = indent;
-        while(n>0) {
+        while(n > 0) {
             result += " ";
             --n;
         };
@@ -928,7 +910,6 @@ def("syntax", function(exports) {
             },
             nud : nudPrefix,
             oldpp : use("prettyprint").ppInfix,
-            pp : ppInfix,
             bp : 200,
             dbp : 1
         }),
@@ -956,18 +937,18 @@ def("syntax", function(exports) {
         }}),
         "annotation:" : sep()
     };
-    [".",
-    "++",
-    "--",
-    "!",
-    "~",
-    "`",
-    "@",
-    "#",
+    [
+        ".",
+        "++",
+        "--",
+        "!",
+        "~",
+        "`",
+        "@",
+        "#"
     ].forEach(function(s) {
-        symb[s].space = '';
+        symb[s].space = "";
     });
-
     var token;
     var nextToken;
     var parse = function(rbp) {
