@@ -355,8 +355,8 @@ def("prettyprint", function(exports) {
     };
     var pp = function(node) {
         node = use("syntax").tokenLookup(node);
-        if(node.pp) {
-            node.pp();
+        if(node.oldpp) {
+            node.oldpp();
         } else if(node.kind === "string") {
             acc.push(JSON.stringify(node.val.slice(1,  - 1)));
             node.assert(node.children.length === 0, "prettyprinting, string with children");
@@ -406,7 +406,7 @@ def("prettyprint", function(exports) {
             node.error("cannot prettyprint");
             acc.push(node.kind + ":" + node.val + " ");
             node.children.forEach(function(child) {
-                use("syntax").tokenLookup(child).pp(acc, indent);
+                use("syntax").tokenLookup(child).oldpp(acc, indent);
             });
         };
     };
@@ -481,7 +481,7 @@ def("syntax", function(exports) {
     var infix = function(bp) {
         return extend(Object.create(defaultToken), {
             led : infixLed,
-            pp : use("prettyprint").ppInfix,
+            oldpp : use("prettyprint").ppInfix,
             nud : nudPrefix,
             bp : bp
         });
@@ -490,7 +490,7 @@ def("syntax", function(exports) {
         return extend(Object.create(defaultToken), {
             led : infixLed,
             nud : nudPrefix,
-            pp : use("prettyprint").ppInfix,
+            oldpp : use("prettyprint").ppInfix,
             bp : bp,
             dbp : 1
         });
@@ -1163,7 +1163,7 @@ def("publish", function(exports) {
     exports.nodemain = function() {
         console.log("copying sites to /usr/share/nginx/www/");
         require("child_process").exec("cp -a sites/* /usr/share/nginx/www/", function(err, stdout, stderr) {
-            console.log("done", , );
+            console.log("done");
             if(err) {
                 console.log("Error:", err);
             };
