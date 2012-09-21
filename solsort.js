@@ -1,3 +1,4 @@
+
 // Module system {{{1
 var modules = {};
 use = function(name) {
@@ -33,7 +34,7 @@ def("util", function(exports) {
     };
     if(exports.platform === "node") {
         exports.nextTick = process.nextTick;
-    } else {
+    } else  {
         exports.nextTick = function(f) {
             setTimeout(f, 0);
         };
@@ -108,7 +109,7 @@ def("tokeniser", function(exports) {
         return {
             kind : kind,
             val : val,
-            pos : pos
+            pos : pos,
         };
     };
     exports.tokenise = function(buffer) {
@@ -116,7 +117,7 @@ def("tokeniser", function(exports) {
         var start;
         var lineno = 0;
         var one_of = function(str) {
-            return str.indexOf(peek()) !==  - 1;
+            return str.indexOf(peek()) !== - 1;
         };
         var starts_with = function(str) {
             return peek(str.length) === str;
@@ -138,10 +139,19 @@ def("tokeniser", function(exports) {
             return result;
         };
         var begin_token = function() {
-            start = {lineno : lineno, pos : pos};
+            start = {
+                lineno : lineno,
+                pos : pos,
+            };
         };
         var newToken = function(kind, val) {
-            var result = createToken(kind, val, {start : start, end : {lineno : lineno, pos : pos}});
+            var result = createToken(kind, val, {
+                start : start,
+                end : {
+                    lineno : lineno,
+                    pos : pos,
+                },
+            });
             return result;
         };
         var next = function() {
@@ -183,20 +193,20 @@ def("tokeniser", function(exports) {
                             c = {
                                 "n" : "\n",
                                 "r" : "\r",
-                                "t" : "\t"
+                                "t" : "\t",
                             }[c] || c;
                         };
                         s += c;
                     };
                     s += pop();
                     return newToken("string", s);
-                } else if(one_of(digits) || (peek() === "." && digits.indexOf(peek(1, 1)) !==  - 1)) {
+                } else if(one_of(digits) || (peek() === "." && digits.indexOf(peek(1, 1)) !== - 1)) {
                     s = pop();
                     if(peek() !== "x") {
                         while(peek() && one_of(".e" + digits)) {
                             s += pop();
                         };
-                    } else {
+                    } else  {
                         s = pop(2);
                         while(peek() && one_of(hexdigits)) {
                             s += pop();
@@ -217,7 +227,7 @@ def("tokeniser", function(exports) {
                         s += pop();
                     };
                     return newToken("identifier", s);
-                } else {
+                } else  {
                     throw "Tokenisation error: " + peek().charCodeAt(0) + " (" + peek() + ") at pos " + pos;
                 };
             };
@@ -243,15 +253,18 @@ def("prettyprint", function(exports) {
             rst2ast = use("rst2ast").rst2ast;
             var filename = process.argv[1];
             var rst = ls.parse(ls.tokenise(require("fs").readFileSync(filename, "utf8")));
-            var newCode = ls.prettyprint({kind : "block", children : rst.map(rst2ast).filter(function(elem) {
-                return elem.val !== ";";
-            })}).replace(RegExp("\n    ", "g"), "\n").slice(2,  - 2) + "\n";
+            var newCode = ls.prettyprint({
+                kind : "block",
+                children : rst.map(rst2ast).filter(function(elem) {
+                    return elem.val !== ";";
+                }),
+            }).replace(RegExp("\n    ", "g"), "\n").slice(2, - 2) + "\n";
             if(syntax.errors.length) {
                 console.log("errors:", syntax.errors);
-            } else {
+            } else  {
                 require("fs").writeFileSync(filename + "", newCode);
             };
-        } else {
+        } else  {
             throw "TODO: can currently only prettyprint self on node";
         };
     };
@@ -283,7 +296,7 @@ def("prettyprint", function(exports) {
         var len = node.children.length;
         node.assert(node.children[len - 1].kind === "block", "Expected block after function");
         acc.push(node.children[0].val);
-        parenList(node.children.slice(1,  - 1));
+        parenList(node.children.slice(1, - 1));
         acc.push(" ");
         pp(node.children[len - 1]);
     };
@@ -309,7 +322,7 @@ def("prettyprint", function(exports) {
             acc.push(node.children[0].val);
             if(node.children.length < 4) {
                 exprList(node.children.slice(1), ", ");
-            } else {
+            } else  {
                 indent += 4;
                 acc.push(newline());
                 exprList(node.children.slice(1), "," + newline());
@@ -334,7 +347,7 @@ def("prettyprint", function(exports) {
         "throw" : fPrefix,
         "if" : ifelse,
         "{" : list("}"),
-        "[" : list("]")
+        "[" : list("]"),
     };
     var mSubscript = function(node) {
         node.assert(node.children.length === 2, "subscript wrong length");
@@ -351,20 +364,20 @@ def("prettyprint", function(exports) {
         "`" : mPrefix,
         "@" : mPrefix,
         "#" : mPrefix,
-        "[" : mSubscript
+        "[" : mSubscript,
     };
     var pp = function(node) {
         node = use("oldsyntax").tokenLookup(node);
         if(node.oldpp) {
             node.oldpp();
         } else if(node.kind === "string") {
-            acc.push(JSON.stringify(node.val.slice(1,  - 1)));
+            acc.push(JSON.stringify(node.val.slice(1, - 1)));
             node.assert(node.children.length === 0, "prettyprinting, string with children");
         } else if(node.kind === "annotation" && node.val.slice(0, 2) === "/*") {
             acc.push(node.val);
             node.assert(node.children.length === 0, "prettyprinting, but has children");
         } else if(node.kind === "annotation" && node.val.slice(0, 2) === "//") {
-            acc.push(node.val.slice(0,  - 1));
+            acc.push(node.val.slice(0, - 1));
             node.assert(node.children.length === 0, "prettyprinting, but has children");
         } else if(node.kind === "number" || node.kind === "annotation") {
             acc.push(node.val);
@@ -374,14 +387,14 @@ def("prettyprint", function(exports) {
             if(node.val === "()") {
                 if(node.children[0].kind === "identifier" && specialFn[node.children[0].val]) {
                     specialFn[node.children[0].val](node);
-                } else {
+                } else  {
                     pp(node.children[0]);
                     parenList(node.children.slice(1));
                 };
-            } else {
+            } else  {
                 if(specialMethod[node.val]) {
                     specialMethod[node.val](node);
-                } else {
+                } else  {
                     pp(node.children[0]);
                     acc.push("." + node.val);
                     parenList(node.children.slice(1));
@@ -402,7 +415,7 @@ def("prettyprint", function(exports) {
             acc.push("}");
         } else if(node.kind === "identifier") {
             acc.push(node.val);
-        } else {
+        } else  {
             node.error("cannot prettyprint");
             acc.push(node.kind + ":" + node.val + " ");
             node.children.forEach(function(child) {
@@ -427,7 +440,7 @@ def("prettyprint", function(exports) {
             ppPrio(this.children[0], this.bp);
             acc.push(this.space + this.val + this.space);
             ppPrio(this.children[1], this.bp + 1 - this.dbp);
-        } else {
+        } else  {
             this.error("cannot prettyprint infix mus have 1 <= parameters <= 2");
         };
     };
@@ -445,7 +458,7 @@ def("oldsyntax", function(exports) {
         node = tokenLookup(node);
         if(!node.pp) {
             console.log("cannot prettyprint", node.kind, node.val);
-        } else {
+        } else  {
             return node.pp();
         };
     };
@@ -455,7 +468,7 @@ def("oldsyntax", function(exports) {
         var rsts = exports.parse(tokenise(require("fs").readFileSync(filename, "utf8")));
         if(exports.errors.length) {
             console.log("errors:", exports.errors);
-        } else {
+        } else  {
             rsts.forEach(function(rst) {
                 console.log(pp(rst));
             });
@@ -479,9 +492,9 @@ def("oldsyntax", function(exports) {
             exports.errors.push({
                 error : "syntax",
                 desc : desc,
-                token : this
+                token : this,
             });
-        }
+        },
     };
     var tokenLookup = exports.tokenLookup = function(orig) {
         var proto = symb[orig.kind + ":"] || symb[orig.val] || (orig.val && symb[orig.val[orig.val.length - 1]]) || defaultToken;
@@ -497,14 +510,17 @@ def("oldsyntax", function(exports) {
     };
     var infixLed = function(left) {
         this.infix = true;
-        this.children = [left, parse(this.bp - this.dbp)];
+        this.children = [
+            left,
+            parse(this.bp - this.dbp),
+        ];
     };
     var infix = function(bp) {
         return extend(Object.create(defaultToken), {
             led : infixLed,
             oldpp : use("prettyprint").ppInfix,
             nud : nudPrefix,
-            bp : bp
+            bp : bp,
         });
     };
     var infixr = function(bp) {
@@ -513,21 +529,30 @@ def("oldsyntax", function(exports) {
             nud : nudPrefix,
             oldpp : use("prettyprint").ppInfix,
             bp : bp,
-            dbp : 1
+            dbp : 1,
         });
     };
     var rparen = function() {
-        return extend(Object.create(defaultToken), {rparen : true, nud : function() {
-            this.error("unmatched rparen");
-        }});
+        return extend(Object.create(defaultToken), {
+            rparen : true,
+            nud : function() {
+                this.error("unmatched rparen");
+            },
+        });
     };
     var prefix = function(bp) {
-        return extend(Object.create(defaultToken), {nud : nudPrefix, bp : bp});
+        return extend(Object.create(defaultToken), {
+            nud : nudPrefix,
+            bp : bp,
+        });
     };
     var sep = function() {
-        return extend(Object.create(defaultToken), {sep : true, pp : function() {
-            return "";
-        }});
+        return extend(Object.create(defaultToken), {
+            sep : true,
+            pp : function() {
+                return "";
+            },
+        });
     };
     var special = function(ext) {
         return extend(Object.create(defaultToken), ext);
@@ -554,7 +579,7 @@ def("oldsyntax", function(exports) {
                     this.children = [];
                     readList(this);
                 },
-                bp : bp
+                bp : bp,
             });
         };
     };
@@ -612,10 +637,13 @@ def("oldsyntax", function(exports) {
         "new" : prefix(0),
         "typeof" : prefix(0),
         "var" : prefix(0),
-        "comment:" : special({sep : true, pp : function() {
-            return this.val;
-        }}),
-        "annotation:" : sep()
+        "comment:" : special({
+            sep : true,
+            pp : function() {
+                return this.val;
+            },
+        }),
+        "annotation:" : sep(),
     };
     symb["."].space = "";
     var token;
@@ -641,7 +669,10 @@ def("oldsyntax", function(exports) {
     exports.parse = function(tokens) {
         var pos = 0;
         nextToken = function() {
-            token = tokenLookup(pos === tokens.length ? {kind : "eof", rparen : true} : tokens[pos]);
+            token = tokenLookup(pos === tokens.length ? {
+                kind : "eof",
+                rparen : true,
+            } : tokens[pos]);
             ++pos;
             return tokenLookup(token);
         };
@@ -662,14 +693,14 @@ def("syntax", function(exports) {
         var newCode = pplistlines(rsts, ";");
         if(exports.errors.length) {
             console.log("errors:", exports.errors);
-        } else {
+        } else  {
             console.log(newCode);
             if(!process.argv[3]) {
                 require("fs").writeFileSync(filename + "", newCode);
-            }
+            };
         };
     };
-    var indent =  - 4;
+    var indent = - 4;
     var pp = function(node) {
         return tokenLookup(node).pp();
     };
@@ -698,7 +729,7 @@ def("syntax", function(exports) {
                 result += this.space + this.val + this.space;
                 result += ppPrio(this.children[1], this.bp + 1 - this.dbp);
                 return result;
-            } else {
+            } else  {
                 this.error("cannot prettyprint...");
             };
         },
@@ -706,9 +737,9 @@ def("syntax", function(exports) {
             exports.errors.push({
                 error : "syntax",
                 desc : desc,
-                token : this
+                token : this,
             });
-        }
+        },
     };
     var tokenLookup = exports.tokenLookup = function(orig) {
         var proto = symb[orig.kind + ":"] || symb[orig.val] || (orig.val && symb[orig.val[orig.val.length - 1]]) || defaultToken;
@@ -735,14 +766,17 @@ def("syntax", function(exports) {
     };
     var infixLed = function(left) {
         this.infix = true;
-        this.children = [left, parse(this.bp - this.dbp)];
+        this.children = [
+            left,
+            parse(this.bp - this.dbp),
+        ];
     };
     var infix = function(bp) {
         return extend(Object.create(defaultToken), {
             led : infixLed,
             oldpp : use("prettyprint").ppInfix,
             nud : nudPrefix,
-            bp : bp
+            bp : bp,
         });
     };
     var infixr = function(bp) {
@@ -751,13 +785,16 @@ def("syntax", function(exports) {
             nud : nudPrefix,
             oldpp : use("prettyprint").ppInfix,
             bp : bp,
-            dbp : 1
+            dbp : 1,
         });
     };
     var rparen = function() {
-        return extend(Object.create(defaultToken), {rparen : true, nud : function() {
-            this.error("unmatched rparen");
-        }});
+        return extend(Object.create(defaultToken), {
+            rparen : true,
+            nud : function() {
+                this.error("unmatched rparen");
+            },
+        });
     };
     var prefix = function(bp) {
         return extend(Object.create(defaultToken), {
@@ -766,9 +803,12 @@ def("syntax", function(exports) {
         });
     };
     var sep = function() {
-        return extend(Object.create(defaultToken), {sep : true, pp : function() {
-            return "";
-        }});
+        return extend(Object.create(defaultToken), {
+            sep : true,
+            pp : function() {
+                return "";
+            },
+        });
     };
     var special = function(ext) {
         return extend(Object.create(defaultToken), ext);
@@ -799,14 +839,14 @@ def("syntax", function(exports) {
                 bp : bp,
                 pp : function() {
                     return this.val + listpp(this.children) + rparen;
-                }
+                },
             });
         };
     };
     var listpp = function(nodes) {
         if(nodes.length > 2) {
             return pplistlines(nodes, ",");
-        } else {
+        } else  {
             return compactlistpp(nodes);
         };
     };
@@ -853,7 +893,7 @@ def("syntax", function(exports) {
         }), ";") + "}";
     };
     var stringpp = function() {
-        return JSON.stringify(this.val.slice(1,  - 1));
+        return JSON.stringify(this.val.slice(1, - 1));
     };
     var symb = {
         "." : infix(1000),
@@ -905,14 +945,14 @@ def("syntax", function(exports) {
                     child1.children.unshift(extend(Object.create(defaultToken), {
                         kind : "identifier",
                         val : "",
-                        pos : this.pos
+                        pos : this.pos,
                     }));
                 };
             },
             nud : nudPrefix,
             oldpp : use("prettyprint").ppInfix,
             bp : 200,
-            dbp : 1
+            dbp : 1,
         }),
         "=" : infixr(100),
         "," : sep(),
@@ -930,14 +970,17 @@ def("syntax", function(exports) {
         "typeof" : prefix(0),
         "var" : prefix(0),
         "string:" : special({pp : stringpp}),
-        "comment:" : special({sep : true, pp : function() {
-            if(this.val.slice(0,2) === '//') {
-            return this.val.slice(0,-1);
-            } else {
-            return this.val;
-            }
-        }}),
-        "annotation:" : sep()
+        "comment:" : special({
+            sep : true,
+            pp : function() {
+                if(this.val.slice(0, 2) === "//") {
+                    return this.val.slice(0, - 1);
+                } else  {
+                    return this.val;
+                };
+            },
+        }),
+        "annotation:" : sep(),
     };
     [
         ".",
@@ -947,7 +990,7 @@ def("syntax", function(exports) {
         "~",
         "`",
         "@",
-        "#"
+        "#",
     ].forEach(function(s) {
         symb[s].space = "";
     });
@@ -974,7 +1017,10 @@ def("syntax", function(exports) {
     exports.parse = function(tokens) {
         var pos = 0;
         nextToken = function() {
-            token = tokenLookup(pos === tokens.length ? {kind : "eof", rparen : true} : tokens[pos]);
+            token = tokenLookup(pos === tokens.length ? {
+                kind : "eof",
+                rparen : true,
+            } : tokens[pos]);
             ++pos;
             return tokenLookup(token);
         };
@@ -1015,14 +1061,14 @@ def("rst2ast", function(exports) {
                         pos : ast.pos,
                         kind : "call",
                         val : lhs.children[1].val,
-                        children : children
+                        children : children,
                     };
                 };
                 return {
                     pos : ast.pos,
                     kind : "call",
                     val : "()",
-                    children : clearSep(",", ast.children).map(rst2ast)
+                    children : clearSep(",", ast.children).map(rst2ast),
                 };
             };
             if(ast.val === "else") {
@@ -1032,9 +1078,9 @@ def("rst2ast", function(exports) {
                         pos : ast.children[1].pos,
                         kind : "block",
                         val : "block",
-                        children : clearSep(";", ast.children[1].children).map(rst2ast)
+                        children : clearSep(";", ast.children[1].children).map(rst2ast),
                     });
-                } else {
+                } else  {
                     lhs.children.push(rst2ast(ast.children[1]));
                 };
                 return lhs;
@@ -1045,11 +1091,11 @@ def("rst2ast", function(exports) {
                     pos : ast.pos,
                     kind : "block",
                     val : "block",
-                    children : clearSep(";", ast.children).slice(1).map(rst2ast)
+                    children : clearSep(";", ast.children).slice(1).map(rst2ast),
                 });
                 return lhs;
             };
-        } else {
+        } else  {
             if(ast.val === "(" && ast.children.length === 1) {
                 return rst2ast(ast.children[0]);
             };
@@ -1059,13 +1105,13 @@ def("rst2ast", function(exports) {
                     pos : ast.pos,
                     kind : "identifier",
                     val : ast.val,
-                    children : []
+                    children : [],
                 });
                 return {
                     pos : ast.pos,
                     kind : "call",
                     val : "()",
-                    children : children
+                    children : children,
                 };
             };
             if(ast.val === "var" || ast.val === "return" || ast.val === "throw" || ast.val === "new" || ast.val === "typeof") {
@@ -1073,12 +1119,15 @@ def("rst2ast", function(exports) {
                     pos : ast.pos,
                     kind : "call",
                     val : "()",
-                    children : [{
-                        pos : ast.pos,
-                        kind : "identifier",
-                        val : ast.val,
-                        children : []
-                    }, rst2ast(ast.children[0])]
+                    children : [
+                        {
+                            pos : ast.pos,
+                            kind : "identifier",
+                            val : ast.val,
+                            children : [],
+                        },
+                        rst2ast(ast.children[0]),
+                    ],
                 };
             };
         };
@@ -1120,11 +1169,11 @@ def("server", function(exports) {
                         "é" : "e",
                         "?" : "",
                         ":" : "",
-                        " " : "_"
+                        " " : "_",
                     };
                     if(subs[c] === undefined) {
                         return "_";
-                    } else {
+                    } else  {
                         return subs[c];
                     };
                 });
@@ -1139,7 +1188,7 @@ def("server", function(exports) {
                     result[title] = {
                         title : title,
                         url : name2url(title),
-                        html : require("markdown").markdown.toHTML("# " + elem)
+                        html : require("markdown").markdown.toHTML("# " + elem),
                     };
                 });
                 return result;
@@ -1152,11 +1201,17 @@ def("server", function(exports) {
                     res.removeHeader("X-Powered-By");
                     next();
                 });
-                app.stack.unshift({route : "", handle : logger({path : process.env.HOME + "/data/httpd.log"})});
+                app.stack.unshift({
+                    route : "",
+                    handle : logger({path : process.env.HOME + "/data/httpd.log"}),
+                });
                 app.use(express.bodyParser());
                 Object.keys(notes).forEach(function(key) {
                     app.get("/" + notes[key].url, function(req, res) {
-                        res.send(fixLinks(mustache.to_html(htmlTemplate, {title : key, body : notes[key].html})));
+                        res.send(fixLinks(mustache.to_html(htmlTemplate, {
+                            title : key,
+                            body : notes[key].html,
+                        })));
                     });
                 });
                 var fixLinks = function(html) {
@@ -1165,7 +1220,10 @@ def("server", function(exports) {
                     });
                 };
                 app.get("/githubLogin", function(req, res) {
-                    https.get({host : "github.com", path : "/login/oauth/access_token?client_id=cc14f7f75ff01bdbb1e7&client_secret=d978cb4e2e1cdb35d4ae9e194b9c36fa0c2f607e&code=" + req.query.code + "&state=" + req.query.state}, function(con) {
+                    https.get({
+                        host : "github.com",
+                        path : "/login/oauth/access_token?client_id=cc14f7f75ff01bdbb1e7&client_secret=d978cb4e2e1cdb35d4ae9e194b9c36fa0c2f607e&code=" + req.query.code + "&state=" + req.query.state,
+                    }, function(con) {
                         con.on("data", function(data) {
                             res.send(req.query.callback + "(\"" + data + "\");", {"Content-Type" : "application/javascript"});
                         });
@@ -1194,13 +1252,19 @@ def("server", function(exports) {
                         });
                         return ;
                     };
-                    db.get("SELECT * FROM userdata WHERE store=$store AND key=$key;", {$store : store, $key : key}, function(err, row) {
+                    db.get("SELECT * FROM userdata WHERE store=$store AND key=$key;", {
+                        $store : store,
+                        $key : key,
+                    }, function(err, row) {
                         if(err) {
                             return res.send(String(err), {"Content-Type" : "text/plain"}, 500);
                         };
                         var val = row && row.val;
                         if(newVal !== undefined) {
-                            console.log({val : val, prevVal : prevVal});
+                            console.log({
+                                val : val,
+                                prevVal : prevVal,
+                            });
                             if(prevVal != val) {
                                 return res.send(val, {"Content-Type" : "text/plain"}, 409);
                             };
@@ -1208,7 +1272,7 @@ def("server", function(exports) {
                                 $store : store,
                                 $key : key,
                                 $val : newVal,
-                                $timestamp : Date.now()
+                                $timestamp : Date.now(),
                             }, function(err) {
                                 if(err) {
                                     return res.send(String(err), {"Content-Type" : "text/plain"}, 500);
@@ -1286,7 +1350,7 @@ def("restapi", function(exports) {
             // call function directly a la
             if(use(module) && use(module).restable && use(module).restable[name] && typeof use(module)[name] === "function") {
                 use(module)[name](param, callback);
-            } else {
+            } else  {
                 callback({error : "no such call"});
             };
         };
@@ -1407,7 +1471,7 @@ def("web", function(exports) {
             var storage = {
                 sync : throttledSync,
                 set : set,
-                get : get
+                get : get,
             };
             stores[storageName] = storage;
             return storage;
@@ -1421,11 +1485,11 @@ def("web", function(exports) {
                 var userName = localStorage.getItem("userName");
                 if(!userId) {
                     solsortLogin.innerHTML = "<ul class=\"nav\"><li class=\"dropdown\">" + "<a href=\"#\" class=\"dropdown-toggle\" data-toggle=\"dropdown\">Login<b class=\"caret\"></b></a>" + "<ul class=\"dropdown-menu\">" + "<li><a href=\"javascript:use('web').loginGitHub()\"><span class=\"icon-github\"></span> github</a></li>" + "<li><a href=\"#\" onclick=\"use('web').loginFacebook()\"><span class=\"icon-facebook-sign\"></span> facebook</a></li>" + "<li><a href=\"#\" onclick=\"use('web').loginGoogle()\"><span class=\"icon-google-plus-sign\"></span> google</a></li>" + "</ul></li></ul>";
-                } else {
+                } else  {
                     solsortLogin.innerHTML = "<ul class=\"nav\"><li><a onclick=\"use('web').logout();\">" + userName + "<span class=\"icon-" + {
                         github : "github",
                         facebook : "facebook-sign",
-                        google : "google-plus-sign"
+                        google : "google-plus-sign",
                     }[userId.split(":")[0]] + " icon-large\"></span>" + "logout" + "</a></li></ul>";
                 };
             };
@@ -1472,7 +1536,10 @@ def("web", function(exports) {
         var loginAs = function(user, name) {
             localStorage.setItem("userId", user);
             localStorage.setItem("userName", name);
-            exports.jsonp("http://solsort.com/", {user : user, name : name});
+            exports.jsonp("http://solsort.com/", {
+                user : user,
+                name : name,
+            });
             var loginFromUrl = localStorage.getItem("loginFromUrl");
             if(loginFromUrl) {
                 localStorage.removeItem("loginFromUrl");
