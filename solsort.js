@@ -655,22 +655,26 @@ def("oldsyntax", function(exports) {
 });
 // Syntax {{{2
 def("syntax", function(exports) {
-    var indent = 0;
-    var pp = function(node) {
-        return tokenLookup(node).pp();
-    };
     exports.nodemain = function() {
         var tokenise = use("tokeniser").tokenise;
-        var filename = process.argv[1];
+        var filename = process.argv[3] || process.argv[1];
         var rsts = exports.parse(tokenise(require("fs").readFileSync(filename, "utf8")));
         if(exports.errors.length) {
             console.log("errors:", exports.errors);
         } else {
             rsts.forEach(function(rst) {
+        //        console.log(require('util').inspect(rst, true, null));
+            });
+            rsts.forEach(function(rst) {
                 console.log(pp(rst));
             });
         };
     };
+    var indent = 0;
+    var pp = function(node) {
+        return tokenLookup(node).pp();
+    };
+
     exports.errors = [];
     var extend = use("util").extend;
     var defaultToken = {
@@ -805,23 +809,23 @@ def("syntax", function(exports) {
                 },
                 bp : bp,
                 pp : function() {
+                    return this.val + listpp(this.children) + rparen;
+                },
+            });
+                /*function() {
                     console.log(this.kind, this.val);
                     return "xxxx";
-                }
-            });
+                }*/
         };
     };
-    var listpp = function() {
-        var result = this.val[1];
-        var args = this.children.slice(1).filter(function(elem) {
+    var listpp = function(nodes) {
+        var args = nodes.filter(function(elem) {
             return elem.val !== "," || elem.kind !== "symbol";
         });
-        result += args.map(pp).join(", ");
-        result += this.val[2];
-        return result;
+        return args.map(pp).join(", ");
     };
     var infixlistpp = function() {
-        return pp(this.children[0]) + listpp.call(this);
+        return pp(this.children[0]) + this.val[1] + listpp(this.children.slice(1)) + this.val[2];
     };
     var newline = function() {
         var result = "\n";
@@ -927,8 +931,8 @@ def("syntax", function(exports) {
         "new" : prefix(0),
         "typeof" : prefix(0),
         "var" : prefix(0),
-        "string:" : special({sep : true, pp : stringpp}),
-        "number:" : special({sep : true, pp : function() {
+        "string:" : special({pp : stringpp}),
+        "number:" : special({pp : function() {
             return this.val;
         }}),
         "comment:" : special({sep : true, pp : function() {
