@@ -440,6 +440,15 @@ def("prettyprint", function(exports) {
 });
 // Syntax {{{2
 def("syntax", function(exports) {
+    var indent = 0;
+    var pp = function(node) {
+        node = tokenLookup(node);
+        if(!node.pp) {
+            console.log('cannot prettyprint', node.kind, node.val);
+        } else {
+            return node.pp();
+        }
+    }
     exports.nodemain = function() {
             var tokenise = use("tokeniser").tokenise;
             var filename = process.argv[1];
@@ -448,7 +457,7 @@ def("syntax", function(exports) {
                 console.log("errors:", exports.errors);
             } else {
                 rsts.forEach(function(rst) {
-                    console.log(rst);
+                    console.log(pp(rst));
                 });
             };
     };
