@@ -51,10 +51,10 @@ def("main", function(exports) {
         if(platform === "web") {
             commandName = window.location.hash.slice(1);
         };
-        if(use(commandName) && use(commandName)[platform + 'main']) {
-            use(commandName)[platform + 'main']();
+        if(use(commandName) && use(commandName)[platform + "main"]) {
+            use(commandName)[platform + "main"]();
         } else if(use(commandName) && use(commandName).main) {
-            use(commandName)[platform + 'main']();
+            use(commandName)[platform + "main"]();
         } else if(use(platform) && use(platform).main) {
             use(platform).main();
         };
@@ -233,7 +233,7 @@ def("tokeniser", function(exports) {
 });
 // Prettyprint {{{2
 def("prettyprint", function(exports) {
-    exports.main = function() {
+    exports.nodemain = function() {
         if(use("util").platform === "node") {
             var ls = {};
             ls.tokenise = use("tokeniser").tokenise;
@@ -914,26 +914,26 @@ body: '<h1>The end of the Internet</h1>' +
     };
 });
 // rest-api {{{1
-def('restapi', function(exports) {
-    var platform = use('util').platform;
+def("restapi", function(exports) {
+    var platform = use("util").platform;
     exports.nodemain = function() {
-        console.log('hello world');
+        console.log("hello world");
         // setup server
-    }
-    if(platform === 'node') {
+    };
+    if(platform === "node") {
         exports.call = function(module, name, param, callback) {
             // call function directly a la
-            if(use(module) && use(module).restable && use(module).restable[name] && typeof use(module)[name] === 'function') {
+            if(use(module) && use(module).restable && use(module).restable[name] && typeof use(module)[name] === "function") {
                 use(module)[name](param, callback);
             } else {
-                callback({error: 'no such call'});
-            }
-        }
-    } else if(platform === 'web') {
+                callback({error : "no such call"});
+            };
+        };
+    } else if(platform === "web") {
         exports.call = function(module, param, callback) {
             // send jsonp-request to api.solsort.com
-        }
-    }
+        };
+    };
 });
 // web {{{1
 def("web", function(exports) {
@@ -1161,13 +1161,12 @@ def("web", function(exports) {
 // publish web sites {{{1
 def("publish", function(exports) {
     exports.nodemain = function() {
-        console.log('copying sites to /usr/share/nginx/www/');
-        require('child_process').exec('cp -a sites/* /usr/share/nginx/www/', function(err,stdout,stderr) {
-            console.log('done', stdout.toString(), stderr.toString());
-
-                                                     if(err) {
-                                                     console.log('Error:', err);
-                                                     }
+        console.log("copying sites to /usr/share/nginx/www/");
+        require("child_process").exec("cp -a sites/* /usr/share/nginx/www/", function(err, stdout, stderr) {
+            console.log("done", , );
+            if(err) {
+                console.log("Error:", err);
+            };
         });
-    }
+    };
 });
