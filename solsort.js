@@ -712,13 +712,13 @@ def("syntax", function(exports) {
         this.children = [child];
     };
     var ppPrio = function(node, prio) {
-        var result = '';
+        var result = "";
         if(node.bp && node.bp < prio) {
-            result += '(';
+            result += "(";
         };
         result += pp(node);
         if(node.bp && node.bp < prio) {
-            result += ')';
+            result += ")";
         };
         return result;
     };
@@ -726,7 +726,7 @@ def("syntax", function(exports) {
         if(this.children.length === 1) {
             return this.space + this.val + this.space + pp(this.children[0]);
         } else if(this.children.length === 2) {
-            var result = '';
+            var result = "";
             result += ppPrio(this.children[0], this.bp);
             result += this.space + this.val + this.space;
             result += ppPrio(this.children[1], this.bp + 1 - this.dbp);
@@ -743,7 +743,7 @@ def("syntax", function(exports) {
         return extend(Object.create(defaultToken), {
             led : infixLed,
             oldpp : use("prettyprint").ppInfix,
-            pp: ppInfix,
+            pp : ppInfix,
             nud : nudPrefix,
             bp : bp
         });
@@ -753,7 +753,7 @@ def("syntax", function(exports) {
             led : infixLed,
             nud : nudPrefix,
             oldpp : use("prettyprint").ppInfix,
-            pp: ppInfix,
+            pp : ppInfix,
             bp : bp,
             dbp : 1
         });
@@ -764,9 +764,13 @@ def("syntax", function(exports) {
         }});
     };
     var prefix = function(bp) {
-        return extend(Object.create(defaultToken), {nud : nudPrefix, bp : bp, pp: function() {
-            return this.val + ' ' + pp(this.children[0]);
-        }});
+        return extend(Object.create(defaultToken), {
+            nud : nudPrefix,
+            bp : bp,
+            pp : function() {
+                return this.val + " " + pp(this.children[0]);
+            }
+        });
     };
     var sep = function() {
         return extend(Object.create(defaultToken), {sep : true, pp : function() {
@@ -810,9 +814,9 @@ def("syntax", function(exports) {
     var listpp = function() {
         var result = this.val[1];
         var args = this.children.slice(1).filter(function(elem) {
-            return elem.val !== ',' || elem.kind !== 'symbol';
+            return elem.val !== "," || elem.kind !== "symbol";
         });
-        result += args.map(pp).join(', ');
+        result += args.map(pp).join(", ");
         result += this.val[2];
         return result;
     };
@@ -839,14 +843,14 @@ def("syntax", function(exports) {
             return result;
         };
         indent += 4;
-        result += nodes.map(listline).join('');
+        result += nodes.map(listline).join("");
         indent -= 4;
         result += newline();
         return result;
     };
     var blockpp = function() {
         return pp(this.children[0]) + " {" + pplistlines(this.children.slice(1).filter(function(elem) {
-            return elem.val !== ';' || elem.kind !== 'symbol';
+            return elem.val !== ";" || elem.kind !== "symbol";
         }), ";") + "}";
     };
     var stringpp = function() {
@@ -894,10 +898,17 @@ def("syntax", function(exports) {
         ":" : infixr(200),
         "?" : infixr(200),
         "else" : special({
-            led : infixLed,
+            led : function(left) {
+                infixLed.call(this, left);
+                var child1 = this.children[1];
+                if(child1.val === '{' && child1.kind === 'symbol') {
+                    child1.val = '*{}';
+                    child1.children.unshift(extend(Object.create(defaultToken), {kind: 'identifier', val: '', pos: this.pos}));
+                } 
+            },
             nud : nudPrefix,
             oldpp : use("prettyprint").ppInfix,
-            pp: ppInfix,
+            pp : ppInfix,
             bp : 200,
             dbp : 1
         }),
