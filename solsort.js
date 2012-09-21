@@ -659,10 +659,14 @@ def("syntax", function(exports) {
         var tokenise = use("tokeniser").tokenise;
         var filename = process.argv[3] || process.argv[1];
         var rsts = exports.parse(tokenise(require("fs").readFileSync(filename, "utf8")));
+        var newCode = pplistlines(rsts, ";");
         if(exports.errors.length) {
             console.log("errors:", exports.errors);
         } else {
-            console.log(pplistlines(rsts, ";"));
+            console.log(newCode);
+            if(!process.argv[3]) {
+                require("fs").writeFileSync(filename + "", newCode);
+            }
         };
     };
     var indent =  - 4;
@@ -687,7 +691,7 @@ def("syntax", function(exports) {
             if(this.children.length === 0) {
                 return this.val;
             } else if(this.children.length === 1) {
-                return this.space + this.val + this.space + pp(this.children[0]);
+                return this.val + this.space + pp(this.children[0]);
             } else if(this.children.length === 2) {
                 var result = "";
                 result += ppPrio(this.children[0], this.bp);
@@ -759,9 +763,6 @@ def("syntax", function(exports) {
         return extend(Object.create(defaultToken), {
             nud : nudPrefix,
             bp : bp,
-            pp : function() {
-                return this.val + " " + pp(this.children[0]);
-            }
         });
     };
     var sep = function() {
@@ -929,11 +930,12 @@ def("syntax", function(exports) {
         "typeof" : prefix(0),
         "var" : prefix(0),
         "string:" : special({pp : stringpp}),
-        "number:" : special({pp : function() {
-            return this.val;
-        }}),
         "comment:" : special({sep : true, pp : function() {
+            if(this.val.slice(0,2) === '//') {
+            return this.val.slice(0,-1);
+            } else {
             return this.val;
+            }
         }}),
         "annotation:" : sep()
     };
