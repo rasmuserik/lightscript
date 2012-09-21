@@ -662,19 +662,21 @@ def("syntax", function(exports) {
         if(exports.errors.length) {
             console.log("errors:", exports.errors);
         } else {
+            console.log(pplistlines(rsts, ';'));
+            /*
             rsts.forEach(function(rst) {
-        //        console.log(require('util').inspect(rst, true, null));
+                //        console.log(require('util').inspect(rst, true, null));
             });
             rsts.forEach(function(rst) {
                 console.log(pp(rst));
             });
+            */
         };
     };
-    var indent = 0;
+    var indent = -4;
     var pp = function(node) {
         return tokenLookup(node).pp();
     };
-
     exports.errors = [];
     var extend = use("util").extend;
     var defaultToken = {
@@ -810,33 +812,43 @@ def("syntax", function(exports) {
                 bp : bp,
                 pp : function() {
                     return this.val + listpp(this.children) + rparen;
-                },
+                }
             });
-                /*function() {
-                    console.log(this.kind, this.val);
-                    return "xxxx";
-                }*/
+            /*function() {
+                console.log(this.kind, this.val);
+                return "xxxx";
+            }*/
         };
     };
     var listpp = function(nodes) {
+        if(nodes.length > 2) {
+            return pplistlines(nodes, ',');
+        } else {
+            return compactlistpp(nodes);
+        }
+    }
+    var compactlistpp = function(nodes) {
         var args = nodes.filter(function(elem) {
             return elem.val !== "," || elem.kind !== "symbol";
         });
         return args.map(pp).join(", ");
     };
     var infixlistpp = function() {
-        return pp(this.children[0]) + this.val[1] + listpp(this.children.slice(1)) + this.val[2];
+        return pp(this.children[0]) + this.val[1] + compactlistpp(this.children.slice(1)) + this.val[2];
     };
     var newline = function() {
         var result = "\n";
         var n = indent;
-        while(n) {
+        while(n>0) {
             result += " ";
             --n;
         };
         return result;
     };
     var pplistlines = function(nodes, sep) {
+        nodes = nodes.filter(function(elem) {
+            return elem.val !== sep || elem.kind !== "symbol";
+        });
         var result = "";
         var listline = function(node) {
             node = tokenLookup(node);
@@ -905,10 +917,14 @@ def("syntax", function(exports) {
             led : function(left) {
                 infixLed.call(this, left);
                 var child1 = this.children[1];
-                if(child1.val === '{' && child1.kind === 'symbol') {
-                    child1.val = '*{}';
-                    child1.children.unshift(extend(Object.create(defaultToken), {kind: 'identifier', val: '', pos: this.pos}));
-                } 
+                if(child1.val === "{" && child1.kind === "symbol") {
+                    child1.val = "*{}";
+                    child1.children.unshift(extend(Object.create(defaultToken), {
+                        kind : "identifier",
+                        val : "",
+                        pos : this.pos
+                    }));
+                };
             },
             nud : nudPrefix,
             oldpp : use("prettyprint").ppInfix,
@@ -940,7 +956,18 @@ def("syntax", function(exports) {
         }}),
         "annotation:" : sep()
     };
-    symb["."].space = "";
+    [".",
+    "++",
+    "--",
+    "!",
+    "~",
+    "`",
+    "@",
+    "#",
+    ].forEach(function(s) {
+        symb[s].space = '';
+    });
+
     var token;
     var nextToken;
     var parse = function(rbp) {
