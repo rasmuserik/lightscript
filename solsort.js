@@ -261,7 +261,45 @@ def("syntax", function(exports) {
     // setup {{{3
     exports.errors = [];
     var extend = use("util").extend;
-    // prettyprint {{{3
+    // parser {{{3
+    var token = undefined;
+    var nextToken = undefined;
+    var parse = function(rbp) {
+        rbp = rbp || 0;
+        var left;
+        var t = token;
+        nextToken();
+        t.nud();
+        left = t;
+        while(rbp < token.bp && !t.sep) {
+            t = token;
+            nextToken();
+            if(!t.led) {
+                t.error("expect led, which doesn't exists");
+            };
+            t.led(left);
+            left = t;
+        };
+        return left;
+    };
+    exports.parse = function(tokens) {
+        var pos = 0;
+        nextToken = function() {
+            token = tokenLookup(pos === tokens.length ? {
+                kind : "eof",
+                rparen : true,
+            } : tokens[pos]);
+            ++pos;
+            return tokenLookup(token);
+        };
+        nextToken();
+        var result = [];
+        while(token.kind !== "eof") {
+            result.push(parse());
+        };
+        return result;
+    };
+    // prettyprinter {{{3
     var indent = - 4;
     var pp = function(node) {
         return tokenLookup(node).pp();
@@ -278,7 +316,9 @@ def("syntax", function(exports) {
         return result;
     };
     var listpp = function(nodes) {
-        if(nodes.length > 2) {
+        if(nodes.length === 0) {
+            return '';
+        } else if(nodes.length > 2) {
             return pplistlines(nodes, ",");
         } else  {
             return compactlistpp(nodes);
@@ -369,7 +409,7 @@ def("syntax", function(exports) {
             });
         },
     };
-    // nud/led-functions {{{3
+    // syntax constructors {{{3
     var nudPrefix = function() {
         var child = parse();
         if(parse.sep) {
@@ -385,7 +425,6 @@ def("syntax", function(exports) {
             parse(this.bp - this.dbp),
         ];
     };
-    // syntax constructors {{{3
     var infix = function(bp) {
         return extend(Object.create(defaultToken), {
             led : infixLed,
@@ -460,7 +499,7 @@ def("syntax", function(exports) {
         node.space = "";
         return node;
     };
-    // Syntax definition {{{3
+    // syntax definition {{{3
     var symb = {
         "." : nospace(infix(1000)),
         "[" : list("]")(1000),
@@ -546,44 +585,6 @@ def("syntax", function(exports) {
             },
         }),
         "annotation:" : sep(),
-    };
-    // parser {{{3
-    var token;
-    var nextToken;
-    var parse = function(rbp) {
-        rbp = rbp || 0;
-        var left;
-        var t = token;
-        nextToken();
-        t.nud();
-        left = t;
-        while(rbp < token.bp && !t.sep) {
-            t = token;
-            nextToken();
-            if(!t.led) {
-                t.error("expect led, which doesn't exists");
-            };
-            t.led(left);
-            left = t;
-        };
-        return left;
-    };
-    exports.parse = function(tokens) {
-        var pos = 0;
-        nextToken = function() {
-            token = tokenLookup(pos === tokens.length ? {
-                kind : "eof",
-                rparen : true,
-            } : tokens[pos]);
-            ++pos;
-            return tokenLookup(token);
-        };
-        nextToken();
-        var result = [];
-        while(token.kind !== "eof") {
-            result.push(parse());
-        };
-        return result;
     };
 });
 // Server {{{1
