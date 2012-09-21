@@ -316,9 +316,7 @@ def("syntax", function(exports) {
         return result;
     };
     var listpp = function(nodes) {
-        if(nodes.length === 0) {
-            return '';
-        } else if(nodes.length > 2) {
+        if(nodes.length > 2) {
             return pplistlines(nodes, ",");
         } else  {
             return compactlistpp(nodes);
@@ -347,6 +345,9 @@ def("syntax", function(exports) {
             return elem.val !== sep || elem.kind !== "symbol";
         });
         var result = "";
+        if(nodes.length === 0) {
+            return result;
+        };
         var listline = function(node) {
             node = tokenLookup(node);
             var result = newline() + node.pp();
@@ -375,8 +376,7 @@ def("syntax", function(exports) {
         return extend(Object.create(proto), orig);
     };
     var defaultToken = {
-        nud : function() {
-        },
+        nud : function() {},
         bp : 0,
         dbp : 0,
         space : " ",
