@@ -657,12 +657,7 @@ def("oldsyntax", function(exports) {
 def("syntax", function(exports) {
     var indent = 0;
     var pp = function(node) {
-        node = tokenLookup(node);
-        if(!node.pp) {
-            console.log("cannot prettyprint", node.kind, node.val);
-        } else {
-            return node.pp();
-        };
+        return tokenLookup(node).pp();
     };
     exports.nodemain = function() {
         var tokenise = use("tokeniser").tokenise;
@@ -690,6 +685,12 @@ def("syntax", function(exports) {
                 this.error(desc);
             };
         },
+        pp : function() {
+            if(this.kind === "identifier") {
+                return this.val;
+            };
+            return this.kind + ":" + this.val;
+        },
         error : function(desc) {
             exports.errors.push({
                 error : "syntax",
@@ -710,6 +711,30 @@ def("syntax", function(exports) {
         };
         this.children = [child];
     };
+    var ppPrio = function(node, prio) {
+        var result = '';
+        if(node.bp && node.bp < prio) {
+            result += '(';
+        };
+        result += pp(node);
+        if(node.bp && node.bp < prio) {
+            result += ')';
+        };
+        return result;
+    };
+    var ppInfix = function() {
+        if(this.children.length === 1) {
+            return this.space + this.val + this.space + pp(this.children[0]);
+        } else if(this.children.length === 2) {
+            var result = '';
+            result += ppPrio(this.children[0], this.bp);
+            result += this.space + this.val + this.space;
+            result += ppPrio(this.children[1], this.bp + 1 - this.dbp);
+            return result;
+        } else {
+            this.error("cannot prettyprint infix mus have 1 <= parameters <= 2");
+        };
+    };
     var infixLed = function(left) {
         this.infix = true;
         this.children = [left, parse(this.bp - this.dbp)];
@@ -718,6 +743,7 @@ def("syntax", function(exports) {
         return extend(Object.create(defaultToken), {
             led : infixLed,
             oldpp : use("prettyprint").ppInfix,
+            pp: ppInfix,
             nud : nudPrefix,
             bp : bp
         });
@@ -727,6 +753,7 @@ def("syntax", function(exports) {
             led : infixLed,
             nud : nudPrefix,
             oldpp : use("prettyprint").ppInfix,
+            pp: ppInfix,
             bp : bp,
             dbp : 1
         });
@@ -737,7 +764,9 @@ def("syntax", function(exports) {
         }});
     };
     var prefix = function(bp) {
-        return extend(Object.create(defaultToken), {nud : nudPrefix, bp : bp});
+        return extend(Object.create(defaultToken), {nud : nudPrefix, bp : bp, pp: function() {
+            return this.val + ' ' + pp(this.children[0]);
+        }});
     };
     var sep = function() {
         return extend(Object.create(defaultToken), {sep : true, pp : function() {
@@ -761,6 +790,7 @@ def("syntax", function(exports) {
         return function(bp) {
             return extend(Object.create(defaultToken), {
                 led : function(left) {
+                    this.val = "*" + this.val + rparen;
                     this.children = [left];
                     this.infix = true;
                     readList(this);
@@ -773,13 +803,59 @@ def("syntax", function(exports) {
             });
         };
     };
+    var listpp = function() {
+        var result = pp(this.children[0]);
+        result += this.val[1];
+        var args = this.children.slice(1).filter(function(elem) {
+            return elem.val !== ',' || elem.kind !== 'symbol';
+        })
+        result += args.map(pp).join(', ');
+        result += this.val[2];
+        return result;
+    };
+    var newline = function() {
+        var result = "\n";
+        var n = indent;
+        while(n) {
+            result += " ";
+            --n;
+        };
+        return result;
+    };
+    var pplistlines = function(nodes, sep) {
+        var result = "";
+        var listline = function(node) {
+            node = tokenLookup(node);
+            var result = newline() + node.pp();
+            if(!node.sep) {
+                result += sep;
+            };
+            return result;
+        };
+        indent += 4;
+        result += nodes.map(listline).join('');
+        indent -= 4;
+        result += newline();
+        return result;
+    };
+    var blockpp = function() {
+        return pp(this.children[0]) + " {" + pplistlines(this.children.slice(1).filter(function(elem) {
+            return elem.val !== ';' || elem.kind !== 'symbol';
+        }), ";") + "}";
+    };
+    var stringpp = function() {
+        return JSON.stringify(this.val.slice(1,  - 1));
+    };
     var symb = {
         "." : infix(1000),
         "[" : list("]")(1000),
+        "*[]" : special({pp : listpp}),
         "]" : rparen(),
         "{" : list("}")(1000),
+        "*{}" : special({pp : blockpp}),
         "}" : rparen(),
         "(" : list(")")(1000),
+        "*()" : special({pp : listpp}),
         ")" : rparen(),
         "#" : prefix(1000),
         "@" : prefix(1000),
@@ -827,6 +903,7 @@ def("syntax", function(exports) {
         "new" : prefix(0),
         "typeof" : prefix(0),
         "var" : prefix(0),
+        "string:" : special({sep : true, pp : stringpp}),
         "comment:" : special({sep : true, pp : function() {
             return this.val;
         }}),

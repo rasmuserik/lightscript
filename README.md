@@ -45,6 +45,27 @@ TODO:
     - content editing with mercury
 - static via nginx
 
+# Intended backends
+
+- JavaScript
+    - node-server
+    - firefox-plugin
+    - chrome-app
+    - facebook-app
+    - html5-app
+    - phonegap-app
+- Java
+    - servlet / google-appengine
+    - PC application
+    - android
+- C or llvm
+    - pebble
+    - TI-dev-board
+    - lego
+    - arduino
+    - iOS
+    - unix
+
 # LightScript Language
 New version of lightscript in progress
 
