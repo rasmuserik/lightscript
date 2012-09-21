@@ -799,19 +799,25 @@ def("syntax", function(exports) {
                     this.children = [];
                     readList(this);
                 },
-                bp : bp
+                bp : bp,
+                pp : function() {
+                    console.log(this.kind, this.val);
+                    return "xxxx";
+                }
             });
         };
     };
     var listpp = function() {
-        var result = pp(this.children[0]);
-        result += this.val[1];
+        var result = this.val[1];
         var args = this.children.slice(1).filter(function(elem) {
             return elem.val !== ',' || elem.kind !== 'symbol';
-        })
+        });
         result += args.map(pp).join(', ');
         result += this.val[2];
         return result;
+    };
+    var infixlistpp = function() {
+        return pp(this.children[0]) + listpp.call(this);
     };
     var newline = function() {
         var result = "\n";
@@ -849,13 +855,13 @@ def("syntax", function(exports) {
     var symb = {
         "." : infix(1000),
         "[" : list("]")(1000),
-        "*[]" : special({pp : listpp}),
+        "*[]" : special({pp : infixlistpp}),
         "]" : rparen(),
         "{" : list("}")(1000),
         "*{}" : special({pp : blockpp}),
         "}" : rparen(),
         "(" : list(")")(1000),
-        "*()" : special({pp : listpp}),
+        "*()" : special({pp : infixlistpp}),
         ")" : rparen(),
         "#" : prefix(1000),
         "@" : prefix(1000),
@@ -887,7 +893,14 @@ def("syntax", function(exports) {
         "||" : infix(300),
         ":" : infixr(200),
         "?" : infixr(200),
-        "else" : infixr(200),
+        "else" : special({
+            led : infixLed,
+            nud : nudPrefix,
+            oldpp : use("prettyprint").ppInfix,
+            pp: ppInfix,
+            bp : 200,
+            dbp : 1
+        }),
         "=" : infixr(100),
         "," : sep(),
         ";" : sep(),
@@ -904,6 +917,9 @@ def("syntax", function(exports) {
         "typeof" : prefix(0),
         "var" : prefix(0),
         "string:" : special({sep : true, pp : stringpp}),
+        "number:" : special({sep : true, pp : function() {
+            return this.val;
+        }}),
         "comment:" : special({sep : true, pp : function() {
             return this.val;
         }}),
