@@ -241,449 +241,6 @@ def("tokeniser", function(exports) {
         return result;
     };
 });
-// Prettyprint {{{2
-def("prettyprint", function(exports) {
-    exports.nodemain = function() {
-        if(use("util").platform === "node") {
-            var ls = {};
-            ls.tokenise = use("tokeniser").tokenise;
-            var syntax = use("oldsyntax");
-            ls.parse = syntax.parse;
-            ls.prettyprint = use("prettyprint").prettyprint;
-            rst2ast = use("rst2ast").rst2ast;
-            var filename = process.argv[1];
-            var rst = ls.parse(ls.tokenise(require("fs").readFileSync(filename, "utf8")));
-            var newCode = ls.prettyprint({
-                kind : "block",
-                children : rst.map(rst2ast).filter(function(elem) {
-                    return elem.val !== ";";
-                }),
-            }).replace(RegExp("\n    ", "g"), "\n").slice(2, - 2) + "\n";
-            if(syntax.errors.length) {
-                console.log("errors:", syntax.errors);
-            } else  {
-                require("fs").writeFileSync(filename + "", newCode);
-            };
-        } else  {
-            throw "TODO: can currently only prettyprint self on node";
-        };
-    };
-    var acc = [];
-    var indent = 0;
-    var newline = function() {
-        var result = "\n";
-        var n = indent;
-        while(n) {
-            result += " ";
-            --n;
-        };
-        return result;
-    };
-    var exprList = function(arr, separator) {
-        var sep = "";
-        arr.forEach(function(elem) {
-            acc.push(sep);
-            pp(elem);
-            sep = separator;
-        });
-    };
-    var parenList = function(arr) {
-        acc.push("(");
-        exprList(arr, ", ");
-        acc.push(")");
-    };
-    var fBlock = function(node) {
-        var len = node.children.length;
-        node.assert(node.children[len - 1].kind === "block", "Expected block after function");
-        acc.push(node.children[0].val);
-        parenList(node.children.slice(1, - 1));
-        acc.push(" ");
-        pp(node.children[len - 1]);
-    };
-    var fPrefix = function(node) {
-        node.assert(node.children.length === 2, "prettyprint prefix must have length 1");
-        acc.push(node.children[0].val);
-        acc.push(" ");
-        pp(node.children[1]);
-    };
-    var ifelse = function(node) {
-        var len = node.children.length;
-        acc.push("if");
-        parenList(node.children.slice(1, 2));
-        acc.push(" ");
-        pp(node.children[2]);
-        if(node.children.length === 4) {
-            acc.push(" else ");
-            pp(node.children[3]);
-        };
-    };
-    var list = function(listEnd) {
-        return function(node) {
-            acc.push(node.children[0].val);
-            if(node.children.length < 4) {
-                exprList(node.children.slice(1), ", ");
-            } else  {
-                indent += 4;
-                acc.push(newline());
-                exprList(node.children.slice(1), "," + newline());
-                indent -= 4;
-                acc.push(newline());
-            };
-            acc.push(listEnd);
-        };
-    };
-    var mPrefix = function(node) {
-        acc.push(node.val);
-        node.assert(node.children.length === 1, "prettyprint");
-        ppPrio(node.children[0], node.bp);
-    };
-    var specialFn = {
-        "function" : fBlock,
-        "while" : fBlock,
-        "var" : fPrefix,
-        "return" : fPrefix,
-        "new" : fPrefix,
-        "typeof" : fPrefix,
-        "throw" : fPrefix,
-        "if" : ifelse,
-        "{" : list("}"),
-        "[" : list("]"),
-    };
-    var mSubscript = function(node) {
-        node.assert(node.children.length === 2, "subscript wrong length");
-        pp(node.children[0]);
-        acc.push("[");
-        pp(node.children[1]);
-        acc.push("]");
-    };
-    var specialMethod = {
-        "++" : mPrefix,
-        "--" : mPrefix,
-        "!" : mPrefix,
-        "~" : mPrefix,
-        "`" : mPrefix,
-        "@" : mPrefix,
-        "#" : mPrefix,
-        "[" : mSubscript,
-    };
-    var pp = function(node) {
-        node = use("oldsyntax").tokenLookup(node);
-        if(node.oldpp) {
-            node.oldpp();
-        } else if(node.kind === "string") {
-            acc.push(JSON.stringify(node.val.slice(1, - 1)));
-            node.assert(node.children.length === 0, "prettyprinting, string with children");
-        } else if(node.kind === "annotation" && node.val.slice(0, 2) === "/*") {
-            acc.push(node.val);
-            node.assert(node.children.length === 0, "prettyprinting, but has children");
-        } else if(node.kind === "annotation" && node.val.slice(0, 2) === "//") {
-            acc.push(node.val.slice(0, - 1));
-            node.assert(node.children.length === 0, "prettyprinting, but has children");
-        } else if(node.kind === "number" || node.kind === "annotation") {
-            acc.push(node.val);
-            node.assert(node.children.length === 0, "prettyprinting, but has children");
-        } else if(node.val === ";") {
-        } else if(node.kind === "call") {
-            if(node.val === "()") {
-                if(node.children[0].kind === "identifier" && specialFn[node.children[0].val]) {
-                    specialFn[node.children[0].val](node);
-                } else  {
-                    pp(node.children[0]);
-                    parenList(node.children.slice(1));
-                };
-            } else  {
-                if(specialMethod[node.val]) {
-                    specialMethod[node.val](node);
-                } else  {
-                    pp(node.children[0]);
-                    acc.push("." + node.val);
-                    parenList(node.children.slice(1));
-                };
-            };
-        } else if(node.kind === "block") {
-            acc.push("{");
-            indent += 4;
-            node.children.forEach(function(child) {
-                acc.push(newline());
-                pp(child);
-                if(child.kind !== "annotation") {
-                    acc.push(";");
-                };
-            });
-            indent -= 4;
-            acc.push(newline());
-            acc.push("}");
-        } else if(node.kind === "identifier") {
-            acc.push(node.val);
-        } else  {
-            node.error("cannot prettyprint");
-            acc.push(node.kind + ":" + node.val + " ");
-            node.children.forEach(function(child) {
-                use("oldsyntax").tokenLookup(child).oldpp(acc, indent);
-            });
-        };
-    };
-    var ppPrio = function(node, prio) {
-        if(node.bp && node.bp < prio) {
-            acc.push("(");
-        };
-        pp(node);
-        if(node.bp && node.bp < prio) {
-            acc.push(")");
-        };
-    };
-    exports.ppInfix = function() {
-        if(this.children.length === 1) {
-            acc.push(this.space + this.val + this.space);
-            pp(this.children[0]);
-        } else if(this.children.length === 2) {
-            ppPrio(this.children[0], this.bp);
-            acc.push(this.space + this.val + this.space);
-            ppPrio(this.children[1], this.bp + 1 - this.dbp);
-        } else  {
-            this.error("cannot prettyprint infix mus have 1 <= parameters <= 2");
-        };
-    };
-    exports.prettyprint = function(obj) {
-        acc = [];
-        indent = 0;
-        pp(obj);
-        return acc.join("");
-    };
-});
-// oldSyntax {{{2
-def("oldsyntax", function(exports) {
-    var indent = 0;
-    var pp = function(node) {
-        node = tokenLookup(node);
-        if(!node.pp) {
-            console.log("cannot prettyprint", node.kind, node.val);
-        } else  {
-            return node.pp();
-        };
-    };
-    exports.nodemain = function() {
-        var tokenise = use("tokeniser").tokenise;
-        var filename = process.argv[1];
-        var rsts = exports.parse(tokenise(require("fs").readFileSync(filename, "utf8")));
-        if(exports.errors.length) {
-            console.log("errors:", exports.errors);
-        } else  {
-            rsts.forEach(function(rst) {
-                console.log(pp(rst));
-            });
-        };
-    };
-    exports.errors = [];
-    var extend = use("util").extend;
-    var defaultToken = {
-        nud : function() {
-        },
-        bp : 0,
-        dbp : 0,
-        space : " ",
-        children : [],
-        assert : function(ok, desc) {
-            if(!ok) {
-                this.error(desc);
-            };
-        },
-        error : function(desc) {
-            exports.errors.push({
-                error : "syntax",
-                desc : desc,
-                token : this,
-            });
-        },
-    };
-    var tokenLookup = exports.tokenLookup = function(orig) {
-        var proto = symb[orig.kind + ":"] || symb[orig.val] || (orig.val && symb[orig.val[orig.val.length - 1]]) || defaultToken;
-        return extend(Object.create(proto), orig);
-    };
-    var nudPrefix = function() {
-        var child = parse();
-        if(parse.sep) {
-            this.error("should be followed by a value, not a separator");
-            child.error("missing something before this element");
-        };
-        this.children = [child];
-    };
-    var infixLed = function(left) {
-        this.infix = true;
-        this.children = [
-            left,
-            parse(this.bp - this.dbp),
-        ];
-    };
-    var infix = function(bp) {
-        return extend(Object.create(defaultToken), {
-            led : infixLed,
-            oldpp : use("prettyprint").ppInfix,
-            nud : nudPrefix,
-            bp : bp,
-        });
-    };
-    var infixr = function(bp) {
-        return extend(Object.create(defaultToken), {
-            led : infixLed,
-            nud : nudPrefix,
-            oldpp : use("prettyprint").ppInfix,
-            bp : bp,
-            dbp : 1,
-        });
-    };
-    var rparen = function() {
-        return extend(Object.create(defaultToken), {
-            rparen : true,
-            nud : function() {
-                this.error("unmatched rparen");
-            },
-        });
-    };
-    var prefix = function(bp) {
-        return extend(Object.create(defaultToken), {
-            nud : nudPrefix,
-            bp : bp,
-        });
-    };
-    var sep = function() {
-        return extend(Object.create(defaultToken), {
-            sep : true,
-            pp : function() {
-                return "";
-            },
-        });
-    };
-    var special = function(ext) {
-        return extend(Object.create(defaultToken), ext);
-    };
-    var list = function(rparen) {
-        var readList = function(obj) {
-            while(!token.rparen) {
-                obj.children.push(parse());
-            };
-            if(token.val !== rparen) {
-                obj.error("Paren mismatch begin");
-                token.error("Paren mismatch end");
-            };
-            nextToken();
-        };
-        return function(bp) {
-            return extend(Object.create(defaultToken), {
-                led : function(left) {
-                    this.children = [left];
-                    this.infix = true;
-                    readList(this);
-                },
-                nud : function() {
-                    this.children = [];
-                    readList(this);
-                },
-                bp : bp,
-            });
-        };
-    };
-    var symb = {
-        "." : infix(1000),
-        "[" : list("]")(1000),
-        "]" : rparen(),
-        "{" : list("}")(1000),
-        "}" : rparen(),
-        "(" : list(")")(1000),
-        ")" : rparen(),
-        "#" : prefix(1000),
-        "@" : prefix(1000),
-        "++" : prefix(1000),
-        "--" : prefix(1000),
-        "!" : prefix(1000),
-        "~" : prefix(1000),
-        "`" : prefix(1000),
-        "*" : infix(900),
-        "/" : infix(900),
-        "%" : infix(900),
-        "-" : infix(800),
-        "+" : infix(800),
-        ">>>" : infix(700),
-        ">>" : infix(700),
-        "<<" : infix(700),
-        "<=" : infix(600),
-        ">=" : infix(600),
-        ">" : infix(600),
-        "<" : infix(600),
-        "==" : infix(500),
-        "!=" : infix(500),
-        "!==" : infix(500),
-        "===" : infix(500),
-        "^" : infix(400),
-        "|" : infix(400),
-        "&" : infix(400),
-        "&&" : infix(300),
-        "||" : infix(300),
-        ":" : infixr(200),
-        "?" : infixr(200),
-        "else" : infixr(200),
-        "=" : infixr(100),
-        "," : sep(),
-        ";" : sep(),
-        constructor : defaultToken,
-        valueOf : defaultToken,
-        toString : defaultToken,
-        toLocaleString : defaultToken,
-        hasOwnProperty : defaultToken,
-        isPrototypeOf : defaultToken,
-        propertyIsEnumerable : defaultToken,
-        "return" : prefix(0),
-        "throw" : prefix(0),
-        "new" : prefix(0),
-        "typeof" : prefix(0),
-        "var" : prefix(0),
-        "comment:" : special({
-            sep : true,
-            pp : function() {
-                return this.val;
-            },
-        }),
-        "annotation:" : sep(),
-    };
-    symb["."].space = "";
-    var token;
-    var nextToken;
-    var parse = function(rbp) {
-        rbp = rbp || 0;
-        var left;
-        var t = token;
-        nextToken();
-        t.nud();
-        left = t;
-        while(rbp < token.bp && !t.sep) {
-            t = token;
-            nextToken();
-            if(!t.led) {
-                t.error("expect led, which doesn't exists");
-            };
-            t.led(left);
-            left = t;
-        };
-        return left;
-    };
-    exports.parse = function(tokens) {
-        var pos = 0;
-        nextToken = function() {
-            token = tokenLookup(pos === tokens.length ? {
-                kind : "eof",
-                rparen : true,
-            } : tokens[pos]);
-            ++pos;
-            return tokenLookup(token);
-        };
-        nextToken();
-        var result = [];
-        while(token.kind !== "eof") {
-            result.push(parse());
-        };
-        return result;
-    };
-});
 // Syntax {{{2
 def("syntax", function(exports) {
     exports.nodemain = function() {
@@ -774,7 +331,6 @@ def("syntax", function(exports) {
     var infix = function(bp) {
         return extend(Object.create(defaultToken), {
             led : infixLed,
-            oldpp : use("prettyprint").ppInfix,
             nud : nudPrefix,
             bp : bp,
         });
@@ -783,7 +339,6 @@ def("syntax", function(exports) {
         return extend(Object.create(defaultToken), {
             led : infixLed,
             nud : nudPrefix,
-            oldpp : use("prettyprint").ppInfix,
             bp : bp,
             dbp : 1,
         });
@@ -895,8 +450,12 @@ def("syntax", function(exports) {
     var stringpp = function() {
         return JSON.stringify(this.val.slice(1, - 1));
     };
+    var nospace = function(node) {
+        node.space = "";
+        return node;
+    };
     var symb = {
-        "." : infix(1000),
+        "." : nospace(infix(1000)),
         "[" : list("]")(1000),
         "*[]" : special({pp : infixlistpp}),
         "]" : rparen(),
@@ -906,13 +465,13 @@ def("syntax", function(exports) {
         "(" : list(")")(1000),
         "*()" : special({pp : infixlistpp}),
         ")" : rparen(),
-        "#" : prefix(1000),
-        "@" : prefix(1000),
-        "++" : prefix(1000),
-        "--" : prefix(1000),
-        "!" : prefix(1000),
-        "~" : prefix(1000),
-        "`" : prefix(1000),
+        "#" : nospace(prefix(1000)),
+        "@" : nospace(prefix(1000)),
+        "++" : nospace(prefix(1000)),
+        "--" : nospace(prefix(1000)),
+        "!" : nospace(prefix(1000)),
+        "~" : nospace(prefix(1000)),
+        "`" : nospace(prefix(1000)),
         "*" : infix(900),
         "/" : infix(900),
         "%" : infix(900),
@@ -950,7 +509,6 @@ def("syntax", function(exports) {
                 };
             },
             nud : nudPrefix,
-            oldpp : use("prettyprint").ppInfix,
             bp : 200,
             dbp : 1,
         }),
@@ -982,18 +540,6 @@ def("syntax", function(exports) {
         }),
         "annotation:" : sep(),
     };
-    [
-        ".",
-        "++",
-        "--",
-        "!",
-        "~",
-        "`",
-        "@",
-        "#",
-    ].forEach(function(s) {
-        symb[s].space = "";
-    });
     var token;
     var nextToken;
     var parse = function(rbp) {
@@ -1031,116 +577,6 @@ def("syntax", function(exports) {
         };
         return result;
     };
-});
-// Rst2Ast {{{2
-def("rst2ast", function(exports) {
-    var trycatch = use("util").trycatch;
-    var clearSep = function(sepVal, arr) {
-        return arr.filter(function(elem) {
-            return !(elem.sep && elem.val === sepVal);
-        });
-    };
-    var rst2ast = function(ast) {
-        return trycatch(function() {
-            return rst2astUnsafe(ast);
-        }, function(err) {
-            ast.error("Could not do rst2ast transformation; " + err);
-            return ast;
-        });
-    };
-    var rst2astUnsafe = function(ast) {
-        var children;
-        var lhs;
-        if(ast.infix) {
-            if(ast.val === "(") {
-                lhs = ast.children[0];
-                if(lhs.infix && lhs.val === "." && lhs.children[1].kind === "identifier") {
-                    children = clearSep(",", ast.children).map(rst2ast);
-                    children[0] = lhs.children[0];
-                    return {
-                        pos : ast.pos,
-                        kind : "call",
-                        val : lhs.children[1].val,
-                        children : children,
-                    };
-                };
-                return {
-                    pos : ast.pos,
-                    kind : "call",
-                    val : "()",
-                    children : clearSep(",", ast.children).map(rst2ast),
-                };
-            };
-            if(ast.val === "else") {
-                lhs = rst2ast(ast.children[0]);
-                if(ast.children[1].val === "{" && !ast.children[1].infix) {
-                    lhs.children.push({
-                        pos : ast.children[1].pos,
-                        kind : "block",
-                        val : "block",
-                        children : clearSep(";", ast.children[1].children).map(rst2ast),
-                    });
-                } else  {
-                    lhs.children.push(rst2ast(ast.children[1]));
-                };
-                return lhs;
-            };
-            if(ast.val === "{") {
-                lhs = rst2ast(ast.children[0]);
-                lhs.children.push({
-                    pos : ast.pos,
-                    kind : "block",
-                    val : "block",
-                    children : clearSep(";", ast.children).slice(1).map(rst2ast),
-                });
-                return lhs;
-            };
-        } else  {
-            if(ast.val === "(" && ast.children.length === 1) {
-                return rst2ast(ast.children[0]);
-            };
-            if(ast.val === "(" || ast.val === "{" || ast.val === "[") {
-                children = clearSep(",", ast.children).map(rst2ast);
-                children.unshift({
-                    pos : ast.pos,
-                    kind : "identifier",
-                    val : ast.val,
-                    children : [],
-                });
-                return {
-                    pos : ast.pos,
-                    kind : "call",
-                    val : "()",
-                    children : children,
-                };
-            };
-            if(ast.val === "var" || ast.val === "return" || ast.val === "throw" || ast.val === "new" || ast.val === "typeof") {
-                return {
-                    pos : ast.pos,
-                    kind : "call",
-                    val : "()",
-                    children : [
-                        {
-                            pos : ast.pos,
-                            kind : "identifier",
-                            val : ast.val,
-                            children : [],
-                        },
-                        rst2ast(ast.children[0]),
-                    ],
-                };
-            };
-        };
-        if(ast.kind === "comment") {
-            ast.kind = "annotation";
-        };
-        if(ast.kind === "symbol") {
-            ast.kind = "call";
-        };
-        ast.children = ast.children.map(rst2ast);
-        return ast;
-    };
-    exports.rst2ast = rst2ast;
 });
 // Server {{{1
 def("server", function(exports) {
