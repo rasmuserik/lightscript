@@ -243,6 +243,7 @@ def("tokeniser", function(exports) {
 });
 // Syntax {{{2
 def("syntax", function(exports) {
+    // main {{{3
     exports.nodemain = function() {
         var tokenise = use("tokeniser").tokenise;
         var filename = process.argv[3] || process.argv[1];
@@ -257,12 +258,78 @@ def("syntax", function(exports) {
             };
         };
     };
+    // setup {{{3
+    exports.errors = [];
+    var extend = use("util").extend;
+    // prettyprint {{{3
     var indent = - 4;
     var pp = function(node) {
         return tokenLookup(node).pp();
     };
-    exports.errors = [];
-    var extend = use("util").extend;
+    var ppPrio = function(node, prio) {
+        var result = "";
+        if(node.bp && node.bp < prio) {
+            result += "(";
+        };
+        result += pp(node);
+        if(node.bp && node.bp < prio) {
+            result += ")";
+        };
+        return result;
+    };
+    var listpp = function(nodes) {
+        if(nodes.length > 2) {
+            return pplistlines(nodes, ",");
+        } else  {
+            return compactlistpp(nodes);
+        };
+    };
+    var compactlistpp = function(nodes) {
+        var args = nodes.filter(function(elem) {
+            return elem.val !== "," || elem.kind !== "symbol";
+        });
+        return args.map(pp).join(", ");
+    };
+    var infixlistpp = function() {
+        return pp(this.children[0]) + this.val[1] + compactlistpp(this.children.slice(1)) + this.val[2];
+    };
+    var newline = function() {
+        var result = "\n";
+        var n = indent;
+        while(n > 0) {
+            result += " ";
+            --n;
+        };
+        return result;
+    };
+    var pplistlines = function(nodes, sep) {
+        nodes = nodes.filter(function(elem) {
+            return elem.val !== sep || elem.kind !== "symbol";
+        });
+        var result = "";
+        var listline = function(node) {
+            node = tokenLookup(node);
+            var result = newline() + node.pp();
+            if(!node.sep) {
+                result += sep;
+            };
+            return result;
+        };
+        indent += 4;
+        result += nodes.map(listline).join("");
+        indent -= 4;
+        result += newline();
+        return result;
+    };
+    var blockpp = function() {
+        return pp(this.children[0]) + " {" + pplistlines(this.children.slice(1).filter(function(elem) {
+            return elem.val !== ";" || elem.kind !== "symbol";
+        }), ";") + "}";
+    };
+    var stringpp = function() {
+        return JSON.stringify(this.val.slice(1, - 1));
+    };
+    // default token {{{3
     var defaultToken = {
         nud : function() {
         },
@@ -298,10 +365,12 @@ def("syntax", function(exports) {
             });
         },
     };
+    // token lookup {{{3
     var tokenLookup = exports.tokenLookup = function(orig) {
         var proto = symb[orig.kind + ":"] || symb[orig.val] || (orig.val && symb[orig.val[orig.val.length - 1]]) || defaultToken;
         return extend(Object.create(proto), orig);
     };
+    // nud/led-functions {{{3
     var nudPrefix = function() {
         var child = parse();
         if(parse.sep) {
@@ -310,17 +379,6 @@ def("syntax", function(exports) {
         };
         this.children = [child];
     };
-    var ppPrio = function(node, prio) {
-        var result = "";
-        if(node.bp && node.bp < prio) {
-            result += "(";
-        };
-        result += pp(node);
-        if(node.bp && node.bp < prio) {
-            result += ")";
-        };
-        return result;
-    };
     var infixLed = function(left) {
         this.infix = true;
         this.children = [
@@ -328,6 +386,7 @@ def("syntax", function(exports) {
             parse(this.bp - this.dbp),
         ];
     };
+    // syntax constructors {{{3
     var infix = function(bp) {
         return extend(Object.create(defaultToken), {
             led : infixLed,
@@ -398,62 +457,11 @@ def("syntax", function(exports) {
             });
         };
     };
-    var listpp = function(nodes) {
-        if(nodes.length > 2) {
-            return pplistlines(nodes, ",");
-        } else  {
-            return compactlistpp(nodes);
-        };
-    };
-    var compactlistpp = function(nodes) {
-        var args = nodes.filter(function(elem) {
-            return elem.val !== "," || elem.kind !== "symbol";
-        });
-        return args.map(pp).join(", ");
-    };
-    var infixlistpp = function() {
-        return pp(this.children[0]) + this.val[1] + compactlistpp(this.children.slice(1)) + this.val[2];
-    };
-    var newline = function() {
-        var result = "\n";
-        var n = indent;
-        while(n > 0) {
-            result += " ";
-            --n;
-        };
-        return result;
-    };
-    var pplistlines = function(nodes, sep) {
-        nodes = nodes.filter(function(elem) {
-            return elem.val !== sep || elem.kind !== "symbol";
-        });
-        var result = "";
-        var listline = function(node) {
-            node = tokenLookup(node);
-            var result = newline() + node.pp();
-            if(!node.sep) {
-                result += sep;
-            };
-            return result;
-        };
-        indent += 4;
-        result += nodes.map(listline).join("");
-        indent -= 4;
-        result += newline();
-        return result;
-    };
-    var blockpp = function() {
-        return pp(this.children[0]) + " {" + pplistlines(this.children.slice(1).filter(function(elem) {
-            return elem.val !== ";" || elem.kind !== "symbol";
-        }), ";") + "}";
-    };
-    var stringpp = function() {
-        return JSON.stringify(this.val.slice(1, - 1));
-    };
     var nospace = function(node) {
         node.space = "";
         return node;
     };
+    // Syntax definition {{{3
     var symb = {
         "." : nospace(infix(1000)),
         "[" : list("]")(1000),
@@ -540,6 +548,7 @@ def("syntax", function(exports) {
         }),
         "annotation:" : sep(),
     };
+    // parser {{{3
     var token;
     var nextToken;
     var parse = function(rbp) {
