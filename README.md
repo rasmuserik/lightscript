@@ -71,8 +71,9 @@ New version of lightscript in progress
 
 ## TODO
 - bug: prefix-parenthesis
-- ast2sst
-- sst2ast
+- token/rst-rename symbol,,number,... id,num,str,comment 
+- rst2sst
+- sst2rst
 - type inference
 - sst2js
 - sst2java
