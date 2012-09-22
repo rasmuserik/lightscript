@@ -1,3 +1,4 @@
+
 // Module system {{{1
 var modules = {};
 use = function(name) {
@@ -33,7 +34,7 @@ def("util", function(exports) {
     };
     if(exports.platform === "node") {
         exports.nextTick = process.nextTick;
-    } else {
+    } else  {
         exports.nextTick = function(f) {
             setTimeout(f, 0);
         };
@@ -51,10 +52,10 @@ def("main", function(exports) {
         if(platform === "web") {
             commandName = window.location.hash.slice(1);
         };
-        if(use(commandName) && use(commandName)[platform + 'main']) {
-            use(commandName)[platform + 'main']();
+        if(use(commandName) && use(commandName)[platform + "main"]) {
+            use(commandName)[platform + "main"]();
         } else if(use(commandName) && use(commandName).main) {
-            use(commandName)[platform + 'main']();
+            use(commandName)[platform + "main"]();
         } else if(use(platform) && use(platform).main) {
             use(platform).main();
         };
@@ -108,7 +109,7 @@ def("tokeniser", function(exports) {
         return {
             kind : kind,
             val : val,
-            pos : pos
+            pos : pos,
         };
     };
     exports.tokenise = function(buffer) {
@@ -116,7 +117,7 @@ def("tokeniser", function(exports) {
         var start;
         var lineno = 0;
         var one_of = function(str) {
-            return str.indexOf(peek()) !==  - 1;
+            return str.indexOf(peek()) !== - 1;
         };
         var starts_with = function(str) {
             return peek(str.length) === str;
@@ -138,10 +139,19 @@ def("tokeniser", function(exports) {
             return result;
         };
         var begin_token = function() {
-            start = {lineno : lineno, pos : pos};
+            start = {
+                lineno : lineno,
+                pos : pos,
+            };
         };
         var newToken = function(kind, val) {
-            var result = createToken(kind, val, {start : start, end : {lineno : lineno, pos : pos}});
+            var result = createToken(kind, val, {
+                start : start,
+                end : {
+                    lineno : lineno,
+                    pos : pos,
+                },
+            });
             return result;
         };
         var next = function() {
@@ -166,14 +176,14 @@ def("tokeniser", function(exports) {
                         s += pop();
                     };
                     s += pop();
-                    return newToken("comment", s);
+                    return newToken("note", s);
                 } else if(starts_with("/*")) {
                     s = "";
                     while(peek() && peek(2) !== "*/") {
                         s += pop();
                     };
                     s += pop(2);
-                    return newToken("comment", s);
+                    return newToken("note", s);
                 } else if(one_of("'\"")) {
                     s = quote = pop();
                     while(!starts_with(quote)) {
@@ -183,41 +193,41 @@ def("tokeniser", function(exports) {
                             c = {
                                 "n" : "\n",
                                 "r" : "\r",
-                                "t" : "\t"
+                                "t" : "\t",
                             }[c] || c;
                         };
                         s += c;
                     };
                     s += pop();
-                    return newToken("string", s);
-                } else if(one_of(digits) || (peek() === "." && digits.indexOf(peek(1, 1)) !==  - 1)) {
+                    return newToken("str", s);
+                } else if(one_of(digits) || (peek() === "." && digits.indexOf(peek(1, 1)) !== - 1)) {
                     s = pop();
                     if(peek() !== "x") {
                         while(peek() && one_of(".e" + digits)) {
                             s += pop();
                         };
-                    } else {
+                    } else  {
                         s = pop(2);
                         while(peek() && one_of(hexdigits)) {
                             s += pop();
                         };
                     };
-                    return newToken("number", s);
+                    return newToken("num", s);
                 } else if(one_of(single_symbol)) {
-                    return newToken("symbol", pop());
+                    return newToken("id", pop());
                 } else if(one_of(joined_symbol)) {
                     s = "";
                     while(peek() && one_of(joined_symbol)) {
                         s += pop();
                     };
-                    return newToken("symbol", s);
+                    return newToken("id", s);
                 } else if(one_of(ident)) {
                     s = "";
                     while(peek() && one_of(ident + digits)) {
                         s += pop();
                     };
-                    return newToken("identifier", s);
-                } else {
+                    return newToken("id", s);
+                } else  {
                     throw "Tokenisation error: " + peek().charCodeAt(0) + " (" + peek() + ") at pos " + pos;
                 };
             };
@@ -231,220 +241,142 @@ def("tokeniser", function(exports) {
         return result;
     };
 });
-// Prettyprint {{{2
-def("prettyprint", function(exports) {
-    exports.main = function() {
-        if(use("util").platform === "node") {
-            var ls = {};
-            ls.tokenise = use("tokeniser").tokenise;
-            var syntax = use("syntax");
-            ls.parse = syntax.parse;
-            ls.prettyprint = use("prettyprint").prettyprint;
-            rst2ast = use("rst2ast").rst2ast;
-            var filename = process.argv[1];
-            var rst = ls.parse(ls.tokenise(require("fs").readFileSync(filename, "utf8")));
-            var newCode = ls.prettyprint({kind : "block", children : rst.map(rst2ast).filter(function(elem) {
-                return elem.val !== ";";
-            })}).replace(RegExp("\n    ", "g"), "\n").slice(2,  - 2) + "\n";
-            if(syntax.errors.length) {
-                console.log("errors:", syntax.errors);
-            } else {
+// Syntax {{{2
+def("syntax", function(exports) {
+    // main {{{3
+    exports.nodemain = function() {
+        var tokenise = use("tokeniser").tokenise;
+        var filename = process.argv[3] || process.argv[1];
+        var rsts = exports.parse(tokenise(require("fs").readFileSync(filename, "utf8")));
+        var newCode = pplistlines(rsts, ";");
+        if(exports.errors.length) {
+            console.log("errors:", exports.errors);
+        } else  {
+            console.log(newCode);
+            if(!process.argv[3]) {
                 require("fs").writeFileSync(filename + "", newCode);
             };
-        } else {
-            throw "TODO: can currently only prettyprint self on node";
         };
     };
-    var acc = [];
-    var indent = 0;
+    // setup {{{3
+    exports.errors = [];
+    var extend = use("util").extend;
+    // parser {{{3
+    var token = undefined;
+    var nextToken = undefined;
+    var parse = function(rbp) {
+        rbp = rbp || 0;
+        var left;
+        var t = token;
+        nextToken();
+        t.nud();
+        left = t;
+        while(rbp < token.bp && !t.sep) {
+            t = token;
+            nextToken();
+            if(!t.led) {
+                t.error("expect led, which doesn't exists");
+            };
+            t.led(left);
+            left = t;
+        };
+        return left;
+    };
+    exports.parse = function(tokens) {
+        var pos = 0;
+        nextToken = function() {
+            token = tokenLookup(pos === tokens.length ? {
+                kind : "eof",
+                rparen : true,
+            } : tokens[pos]);
+            ++pos;
+            return tokenLookup(token);
+        };
+        nextToken();
+        var result = [];
+        while(token.kind !== "eof") {
+            result.push(parse());
+        };
+        return result;
+    };
+    // prettyprinter {{{3
+    var indent = - 4;
+    var pp = function(node) {
+        return tokenLookup(node).pp();
+    };
+    var ppPrio = function(node, prio) {
+        var result = "";
+        if(node.bp && node.bp < prio) {
+            result += "(";
+        };
+        result += pp(node);
+        if(node.bp && node.bp < prio) {
+            result += ")";
+        };
+        return result;
+    };
+    var listpp = function(nodes) {
+        if(nodes.length > 2) {
+            return pplistlines(nodes, ",");
+        } else  {
+            return compactlistpp(nodes);
+        };
+    };
+    var compactlistpp = function(nodes) {
+        var args = nodes.filter(function(elem) {
+            return elem.val !== "," || elem.kind !== "id";
+        });
+        return args.map(pp).join(", ");
+    };
+    var infixlistpp = function() {
+        return pp(this.children[0]) + this.val[1] + compactlistpp(this.children.slice(1)) + this.val[2];
+    };
     var newline = function() {
         var result = "\n";
         var n = indent;
-        while(n) {
+        while(n > 0) {
             result += " ";
             --n;
         };
         return result;
     };
-    var exprList = function(arr, separator) {
-        var sep = "";
-        arr.forEach(function(elem) {
-            acc.push(sep);
-            pp(elem);
-            sep = separator;
+    var pplistlines = function(nodes, sep) {
+        nodes = nodes.filter(function(elem) {
+            return elem.val !== sep || elem.kind !== "id";
         });
-    };
-    var parenList = function(arr) {
-        acc.push("(");
-        exprList(arr, ", ");
-        acc.push(")");
-    };
-    var fBlock = function(node) {
-        var len = node.children.length;
-        node.assert(node.children[len - 1].kind === "block", "Expected block after function");
-        acc.push(node.children[0].val);
-        parenList(node.children.slice(1,  - 1));
-        acc.push(" ");
-        pp(node.children[len - 1]);
-    };
-    var fPrefix = function(node) {
-        node.assert(node.children.length === 2, "prettyprint prefix must have length 1");
-        acc.push(node.children[0].val);
-        acc.push(" ");
-        pp(node.children[1]);
-    };
-    var ifelse = function(node) {
-        var len = node.children.length;
-        acc.push("if");
-        parenList(node.children.slice(1, 2));
-        acc.push(" ");
-        pp(node.children[2]);
-        if(node.children.length === 4) {
-            acc.push(" else ");
-            pp(node.children[3]);
+        var result = "";
+        if(nodes.length === 0) {
+            return result;
         };
-    };
-    var list = function(listEnd) {
-        return function(node) {
-            acc.push(node.children[0].val);
-            if(node.children.length < 4) {
-                exprList(node.children.slice(1), ", ");
-            } else {
-                indent += 4;
-                acc.push(newline());
-                exprList(node.children.slice(1), "," + newline());
-                indent -= 4;
-                acc.push(newline());
+        var listline = function(node) {
+            node = tokenLookup(node);
+            var result = newline() + node.pp();
+            if(!node.sep) {
+                result += sep;
             };
-            acc.push(listEnd);
+            return result;
         };
+        indent += 4;
+        result += nodes.map(listline).join("");
+        indent -= 4;
+        result += newline();
+        return result;
     };
-    var mPrefix = function(node) {
-        acc.push(node.val);
-        node.assert(node.children.length === 1, "prettyprint");
-        ppPrio(node.children[0], node.bp);
+    var blockpp = function() {
+        return pp(this.children[0]) + " {" + pplistlines(this.children.slice(1).filter(function(elem) {
+            return elem.val !== ";" || elem.kind !== "id";
+        }), ";") + "}";
     };
-    var specialFn = {
-        "function" : fBlock,
-        "while" : fBlock,
-        "var" : fPrefix,
-        "return" : fPrefix,
-        "new" : fPrefix,
-        "typeof" : fPrefix,
-        "throw" : fPrefix,
-        "if" : ifelse,
-        "{" : list("}"),
-        "[" : list("]")
+    var stringpp = function() {
+        return JSON.stringify(this.val.slice(1, - 1));
     };
-    var mSubscript = function(node) {
-        node.assert(node.children.length === 2, "subscript wrong length");
-        pp(node.children[0]);
-        acc.push("[");
-        pp(node.children[1]);
-        acc.push("]");
+    // token lookup + default token {{{3
+    var tokenLookup = exports.tokenLookup = function(orig) {
+        var proto = symb[orig.kind + ":"] || symb[orig.val] || (orig.val && symb[orig.val[orig.val.length - 1]]) || defaultToken;
+        return extend(Object.create(proto), orig);
     };
-    var specialMethod = {
-        "++" : mPrefix,
-        "--" : mPrefix,
-        "!" : mPrefix,
-        "~" : mPrefix,
-        "`" : mPrefix,
-        "@" : mPrefix,
-        "#" : mPrefix,
-        "[" : mSubscript
-    };
-    var pp = function(node) {
-        node = use("syntax").tokenLookup(node);
-        if(node.pp) {
-            node.pp();
-        } else if(node.kind === "string") {
-            acc.push(JSON.stringify(node.val.slice(1,  - 1)));
-            node.assert(node.children.length === 0, "prettyprinting, string with children");
-        } else if(node.kind === "annotation" && node.val.slice(0, 2) === "/*") {
-            acc.push(node.val);
-            node.assert(node.children.length === 0, "prettyprinting, but has children");
-        } else if(node.kind === "annotation" && node.val.slice(0, 2) === "//") {
-            acc.push(node.val.slice(0,  - 1));
-            node.assert(node.children.length === 0, "prettyprinting, but has children");
-        } else if(node.kind === "number" || node.kind === "annotation") {
-            acc.push(node.val);
-            node.assert(node.children.length === 0, "prettyprinting, but has children");
-        } else if(node.val === ";") {
-        } else if(node.kind === "call") {
-            if(node.val === "()") {
-                if(node.children[0].kind === "identifier" && specialFn[node.children[0].val]) {
-                    specialFn[node.children[0].val](node);
-                } else {
-                    pp(node.children[0]);
-                    parenList(node.children.slice(1));
-                };
-            } else {
-                if(specialMethod[node.val]) {
-                    specialMethod[node.val](node);
-                } else {
-                    pp(node.children[0]);
-                    acc.push("." + node.val);
-                    parenList(node.children.slice(1));
-                };
-            };
-        } else if(node.kind === "block") {
-            acc.push("{");
-            indent += 4;
-            node.children.forEach(function(child) {
-                acc.push(newline());
-                pp(child);
-                if(child.kind !== "annotation") {
-                    acc.push(";");
-                };
-            });
-            indent -= 4;
-            acc.push(newline());
-            acc.push("}");
-        } else if(node.kind === "identifier") {
-            acc.push(node.val);
-        } else {
-            node.error("cannot prettyprint");
-            acc.push(node.kind + ":" + node.val + " ");
-            node.children.forEach(function(child) {
-                use("syntax").tokenLookup(child).pp(acc, indent);
-            });
-        };
-    };
-    var ppPrio = function(node, prio) {
-        if(node.bp && node.bp < prio) {
-            acc.push("(");
-        };
-        pp(node);
-        if(node.bp && node.bp < prio) {
-            acc.push(")");
-        };
-    };
-    exports.ppInfix = function() {
-        if(this.children.length === 1) {
-            acc.push(this.space + this.val + this.space);
-            pp(this.children[0]);
-        } else if(this.children.length === 2) {
-            ppPrio(this.children[0], this.bp);
-            acc.push(this.space + this.val + this.space);
-            ppPrio(this.children[1], this.bp + 1 - this.dbp);
-        } else {
-            this.error("cannot prettyprint infix mus have 1 <= parameters <= 2");
-        };
-    };
-    exports.prettyprint = function(obj) {
-        acc = [];
-        indent = 0;
-        pp(obj);
-        return acc.join("");
-    };
-});
-// Syntax {{{2
-def("syntax", function(exports) {
-    exports.errors = [];
-    var extend = use("util").extend;
     var defaultToken = {
-        nud : function() {
-        },
+        nud : function() {},
         bp : 0,
         dbp : 0,
         space : " ",
@@ -454,18 +386,30 @@ def("syntax", function(exports) {
                 this.error(desc);
             };
         },
+        pp : function() {
+            if(this.children.length === 0) {
+                return this.val;
+            } else if(this.children.length === 1) {
+                return this.val + this.space + pp(this.children[0]);
+            } else if(this.children.length === 2) {
+                var result = "";
+                result += ppPrio(this.children[0], this.bp);
+                result += this.space + this.val + this.space;
+                result += ppPrio(this.children[1], this.bp + 1 - this.dbp);
+                return result;
+            } else  {
+                this.error("cannot prettyprint...");
+            };
+        },
         error : function(desc) {
             exports.errors.push({
                 error : "syntax",
                 desc : desc,
-                token : this
+                token : this,
             });
-        }
+        },
     };
-    var tokenLookup = exports.tokenLookup = function(orig) {
-        var proto = symb[orig.kind] || symb[orig.val] || (orig.val && symb[orig.val[orig.val.length - 1]]) || defaultToken;
-        return extend(Object.create(proto), orig);
-    };
+    // syntax constructors {{{3
     var nudPrefix = function() {
         var child = parse();
         if(parse.sep) {
@@ -476,35 +420,50 @@ def("syntax", function(exports) {
     };
     var infixLed = function(left) {
         this.infix = true;
-        this.children = [left, parse(this.bp - this.dbp)];
+        this.children = [
+            left,
+            parse(this.bp - this.dbp),
+        ];
     };
     var infix = function(bp) {
         return extend(Object.create(defaultToken), {
             led : infixLed,
-            pp : use("prettyprint").ppInfix,
             nud : nudPrefix,
-            bp : bp
+            bp : bp,
         });
     };
     var infixr = function(bp) {
         return extend(Object.create(defaultToken), {
             led : infixLed,
             nud : nudPrefix,
-            pp : use("prettyprint").ppInfix,
             bp : bp,
-            dbp : 1
+            dbp : 1,
         });
     };
     var rparen = function() {
-        return extend(Object.create(defaultToken), {rparen : true, nud : function() {
-            this.error("unmatched rparen");
-        }});
+        return extend(Object.create(defaultToken), {
+            rparen : true,
+            nud : function() {
+                this.error("unmatched rparen");
+            },
+        });
     };
     var prefix = function(bp) {
-        return extend(Object.create(defaultToken), {nud : nudPrefix, bp : bp});
+        return extend(Object.create(defaultToken), {
+            nud : nudPrefix,
+            bp : bp,
+        });
     };
     var sep = function() {
-        return extend(Object.create(defaultToken), {sep : true});
+        return extend(Object.create(defaultToken), {
+            sep : true,
+            pp : function() {
+                return "";
+            },
+        });
+    };
+    var special = function(ext) {
+        return extend(Object.create(defaultToken), ext);
     };
     var list = function(rparen) {
         var readList = function(obj) {
@@ -520,6 +479,7 @@ def("syntax", function(exports) {
         return function(bp) {
             return extend(Object.create(defaultToken), {
                 led : function(left) {
+                    this.val = "*" + this.val + rparen;
                     this.children = [left];
                     this.infix = true;
                     readList(this);
@@ -528,25 +488,36 @@ def("syntax", function(exports) {
                     this.children = [];
                     readList(this);
                 },
-                bp : bp
+                bp : bp,
+                pp : function() {
+                    return this.val + listpp(this.children) + rparen;
+                },
             });
         };
     };
+    var nospace = function(node) {
+        node.space = "";
+        return node;
+    };
+    // syntax definition {{{3
     var symb = {
-        "." : infix(1000),
+        "." : nospace(infix(1000)),
         "[" : list("]")(1000),
+        "*[]" : special({pp : infixlistpp}),
         "]" : rparen(),
         "{" : list("}")(1000),
+        "*{}" : special({pp : blockpp}),
         "}" : rparen(),
         "(" : list(")")(1000),
+        "*()" : special({pp : infixlistpp}),
         ")" : rparen(),
-        "#" : prefix(1000),
-        "@" : prefix(1000),
-        "++" : prefix(1000),
-        "--" : prefix(1000),
-        "!" : prefix(1000),
-        "~" : prefix(1000),
-        "`" : prefix(1000),
+        "#" : nospace(prefix(1000)),
+        "@" : nospace(prefix(1000)),
+        "++" : nospace(prefix(1000)),
+        "--" : nospace(prefix(1000)),
+        "!" : nospace(prefix(1000)),
+        "~" : nospace(prefix(1000)),
+        "`" : nospace(prefix(1000)),
         "*" : infix(900),
         "/" : infix(900),
         "%" : infix(900),
@@ -570,7 +541,23 @@ def("syntax", function(exports) {
         "||" : infix(300),
         ":" : infixr(200),
         "?" : infixr(200),
-        "else" : infixr(200),
+        "else" : special({
+            led : function(left) {
+                infixLed.call(this, left);
+                var child1 = this.children[1];
+                if(child1.val === "{" && child1.kind === "id") {
+                    child1.val = "*{}";
+                    child1.children.unshift(extend(Object.create(defaultToken), {
+                        kind : "id",
+                        val : "",
+                        pos : this.pos,
+                    }));
+                };
+            },
+            nud : nudPrefix,
+            bp : 200,
+            dbp : 1,
+        }),
         "=" : infixr(100),
         "," : sep(),
         ";" : sep(),
@@ -586,151 +573,19 @@ def("syntax", function(exports) {
         "new" : prefix(0),
         "typeof" : prefix(0),
         "var" : prefix(0),
-        "comment" : sep(),
-        "annotation" : sep()
-    };
-    symb["."].space = "";
-    var token;
-    var nextToken;
-    var parse = function(rbp) {
-        rbp = rbp || 0;
-        var left;
-        var t = token;
-        nextToken();
-        t.nud();
-        left = t;
-        while(rbp < token.bp && !t.sep) {
-            t = token;
-            nextToken();
-            if(!t.led) {
-                t.error("expect led, which doesn't exists");
-            };
-            t.led(left);
-            left = t;
-        };
-        return left;
-    };
-    exports.parse = function(tokens) {
-        var pos = 0;
-        nextToken = function() {
-            token = tokenLookup(pos === tokens.length ? {kind : "eof", rparen : true} : tokens[pos]);
-            ++pos;
-            return tokenLookup(token);
-        };
-        nextToken();
-        var result = [];
-        while(token.kind !== "eof") {
-            result.push(parse());
-        };
-        return result;
-    };
-});
-// Rst2Ast {{{2
-def("rst2ast", function(exports) {
-    var trycatch = use("util").trycatch;
-    var clearSep = function(sepVal, arr) {
-        return arr.filter(function(elem) {
-            return !(elem.sep && elem.val === sepVal);
-        });
-    };
-    var rst2ast = function(ast) {
-        return trycatch(function() {
-            return rst2astUnsafe(ast);
-        }, function(err) {
-            ast.error("Could not do rst2ast transformation; " + err);
-            return ast;
-        });
-    };
-    var rst2astUnsafe = function(ast) {
-        var children;
-        var lhs;
-        if(ast.infix) {
-            if(ast.val === "(") {
-                lhs = ast.children[0];
-                if(lhs.infix && lhs.val === "." && lhs.children[1].kind === "identifier") {
-                    children = clearSep(",", ast.children).map(rst2ast);
-                    children[0] = lhs.children[0];
-                    return {
-                        pos : ast.pos,
-                        kind : "call",
-                        val : lhs.children[1].val,
-                        children : children
-                    };
+        "str:" : special({pp : stringpp}),
+        "note:" : special({
+            sep : true,
+            pp : function() {
+                if(this.val.slice(0, 2) === "//") {
+                    return this.val.slice(0, - 1);
+                } else  {
+                    return this.val;
                 };
-                return {
-                    pos : ast.pos,
-                    kind : "call",
-                    val : "()",
-                    children : clearSep(",", ast.children).map(rst2ast)
-                };
-            };
-            if(ast.val === "else") {
-                lhs = rst2ast(ast.children[0]);
-                if(ast.children[1].val === "{" && !ast.children[1].infix) {
-                    lhs.children.push({
-                        pos : ast.children[1].pos,
-                        kind : "block",
-                        val : "block",
-                        children : clearSep(";", ast.children[1].children).map(rst2ast)
-                    });
-                } else {
-                    lhs.children.push(rst2ast(ast.children[1]));
-                };
-                return lhs;
-            };
-            if(ast.val === "{") {
-                lhs = rst2ast(ast.children[0]);
-                lhs.children.push({
-                    pos : ast.pos,
-                    kind : "block",
-                    val : "block",
-                    children : clearSep(";", ast.children).slice(1).map(rst2ast)
-                });
-                return lhs;
-            };
-        } else {
-            if(ast.val === "(" && ast.children.length === 1) {
-                return rst2ast(ast.children[0]);
-            };
-            if(ast.val === "(" || ast.val === "{" || ast.val === "[") {
-                children = clearSep(",", ast.children).map(rst2ast);
-                children.unshift({
-                    pos : ast.pos,
-                    kind : "identifier",
-                    val : ast.val,
-                    children : []
-                });
-                return {
-                    pos : ast.pos,
-                    kind : "call",
-                    val : "()",
-                    children : children
-                };
-            };
-            if(ast.val === "var" || ast.val === "return" || ast.val === "throw" || ast.val === "new" || ast.val === "typeof") {
-                return {
-                    pos : ast.pos,
-                    kind : "call",
-                    val : "()",
-                    children : [{
-                        pos : ast.pos,
-                        kind : "identifier",
-                        val : ast.val,
-                        children : []
-                    }, rst2ast(ast.children[0])]
-                };
-            };
-        };
-        if(ast.kind === "comment") {
-            ast.kind = "annotation";
-        };
-        if(ast.kind === "symbol") {
-            ast.kind = "call";
-        };
-        ast.children = ast.children.map(rst2ast);
-        return ast;
+            },
+        }),
+        "annotation:" : sep(),
     };
-    exports.rst2ast = rst2ast;
 });
 // Server {{{1
 def("server", function(exports) {
@@ -759,11 +614,11 @@ def("server", function(exports) {
                         "é" : "e",
                         "?" : "",
                         ":" : "",
-                        " " : "_"
+                        " " : "_",
                     };
                     if(subs[c] === undefined) {
                         return "_";
-                    } else {
+                    } else  {
                         return subs[c];
                     };
                 });
@@ -778,7 +633,7 @@ def("server", function(exports) {
                     result[title] = {
                         title : title,
                         url : name2url(title),
-                        html : require("markdown").markdown.toHTML("# " + elem)
+                        html : require("markdown").markdown.toHTML("# " + elem),
                     };
                 });
                 return result;
@@ -791,11 +646,17 @@ def("server", function(exports) {
                     res.removeHeader("X-Powered-By");
                     next();
                 });
-                app.stack.unshift({route : "", handle : logger({path : process.env.HOME + "/data/httpd.log"})});
+                app.stack.unshift({
+                    route : "",
+                    handle : logger({path : process.env.HOME + "/data/httpd.log"}),
+                });
                 app.use(express.bodyParser());
                 Object.keys(notes).forEach(function(key) {
                     app.get("/" + notes[key].url, function(req, res) {
-                        res.send(fixLinks(mustache.to_html(htmlTemplate, {title : key, body : notes[key].html})));
+                        res.send(fixLinks(mustache.to_html(htmlTemplate, {
+                            title : key,
+                            body : notes[key].html,
+                        })));
                     });
                 });
                 var fixLinks = function(html) {
@@ -804,7 +665,10 @@ def("server", function(exports) {
                     });
                 };
                 app.get("/githubLogin", function(req, res) {
-                    https.get({host : "github.com", path : "/login/oauth/access_token?client_id=cc14f7f75ff01bdbb1e7&client_secret=d978cb4e2e1cdb35d4ae9e194b9c36fa0c2f607e&code=" + req.query.code + "&state=" + req.query.state}, function(con) {
+                    https.get({
+                        host : "github.com",
+                        path : "/login/oauth/access_token?client_id=cc14f7f75ff01bdbb1e7&client_secret=d978cb4e2e1cdb35d4ae9e194b9c36fa0c2f607e&code=" + req.query.code + "&state=" + req.query.state,
+                    }, function(con) {
                         con.on("data", function(data) {
                             res.send(req.query.callback + "(\"" + data + "\");", {"Content-Type" : "application/javascript"});
                         });
@@ -833,13 +697,19 @@ def("server", function(exports) {
                         });
                         return ;
                     };
-                    db.get("SELECT * FROM userdata WHERE store=$store AND key=$key;", {$store : store, $key : key}, function(err, row) {
+                    db.get("SELECT * FROM userdata WHERE store=$store AND key=$key;", {
+                        $store : store,
+                        $key : key,
+                    }, function(err, row) {
                         if(err) {
                             return res.send(String(err), {"Content-Type" : "text/plain"}, 500);
                         };
                         var val = row && row.val;
                         if(newVal !== undefined) {
-                            console.log({val : val, prevVal : prevVal});
+                            console.log({
+                                val : val,
+                                prevVal : prevVal,
+                            });
                             if(prevVal != val) {
                                 return res.send(val, {"Content-Type" : "text/plain"}, 409);
                             };
@@ -847,7 +717,7 @@ def("server", function(exports) {
                                 $store : store,
                                 $key : key,
                                 $val : newVal,
-                                $timestamp : Date.now()
+                                $timestamp : Date.now(),
                             }, function(err) {
                                 if(err) {
                                     return res.send(String(err), {"Content-Type" : "text/plain"}, 500);
@@ -914,26 +784,26 @@ body: '<h1>The end of the Internet</h1>' +
     };
 });
 // rest-api {{{1
-def('restapi', function(exports) {
-    var platform = use('util').platform;
+def("restapi", function(exports) {
+    var platform = use("util").platform;
     exports.nodemain = function() {
-        console.log('hello world');
+        console.log("hello world");
         // setup server
-    }
-    if(platform === 'node') {
+    };
+    if(platform === "node") {
         exports.call = function(module, name, param, callback) {
             // call function directly a la
-            if(use(module) && use(module).restable && use(module).restable[name] && typeof use(module)[name] === 'function') {
+            if(use(module) && use(module).restable && use(module).restable[name] && typeof use(module)[name] === "function") {
                 use(module)[name](param, callback);
-            } else {
-                callback({error: 'no such call'});
-            }
-        }
-    } else if(platform === 'web') {
+            } else  {
+                callback({error : "no such call"});
+            };
+        };
+    } else if(platform === "web") {
         exports.call = function(module, param, callback) {
             // send jsonp-request to api.solsort.com
-        }
-    }
+        };
+    };
 });
 // web {{{1
 def("web", function(exports) {
@@ -1046,7 +916,7 @@ def("web", function(exports) {
             var storage = {
                 sync : throttledSync,
                 set : set,
-                get : get
+                get : get,
             };
             stores[storageName] = storage;
             return storage;
@@ -1060,11 +930,11 @@ def("web", function(exports) {
                 var userName = localStorage.getItem("userName");
                 if(!userId) {
                     solsortLogin.innerHTML = "<ul class=\"nav\"><li class=\"dropdown\">" + "<a href=\"#\" class=\"dropdown-toggle\" data-toggle=\"dropdown\">Login<b class=\"caret\"></b></a>" + "<ul class=\"dropdown-menu\">" + "<li><a href=\"javascript:use('web').loginGitHub()\"><span class=\"icon-github\"></span> github</a></li>" + "<li><a href=\"#\" onclick=\"use('web').loginFacebook()\"><span class=\"icon-facebook-sign\"></span> facebook</a></li>" + "<li><a href=\"#\" onclick=\"use('web').loginGoogle()\"><span class=\"icon-google-plus-sign\"></span> google</a></li>" + "</ul></li></ul>";
-                } else {
+                } else  {
                     solsortLogin.innerHTML = "<ul class=\"nav\"><li><a onclick=\"use('web').logout();\">" + userName + "<span class=\"icon-" + {
                         github : "github",
                         facebook : "facebook-sign",
-                        google : "google-plus-sign"
+                        google : "google-plus-sign",
                     }[userId.split(":")[0]] + " icon-large\"></span>" + "logout" + "</a></li></ul>";
                 };
             };
@@ -1111,7 +981,10 @@ def("web", function(exports) {
         var loginAs = function(user, name) {
             localStorage.setItem("userId", user);
             localStorage.setItem("userName", name);
-            exports.jsonp("http://solsort.com/", {user : user, name : name});
+            exports.jsonp("http://solsort.com/", {
+                user : user,
+                name : name,
+            });
             var loginFromUrl = localStorage.getItem("loginFromUrl");
             if(loginFromUrl) {
                 localStorage.removeItem("loginFromUrl");
@@ -1161,13 +1034,12 @@ def("web", function(exports) {
 // publish web sites {{{1
 def("publish", function(exports) {
     exports.nodemain = function() {
-        console.log('copying sites to /usr/share/nginx/www/');
-        require('child_process').exec('cp -a sites/* /usr/share/nginx/www/', function(err,stdout,stderr) {
-            console.log('done', stdout.toString(), stderr.toString());
-
-                                                     if(err) {
-                                                     console.log('Error:', err);
-                                                     }
+        console.log("copying sites to /usr/share/nginx/www/");
+        require("child_process").exec("cp -a sites/* /usr/share/nginx/www/", function(err, stdout, stderr) {
+            console.log("done");
+            if(err) {
+                console.log("Error:", err);
+            };
         });
-    }
+    };
 });
