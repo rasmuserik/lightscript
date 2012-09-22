@@ -111,8 +111,8 @@ Data representations
     - `val` required, data connected to the node, ie. identifier/symbol, string content, comment, or number value
     - `pos` position in the source file of the node
     - `children` required, array of child nodes
-- Simplified syntax tree - tree which is prettyprinted
-    - `kind`: `id`, `str`, `note`, `num`, `call`, `fn`, `branch`, `assign`
+- Simplified syntax tree 
+    - `kind`: `id`, `str`, `note`, `num`, `call`, `fn`, `branch`, `assign`, `block`
     - `val`: method-name on `call`, number of args on `fn`, branch-type(`cond`, `while`, ...) on `branch`, identifier-name on `assign`
     - `type`
     - `children`
