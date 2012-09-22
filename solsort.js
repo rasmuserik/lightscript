@@ -176,14 +176,14 @@ def("tokeniser", function(exports) {
                         s += pop();
                     };
                     s += pop();
-                    return newToken("comment", s);
+                    return newToken("note", s);
                 } else if(starts_with("/*")) {
                     s = "";
                     while(peek() && peek(2) !== "*/") {
                         s += pop();
                     };
                     s += pop(2);
-                    return newToken("comment", s);
+                    return newToken("note", s);
                 } else if(one_of("'\"")) {
                     s = quote = pop();
                     while(!starts_with(quote)) {
@@ -199,7 +199,7 @@ def("tokeniser", function(exports) {
                         s += c;
                     };
                     s += pop();
-                    return newToken("string", s);
+                    return newToken("str", s);
                 } else if(one_of(digits) || (peek() === "." && digits.indexOf(peek(1, 1)) !== - 1)) {
                     s = pop();
                     if(peek() !== "x") {
@@ -212,21 +212,21 @@ def("tokeniser", function(exports) {
                             s += pop();
                         };
                     };
-                    return newToken("number", s);
+                    return newToken("num", s);
                 } else if(one_of(single_symbol)) {
-                    return newToken("symbol", pop());
+                    return newToken("id", pop());
                 } else if(one_of(joined_symbol)) {
                     s = "";
                     while(peek() && one_of(joined_symbol)) {
                         s += pop();
                     };
-                    return newToken("symbol", s);
+                    return newToken("id", s);
                 } else if(one_of(ident)) {
                     s = "";
                     while(peek() && one_of(ident + digits)) {
                         s += pop();
                     };
-                    return newToken("identifier", s);
+                    return newToken("id", s);
                 } else  {
                     throw "Tokenisation error: " + peek().charCodeAt(0) + " (" + peek() + ") at pos " + pos;
                 };
@@ -324,7 +324,7 @@ def("syntax", function(exports) {
     };
     var compactlistpp = function(nodes) {
         var args = nodes.filter(function(elem) {
-            return elem.val !== "," || elem.kind !== "symbol";
+            return elem.val !== "," || elem.kind !== "id";
         });
         return args.map(pp).join(", ");
     };
@@ -342,7 +342,7 @@ def("syntax", function(exports) {
     };
     var pplistlines = function(nodes, sep) {
         nodes = nodes.filter(function(elem) {
-            return elem.val !== sep || elem.kind !== "symbol";
+            return elem.val !== sep || elem.kind !== "id";
         });
         var result = "";
         if(nodes.length === 0) {
@@ -364,7 +364,7 @@ def("syntax", function(exports) {
     };
     var blockpp = function() {
         return pp(this.children[0]) + " {" + pplistlines(this.children.slice(1).filter(function(elem) {
-            return elem.val !== ";" || elem.kind !== "symbol";
+            return elem.val !== ";" || elem.kind !== "id";
         }), ";") + "}";
     };
     var stringpp = function() {
@@ -545,10 +545,10 @@ def("syntax", function(exports) {
             led : function(left) {
                 infixLed.call(this, left);
                 var child1 = this.children[1];
-                if(child1.val === "{" && child1.kind === "symbol") {
+                if(child1.val === "{" && child1.kind === "id") {
                     child1.val = "*{}";
                     child1.children.unshift(extend(Object.create(defaultToken), {
-                        kind : "identifier",
+                        kind : "id",
                         val : "",
                         pos : this.pos,
                     }));
@@ -573,8 +573,8 @@ def("syntax", function(exports) {
         "new" : prefix(0),
         "typeof" : prefix(0),
         "var" : prefix(0),
-        "string:" : special({pp : stringpp}),
-        "comment:" : special({
+        "str:" : special({pp : stringpp}),
+        "note:" : special({
             sep : true,
             pp : function() {
                 if(this.val.slice(0, 2) === "//") {
