@@ -39,6 +39,24 @@ def("util", function(exports) {
             setTimeout(f, 0);
         };
     };
+    exports.listpp = function(list, indent) {
+        indent = indent || "  ";
+        if(typeof(list) === 'string') {
+            return list;
+        } 
+        var result = list.map(function(elem) {
+            return exports.listpp(elem, indent + "  ");
+        });
+        var len = 0;
+        result.forEach(function(elem) {
+            len += elem.length+1;
+        });
+        if(len < 72) {
+            return '[' + result.join(' ') + ']';
+        } else {
+            return '[' + result.join('\n' + indent) + ']';
+        }
+    }
 });
 // Main {{{1
 def("main", function(exports) {
@@ -251,6 +269,12 @@ def("syntax", function(exports) {
                 require("fs").writeFileSync(filename + "", newCode);
             };
         };
+    };
+    // toList {{{3
+    exports.toList = function(ast) {
+        var result = ast.children.map(exports.toList);
+        result.unshift(ast.kind + ':' + ast.val);
+        return result;
     };
     // setup {{{3
     exports.errors = [];
@@ -593,7 +617,7 @@ def("macros", function(exports) {
             console.log("errors:", syntax.errors);
         } else  {
             rsts.forEach(function(rst) {
-                console.log(rst2ast(rst));
+                console.log(use('util').listpp(use('syntax').toList(rst2ast(rst))));
             });
         };
     };
@@ -627,20 +651,38 @@ def("macros", function(exports) {
     // first pass - simplify tree {{{3
     var firstpassmacros = [];
     var firstpassreverse = [];
+    // prune seperators{{{4
+    firstpassmacros.push(function(ast) {
+        if(ast.kind === 'call') {
+            ast.children = ast.children.filter(function(elem) {
+                return elem.val !== ',' || elem.kind !== 'id';
+            });
+        }
+    });
+    // subscripts {{{4
+    firstpassmacros.push(function(ast) {
+        if(ast.val === '=' && ast.kind === 'call') {
+            var lhs = ast.children[0];
+            if(lhs.val === '.' && lhs.kind === 'id') {
+                ast.val = '[]=';
+                ast.children.unshift(lhs.children[0]);
+                ast.children[1] = lhs.children[1];
+                ast.children[1].kind = 'str';
+            }
+        }
+    });
     // call-kind {{{4
     // foo.bar(...)
     firstpassmacros.push(function(ast) {
         if(ast.val === '*()' && ast.kind === 'call') {
             var lhs = ast.children[0];
-            if(lhs.val === '.' && lhs.kind === 'call') {
+            if(lhs.val === '.' && lhs.kind === 'id') {
                 lhs.assert(lhs.children.length === 2 && lhs.children[1].kind === 'id', 'field accessor');
-                ast.kind = 'call';
-                ast.val = lhs.children[1];
+                ast.val = lhs.children[1].val;
                 ast.children[0] = lhs.children[0];
             }
         }
     });
-    // infix ops
     firstpassmacros.push(function(ast) {
         if(ast.children.length > 0) {
             ast.kind = 'call';
