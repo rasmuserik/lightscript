@@ -86,25 +86,25 @@ def("test", function(exports) {
     test.name = "";
     test.error = function(description) {
         ++this.error;
-        console.log(this.name + ':', description);
+        console.log(this.name + ":", description);
     };
     test.assertEqual = function(a, b, description) {
-        description = description || "test: " + a + ' !== ' + b;
+        description = description || "test: " + a + " !== " + b;
         if(a === b) {
             ++this.ok;
-        } else {
+        } else  {
             this.error("assertEqual " + description);
         };
     };
     test.assert = function(result, description) {
         if(result) {
             ++this.ok;
-        } else {
+        } else  {
             this.error("assert " + description);
         };
     };
     test.done = function() {
-        console.log(this.name + ': ' + this.ok + '/' + (this.ok + this.error) + ' tests ok');
+        console.log(this.name + ": " + this.ok + "/" + (this.ok + this.error) + " tests ok");
         this.finished = true;
         clearTimeout(this.timeout);
     };
@@ -271,26 +271,26 @@ def("tokeniser", function(exports) {
 // Ast object {{{2
 def("ast", function(exports) {
     var defaultAst = {
-        create: function(arg) {
+        create : function(arg) {
             var args = Array.prototype.slice.call(arguments, 0);
             var self = Object.create(defaultAst);
             self.pos = this.pos;
-            if(typeof arg === 'object') {
-                self = use('util').extend(self, arg);
-            } else if(typeof arg === 'string') {
-                var splitpos = arg.indexOf(':');
+            if(typeof arg === "object") {
+                self = use("util").extend(self, arg);
+            } else if(typeof arg === "string") {
+                var splitpos = arg.indexOf(":");
                 var kind;
                 var val;
-                if(splitpos === -1) {
+                if(splitpos === - 1) {
                     self.kind = args.shift();
                     self.val = args.shift();
-                } else {
+                } else  {
                     args.shift();
                     self.kind = arg.slice(0, splitpos);
                     self.val = arg.slice(splitpos + 1);
                 };
                 self.children = args;
-            }
+            };
             return self;
         },
         error : function(desc) {
@@ -305,19 +305,23 @@ def("ast", function(exports) {
         return defaultAst.create.apply(defaultAst, args);
     };
     exports.test = function(test) {
-        var ast = exports.create('kind1:val1', 'arg1');
-        test.assertEqual(ast.kind, 'kind1');
-        test.assertEqual(ast.val, 'val1');
-        test.assertEqual(ast.children[0], 'arg1');
-        test.assertEqual(typeof ast.create, 'function', 'has create function');
-        var ast = exports.create('kind2', 'val2', 'arg2');
-        test.assertEqual(ast.kind, 'kind2');
-        test.assertEqual(ast.val, 'val2');
-        test.assertEqual(ast.children[0], 'arg2');
-        var ast = exports.create({kind: 'kind3', val: 'val3', children: ['arg3']});
-        test.assertEqual(ast.kind, 'kind3');
-        test.assertEqual(ast.val, 'val3');
-        test.assertEqual(ast.children[0], 'arg3');
+        var ast = exports.create("kind1:val1", "arg1");
+        test.assertEqual(ast.kind, "kind1");
+        test.assertEqual(ast.val, "val1");
+        test.assertEqual(ast.children[0], "arg1");
+        test.assertEqual(typeof ast.create, "function", "has create function");
+        var ast = exports.create("kind2", "val2", "arg2");
+        test.assertEqual(ast.kind, "kind2");
+        test.assertEqual(ast.val, "val2");
+        test.assertEqual(ast.children[0], "arg2");
+        var ast = exports.create({
+            kind : "kind3",
+            val : "val3",
+            children : ["arg3"],
+        });
+        test.assertEqual(ast.kind, "kind3");
+        test.assertEqual(ast.val, "val3");
+        test.assertEqual(ast.children[0], "arg3");
         test.done();
     };
 });
@@ -461,7 +465,7 @@ def("syntax", function(exports) {
         var proto = symb[orig.kind + ":"] || symb[orig.val] || (orig.val && symb[orig.val[orig.val.length - 1]]) || defaultToken;
         return extend(Object.create(proto), orig);
     };
-    var defaultToken = use('ast').create({
+    var defaultToken = use("ast").create({
         nud : function() {},
         bp : 0,
         dbp : 0,
