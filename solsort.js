@@ -699,7 +699,6 @@ def("macros", function(exports) {
     // rst2ast {{{3
     var rst2ast = function(ast) {
         ast.children = ast.children.map(rst2ast);
-
         // parenthesis
         while(ast.isa("id:(") && ast.children.length === 1) {
             ast = ast.children[0];
@@ -721,9 +720,9 @@ def("macros", function(exports) {
         var rhs = ast.children[1];
         // foo.bar -> foo.'bar'
         if(ast.isa("call:.")) {
-            if(rhs.kind === 'id') {
+            if(rhs.kind === "id") {
                 rhs.kind = "str";
-            }
+            };
         };
         // property-set
         if(ast.isa("call:=")) {
@@ -732,11 +731,11 @@ def("macros", function(exports) {
                 ast.children.unshift(lhs.children[0]);
                 ast.children[1] = lhs.children[1];
             };
-            if(lhs.kind === 'id') {
-                ast.kind = 'assign';
+            if(lhs.kind === "id") {
+                ast.kind = "assign";
                 ast.val = lhs.val;
                 ast.children = ast.children.slice(1);
-            }
+            };
             if(lhs.isa("call:.")) {
                 ast.val = ".=";
                 ast.children.unshift(lhs.children[0]);
