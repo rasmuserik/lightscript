@@ -293,15 +293,15 @@ def("ast", function(exports) {
             };
             return self;
         },
-        isa: function(kindval) {
-            kindval = kindval.split(':');
+        isa : function(kindval) {
+            kindval = kindval.split(":");
             this.assertEqual(kindval.length, 2);
             return this.kind === kindval[0] && this.val === kindval[1];
         },
         assertEqual : function(a, b) {
             if(a !== b) {
-                this.error('assert error: ' + a + ' !== ' + b);
-            }
+                this.error("assert error: " + a + " !== " + b);
+            };
         },
         error : function(desc) {
             throw {
@@ -699,130 +699,113 @@ def("macros", function(exports) {
     // rst2ast {{{3
     var rst2ast = function(ast) {
         ast.children = ast.children.map(rst2ast);
-        rst2asts.forEach(function(f) {
-            ast = f(ast) || ast;
-        });
-        return ast;
-    };
-    var rst2asts = [];
-    // infix ops are calls
-    rst2asts.push(function(ast) {
+
+        // parenthesis
+        while(ast.isa("id:(") && ast.children.length === 1) {
+            ast = ast.children[0];
+        };
+        // infix ops are calls
         if(ast.children.length > 0) {
-            ast.kind = 'call';
-        }
-    });
-    // prune separators
-    rst2asts.push(function(ast) {
-        if(ast.kind === "call") {
+            ast.kind = "call";
+            // prune separators
             ast.children = ast.children.filter(function(elem) {
-                return !elem.isa('id:,');
+                return !elem.isa("id:,");
             });
         };
-    });
-    // parenthesis
-    rst2asts.push(function(ast) {
-        if(ast.isa('call:(') && ast.children.length === 1) {
-            return ast.children[0];
-        }
-    });
-    // foo.bar -> foo.'bar'
-    rst2asts.push(function(ast) {
-        if(ast.isa('call:.')) {
-            ast.assertEqual(ast.children[1].kind, 'id');
-            ast.children[1].kind = 'str';
-        }
-    });
-    // property-set
-    rst2asts.push(function(ast) {
-        if(ast.isa('call:=')) { 
-            var lhs = ast.children[0];
-            if(lhs.isa('call:*[]')) {
-                ast.val = '[]=';
+        // remove var
+        if(ast.isa("call:var")) {
+            ast = ast.children[0];
+        };
+        // extract lhs and rhs
+        var lhs = ast.children[0];
+        var rhs = ast.children[1];
+        // foo.bar -> foo.'bar'
+        if(ast.isa("call:.")) {
+            if(rhs.kind === 'id') {
+                rhs.kind = "str";
+            }
+        };
+        // property-set
+        if(ast.isa("call:=")) {
+            if(lhs.isa("call:*[]")) {
+                ast.val = "[]=";
                 ast.children.unshift(lhs.children[0]);
                 ast.children[1] = lhs.children[1];
+            };
+            if(lhs.kind === 'id') {
+                ast.kind = 'assign';
+                ast.val = lhs.val;
+                ast.children = ast.children.slice(1);
             }
-            if(lhs.isa('call:.')) {
-                ast.val = '.=';
+            if(lhs.isa("call:.")) {
+                ast.val = ".=";
                 ast.children.unshift(lhs.children[0]);
                 ast.children[1] = lhs.children[1];
-            }
-        }
-    });
-    // remove var
-    rst2asts.push(function(ast) {
-        if(ast.isa('call:var')) {
-            return ast.children[0];
-        }
-    });
-    // prune ; in blocks
-    rst2asts.push(function(ast) {
-        if(ast.isa('call:*{}')) {
-            ast.children = ast.children.filter(function(elem) {
-                return !elem.isa('id:;');
-            });
-        }
-    });
-    // foo.bar(...)
-    rst2asts.push(function(ast) {
-        if(ast.isa('call:*()')) {
-            var lhs = ast.children[0];
-            if(lhs.isa('call:.')) {
-                ast.kind = 'call';
+            };
+        };
+        // foo.bar(...)
+        if(ast.isa("call:*()")) {
+            if(lhs.isa("call:.")) {
+                ast.kind = "call";
                 ast.val = lhs.children[1].val;
                 ast.children[0] = lhs.children[0];
-            }
-        }
-    });
-    // if(a) { b };
-    rst2asts.push(function(ast) {
-        if(ast.isa('call:*{}')) {
-            var lhs = ast.children[0];
-            if(lhs.isa('call:*()') && lhs.children[0].isa('id:if')) {
-                lhs.kind = 'branch';
-                lhs.val = 'cond';
+            };
+        };
+        if(ast.isa("call:*{}")) {
+            // prune ; in blocks
+            ast.children = ast.children.filter(function(elem) {
+                return !elem.isa("id:;");
+            });
+            // while(a) { b };
+            if(lhs.isa("call:*()") && lhs.children[0].isa("id:while")) {
+                lhs.kind = "branch";
+                lhs.val = "while";
                 lhs.assertEqual(lhs.children.length, 2);
                 lhs.children[0] = lhs.children[1];
                 ast.children = ast.children.slice(1);
-                ast.kind = 'block';
-                ast.val = '';
+                ast.kind = "block";
+                ast.val = "";
                 lhs.children[1] = ast;
-                return lhs;
-            }
-        }
-    });
-    // } else {
-    rst2asts.push(function(ast) {
-        if(ast.isa('call:else')) {
-            var lhs = ast.children[0];
-            var rhs = ast.children[1];
-            if(lhs.isa('branch:cond')) {
-                var rhs = ast.children[1];
-                if(rhs.isa('branch:cond')) {
-                    ast.kind = 'branch';
-                    ast.val = 'cond';
-                    ast.children = lhs.children.concat(rhs.children);
-                } else if(rhs.isa('call:*{}') && rhs.children[0].isa('id:')){
-                    rhs.kind = 'block';
-                    rhs.val = '';
-                    rhs.children = rhs.children.slice(1);
-                    ast.kind = 'branch';
-                    ast.val = 'cond';
-                    ast.children = lhs.children.concat([rhs]);
-                }
-            }
-        }
-    });
-    // function(a, b) { c };
-    rst2asts.push(function(ast) {
-        if(ast.isa('call:*{}')) {
-            var lhs = ast.children[0];
-            if(lhs.isa('call:*()') && lhs.children[0].isa('id:function')) {
-                ast.kind = 'fn';
+                ast = lhs;
+            };
+            // if(a) { b };
+            if(lhs.isa("call:*()") && lhs.children[0].isa("id:if")) {
+                lhs.kind = "branch";
+                lhs.val = "cond";
+                lhs.assertEqual(lhs.children.length, 2);
+                lhs.children[0] = lhs.children[1];
+                ast.children = ast.children.slice(1);
+                ast.kind = "block";
+                ast.val = "";
+                lhs.children[1] = ast;
+                ast = lhs;
+            };
+            // function(a, b) { c };
+            if(lhs.isa("call:*()") && lhs.children[0].isa("id:function")) {
+                ast.kind = "fn";
                 ast.val = lhs.children.length - 1;
                 ast.children = lhs.children.slice(1).concat(ast.children.slice(1));
-            }
-        }
-    });
+            };
+        };
+        // } else {
+        if(ast.isa("call:else")) {
+            if(lhs.isa("branch:cond")) {
+                if(rhs.isa("branch:cond")) {
+                    ast.kind = "branch";
+                    ast.val = "cond";
+                    ast.children = lhs.children.concat(rhs.children);
+                } else if(rhs.isa("call:*{}") && rhs.children[0].isa("id:")) {
+                    rhs.kind = "block";
+                    rhs.val = "";
+                    rhs.children = rhs.children.slice(1);
+                    ast.kind = "branch";
+                    ast.val = "cond";
+                    ast.children = lhs.children.concat([rhs]);
+                };
+            };
+        };
+        return ast;
+    };
 });
 // Server {{{1
 def("server", function(exports) {
@@ -1280,10 +1263,10 @@ def("publish", function(exports) {
         });
     };
     if(1) {
-        2
+        2;
     } else if(3) {
-        4
-    } else {
-        5
-    }
+        4;
+    } else  {
+        5;
+    };
 });
