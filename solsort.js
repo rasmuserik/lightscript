@@ -581,8 +581,8 @@ def("syntax", function(exports) {
         "annotation:" : sep(),
     };
 });
-// rst2ast {{{2
-def("rst2ast", function(exports) {
+// macros {{{2
+def("macros", function(exports) {
     // main {{{3
     exports.nodemain = function() {
         var tokenise = use("tokeniser").tokenise;
@@ -597,9 +597,62 @@ def("rst2ast", function(exports) {
             });
         };
     };
-    var rst2ast = function(rst) {
-        return rst;
+    // rst2ast {{{3
+    var rst2ast = function(ast) {
+        ast = applyMacros(ast, firstpassmacros);
+        return ast;
     };
+    var applyMacros = function(ast, macros) {
+        var done = false;
+        var transform = function(ast) {
+            applyMacros(ast, macros);
+        };
+        var transformChildren = function() {
+            ast.children.map(transform);
+        };
+        var i = macros.length-1;
+        while(i >= 0 && !done) {
+            ast = macros[i](ast, {
+                end: function() { done = true; },
+                transformChildren: transformChildren,
+                transform: transform,
+            }) || ast;
+            --i;
+        }
+        if(!done) {
+            transformChildren();
+        }
+        return ast
+    }
+    // first pass - simplify tree {{{3
+    var firstpassmacros = [];
+    var firstpassreverse = [];
+    // call-kind {{{4
+    // foo.bar(...)
+    firstpassmacros.push(function(ast) {
+        if(ast.val === '*()' && ast.kind === 'call') {
+            var lhs = ast.children[0];
+            if(lhs.val === '.' && lhs.kind === 'call') {
+                lhs.assert(lhs.children.length === 2 && lhs.children[1].kind === 'id', 'field accessor');
+                ast.kind = 'call';
+                ast.val = lhs.children[1];
+                ast.children[0] = lhs.children[0];
+            }
+        }
+    });
+    // infix ops
+    firstpassmacros.push(function(ast) {
+        if(ast.children.length > 0) {
+            ast.kind = 'call';
+        }
+    });
+    // .parent ref {{{4
+    firstpassmacros.push(function(ast) {
+        ast.children.forEach(function(child) {
+            child.parent = ast;
+        });
+    });
+    // second pass - custom macros {{{3
 });
 // Server {{{1
 def("server", function(exports) {
