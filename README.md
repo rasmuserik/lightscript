@@ -114,8 +114,8 @@ Data representations
 - Simplified syntax tree 
     - `kind`: `id`, `str`, `note`, `num`, `call`, `fn`, `branch`, `assign`, `block`
     - `val`: method-name on `call`, number of args on `fn`, branch-type(`cond`, `while`, ...) on `branch`, identifier-name on `assign`
-    - `type`
     - `children`
+    - `type`
     - `pos`
 - Stack language
 - Executable
