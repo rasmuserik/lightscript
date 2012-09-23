@@ -293,6 +293,16 @@ def("ast", function(exports) {
             };
             return self;
         },
+        isa: function(kindval) {
+            kindval = kindval.split(':');
+            this.assertEqual(kindval.length, 2);
+            return this.kind === kindval[0] && this.val === kindval[1];
+        },
+        assertEqual : function(a, b) {
+            if(a !== b) {
+                this.error('assert error: ' + a + ' !== ' + b);
+            }
+        },
         error : function(desc) {
             throw {
                 error : desc,
@@ -688,80 +698,131 @@ def("macros", function(exports) {
     };
     // rst2ast {{{3
     var rst2ast = function(ast) {
-        ast = applyMacros(ast, firstpassmacros);
+        ast.children = ast.children.map(rst2ast);
+        rst2asts.forEach(function(f) {
+            ast = f(ast) || ast;
+        });
         return ast;
     };
-    var applyMacros = function(ast, macros) {
-        var done = false;
-        var transform = function(ast) {
-            applyMacros(ast, macros);
-        };
-        var transformChildren = function() {
-            ast.children.map(transform);
-        };
-        var i = macros.length - 1;
-        while(i >= 0 && !done) {
-            ast = macros[i](ast, {
-                end : function() {
-                    done = true;
-                },
-                transformChildren : transformChildren,
-                transform : transform,
-            }) || ast;
-            --i;
-        };
-        if(!done) {
-            transformChildren();
-        };
-        return ast;
-    };
-    // first pass - simplify tree {{{3
-    var firstpassmacros = [];
-    var firstpassreverse = [];
-    // prune seperators{{{4
-    firstpassmacros.push(function(ast) {
+    var rst2asts = [];
+    // infix ops are calls
+    rst2asts.push(function(ast) {
+        if(ast.children.length > 0) {
+            ast.kind = 'call';
+        }
+    });
+    // prune separators
+    rst2asts.push(function(ast) {
         if(ast.kind === "call") {
             ast.children = ast.children.filter(function(elem) {
-                return elem.val !== "," || elem.kind !== "id";
+                return !elem.isa('id:,');
             });
         };
     });
-    // subscripts {{{4
-    firstpassmacros.push(function(ast) {
-        if(ast.val === "=" && ast.kind === "call") {
+    // parenthesis
+    rst2asts.push(function(ast) {
+        if(ast.isa('call:(') && ast.children.length === 1) {
+            return ast.children[0];
+        }
+    });
+    // foo.bar -> foo.'bar'
+    rst2asts.push(function(ast) {
+        if(ast.isa('call:.')) {
+            ast.assertEqual(ast.children[1].kind, 'id');
+            ast.children[1].kind = 'str';
+        }
+    });
+    // property-set
+    rst2asts.push(function(ast) {
+        if(ast.isa('call:=')) { 
             var lhs = ast.children[0];
-            if(lhs.val === "." && lhs.kind === "id") {
-                ast.val = "[]=";
+            if(lhs.isa('call:*[]')) {
+                ast.val = '[]=';
                 ast.children.unshift(lhs.children[0]);
                 ast.children[1] = lhs.children[1];
-                ast.children[1].kind = "str";
-            };
-        };
+            }
+            if(lhs.isa('call:.')) {
+                ast.val = '.=';
+                ast.children.unshift(lhs.children[0]);
+                ast.children[1] = lhs.children[1];
+            }
+        }
     });
-    // call-kind {{{4
+    // remove var
+    rst2asts.push(function(ast) {
+        if(ast.isa('call:var')) {
+            return ast.children[0];
+        }
+    });
+    // prune ; in blocks
+    rst2asts.push(function(ast) {
+        if(ast.isa('call:*{}')) {
+            ast.children = ast.children.filter(function(elem) {
+                return !elem.isa('id:;');
+            });
+        }
+    });
     // foo.bar(...)
-    firstpassmacros.push(function(ast) {
-        if(ast.val === "*()" && ast.kind === "call") {
+    rst2asts.push(function(ast) {
+        if(ast.isa('call:*()')) {
             var lhs = ast.children[0];
-            if(lhs.val === "." && lhs.kind === "id") {
-                lhs.assert(lhs.children.length === 2 && lhs.children[1].kind === "id", "field accessor");
+            if(lhs.isa('call:.')) {
+                ast.kind = 'call';
                 ast.val = lhs.children[1].val;
                 ast.children[0] = lhs.children[0];
-            };
-        };
+            }
+        }
     });
-    firstpassmacros.push(function(ast) {
-        if(ast.children.length > 0) {
-            ast.kind = "call";
-        };
+    // if(a) { b };
+    rst2asts.push(function(ast) {
+        if(ast.isa('call:*{}')) {
+            var lhs = ast.children[0];
+            if(lhs.isa('call:*()') && lhs.children[0].isa('id:if')) {
+                lhs.kind = 'branch';
+                lhs.val = 'cond';
+                lhs.assertEqual(lhs.children.length, 2);
+                lhs.children[0] = lhs.children[1];
+                ast.children = ast.children.slice(1);
+                ast.kind = 'block';
+                ast.val = '';
+                lhs.children[1] = ast;
+                return lhs;
+            }
+        }
     });
-    // .parent ref {{{4
-    firstpassmacros.push(function(ast) {
-        ast.children.forEach(function(child) {
-            child.parent = ast;
-        });
+    // } else {
+    rst2asts.push(function(ast) {
+        if(ast.isa('call:else')) {
+            var lhs = ast.children[0];
+            var rhs = ast.children[1];
+            if(lhs.isa('branch:cond')) {
+                var rhs = ast.children[1];
+                if(rhs.isa('branch:cond')) {
+                    ast.kind = 'branch';
+                    ast.val = 'cond';
+                    ast.children = lhs.children.concat(rhs.children);
+                } else if(rhs.isa('call:*{}') && rhs.children[0].isa('id:')){
+                    rhs.kind = 'block';
+                    rhs.val = '';
+                    rhs.children = rhs.children.slice(1);
+                    ast.kind = 'branch';
+                    ast.val = 'cond';
+                    ast.children = lhs.children.concat([rhs]);
+                }
+            }
+        }
     });
-    // second pass - custom macros {{{3
+    // function(a, b) { c };
+    rst2asts.push(function(ast) {
+        if(ast.isa('call:*{}')) {
+            var lhs = ast.children[0];
+            if(lhs.isa('call:*()') && lhs.children[0].isa('id:function')) {
+                ast.kind = 'fn';
+                ast.val = lhs.children.length - 1;
+                ast.children = lhs.children.slice(1).concat(ast.children.slice(1));
+            }
+        }
+    });
 });
 // Server {{{1
 def("server", function(exports) {
@@ -1218,4 +1279,11 @@ def("publish", function(exports) {
             };
         });
     };
+    if(1) {
+        2
+    } else if(3) {
+        4
+    } else {
+        5
+    }
 });
