@@ -145,13 +145,7 @@ def("tokeniser", function(exports) {
             };
         };
         var newToken = function(kind, val) {
-            var result = createToken(kind, val, {
-                start : start,
-                end : {
-                    lineno : lineno,
-                    pos : pos,
-                },
-            });
+            var result = createToken(kind, val, "l" + start.lineno + "p" + start.pos + "-l" + lineno + "p" + pos);
             return result;
         };
         var next = function() {
@@ -592,7 +586,7 @@ def("rst2ast", function(exports) {
     // main {{{3
     exports.nodemain = function() {
         var tokenise = use("tokeniser").tokenise;
-        var syntax = use('syntax');
+        var syntax = use("syntax");
         var filename = process.argv[3] || process.argv[1];
         var rsts = syntax.parse(tokenise(require("fs").readFileSync(filename, "utf8")));
         if(syntax.errors.length) {
