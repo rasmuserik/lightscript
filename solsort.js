@@ -587,6 +587,26 @@ def("syntax", function(exports) {
         "annotation:" : sep(),
     };
 });
+// rst2ast {{{2
+def("rst2ast", function(exports) {
+    // main {{{3
+    exports.nodemain = function() {
+        var tokenise = use("tokeniser").tokenise;
+        var syntax = use('syntax');
+        var filename = process.argv[3] || process.argv[1];
+        var rsts = syntax.parse(tokenise(require("fs").readFileSync(filename, "utf8")));
+        if(syntax.errors.length) {
+            console.log("errors:", syntax.errors);
+        } else  {
+            rsts.forEach(function(rst) {
+                console.log(rst2ast(rst));
+            });
+        };
+    };
+    var rst2ast = function(rst) {
+        return rst;
+    };
+});
 // Server {{{1
 def("server", function(exports) {
     if(use("util").platform === "node") {
