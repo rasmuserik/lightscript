@@ -358,9 +358,25 @@ def("syntax", function(exports) {
         result.unshift(ast.kind + ":" + ast.val);
         return result;
     };
-    // setup {{{3
+    // setup, token lookup, default token {{{3
     exports.errors = [];
     var extend = use("util").extend;
+    var tokenLookup = exports.tokenLookup = function(orig) {
+        var proto = symb[orig.kind + ":"] || symb[orig.val] || (orig.val && symb[orig.val[orig.val.length - 1]]) || defaultToken;
+        return extend(Object.create(proto), orig);
+    };
+    var defaultToken = use("ast").create({
+        nud : function() {},
+        bp : 0,
+        dbp : 0,
+        space : " ",
+        children : [],
+        assert : function(ok, desc) {
+            if(!ok) {
+                this.error(desc);
+            };
+        },
+    });
     // parser {{{3
     var token = undefined;
     var nextToken = undefined;
@@ -401,7 +417,24 @@ def("syntax", function(exports) {
     };
     // prettyprinter {{{3
     var indent = - 4;
-    var pp = function(node) {
+
+    defaultToken.pp = function() {
+            if(this.children.length === 0) {
+                return this.val;
+            } else if(this.children.length === 1) {
+                return this.val + this.space + pp(this.children[0]);
+            } else if(this.children.length === 2) {
+                var result = "";
+                result += ppPrio(this.children[0], this.bp);
+                result += this.space + this.val + this.space;
+                result += ppPrio(this.children[1], this.bp + 1 - this.dbp);
+                return result;
+            } else  {
+                return '<([' + this.val + '|' + this.children.map(pp).join(', ') + '])>';
+                this.error("cannot prettyprint...");
+            };
+        };
+    var pp = exports.prettyprint = function(node) {
         return tokenLookup(node).pp();
     };
     var ppPrio = function(node, prio) {
@@ -470,38 +503,6 @@ def("syntax", function(exports) {
     var stringpp = function() {
         return JSON.stringify(this.val.slice(1, - 1));
     };
-    // token lookup + default token {{{3
-    var tokenLookup = exports.tokenLookup = function(orig) {
-        var proto = symb[orig.kind + ":"] || symb[orig.val] || (orig.val && symb[orig.val[orig.val.length - 1]]) || defaultToken;
-        return extend(Object.create(proto), orig);
-    };
-    var defaultToken = use("ast").create({
-        nud : function() {},
-        bp : 0,
-        dbp : 0,
-        space : " ",
-        children : [],
-        assert : function(ok, desc) {
-            if(!ok) {
-                this.error(desc);
-            };
-        },
-        pp : function() {
-            if(this.children.length === 0) {
-                return this.val;
-            } else if(this.children.length === 1) {
-                return this.val + this.space + pp(this.children[0]);
-            } else if(this.children.length === 2) {
-                var result = "";
-                result += ppPrio(this.children[0], this.bp);
-                result += this.space + this.val + this.space;
-                result += ppPrio(this.children[1], this.bp + 1 - this.dbp);
-                return result;
-            } else  {
-                this.error("cannot prettyprint...");
-            };
-        },
-    });
     // syntax constructors {{{3
     var nudPrefix = function() {
         var child = parse();
@@ -702,7 +703,7 @@ def("rst2ast", function(exports) {
         };
     };
     // rst2ast {{{3
-    var rst2ast = function(ast) {
+    var rst2ast = exports.rst2ast = function(ast) {
         // Before recursive transformation {{{4
         // Object
         if(ast.isa("id:{")) {
@@ -848,6 +849,49 @@ def("rst2ast", function(exports) {
                 ast.children[0] = lhs.children[0];
             };
         };
+        return ast;
+    };
+});
+
+// ast2js {{{2
+def("ast2js", function(exports) {
+    // main {{{3
+    exports.nodemain = function() {
+        var tokenise = use("tokeniser").tokenise;
+        var syntax = use("syntax");
+        var filename = process.argv[3] || process.argv[1];
+        var rsts = syntax.parse(tokenise(require("fs").readFileSync(filename, "utf8")));
+        if(syntax.errors.length) {
+            console.log("errors:", syntax.errors);
+        } else  {
+            rsts.forEach(function(rst) {
+                var f = function(elem) {
+                    console.log(elem.kind, elem.val);
+                    elem.children.map(f);
+                };
+                //f(rst2ast(rst));
+                //console.log(use("util").listpp(use("syntax").toList(ast2js(use('rst2ast').rst2ast(rst)))));
+                console.log(use("syntax").prettyprint(ast2js(use('rst2ast').rst2ast(rst))));
+            });
+        };
+    };
+    var ast2js = exports.ast2js = function(ast) {
+        ast.children = ast.children.map(ast2js);
+        if(ast.kind === 'call') {
+            ast.kind = 'id';
+        }
+        if(ast.kind === 'branch') {
+            ast.kind = 'id';
+        }
+        if(ast.kind === 'fn') {
+            ast.kind = 'id';
+        }
+        if(ast.kind === 'assign') {
+            ast.kind = 'id';
+        }
+        if(ast.kind === 'block') {
+            ast.kind = 'id';
+        }
         return ast;
     };
 });
