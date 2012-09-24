@@ -417,23 +417,22 @@ def("syntax", function(exports) {
     };
     // prettyprinter {{{3
     var indent = - 4;
-
     defaultToken.pp = function() {
-            if(this.children.length === 0) {
-                return this.val;
-            } else if(this.children.length === 1) {
-                return this.val + this.space + pp(this.children[0]);
-            } else if(this.children.length === 2) {
-                var result = "";
-                result += ppPrio(this.children[0], this.bp);
-                result += this.space + this.val + this.space;
-                result += ppPrio(this.children[1], this.bp + 1 - this.dbp);
-                return result;
-            } else  {
-                return '<([' + this.val + '|' + this.children.map(pp).join(', ') + '])>';
-                this.error("cannot prettyprint...");
-            };
+        if(this.children.length === 0) {
+            return this.val;
+        } else if(this.children.length === 1) {
+            return this.val + this.space + pp(this.children[0]);
+        } else if(this.children.length === 2) {
+            var result = "";
+            result += ppPrio(this.children[0], this.bp);
+            result += this.space + this.val + this.space;
+            result += ppPrio(this.children[1], this.bp + 1 - this.dbp);
+            return result;
+        } else  {
+            return "<([" + this.val + "|" + this.children.map(pp).join(", ") + "])>";
+            this.error("cannot prettyprint...");
         };
+    };
     var pp = exports.prettyprint = function(node) {
         return tokenLookup(node).pp();
     };
@@ -852,7 +851,6 @@ def("rst2ast", function(exports) {
         return ast;
     };
 });
-
 // ast2js {{{2
 def("ast2js", function(exports) {
     // main {{{3
@@ -871,27 +869,27 @@ def("ast2js", function(exports) {
                 };
                 //f(rst2ast(rst));
                 //console.log(use("util").listpp(use("syntax").toList(ast2js(use('rst2ast').rst2ast(rst)))));
-                console.log(use("syntax").prettyprint(ast2js(use('rst2ast').rst2ast(rst))));
+                console.log(use("syntax").prettyprint(ast2js(use("rst2ast").rst2ast(rst))));
             });
         };
     };
     var ast2js = exports.ast2js = function(ast) {
         ast.children = ast.children.map(ast2js);
-        if(ast.kind === 'call') {
-            ast.kind = 'id';
-        }
-        if(ast.kind === 'branch') {
-            ast.kind = 'id';
-        }
-        if(ast.kind === 'fn') {
-            ast.kind = 'id';
-        }
-        if(ast.kind === 'assign') {
-            ast.kind = 'id';
-        }
-        if(ast.kind === 'block') {
-            ast.kind = 'id';
-        }
+        if(ast.kind === "call") {
+            ast.kind = "id";
+        };
+        if(ast.kind === "branch") {
+            ast.kind = "id";
+        };
+        if(ast.kind === "fn") {
+            ast.kind = "id";
+        };
+        if(ast.kind === "assign") {
+            ast.kind = "id";
+        };
+        if(ast.kind === "block") {
+            ast.kind = "id";
+        };
         return ast;
     };
 });
