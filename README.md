@@ -113,7 +113,8 @@ Data representations
     - `children` required, array of child nodes
 - Simplified syntax tree 
     - `kind`: `id`, `str`, `note`, `num`, `call`, `fn`, `branch`, `assign`, `block`
-    - `val`: method-name on `call`, number of args on `fn`, branch-type(`cond`, `while`, ...) on `branch`, identifier-name on `assign`
+    - `val`: method-name on `call`, number of args on `fn`, identifier-name on `assign`
+        branch-vals:`cond`, `?:`, `return`, `while`, 
     - `children`
     - `type`
     - `pos`

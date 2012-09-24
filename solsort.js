@@ -680,8 +680,8 @@ def("syntax", function(exports) {
         "annotation:" : sep(),
     };
 });
-// macros {{{2
-def("macros", function(exports) {
+// rst2ast {{{2
+def("rst2ast", function(exports) {
     // main {{{3
     exports.nodemain = function() {
         var tokenise = use("tokeniser").tokenise;
@@ -692,13 +692,19 @@ def("macros", function(exports) {
             console.log("errors:", syntax.errors);
         } else  {
             rsts.forEach(function(rst) {
+                var f = function(elem) {
+                    console.log(elem.kind, elem.val);
+                    elem.children.map(f);
+                }
+                //f(rst2ast(rst));
                 console.log(use("util").listpp(use("syntax").toList(rst2ast(rst))));
             });
         };
     };
     // rst2ast {{{3
     var rst2ast = function(ast) {
-        // Object {{{4
+        // Before recursive transformation {{{4
+        // Object
         if(ast.isa('id:{')) {
             var isHashTable = true;
             var children = [ast.create('id:Object')];
@@ -718,49 +724,66 @@ def("macros", function(exports) {
                 ast.children = children;
             }
         }
-        // Array {{{4
+        // ?: (here because of the :)
+        if(ast.isa('id:?') && ast.children.length === 2) {
+            var rhs = ast.children[1];
+            if(rhs.kind === 'id' && rhs.val === ':' && rhs.children.length === 2) {
+                ast.children.push(rhs.children[1]);
+                ast.children[1] = rhs.children[0];
+                ast.kind = 'branch';
+                ast.val = '?:';
+            }
+        }
+        // Array
         if(ast.isa('id:[')) {
             ast.children.unshift(ast.create('id:Array'));
             ast.val = 'new';
         }
+
+
         // transform children {{{4
         ast.children = ast.children.map(rst2ast);
-        // parenthesis {{{4
+        // After recursive transformation {{{4
+        // parenthesie (x) -> x {{{5
         while(ast.isa("id:(") && ast.children.length === 1) {
             ast = ast.children[0];
         };
-        // infix ops are calls
-        if(ast.children.length > 0) {
+        // call {{{5
+        if(ast.kind === 'id' && ast.children.length > 0) {
             ast.kind = "call";
-            // prune separators
             ast.children = ast.children.filter(function(elem) {
                 return !elem.isa("id:,");
             });
         };
-        // remove var
+        // remove var {{{5
         if(ast.isa("call:var")) {
             ast = ast.children[0];
         };
-        // extract lhs and rhs
+        // extract lhs and rhs {{{5
         var lhs = ast.children[0];
         var rhs = ast.children[1];
+        // Simple cases {{{5
         // foo.bar -> foo.'bar'
         if(ast.isa("call:.")) {
             if(rhs.kind === "id") {
                 rhs.kind = "str";
             };
         };
-        // property-set
+        // return
+        if(ast.isa("call:return")) {
+            ast.kind = 'branch';
+        };
+        // = {{{5
         if(ast.isa("call:=")) {
-            if(lhs.isa("call:*[]")) {
-                ast.val = "[]=";
-                ast.children.unshift(lhs.children[0]);
-                ast.children[1] = lhs.children[1];
-            };
             if(lhs.kind === "id") {
                 ast.kind = "assign";
                 ast.val = lhs.val;
                 ast.children = ast.children.slice(1);
+            };
+            if(lhs.isa("call:*[]")) {
+                ast.val = "[]=";
+                ast.children.unshift(lhs.children[0]);
+                ast.children[1] = lhs.children[1];
             };
             if(lhs.isa("call:.")) {
                 ast.val = ".=";
@@ -768,20 +791,12 @@ def("macros", function(exports) {
                 ast.children[1] = lhs.children[1];
             };
         };
-        // foo.bar(...)
-        if(ast.isa("call:*()")) {
-            if(lhs.isa("call:.")) {
-                ast.kind = "call";
-                ast.val = lhs.children[1].val;
-                ast.children[0] = lhs.children[0];
-            };
-        };
+        // *{} {{{5
         if(ast.isa("call:*{}")) {
-            // prune ; in blocks
             ast.children = ast.children.filter(function(elem) {
                 return !elem.isa("id:;");
             });
-            // while(a) { b };
+            // while(a) { b }; 
             if(lhs.isa("call:*()") && lhs.children[0].isa("id:while")) {
                 lhs.kind = "branch";
                 lhs.val = "while";
@@ -805,14 +820,14 @@ def("macros", function(exports) {
                 lhs.children[1] = ast;
                 ast = lhs;
             };
-            // function(a, b) { c };
+            // function(a, b) { c }; 
             if(lhs.isa("call:*()") && lhs.children[0].isa("id:function")) {
                 ast.kind = "fn";
                 ast.val = lhs.children.length - 1;
                 ast.children = lhs.children.slice(1).concat(ast.children.slice(1));
             };
         };
-        // } else {
+        // else {{{5
         if(ast.isa("call:else")) {
             if(lhs.isa("branch:cond")) {
                 if(rhs.isa("branch:cond")) {
@@ -827,6 +842,13 @@ def("macros", function(exports) {
                     ast.val = "cond";
                     ast.children = lhs.children.concat([rhs]);
                 };
+            };
+        };
+        // method call {{{5
+        if(ast.isa("call:*()")) {
+            if(lhs.isa("call:.")) {
+                ast.val = lhs.children[1].val;
+                ast.children[0] = lhs.children[0];
             };
         };
         return ast;
