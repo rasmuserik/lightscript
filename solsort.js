@@ -698,8 +698,34 @@ def("macros", function(exports) {
     };
     // rst2ast {{{3
     var rst2ast = function(ast) {
+        // Object {{{4
+        if(ast.isa('id:{')) {
+            var isHashTable = true;
+            var children = [ast.create('id:Object')];
+            ast.children.forEach(function(elem) {
+                if(elem.kind === 'id' && elem.val === ':' && elem.children.length === 2) {
+                    elem.children[0].kind = 'str';
+                    children = children.concat(elem.children);
+                } else if(elem.isa('id:,')) {
+                } else {
+                    isHashTable = false;
+                    elem.error('unexpected in object literal');
+                }
+            });
+            if(isHashTable) {
+                ast.kind = 'call';
+                ast.val = 'new';
+                ast.children = children;
+            }
+        }
+        // Array {{{4
+        if(ast.isa('id:[')) {
+            ast.children.unshift(ast.create('id:Array'));
+            ast.val = 'new';
+        }
+        // transform children {{{4
         ast.children = ast.children.map(rst2ast);
-        // parenthesis
+        // parenthesis {{{4
         while(ast.isa("id:(") && ast.children.length === 1) {
             ast = ast.children[0];
         };
