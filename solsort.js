@@ -212,7 +212,8 @@ def("tokeniser", function(exports) {
                     s += pop(2);
                     return newToken("note", s);
                 } else if(one_of("'\"")) {
-                    s = quote = pop();
+                    s = "";
+                    quote = pop();
                     while(!starts_with(quote)) {
                         c = pop();
                         if(c === "\\") {
@@ -225,7 +226,7 @@ def("tokeniser", function(exports) {
                         };
                         s += c;
                     };
-                    s += pop();
+                    pop();
                     return newToken("str", s);
                 } else if(one_of(digits) || (peek() === "." && digits.indexOf(peek(1, 1)) !== - 1)) {
                     s = pop();
@@ -500,7 +501,7 @@ def("syntax", function(exports) {
         }), ";") + "}";
     };
     var stringpp = function() {
-        return JSON.stringify(this.val.slice(1, - 1));
+        return JSON.stringify(this.val);
     };
     // syntax constructors {{{3
     var nudPrefix = function() {
