@@ -877,70 +877,68 @@ def("ast2js", function(exports) {
                 };
                 //f(rst2ast(rst));
                 //console.log(use("util").listpp(use("syntax").toList(rst)));
-                var jsast = ast2js(use('rst2ast').rst2ast(rst));
+                var jsast = ast2js(use("rst2ast").rst2ast(rst));
                 //console.log(use("util").listpp(use("syntax").toList(jsast)));
                 console.log(use("syntax").prettyprint(jsast));
             });
         };
     };
     var str2obj = function(str) {
-        return use('util').list2obj(str.split(' '));
+        return use("util").list2obj(str.split(" "));
     };
-    var jsoperator = str2obj('= === !== < <= > >= ! | & ^ << >> ~ - + ++ -- * / ! % *() *[]');
+    var jsoperator = str2obj("= === !== < <= > >= ! | & ^ << >> ~ - + ++ -- * / ! % *() *[]");
     var validIdSymbs = "qwertyuiopasdfghjklzxcvbnm1234567890_$";
-    var num = '1234567890';
-    var reserved = str2obj('break case catch continue debugger default delete do else finally for function if in instanceof new return switch this throw try typeof var void while with class enum export extends import super implements interface let package private protected public static yield');
+    var num = "1234567890";
+    var reserved = str2obj("break case catch continue debugger default delete do else finally for function if in instanceof new return switch this throw try typeof var void while with class enum export extends import super implements interface let package private protected public static yield");
     var isValidId = function(str) {
         if(reserved[str]) {
             return false;
-        }
-        if(num.indexOf(str[0]) !== -1) {
+        };
+        if(num.indexOf(str[0]) !== - 1) {
             return false;
-        }
+        };
         var i = str.length;
         while(i) {
             --i;
-            if(validIdSymbs.indexOf(str[i]) === -1) {
+            if(validIdSymbs.indexOf(str[i]) === - 1) {
                 return false;
-            }
-        }
+            };
+        };
         return true;
-
-    }
+    };
     var ast2js = exports.ast2js = function(ast) {
         var lhs;
         ast.children = ast.children.map(ast2js);
         if(ast.kind === "call") {
-            if(jsoperator[ast.val]) {
-            } else if(ast.val === '.=') {
-                var lhs = ast.create('id:.', ast.children[0], ast.children[1]);
+            if(jsoperator[ast.val]) {} else if(ast.val === ".=") {
+                var lhs = ast.create("id:.", ast.children[0], ast.children[1]);
                 ast.assert(isValidId(ast.children[1]));
-                lhs.children[1].kind = 'id';
+                lhs.children[1].kind = "id";
                 ast.children.shift();
                 ast.children[0] = lhs;
-                ast.val = '=';
-            } else {
+                ast.val = "=";
+            } else  {
                 if(isValidId(ast.val)) {
-                    lhs = ast.create('id:.', ast.create('id', ast.val));
-                } else {
-                    lhs = ast.create('id:*[]', ast.create('str', ast.val));
-                }
+                    lhs = ast.create("id:.", ast.create("id", ast.val));
+                } else  {
+                    lhs = ast.create("id:*[]", ast.create("str", ast.val));
+                };
                 lhs.children.unshift(ast.children[0]);
                 ast.children[0] = lhs;
-                ast.val = '*()';
-            }
+                ast.val = "*()";
+            };
             ast.kind = "id";
         };
         if(ast.kind === "branch") {
             ast.kind = "id";
         };
         if(ast.kind === "fn") {
-            var len = +ast.val;
-            lhs = ast.create('id:*()', ast.create('id:function'));
+            var len = + ast.val;
+            lhs = ast.create("id:*()", ast.create("id:function"));
             lhs.children = lhs.children.concat(ast.children.slice(0, len));
             ast.children = ast.children.slice(len);
             ast.children.unshift(lhs);
-            ast.kind = 'id';
+            ast.kind = "id";
             ast.val = "*{}";
         };
         if(ast.kind === "assign") {
