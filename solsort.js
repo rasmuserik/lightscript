@@ -695,7 +695,7 @@ def("rst2ast", function(exports) {
                 var f = function(elem) {
                     console.log(elem.kind, elem.val);
                     elem.children.map(f);
-                }
+                };
                 //f(rst2ast(rst));
                 console.log(use("util").listpp(use("syntax").toList(rst2ast(rst))));
             });
@@ -705,42 +705,39 @@ def("rst2ast", function(exports) {
     var rst2ast = function(ast) {
         // Before recursive transformation {{{4
         // Object
-        if(ast.isa('id:{')) {
+        if(ast.isa("id:{")) {
             var isHashTable = true;
-            var children = [ast.create('id:Object')];
+            var children = [ast.create("id:Object")];
             ast.children.forEach(function(elem) {
-                if(elem.kind === 'id' && elem.val === ':' && elem.children.length === 2) {
-                    elem.children[0].kind = 'str';
+                if(elem.kind === "id" && elem.val === ":" && elem.children.length === 2) {
+                    elem.children[0].kind = "str";
                     children = children.concat(elem.children);
-                } else if(elem.isa('id:,')) {
-                } else {
+                } else if(elem.isa("id:,")) {} else  {
                     isHashTable = false;
-                    elem.error('unexpected in object literal');
-                }
+                    elem.error("unexpected in object literal");
+                };
             });
             if(isHashTable) {
-                ast.kind = 'call';
-                ast.val = 'new';
+                ast.kind = "call";
+                ast.val = "new";
                 ast.children = children;
-            }
-        }
+            };
+        };
         // ?: (here because of the :)
-        if(ast.isa('id:?') && ast.children.length === 2) {
+        if(ast.isa("id:?") && ast.children.length === 2) {
             var rhs = ast.children[1];
-            if(rhs.kind === 'id' && rhs.val === ':' && rhs.children.length === 2) {
+            if(rhs.kind === "id" && rhs.val === ":" && rhs.children.length === 2) {
                 ast.children.push(rhs.children[1]);
                 ast.children[1] = rhs.children[0];
-                ast.kind = 'branch';
-                ast.val = '?:';
-            }
-        }
+                ast.kind = "branch";
+                ast.val = "?:";
+            };
+        };
         // Array
-        if(ast.isa('id:[')) {
-            ast.children.unshift(ast.create('id:Array'));
-            ast.val = 'new';
-        }
-
-
+        if(ast.isa("id:[")) {
+            ast.children.unshift(ast.create("id:Array"));
+            ast.val = "new";
+        };
         // transform children {{{4
         ast.children = ast.children.map(rst2ast);
         // After recursive transformation {{{4
@@ -749,7 +746,7 @@ def("rst2ast", function(exports) {
             ast = ast.children[0];
         };
         // call {{{5
-        if(ast.kind === 'id' && ast.children.length > 0) {
+        if(ast.kind === "id" && ast.children.length > 0) {
             ast.kind = "call";
             ast.children = ast.children.filter(function(elem) {
                 return !elem.isa("id:,");
@@ -771,7 +768,7 @@ def("rst2ast", function(exports) {
         };
         // return
         if(ast.isa("call:return")) {
-            ast.kind = 'branch';
+            ast.kind = "branch";
         };
         // = {{{5
         if(ast.isa("call:=")) {
