@@ -267,13 +267,13 @@ def("tokeniser", function(exports) {
                 };
             };
         };
-        var result = [];
+        var tokens = [];
         var token = next();
         while(token) {
-            result.push(token);
+            tokens.push(token);
             token = next();
         };
-        return result;
+        return tokens;
     };
 });
 // Ast object {{{2
@@ -287,8 +287,6 @@ def("ast", function(exports) {
                 self = use("util").extend(self, arg);
             } else if(typeof arg === "string") {
                 var splitpos = arg.indexOf(":");
-                var kind;
-                var val;
                 if(splitpos === - 1) {
                     self.kind = args.shift();
                     self.val = args.shift();
