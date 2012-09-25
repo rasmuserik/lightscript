@@ -443,8 +443,8 @@ def("syntax", function(exports) {
         return tokenLookup(node).pp();
     };
     exports.prettyprint = function(stmts) {
-        return pplistlines(stmts, ';');
-    }
+        return pplistlines(stmts, ";");
+    };
     var ppPrio = function(node, prio) {
         var result = "";
         if(node.bp && node.bp < prio) {
@@ -878,7 +878,7 @@ def("code_analysis", function(exports) {
     var fns = [];
     exports.analyse = function(asts) {
         fns = [];
-        var global = use('ast').create('fn:0');
+        var global = use("ast").create("fn:0");
         global.scope = {};
         global.children = asts;
         asts.forEach(function(elem) {
@@ -891,50 +891,50 @@ def("code_analysis", function(exports) {
         Object.keys(fn.scope).forEach(function(name) {
             var t = fn.scope[name];
             if(t.argument) {
-                return;
-            }
+                return ;
+            };
             if(!t.argument) {
-                if(fn.parent && (typeof fn.parent.scope[name] === 'object' || !t.set)) {
+                if(fn.parent && (typeof fn.parent.scope[name] === "object" || !t.set)) {
                     t.boxed = true;
                     Object.keys(t).forEach(function(key) {
                         localVar(fn.parent, name)[key] = true;
                     });
-                } else {
+                } else  {
                     t.local = true;
-                }
-            }
+                };
+            };
         });
-    }
+    };
     var localVar = function(ast, name) {
-        if(typeof ast.scope[name] !== 'object') {
+        if(typeof ast.scope[name] !== "object") {
             ast.scope[name] = {};
-        }
+        };
         return ast.scope[name];
-    }
+    };
     var localVars = function(ast, parent) {
-        if(ast.kind === 'fn') {
+        if(ast.kind === "fn") {
             ast.scope = {};
             ast.parent = parent;
             var argc = Number(ast.val);
             ast.children.slice(0, argc).forEach(function(elem) {
-                ast.assertEqual(elem.kind, 'id');
+                ast.assertEqual(elem.kind, "id");
                 localVar(ast, elem.val).argument = true;
             });
             ast.children.slice(argc).forEach(function(elem) {
                 localVars(elem, ast);
             });
             fns.push(ast);
-            return;
-        } 
-        if(ast.kind === 'id') {
+            return ;
+        };
+        if(ast.kind === "id") {
             localVar(parent, ast.val).get = true;
-        } else if(ast.kind === 'assign') {
+        } else if(ast.kind === "assign") {
             localVar(parent, ast.val).set = true;
-        } 
-            ast.children.forEach(function(elem) {
-                localVars(elem, parent);
-            });
-    }
+        };
+        ast.children.forEach(function(elem) {
+            localVars(elem, parent);
+        });
+    };
 });
 // ast2js {{{2
 def("ast2js", function(exports) {
@@ -1004,16 +1004,16 @@ def("ast2js", function(exports) {
                 };
             } else if(ast.val === "new" && lhs.isa("id:Array")) {
                 ast.children = ast.children.slice(1);
-                ast.val = '[';
+                ast.val = "[";
             } else if(ast.val === "new" && lhs.isa("id:Object")) {
                 var children = [];
                 while(ast.children.length > 1) {
                     rhs = ast.children.pop();
                     lhs = ast.children.pop();
-                    children.push(ast.create('id', ':', lhs, rhs));
-                }
+                    children.push(ast.create("id", ":", lhs, rhs));
+                };
                 ast.children = children.reverse();
-                ast.val = '{';
+                ast.val = "{";
             } else if(ast.val === "[]=") {
                 lhs = ast.create("id:*[]", ast.children[0], ast.children[1]);
                 ast.children.shift();
@@ -1067,14 +1067,14 @@ def("ast2js", function(exports) {
                 };
                 ast = rhs;
             } else if(ast.val === "while") {
-                 ast.val = "*{}";
-                 ast.children[0] = ast.create("id:*()", ast.create("id:while"), ast.children[0]);
-                 ast.children = ast.children.concat(unblock(ast.children.pop()));
+                ast.val = "*{}";
+                ast.children[0] = ast.create("id:*()", ast.create("id:while"), ast.children[0]);
+                ast.children = ast.children.concat(unblock(ast.children.pop()));
             } else if(ast.val === "?:") {
-                rhs = ast.create('id', ':', ast.children[1], ast.children[2]);
+                rhs = ast.create("id", ":", ast.children[1], ast.children[2]);
                 ast.children.pop();
                 ast.children[1] = rhs;
-                ast.val = '?';
+                ast.val = "?";
             } else if(ast.val === "return") {
                 // do nothing
             } else if(ast.val === "throw") {
@@ -1090,10 +1090,10 @@ def("ast2js", function(exports) {
             //ast.children.unshift(ast.create('str', 'XXX' + JSON.stringify(ast.scope)));
             Object.keys(ast.scope).forEach(function(varName) {
                 if(ast.scope[varName].local) {
-                    ast.children.unshift(ast.create('id:var', ast.create('id', varName)));
+                    ast.children.unshift(ast.create("id:var", ast.create("id", varName)));
                 } else if(!ast.scope[varName].argument) {
-                    ast.children.unshift(ast.create('note', '// outer: ' + varName + '\n'));
-                }
+                    ast.children.unshift(ast.create("note", "// outer: " + varName + "\n"));
+                };
             });
             ast.children.unshift(lhs);
             ast.kind = "id";
@@ -1123,7 +1123,6 @@ def("ast2js", function(exports) {
         };
         return ast;
     };
-
 });
 // Server {{{1
 def("server", function(exports) {
