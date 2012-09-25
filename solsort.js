@@ -887,10 +887,11 @@ def("ast2js", function(exports) {
             });
         };
     };
+    // Utility / definitions {{{3
     var str2obj = function(str) {
         return use("util").list2obj(str.split(" "));
     };
-    var jsoperator = str2obj("= === !== < <= > >= ! | & ^ << >> ~ - + ++ -- * / ! % *() *[]");
+    var jsoperator = str2obj("= === !== < <= > >= ! | & ^ << >> ~ - + ++ -- * / ! % *() *[] typeof throw return");
     var validIdSymbs = "qwertyuiopasdfghjklzxcvbnm1234567890_$";
     var num = "1234567890";
     var reserved = str2obj("break case catch continue debugger default delete do else finally for function if in instanceof new return switch this throw try typeof var void while with class enum export extends import super implements interface let package private protected public static yield");
@@ -910,24 +911,35 @@ def("ast2js", function(exports) {
         };
         return true;
     };
+    /// ast2js {{{3
     var ast2js = exports.ast2js = function(ast) {
-        var lhs;
         ast.children = ast.children.map(ast2js);
-        // TODO: foo.'bar' -> foo.bar
+        var lhs = ast.children[0];
+        var rhs = ast.children[1];
+
         if(ast.kind === "call") {
-            if(jsoperator[ast.val]) {
-                //operators
-            } else if(ast.val === ".=") {
-                // .=
-                var lhs = ast.create("id:.", ast.children[0], ast.children[1]);
-                ast.assert(isValidId(ast.children[1]));
-                lhs.children[1].kind = "id";
+            if(ast.val === '.') {
+                // foo.'bar' -> foo.bar
+                if(rhs.kind === 'str') {
+                    rhs.kind = 'id';
+                }
+            } else if(ast.val === "new" && lhs.isa('id:Array')) {
+            } else if(ast.val === "new" && lhs.isa('id:Object')) {
+            } else if(ast.val === "[]=") {
+                lhs = ast.create("id:*[]", ast.children[0], ast.children[1]);
                 ast.children.shift();
                 ast.children[0] = lhs;
                 ast.val = "=";
-                // ... TODO: {...}, [...], []=, .=
-                // foo.bar()
+            } else if(ast.val === ".=") {
+                lhs = ast.create("id:.", ast.children[0], ast.children[1]);
+                ast.children[1].kind = 'id';
+                ast.children.shift();
+                ast.children[0] = lhs;
+                ast.val = "=";
+            } else if(jsoperator[ast.val]) {
+                //operators - do nothing
             } else  {
+                // foo.bar(), foo['x'](bar)
                 if(isValidId(ast.val)) {
                     lhs = ast.create("id:.", ast.create("id", ast.val));
                 } else  {
@@ -937,10 +949,35 @@ def("ast2js", function(exports) {
                 ast.children[0] = lhs;
                 ast.val = "*()";
             };
-            ast.kind = "id";
         };
         if(ast.kind === "branch") {
             if(ast.val === "cond") {
+                var children = ast.children;
+                rhs = undefined;
+                var unblock = function(node) {
+                    if(node.kind === 'block') {
+                        return node.children;
+                    } else {
+                        return [node];
+                    }
+                }
+
+                if(children.length & 1) {
+                    rhs = ast.create('id:*{}');
+                    rhs.children = unblock(children.pop());
+                    rhs.children.unshift(ast.create('id:'));
+                }
+                while(children.length) {
+                    lhs = ast.create('id:*{}');
+                    lhs.children = unblock(children.pop());
+                    lhs.children.unshift(ast.create('id:*()', ast.create('id:if'), children.pop()));
+                    if(rhs) {
+                        rhs = ast.create('id:else', lhs, rhs);
+                    } else {
+                        rhs = lhs;
+                    }
+                }
+                ast = rhs;
                 // TODO
             } else if(ast.val === "while") {
                 // TODO
@@ -951,7 +988,6 @@ def("ast2js", function(exports) {
             } else if(ast.val === "throw") {
                 // TODO
             };
-            ast.kind = "id";
         };
         if(ast.kind === "fn") {
             // TODO: var
@@ -964,10 +1000,26 @@ def("ast2js", function(exports) {
             ast.val = "*{}";
         };
         if(ast.kind === "assign") {
-            ast.kind = "id";
+            // =
+            lhs = ast.create("id", ast.val);
+            ast.children.unshift(lhs);
+            ast.val = '=';
         };
         if(ast.kind === "block") {
-            ast.kind = "id";
+            if(ast.children.length === 1) {
+                return ast.children[0];
+            } else {
+                var children = [];
+                var extractBlocks = function(elem) {
+                    if(elem.kind === 'block') {
+                        elem.children.map(extractBlocks);
+                    } else {
+                        children.push(elem);
+                    }
+                }
+                extractBlocks(ast);
+                ast.children = children;
+            }
         };
         return ast;
     };
