@@ -778,6 +778,10 @@ def("rst2ast", function(exports) {
         if(ast.isa("call:return")) {
             ast.kind = "branch";
         };
+        // throw 
+        if(ast.isa("call:return")) {
+            ast.kind = "branch";
+        };
         // = {{{5
         if(ast.isa("call:=")) {
             if(lhs.kind === "id") {
@@ -909,14 +913,20 @@ def("ast2js", function(exports) {
     var ast2js = exports.ast2js = function(ast) {
         var lhs;
         ast.children = ast.children.map(ast2js);
+        // TODO: foo.'bar' -> foo.bar
         if(ast.kind === "call") {
-            if(jsoperator[ast.val]) {} else if(ast.val === ".=") {
+            if(jsoperator[ast.val]) {
+                //operators
+            } else if(ast.val === ".=") {
+                // .=
                 var lhs = ast.create("id:.", ast.children[0], ast.children[1]);
                 ast.assert(isValidId(ast.children[1]));
                 lhs.children[1].kind = "id";
                 ast.children.shift();
                 ast.children[0] = lhs;
                 ast.val = "=";
+                // ... TODO: {...}, [...], []=, .=
+                // foo.bar()
             } else  {
                 if(isValidId(ast.val)) {
                     lhs = ast.create("id:.", ast.create("id", ast.val));
@@ -930,9 +940,21 @@ def("ast2js", function(exports) {
             ast.kind = "id";
         };
         if(ast.kind === "branch") {
+            if(ast.val === "cond") {
+                // TODO
+            } else if(ast.val === "while") {
+                // TODO
+            } else if(ast.val === "?:") {
+                // TODO
+            } else if(ast.val === "return") {
+                // TODO
+            } else if(ast.val === "throw") {
+                // TODO
+            };
             ast.kind = "id";
         };
         if(ast.kind === "fn") {
+            // TODO: var
             var len = + ast.val;
             lhs = ast.create("id:*()", ast.create("id:function"));
             lhs.children = lhs.children.concat(ast.children.slice(0, len));
