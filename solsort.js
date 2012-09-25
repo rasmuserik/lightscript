@@ -767,19 +767,27 @@ def("rst2ast", function(exports) {
         // extract lhs and rhs {{{5
         var lhs = ast.children[0];
         var rhs = ast.children[1];
-        // Simple cases {{{5
-        // foo.bar -> foo.'bar'
+        // foo.bar -> foo.'bar' {{{5
         if(ast.isa("call:.")) {
             if(rhs.kind === "id") {
                 rhs.kind = "str";
             };
         };
+        // branches {{{5
         // return
         if(ast.isa("call:return")) {
             ast.kind = "branch";
         };
         // throw 
         if(ast.isa("call:return")) {
+            ast.kind = "branch";
+        };
+        // &&
+        if(ast.isa("call:&&")) {
+            ast.kind = "branch";
+        };
+        // ||
+        if(ast.isa("call:||")) {
             ast.kind = "branch";
         };
         // = {{{5
@@ -891,8 +899,8 @@ def("ast2js", function(exports) {
     var str2obj = function(str) {
         return use("util").list2obj(str.split(" "));
     };
-    var jsoperator = str2obj("= === !== < <= > >= ! | & ^ << >> ~ - + ++ -- * / ! % *() *[] typeof throw return");
-    var validIdSymbs = "qwertyuiopasdfghjklzxcvbnm1234567890_$";
+    var jsoperator = str2obj("= === !== < <= > >= += -= *= /= ! | & ^ << >> ~ - + ++ -- * / ! % *() *[] typeof throw return");
+    var validIdSymbs = "QWERTYUIOPASDFGHJKLZXCVBNMqwertyuiopasdfghjklzxcvbnm1234567890_$";
     var num = "1234567890";
     var reserved = str2obj("break case catch continue debugger default delete do else finally for function if in instanceof new return switch this throw try typeof var void while with class enum export extends import super implements interface let package private protected public static yield");
     var isValidId = function(str) {
@@ -923,9 +931,17 @@ def("ast2js", function(exports) {
                     rhs.kind = "id";
                 };
             } else if(ast.val === "new" && lhs.isa("id:Array")) {
-                // TODO: Array literal
+                ast.children = ast.children.slice(1);
+                ast.val = '[';
             } else if(ast.val === "new" && lhs.isa("id:Object")) {
-                // TODO: Object literal
+                var children = [];
+                while(ast.children.length > 1) {
+                    rhs = ast.children.pop();
+                    lhs = ast.children.pop();
+                    children.push(ast.create('id', ':', lhs, rhs));
+                }
+                ast.children = children;
+                ast.val = '{';
             } else if(ast.val === "[]=") {
                 lhs = ast.create("id:*[]", ast.children[0], ast.children[1]);
                 ast.children.shift();
@@ -952,16 +968,16 @@ def("ast2js", function(exports) {
             };
         };
         if(ast.kind === "branch") {
+            var unblock = function(node) {
+                if(node.kind === "block") {
+                    return node.children;
+                } else  {
+                    return [node];
+                };
+            };
             if(ast.val === "cond") {
                 var children = ast.children;
                 rhs = undefined;
-                var unblock = function(node) {
-                    if(node.kind === "block") {
-                        return node.children;
-                    } else  {
-                        return [node];
-                    };
-                };
                 if(children.length & 1) {
                     rhs = ast.create("id:*{}");
                     rhs.children = unblock(children.pop());
@@ -979,13 +995,18 @@ def("ast2js", function(exports) {
                 };
                 ast = rhs;
             } else if(ast.val === "while") {
-                // TODO
+                 ast.val = "*{}";
+                 ast.children[0] = ast.create("id:*()", ast.create("id:while"), ast.children[0]);
+                 ast.children = ast.children.concat(unblock(ast.children.pop()));
             } else if(ast.val === "?:") {
-                // TODO
+                rhs = ast.create('id', ':', ast.children[1], ast.children[2]);
+                ast.children.pop();
+                ast.children[1] = rhs;
+                ast.val = '?';
             } else if(ast.val === "return") {
-                // TODO
+                // do nothing
             } else if(ast.val === "throw") {
-                // TODO
+                // do nothing
             };
         };
         if(ast.kind === "fn") {

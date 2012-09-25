@@ -114,7 +114,7 @@ Data representations
 - Simplified syntax tree 
     - `kind`: `id`, `str`, `note`, `num`, `call`, `fn`, `branch`, `assign`, `block`
     - `val`: method-name on `call`, number of args on `fn`, identifier-name on `assign`
-        branch-vals:`cond`, `?:`, `return`, `while`, 
+        branch-vals:`cond`, `?:`, `while`, `throw`, `return`, `||`, `&&`
     - `children`
     - `type`
     - `pos`
