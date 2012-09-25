@@ -874,6 +874,70 @@ def("rst2ast", function(exports) {
         return ast;
     };
 });
+// analysis {{{2
+def("code_analysis", function(exports) {
+    // functions in post-order traversal
+    var fns = [];
+    exports.analyse = function(asts) {
+        fns = [];
+        var global = use('ast').create('fn:0');
+        global.scope = {};
+        global.children = asts;
+        asts.forEach(function(elem) {
+            localVars(elem, global);
+        });
+        fns.forEach(box);
+        return asts;
+    };
+    var box = function(fn) {
+        Object.keys(fn.scope).forEach(function(name) {
+            var t = fn.scope[name];
+            if(t.argument) {
+                return;
+            }
+            if(!t.argument) {
+                if(fn.parent && (typeof fn.parent.scope[name] === 'object' || !t.set)) {
+                    t.boxed = true;
+                    Object.keys(t).forEach(function(key) {
+                        localVar(fn.parent, name)[key] = true;
+                    });
+                } else {
+                    t.local = true;
+                }
+            }
+        });
+    }
+    var localVar = function(ast, name) {
+        if(typeof ast.scope[name] !== 'object') {
+            ast.scope[name] = {};
+        }
+        return ast.scope[name];
+    }
+    var localVars = function(ast, parent) {
+        if(ast.kind === 'fn') {
+            ast.scope = {};
+            ast.parent = parent;
+            var argc = Number(ast.val);
+            ast.children.slice(0, argc).forEach(function(elem) {
+                ast.assertEqual(elem.kind, 'id');
+                localVar(ast, elem.val).argument = true;
+            });
+            ast.children.slice(argc).forEach(function(elem) {
+                localVars(elem, ast);
+            });
+            fns.push(ast);
+            return;
+        } 
+        if(ast.kind === 'id') {
+            localVar(parent, ast.val).get = true;
+        } else if(ast.kind === 'assign') {
+            localVar(parent, ast.val).set = true;
+        } 
+            ast.children.forEach(function(elem) {
+                localVars(elem, parent);
+            });
+    }
+});
 // ast2js {{{2
 def("ast2js", function(exports) {
     // main {{{3
@@ -898,8 +962,10 @@ def("ast2js", function(exports) {
                 console.log(use("syntax").prettyprint([jsast]));
             });
             */
-            console.log(use("syntax").prettyprint(rsts.map(function(rst) {
-                return ast2js(use("rst2ast").rst2ast(rst));
+            var asts = rsts.map(use("rst2ast").rst2ast);
+            asts = use("code_analysis").analyse(asts);
+            console.log(use("syntax").prettyprint(asts.map(function(ast) {
+                return ast2js(ast);
             })));
         };
     };
@@ -1023,6 +1089,14 @@ def("ast2js", function(exports) {
             lhs = ast.create("id:*()", ast.create("id:function"));
             lhs.children = lhs.children.concat(ast.children.slice(0, len));
             ast.children = ast.children.slice(len);
+            //ast.children.unshift(ast.create('str', 'XXX' + JSON.stringify(ast.scope)));
+            Object.keys(ast.scope).forEach(function(varName) {
+                if(ast.scope[varName].local) {
+                    ast.children.unshift(ast.create('id:var', ast.create('id', varName)));
+                } else if(!ast.scope[varName].argument) {
+                    ast.children.unshift(ast.create('note', '// outer: ' + varName + '\n'));
+                }
+            });
             ast.children.unshift(lhs);
             ast.kind = "id";
             ast.val = "*{}";
@@ -1051,6 +1125,7 @@ def("ast2js", function(exports) {
         };
         return ast;
     };
+
 });
 // Server {{{1
 def("server", function(exports) {
