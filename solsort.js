@@ -916,15 +916,16 @@ def("ast2js", function(exports) {
         ast.children = ast.children.map(ast2js);
         var lhs = ast.children[0];
         var rhs = ast.children[1];
-
         if(ast.kind === "call") {
-            if(ast.val === '.') {
+            if(ast.val === ".") {
                 // foo.'bar' -> foo.bar
-                if(rhs.kind === 'str') {
-                    rhs.kind = 'id';
-                }
-            } else if(ast.val === "new" && lhs.isa('id:Array')) {
-            } else if(ast.val === "new" && lhs.isa('id:Object')) {
+                if(rhs.kind === "str") {
+                    rhs.kind = "id";
+                };
+            } else if(ast.val === "new" && lhs.isa("id:Array")) {
+                // TODO: Array literal
+            } else if(ast.val === "new" && lhs.isa("id:Object")) {
+                // TODO: Object literal
             } else if(ast.val === "[]=") {
                 lhs = ast.create("id:*[]", ast.children[0], ast.children[1]);
                 ast.children.shift();
@@ -932,7 +933,7 @@ def("ast2js", function(exports) {
                 ast.val = "=";
             } else if(ast.val === ".=") {
                 lhs = ast.create("id:.", ast.children[0], ast.children[1]);
-                ast.children[1].kind = 'id';
+                ast.children[1].kind = "id";
                 ast.children.shift();
                 ast.children[0] = lhs;
                 ast.val = "=";
@@ -955,30 +956,28 @@ def("ast2js", function(exports) {
                 var children = ast.children;
                 rhs = undefined;
                 var unblock = function(node) {
-                    if(node.kind === 'block') {
+                    if(node.kind === "block") {
                         return node.children;
-                    } else {
+                    } else  {
                         return [node];
-                    }
-                }
-
+                    };
+                };
                 if(children.length & 1) {
-                    rhs = ast.create('id:*{}');
+                    rhs = ast.create("id:*{}");
                     rhs.children = unblock(children.pop());
-                    rhs.children.unshift(ast.create('id:'));
-                }
+                    rhs.children.unshift(ast.create("id:"));
+                };
                 while(children.length) {
-                    lhs = ast.create('id:*{}');
+                    lhs = ast.create("id:*{}");
                     lhs.children = unblock(children.pop());
-                    lhs.children.unshift(ast.create('id:*()', ast.create('id:if'), children.pop()));
+                    lhs.children.unshift(ast.create("id:*()", ast.create("id:if"), children.pop()));
                     if(rhs) {
-                        rhs = ast.create('id:else', lhs, rhs);
-                    } else {
+                        rhs = ast.create("id:else", lhs, rhs);
+                    } else  {
                         rhs = lhs;
-                    }
-                }
+                    };
+                };
                 ast = rhs;
-                // TODO
             } else if(ast.val === "while") {
                 // TODO
             } else if(ast.val === "?:") {
@@ -1003,23 +1002,23 @@ def("ast2js", function(exports) {
             // =
             lhs = ast.create("id", ast.val);
             ast.children.unshift(lhs);
-            ast.val = '=';
+            ast.val = "=";
         };
         if(ast.kind === "block") {
             if(ast.children.length === 1) {
                 return ast.children[0];
-            } else {
+            } else  {
                 var children = [];
                 var extractBlocks = function(elem) {
-                    if(elem.kind === 'block') {
+                    if(elem.kind === "block") {
                         elem.children.map(extractBlocks);
-                    } else {
+                    } else  {
                         children.push(elem);
-                    }
-                }
+                    };
+                };
                 extractBlocks(ast);
                 ast.children = children;
-            }
+            };
         };
         return ast;
     };
