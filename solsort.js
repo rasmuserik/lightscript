@@ -441,9 +441,12 @@ def("syntax", function(exports) {
             this.error("cannot prettyprint...");
         };
     };
-    var pp = exports.prettyprint = function(node) {
+    var pp = function(node) {
         return tokenLookup(node).pp();
     };
+    exports.prettyprint = function(stmts) {
+        return pplistlines(stmts, ';');
+    }
     var ppPrio = function(node, prio) {
         var result = "";
         if(node.bp && node.bp < prio) {
@@ -882,6 +885,7 @@ def("ast2js", function(exports) {
         if(syntax.errors.length) {
             console.log("errors:", syntax.errors);
         } else  {
+            /*
             rsts.forEach(function(rst) {
                 var f = function(elem) {
                     console.log(elem.kind, elem.val);
@@ -891,8 +895,12 @@ def("ast2js", function(exports) {
                 //console.log(use("util").listpp(use("syntax").toList(rst)));
                 var jsast = ast2js(use("rst2ast").rst2ast(rst));
                 //console.log(use("util").listpp(use("syntax").toList(jsast)));
-                console.log(use("syntax").prettyprint(jsast));
+                console.log(use("syntax").prettyprint([jsast]));
             });
+            */
+            console.log(use("syntax").prettyprint(rsts.map(function(rst) {
+                return ast2js(use("rst2ast").rst2ast(rst));
+            })));
         };
     };
     // Utility / definitions {{{3
@@ -940,7 +948,7 @@ def("ast2js", function(exports) {
                     lhs = ast.children.pop();
                     children.push(ast.create('id', ':', lhs, rhs));
                 }
-                ast.children = children;
+                ast.children = children.reverse();
                 ast.val = '{';
             } else if(ast.val === "[]=") {
                 lhs = ast.create("id:*[]", ast.children[0], ast.children[1]);
