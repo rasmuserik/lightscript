@@ -351,7 +351,7 @@ def("syntax", function(exports) {
         var rsts = exports.parse(tokenise(require("fs").readFileSync(filename, "utf8")));
         var asts = rsts.map(use("rst2ast").rst2ast);
         asts = use("code_analysis").analyse(asts);
-        rsts = asts.map(use("ast2js").ast2js);
+        rsts = asts.map(use("ast2rst").ast2rst);
         var newCode = pplistlines(rsts, ";");
         if(exports.errors.length) {
             console.log("errors:", exports.errors);
