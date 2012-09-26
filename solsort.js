@@ -349,6 +349,9 @@ def("syntax", function(exports) {
         var tokenise = use("tokeniser").tokenise;
         var filename = process.argv[3] || process.argv[1];
         var rsts = exports.parse(tokenise(require("fs").readFileSync(filename, "utf8")));
+        var asts = rsts.map(use("rst2ast").rst2ast);
+        asts = use("code_analysis").analyse(asts);
+        rsts = asts.map(use("ast2js").ast2js);
         var newCode = pplistlines(rsts, ";");
         if(exports.errors.length) {
             console.log("errors:", exports.errors);
