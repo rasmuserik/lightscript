@@ -153,7 +153,10 @@ def("tokeniser", function(exports) {
     };
     exports.tokenise = function(buffer) {
         var pos = 0;
-        var start = {lineno: 0, pos: 0};
+        var start = {
+            lineno : 0,
+            pos : 0,
+        };
         var lineno = 0;
         var one_of = function(str) {
             return str.indexOf(peek()) !== - 1;
@@ -900,7 +903,7 @@ def("code_analysis", function(exports) {
                     t.local = true;
                     if(t.firstSet) {
                         t.firstSet.doTypeAnnotate = true;
-                    }
+                    };
                 };
             };
         });
@@ -931,7 +934,7 @@ def("code_analysis", function(exports) {
         } else if(ast.kind === "assign") {
             if(!localVar(parent, ast.val).set) {
                 localVar(parent, ast.val).firstSet = ast;
-            }
+            };
             localVar(parent, ast.val).set = true;
         };
         ast.children.forEach(function(elem) {
@@ -1190,9 +1193,9 @@ def("ast2rst", function(exports) {
                 while(ast.children.length > 1) {
                     rhs = ast.children.pop();
                     lhs = ast.children.pop();
-                    if(lhs.kind === 'str' && isValidId(lhs.val)) {
-                        lhs.kind = 'id';
-                    }
+                    if(lhs.kind === "str" && isValidId(lhs.val)) {
+                        lhs.kind = "id";
+                    };
                     children.push(ast.create("id", ":", lhs, rhs));
                 };
                 ast.children = children.reverse();
@@ -1280,8 +1283,8 @@ def("ast2rst", function(exports) {
             lhs = ast.create("id", ast.val);
             if(ast.doTypeAnnotate) {
                 //lhs = ast.create('call', ':', lhs, ast.type || ast.create('id:Any'));
-                lhs = ast.create('call', 'var', lhs);
-            }
+                lhs = ast.create("call", "var", lhs);
+            };
             ast.children.unshift(lhs);
             ast.val = "=";
         };
