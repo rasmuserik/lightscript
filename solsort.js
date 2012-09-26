@@ -1,6 +1,6 @@
 
 // Module system {{{1
-var modules = {};
+modules = {};
 use = function(name) {
     var result = modules[name];
     if(typeof result === "function") {
@@ -41,7 +41,7 @@ def("util", function(exports) {
     };
     exports.listpp = function(list, indent) {
         indent = indent || "  ";
-        if(typeof (list) === "string") {
+        if(typeof list === "string") {
             return list;
         };
         var result = list.map(function(elem) {
@@ -153,10 +153,7 @@ def("tokeniser", function(exports) {
     };
     exports.tokenise = function(buffer) {
         var pos = 0;
-        var start = {
-            lineno : 0,
-            pos : 0,
-        };
+        var start = {lineno : 0, pos : 0};
         var lineno = 0;
         var one_of = function(str) {
             return str.indexOf(peek()) !== - 1;
@@ -181,10 +178,7 @@ def("tokeniser", function(exports) {
             return result;
         };
         var begin_token = function() {
-            start = {
-                lineno : lineno,
-                pos : pos,
-            };
+            start = {lineno : lineno, pos : pos};
         };
         var newToken = function(kind, val) {
             var result = createToken(kind, val, "l" + start.lineno + "p" + start.pos + "-l" + lineno + "p" + pos);
@@ -227,9 +221,9 @@ def("tokeniser", function(exports) {
                         if(c === "\\") {
                             c = pop();
                             c = {
-                                "n" : "\n",
-                                "r" : "\r",
-                                "t" : "\t",
+                                n : "\n",
+                                r : "\r",
+                                t : "\t",
                             }[c] || c;
                         };
                         s += c;
@@ -311,10 +305,7 @@ def("ast", function(exports) {
             };
         },
         error : function(desc) {
-            throw {
-                error : desc,
-                token : this,
-            };
+            throw {error : desc, token : this};
         },
     };
     exports.create = function(arg) {
@@ -410,10 +401,7 @@ def("syntax", function(exports) {
     exports.parse = function(tokens) {
         var pos = 0;
         nextToken = function() {
-            token = tokenLookup(pos === tokens.length ? {
-                kind : "eof",
-                rparen : true,
-            } : tokens[pos]);
+            token = tokenLookup(pos === tokens.length ? {kind : "eof", rparen : true} : tokens[pos]);
             ++pos;
             return tokenLookup(token);
         };
@@ -525,10 +513,7 @@ def("syntax", function(exports) {
     };
     var infixLed = function(left) {
         this.infix = true;
-        this.children = [
-            left,
-            parse(this.bp - this.dbp),
-        ];
+        this.children = [left, parse(this.bp - this.dbp)];
     };
     var infix = function(bp) {
         return extend(Object.create(defaultToken), {
@@ -546,26 +531,17 @@ def("syntax", function(exports) {
         });
     };
     var rparen = function() {
-        return extend(Object.create(defaultToken), {
-            rparen : true,
-            nud : function() {
-                this.error("unmatched rparen");
-            },
-        });
+        return extend(Object.create(defaultToken), {rparen : true, nud : function() {
+            this.error("unmatched rparen");
+        }});
     };
     var prefix = function(bp) {
-        return extend(Object.create(defaultToken), {
-            nud : nudPrefix,
-            bp : bp,
-        });
+        return extend(Object.create(defaultToken), {nud : nudPrefix, bp : bp});
     };
     var sep = function() {
-        return extend(Object.create(defaultToken), {
-            sep : true,
-            pp : function() {
-                return "";
-            },
-        });
+        return extend(Object.create(defaultToken), {sep : true, pp : function() {
+            return "";
+        }});
     };
     var special = function(ext) {
         return extend(Object.create(defaultToken), ext);
@@ -666,29 +642,26 @@ def("syntax", function(exports) {
         "=" : infixr(100),
         "," : sep(),
         ";" : sep(),
-        constructor : defaultToken,
-        valueOf : defaultToken,
-        toString : defaultToken,
-        toLocaleString : defaultToken,
-        hasOwnProperty : defaultToken,
-        isPrototypeOf : defaultToken,
-        propertyIsEnumerable : defaultToken,
+        "constructor" : defaultToken,
+        "valueOf" : defaultToken,
+        "toString" : defaultToken,
+        "toLocaleString" : defaultToken,
+        "hasOwnProperty" : defaultToken,
+        "isPrototypeOf" : defaultToken,
+        "propertyIsEnumerable" : defaultToken,
         "return" : prefix(0),
         "throw" : prefix(0),
         "new" : prefix(0),
         "typeof" : prefix(0),
         "var" : prefix(0),
         "str:" : special({pp : stringpp}),
-        "note:" : special({
-            sep : true,
-            pp : function() {
-                if(this.val.slice(0, 2) === "//") {
-                    return this.val.slice(0, - 1);
-                } else  {
-                    return this.val;
-                };
-            },
-        }),
+        "note:" : special({sep : true, pp : function() {
+            if(this.val.slice(0, 2) === "//") {
+                return this.val.slice(0, - 1);
+            } else  {
+                return this.val;
+            };
+        }}),
         "annotation:" : sep(),
     };
 });
@@ -770,7 +743,7 @@ def("rst2ast", function(exports) {
         };
         // extract lhs and rhs {{{5
         var lhs = ast.children[0];
-        var rhs = ast.children[1];
+        rhs = ast.children[1];
         // foo.bar -> foo.'bar' {{{5
         if(ast.isa("call:.")) {
             if(rhs.kind === "id") {
@@ -897,7 +870,7 @@ def("code_analysis", function(exports) {
                 return ;
             };
             if(!t.argument) {
-                if(fn.parent && (typeof fn.parent.scope[name] === "object" || !t.set)) {
+                if(fn.parent && typeof fn.parent.scope[name] === "object" || !t.set) {
                     t.boxed = true;
                     Object.keys(t).forEach(function(key) {
                         localVar(fn.parent, name)[key] = localVar(fn.parent, name)[key] || t[key];
@@ -1059,7 +1032,7 @@ def("ast2js", function(exports) {
                 };
             };
             if(ast.val === "cond") {
-                var children = ast.children;
+                children = ast.children;
                 rhs = undefined;
                 if(children.length & 1) {
                     rhs = ast.create("id:*{}");
@@ -1120,7 +1093,7 @@ def("ast2js", function(exports) {
             if(ast.children.length === 1) {
                 return ast.children[0];
             } else  {
-                var children = [];
+                children = [];
                 var extractBlocks = function(elem) {
                     if(elem.kind === "block") {
                         elem.children.map(extractBlocks);
@@ -1239,7 +1212,7 @@ def("ast2rst", function(exports) {
                 };
             };
             if(ast.val === "cond") {
-                var children = ast.children;
+                children = ast.children;
                 rhs = undefined;
                 if(children.length & 1) {
                     rhs = ast.create("id:*{}");
@@ -1295,7 +1268,7 @@ def("ast2rst", function(exports) {
             if(ast.children.length === 1) {
                 return ast.children[0];
             } else  {
-                var children = [];
+                children = [];
                 var extractBlocks = function(elem) {
                     if(elem.kind === "block") {
                         elem.children.map(extractBlocks);
@@ -1324,7 +1297,7 @@ def("server", function(exports) {
             var db = new sqlite3.Database(process.env.HOME + "/data/db.sqlite3");
             db.run("CREATE TABLE IF NOT EXISTS userdata (store, key, val, timestamp, PRIMARY KEY (store, key))");
             // # Pages from markdown {{{2
-            htmlTemplate = fs.readFileSync(__dirname + "/sites/solsort/template/html.mustache", "utf8");
+            var htmlTemplate = fs.readFileSync(__dirname + "/sites/solsort/template/html.mustache", "utf8");
             var name2url = function(name) {
                 return name.replace(RegExp("[^a-zA-Z0-9._~/\\[\\]@!$&'()*+,;=-]", "g"), function(c) {
                     var subs = {
@@ -1369,17 +1342,11 @@ def("server", function(exports) {
                     res.removeHeader("X-Powered-By");
                     next();
                 });
-                app.stack.unshift({
-                    route : "",
-                    handle : logger({path : process.env.HOME + "/data/httpd.log"}),
-                });
+                app.stack.unshift({route : "", handle : logger({path : process.env.HOME + "/data/httpd.log"})});
                 app.use(express.bodyParser());
                 Object.keys(notes).forEach(function(key) {
                     app.get("/" + notes[key].url, function(req, res) {
-                        res.send(fixLinks(mustache.to_html(htmlTemplate, {
-                            title : key,
-                            body : notes[key].html,
-                        })));
+                        res.send(fixLinks(mustache.to_html(htmlTemplate, {title : key, body : notes[key].html})));
                     });
                 });
                 var fixLinks = function(html) {
@@ -1388,10 +1355,7 @@ def("server", function(exports) {
                     });
                 };
                 app.get("/githubLogin", function(req, res) {
-                    https.get({
-                        host : "github.com",
-                        path : "/login/oauth/access_token?client_id=cc14f7f75ff01bdbb1e7&client_secret=d978cb4e2e1cdb35d4ae9e194b9c36fa0c2f607e&code=" + req.query.code + "&state=" + req.query.state,
-                    }, function(con) {
+                    https.get({host : "github.com", path : "/login/oauth/access_token?client_id=cc14f7f75ff01bdbb1e7&client_secret=d978cb4e2e1cdb35d4ae9e194b9c36fa0c2f607e&code=" + req.query.code + "&state=" + req.query.state}, function(con) {
                         con.on("data", function(data) {
                             res.send(req.query.callback + "(\"" + data + "\");", {"Content-Type" : "application/javascript"});
                         });
@@ -1420,20 +1384,14 @@ def("server", function(exports) {
                         });
                         return ;
                     };
-                    db.get("SELECT * FROM userdata WHERE store=$store AND key=$key;", {
-                        $store : store,
-                        $key : key,
-                    }, function(err, row) {
+                    db.get("SELECT * FROM userdata WHERE store=$store AND key=$key;", {$store : store, $key : key}, function(err, row) {
                         if(err) {
                             return res.send(String(err), {"Content-Type" : "text/plain"}, 500);
                         };
                         var val = row && row.val;
                         if(newVal !== undefined) {
-                            console.log({
-                                val : val,
-                                prevVal : prevVal,
-                            });
-                            if(prevVal != val) {
+                            console.log({val : val, prevVal : prevVal});
+                            if(prevVal["!="](val)) {
                                 return res.send(val, {"Content-Type" : "text/plain"}, 409);
                             };
                             return db.run("INSERT OR REPLACE INTO userdata VALUES ($store, $key, $val, $timestamp);", {
@@ -1474,7 +1432,7 @@ def("server", function(exports) {
                 app.get("/https", function(req, res) {
                     res.redirect("https://" + req.originalUrl.slice(7));
                 });
-                app.get("*", express.static(__dirname + "/sites/solsort"));
+                app.get("*", express["static"](__dirname + "/sites/solsort"));
                 /*
 app.get('*', function(req, res){
 res.send(
@@ -1532,7 +1490,7 @@ def("web", function(exports) {
     exports.main = function() {
         console.log("here");
         // TODO: remove the following line
-        solsort = exports;
+        var solsort = exports;
         // # Utility functions {{{2
         // ## load an external .js file {{{3
         // TODO: callback parameter (+onreadychange etc.)
@@ -1701,10 +1659,7 @@ def("web", function(exports) {
         var loginAs = function(user, name) {
             localStorage.setItem("userId", user);
             localStorage.setItem("userName", name);
-            exports.jsonp("http://solsort.com/", {
-                user : user,
-                name : name,
-            });
+            exports.jsonp("http://solsort.com/", {user : user, name : name});
             var loginFromUrl = localStorage.getItem("loginFromUrl");
             if(loginFromUrl) {
                 localStorage.removeItem("loginFromUrl");
