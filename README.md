@@ -1,6 +1,18 @@
-# General
+# Hacking notes
+Data layers
+- Raw syntax tree - generic syntax, both used for parsing, and also for generating code for c-like languages.
+    - `kind` required, kind of node: `str`, `note`, `num`, `id`/anything-else
+    - `val` required, data connected to the node, ie. identifier/symbol, string content, comment, or number value
+    - `pos` position in the source file of the node
+    - `children` required, array of child nodes
+- Abstract syntax tree 
+    - `kind`: `id`, `str`, `note`, `num`, `call`, `fn`, `branch`, `assign`, `block`
+    - `val`: method-name on `call`, number of args on `fn`, identifier-name on `assign`
+        branch-vals:`cond`, `?:`, `while`, `throw`, `return`, `||`, `&&`
+    - `children`
+    - `pos`
 
-# Solsort
+# Apps
 TODO:
 - webapi-dispatch
 - sync'ed storage
@@ -45,78 +57,55 @@ TODO:
     - content editing with mercury
 - static via nginx
 
-# Intended backends
-
-- JavaScript
-    - node-server
-    - firefox-plugin
-    - chrome-app
-    - facebook-app
-    - html5-app
-    - phonegap-app
-- Java
-    - servlet / google-appengine
-    - PC application
-    - android
-- C or llvm
-    - pebble
-    - TI-dev-board
-    - lego
-    - arduino
-    - iOS
-    - unix
-
 # LightScript Language
-New version of lightscript in progress
 
-## TODO
-- bug: prefix-parenthesis
-- token/rst-rename symbol,,number,... id,num,str,comment 
-- rst2sst
-- sst2rst
-- type inference
-- sst2js
-- sst2java
-- js-syntax
-    - (function() {...})()
-    - for(;;)
-
-## (Intended) Features
-
+Intended Features:
 - C-family syntax, generalised
-- Two levels of Abstract Syntax Tree
-- Reversable macros
+- Easy to transform Abstract Syntax Tree
+- Reversable macros 
 - Mapping from AST back to source code
-- Stong static typing, including a var type (dynamic a la JavaScript values)
-- Different backends
-    - JavaScript (web including codemaps)
-    - Java (server, desktop, android, (ios))
-    - C (embedded systems, running in less than 64KB of RAM)
-    - (OpenCL for computation)
+- Stong static typing, including a var/Any type (dynamic a la JavaScript values)
+- Highly portable, with different backends / packaging
+- Good integration with host-language (javascript/java/c/...)
 
-## Internal
+Intended backends / packaging:
+- JavaScript (with codemaps)
+    - node-server
+    - html5-app
+    - (note:http://developers.facebook.com/html5/distribution/?_fb_noscript=1)
+    - (firefox-plugin)
+    - (phonegap-app)
+    - (mozilla-marketplace)
+    - (chrome-plugin)
+    - (chrome-app)
+    - (facebook-app)
+- Java
+    - application
+    - (servlet / google-appengine)
+    - (android)
+    - (j2me)
+- C
+    - unix
+    - TI-dev-board (embedded, limited to 64KB RAM)
+    - pebble
+    - (lego)
+    - (arduino)
+    - (iOS)
+- (OpenCL for performance)
+- (interpreted stack-language)
+- (php - drupal module)
 
-Stages
-- Tokenisation (implemented)
-- Parsing to raw syntax (implemented)
-- Macro transformation rst2ast (implemented)
-- Macro transformation ast2sst
-- Macro transformation sst2ast
-- sst2js
+# Roadmap
 
-Data representations
-- LightScript source code
-- Raw syntax tree - generic syntax 
-    - `kind` required, kind of node: `id`, `str`, `note`, `num`
-    - `val` required, data connected to the node, ie. identifier/symbol, string content, comment, or number value
-    - `pos` position in the source file of the node
-    - `children` required, array of child nodes
-- Simplified syntax tree 
-    - `kind`: `id`, `str`, `note`, `num`, `call`, `fn`, `branch`, `assign`, `block`
-    - `val`: method-name on `call`, number of args on `fn`, identifier-name on `assign`
-        branch-vals:`cond`, `?:`, `while`, `throw`, `return`, `||`, `&&`
-    - `children`
-    - `type`
-    - `pos`
-- Stack language
-- Executable
+- check if `!(foo&&bar)`-bug still exists and fix it - bug: prefix-parenthesis
+- refactor rst2js/rst2ast
+- Java backend
+- C backend
+- syntax-bug: (function() {...})()
+- syntax: for(;;)
+- Static type system / type inference
+- type inference
+
+# Changelog
+
+- 2012-09-26 ast2rst
