@@ -83,7 +83,7 @@ Intended backends / packaging:
     - application
     - (servlet / google-appengine)
     - (android)
-    - (j2me)
+    - (j2me, nokia store, getjar)
 - C
     - unix
     - TI-dev-board (embedded, limited to 64KB RAM)
@@ -91,15 +91,21 @@ Intended backends / packaging:
     - (lego)
     - (arduino)
     - (iOS)
+    - (symbian, nokia store)
+    - (blackberry)
 - (OpenCL for performance)
 - (interpreted stack-language)
 - (php - drupal module)
 
 # Roadmap
 
+- restructure: lightscript/ build/
+- app: REST-api
+- app: persistant storage
 - check if `!(foo&&bar)`-bug still exists and fix it - bug: prefix-parenthesis
 - refactor rst2js/rst2ast
 - Java backend
+- open source repository (filter out personal stuff, api-keys etc. from private repos)
 - C backend
 - syntax-bug: (function() {...})()
 - syntax: for(;;)
@@ -108,4 +114,14 @@ Intended backends / packaging:
 
 # Changelog
 
-- 2012-09-26 ast2rst
+- 2012-09-26 working transformation from AST to LightScript RST/source code
+- 2012-09-25 working JavaScript backend / code generation via RST
+- 2012-09-24 working transformation from RST to AST
+- 2012-09-21 merged and refactored prettyprinting into the syntax module, killing hundreds of lines of code
+- 2012-09-18 app: ported code for website from JavaScript to LightScript
+- 2012-09-10 working prettyprinting of RST(Raw Syntax Tree)
+
+
+
+
+
