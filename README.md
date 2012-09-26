@@ -12,8 +12,8 @@ Data layers
     - `children`
     - `pos`
 
-# Apps
-TODO:
+# Apps/libs
+## TODO
 - webapi-dispatch
 - sync'ed storage
     - open(owner, storageName, mergeFn);
