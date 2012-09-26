@@ -70,9 +70,8 @@ def("main", function(exports) {
     var util = use("util");
     util.nextTick(function() {
         var platform = util.platform;
-        var commandName;
         if(platform === "node") {
-            commandName = process.argv[2];
+            var commandName = process.argv[2];
         };
         if(platform === "web") {
             commandName = window.location.hash.slice(1);
@@ -134,7 +133,7 @@ def("test", function(exports) {
             if(module.test) {
                 module.test(test.create(moduleName));
             };
-            pname = "test" + use("util").platform;
+            var pname = "test" + use("util").platform;
             if(module[pname]) {
                 module[pname](test.create(use("util".platform) + ":" + moduleName));
             };
@@ -154,7 +153,7 @@ def("tokeniser", function(exports) {
     };
     exports.tokenise = function(buffer) {
         var pos = 0;
-        var start;
+        var start = {lineno: 0, pos: 0};
         var lineno = 0;
         var one_of = function(str) {
             return str.indexOf(peek()) !== - 1;
@@ -195,9 +194,8 @@ def("tokeniser", function(exports) {
             var ident = "_qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM$";
             var digits = "0123456789";
             var hexdigits = digits + "abcdefABCDEF";
-            var s;
-            var c;
-            var quote;
+            var s = undefined;
+            var c = undefined;
             while(true) {
                 begin_token();
                 if(peek() === "") {
@@ -220,7 +218,7 @@ def("tokeniser", function(exports) {
                     return newToken("note", s);
                 } else if(one_of("'\"")) {
                     s = "";
-                    quote = pop();
+                    var quote = pop();
                     while(!starts_with(quote)) {
                         c = pop();
                         if(c === "\\") {
@@ -326,11 +324,11 @@ def("ast", function(exports) {
         test.assertEqual(ast.val, "val1");
         test.assertEqual(ast.children[0], "arg1");
         test.assertEqual(typeof ast.create, "function", "has create function");
-        var ast = exports.create("kind2", "val2", "arg2");
+        ast = exports.create("kind2", "val2", "arg2");
         test.assertEqual(ast.kind, "kind2");
         test.assertEqual(ast.val, "val2");
         test.assertEqual(ast.children[0], "arg2");
-        var ast = exports.create({
+        ast = exports.create({
             kind : "kind3",
             val : "val3",
             children : ["arg3"],
@@ -388,11 +386,10 @@ def("syntax", function(exports) {
     var nextToken = undefined;
     var parse = function(rbp) {
         rbp = rbp || 0;
-        var left;
         var t = token;
         nextToken();
         t.nud();
-        left = t;
+        var left = t;
         while(rbp < token.bp && !t.sep) {
             t = token;
             nextToken();
@@ -491,11 +488,11 @@ def("syntax", function(exports) {
         };
         var listline = function(node) {
             node = tokenLookup(node);
-            var result = newline() + node.pp();
+            var lines = newline() + node.pp();
             if(!node.sep) {
-                result += sep;
+                lines += sep;
             };
-            return result;
+            return lines;
         };
         indent += 4;
         result += nodes.map(listline).join("");
@@ -872,7 +869,7 @@ def("rst2ast", function(exports) {
         return ast;
     };
 });
-// analysis {{{2
+// code analysis {{{2
 def("code_analysis", function(exports) {
     // functions in post-order traversal
     var fns = [];
@@ -897,10 +894,13 @@ def("code_analysis", function(exports) {
                 if(fn.parent && (typeof fn.parent.scope[name] === "object" || !t.set)) {
                     t.boxed = true;
                     Object.keys(t).forEach(function(key) {
-                        localVar(fn.parent, name)[key] = true;
+                        localVar(fn.parent, name)[key] = localVar(fn.parent, name)[key] || t[key];
                     });
                 } else  {
                     t.local = true;
+                    if(t.firstSet) {
+                        t.firstSet.doTypeAnnotate = true;
+                    }
                 };
             };
         });
@@ -929,6 +929,9 @@ def("code_analysis", function(exports) {
         if(ast.kind === "id") {
             localVar(parent, ast.val).get = true;
         } else if(ast.kind === "assign") {
+            if(!localVar(parent, ast.val).set) {
+                localVar(parent, ast.val).firstSet = ast;
+            }
             localVar(parent, ast.val).set = true;
         };
         ast.children.forEach(function(elem) {
@@ -1014,6 +1017,8 @@ def("ast2js", function(exports) {
                 };
                 ast.children = children.reverse();
                 ast.val = "{";
+            } else if(ast.val === "new") {
+                // do nothing
             } else if(ast.val === "[]=") {
                 lhs = ast.create("id:*[]", ast.children[0], ast.children[1]);
                 ast.children.shift();
@@ -1138,7 +1143,7 @@ def("ast2rst", function(exports) {
             var asts = rsts.map(use("rst2ast").rst2ast);
             asts = use("code_analysis").analyse(asts);
             console.log(use("syntax").prettyprint(asts.map(function(ast) {
-                return ast2js(ast);
+                return ast2rst(ast);
             })));
         };
     };
@@ -1166,9 +1171,9 @@ def("ast2rst", function(exports) {
         };
         return true;
     };
-    /// ast2js {{{3
-    var ast2js = exports.ast2js = function(ast) {
-        ast.children = ast.children.map(ast2js);
+    /// ast2rst {{{3
+    var ast2rst = exports.ast2rst = function(ast) {
+        ast.children = ast.children.map(ast2rst);
         var lhs = ast.children[0];
         var rhs = ast.children[1];
         if(ast.kind === "call") {
@@ -1185,10 +1190,15 @@ def("ast2rst", function(exports) {
                 while(ast.children.length > 1) {
                     rhs = ast.children.pop();
                     lhs = ast.children.pop();
+                    if(lhs.kind === 'str' && isValidId(lhs.val)) {
+                        lhs.kind = 'id';
+                    }
                     children.push(ast.create("id", ":", lhs, rhs));
                 };
                 ast.children = children.reverse();
                 ast.val = "{";
+            } else if(ast.val === "new") {
+                // do nothing
             } else if(ast.val === "[]=") {
                 lhs = ast.create("id:*[]", ast.children[0], ast.children[1]);
                 ast.children.shift();
@@ -1257,19 +1267,10 @@ def("ast2rst", function(exports) {
             };
         };
         if(ast.kind === "fn") {
-            // TODO: var
             var len = + ast.val;
             lhs = ast.create("id:*()", ast.create("id:function"));
             lhs.children = lhs.children.concat(ast.children.slice(0, len));
             ast.children = ast.children.slice(len);
-            //ast.children.unshift(ast.create('str', 'XXX' + JSON.stringify(ast.scope)));
-            Object.keys(ast.scope).forEach(function(varName) {
-                if(ast.scope[varName].local) {
-                    ast.children.unshift(ast.create("id:var", ast.create("id", varName)));
-                } else if(!ast.scope[varName].argument) {
-                    ast.children.unshift(ast.create("note", "// outer: " + varName + "\n"));
-                };
-            });
             ast.children.unshift(lhs);
             ast.kind = "id";
             ast.val = "*{}";
@@ -1277,6 +1278,10 @@ def("ast2rst", function(exports) {
         if(ast.kind === "assign") {
             // =
             lhs = ast.create("id", ast.val);
+            if(ast.doTypeAnnotate) {
+                //lhs = ast.create('call', ':', lhs, ast.type || ast.create('id:Any'));
+                lhs = ast.create('call', 'var', lhs);
+            }
             ast.children.unshift(lhs);
             ast.val = "=";
         };
@@ -1482,8 +1487,7 @@ body: '<h1>The end of the Internet</h1>' +
             // # Setup the servers {{{2
             //
             exports.expressCreateServer = function(hook_name, args, callback) {
-                var app = args.app;
-                configureApp(app);
+                configureApp(args.app);
                 callback();
             };
             var app = express.createServer();
@@ -1590,7 +1594,6 @@ def("web", function(exports) {
             // ## Private data {{{3
             var data = localStorage.getItem(storageName) || "{}";
             data = JSON.parse(storage.store);
-            var serverData;
             var syncCallbacks = [];
             // ## Synchronise with localStorage and server {{{3
             var sync = function() {
@@ -1659,11 +1662,10 @@ def("web", function(exports) {
         };
         // ## solsort.login {{{3
         exports.login = function() {
-            var callback;
             var i = 0;
             while(i < arguments.length) {
                 if(typeof arguments[i] === "function") {
-                    callback = arguments[i];
+                    var callback = arguments[i];
                 };
                 ++i;
             };
@@ -1705,7 +1707,6 @@ def("web", function(exports) {
         };
         // ### Handle second part of login, if magic cookie {{{4
         var loggingIn = localStorage.getItem("logging in");
-        var access_token;
         if(loggingIn) {
             localStorage.removeItem("logging in");
             if(loggingIn === "github") {
@@ -1720,7 +1721,7 @@ def("web", function(exports) {
                 });
             };
             if(loggingIn === "facebook") {
-                access_token = location.hash.replace(RegExp(".*access_token="), "").replace(RegExp("&.*"), "");
+                var access_token = location.hash.replace(RegExp(".*access_token="), "").replace(RegExp("&.*"), "");
                 exports.jsonp("https://graph.facebook.com/me", {access_token : access_token}, function(data) {
                     if(data.id) {
                         loginAs("facebook:" + data.id, data.name);
