@@ -1,4 +1,3 @@
-
 def("util", function(exports) {
     exports.trycatch = Function("return function trycatch(fn,handle){try{return fn();}catch(e){return handle(e);}}")();
     exports.extend = function(a, b) {

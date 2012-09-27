@@ -1,4 +1,3 @@
-
 def("rest", function(exports) {
     exports.nodemain = function() {
         var server = require("express")();

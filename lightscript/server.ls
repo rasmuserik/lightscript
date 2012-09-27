@@ -1,4 +1,3 @@
-
 def("server", function(exports) {
     if(use("util").platform === "node") {
         exports.nodemain = function() {

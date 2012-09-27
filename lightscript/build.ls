@@ -1,4 +1,3 @@
-
 def("build", function(exports) {
     var fs = require("fs");
     exports.nodemain = function(arg) {

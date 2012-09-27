@@ -32,7 +32,7 @@ def("compiler", function(exports) {
         return use("syntax").prettyprint(asts.map(function(ast) {
             // outer: use
             return use("ast2rst").ast2rst(ast);
-        }));
+        })).slice(1);
     };
 });
 // Tokeniser {{{1

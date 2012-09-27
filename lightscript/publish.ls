@@ -1,4 +1,3 @@
-
 def("publish", function(exports) {
     exports.nodemain = function() {
         console.log("copying sites to /usr/share/nginx/www/");

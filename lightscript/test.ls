@@ -1,4 +1,3 @@
-
 def("test", function(exports) {
     var test = {};
     test.name = "";

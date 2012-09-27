@@ -1,4 +1,3 @@
-
 // Compiler {{{1
 def("compiler", function(exports) {
     exports.ls2js = function(ls) {
@@ -19,7 +18,7 @@ def("compiler", function(exports) {
         asts = use("code_analysis").analyse(asts);
         return use("syntax").prettyprint(asts.map(function(ast) {
             return use("ast2rst").ast2rst(ast);
-        }));
+        })).slice(1);
     };
 });
 // Tokeniser {{{1
