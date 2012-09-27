@@ -29,7 +29,7 @@ def("build", function(exports) {
             fs.readFile(ls, "utf8", function(err, src) {
                 src = use("compiler").ls2js(src);
                 if(shortname !== "module.ls") {
-                    src = "use=require(\"./module\").use;def=require(\"./module\").def;" + src;
+                    src = "if(typeof require==='function'){use=require('./module').use;def=require('./module').def}else{modules=window.modules||{};def=function(name,fn){modules[name]=fn};use=function(name){if(typeof modules[name]==='function'){var exports={};modules[name](exports);modules[name]=exports;}return modules[name];};}" + src;
                 };
                 fs.writeFile(js, src, function() {
                     done();
@@ -44,15 +44,20 @@ def("build", function(exports) {
                 fs.writeFileSync(sourcepath + filename, src);
             });
         };
+        var createSolsortJS = function() {
+            require("child_process").exec("cat " + buildpath + "nodejs/* > " + buildpath + "webjs/solsort.js");
+        };
         require("async").forEach(sourcefiles, function(filename, done) {
             var destfile = buildpath + "nodejs/" + filename.replace(".ls", ".js");
             optionalCompile(sourcepath + filename, destfile, compileToJS, done);
         }, function() {
-            if(compiled["compiler.ls"] || compiled["build.ls"]) {
-                sourcefiles.forEach(function(filename) {
+            if(compiled["compiler.ls"] || compiled["build.ls"] || arg === "web") {
+                require("async").forEach(sourcefiles, function(filename, done) {
                     var destfile = buildpath + "nodejs/" + filename.replace(".ls", ".js");
-                    compileToJS(sourcepath + filename, destfile, function() {});
-                });
+                    compileToJS(sourcepath + filename, destfile, done);
+                }, createSolsortJS);
+            } else  {
+                createSolsortJS();
             };
         });
     };

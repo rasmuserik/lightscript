@@ -19,4 +19,6 @@ def("main", function(exports) {
         };
     });
 });
-use("main");
+setTimeout(function() {
+    use("main");
+}, 0);
