@@ -1,5 +1,6 @@
-use = require('./module').use;
-def = require('./module').def;
+
+use = require("./module").use;
+def = require("./module").def;
 // Test {{{1
 def("test", function(exports) {
     var test = {};

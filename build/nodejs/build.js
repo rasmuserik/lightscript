@@ -84,14 +84,15 @@ def("build", function(exports) {
         };
         if(arg === "pretty") {
             sourcefiles.forEach(function(filename) {
-                // outer: console
                 // outer: use
                 // outer: sourcepath
                 // outer: fs
                 var src;
+                // outer: console
+                console.log("prettyprinting:", filename);
                 src = fs.readFileSync(sourcepath + filename, "utf8");
                 src = use("compiler").ls2ls(src);
-                console.log(filename, src, filename);
+                fs.writeFileSync(sourcepath + filename, src);
             });
         };
         require("async").forEach(sourcefiles, function(filename, done) {

@@ -1,5 +1,6 @@
-use = require('./module').use;
-def = require('./module').def;
+
+use = require("./module").use;
+def = require("./module").def;
 // Compiler {{{1
 def("compiler", function(exports) {
     exports.ls2js = function(ls) {
@@ -9,7 +10,7 @@ def("compiler", function(exports) {
         var asts = rsts.map(use("rst2ast").rst2ast);
         asts = use("code_analysis").analyse(asts);
         return use("syntax").prettyprint(asts.map(function(ast) {
-            return use('ast2js').ast2js(ast);
+            return use("ast2js").ast2js(ast);
         }));
     };
     exports.ls2ls = function(ls) {
@@ -19,9 +20,9 @@ def("compiler", function(exports) {
         var asts = rsts.map(use("rst2ast").rst2ast);
         asts = use("code_analysis").analyse(asts);
         return use("syntax").prettyprint(asts.map(function(ast) {
-            return use('ast2rst').ast2rst(ast);
+            return use("ast2rst").ast2rst(ast);
         }));
-    }
+    };
 });
 // Tokeniser {{{2
 def("tokeniser", function(exports) {
@@ -891,7 +892,7 @@ def("ast2js", function(exports) {
                 ast.children.shift();
                 ast.children[0] = lhs;
                 ast.val = "=";
-            } else if(jsoperator.hasOwnProperty(ast.val)) {
+            } else if(jsoperator["hasOwnProperty"](ast.val)) {
                 //operators - do nothing
             } else  {
                 // foo.bar(), foo['x'](bar)
@@ -1071,7 +1072,7 @@ def("ast2rst", function(exports) {
                 ast.children.shift();
                 ast.children[0] = lhs;
                 ast.val = "=";
-            } else if(jsoperator[ast.val]) {
+            } else if(jsoperator["hasOwnProperty"](ast.val)) {
                 //operators - do nothing
             } else  {
                 // foo.bar(), foo['x'](bar)

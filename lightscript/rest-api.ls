@@ -1,5 +1,6 @@
-use = require('./module').use;
-def = require('./module').def;
+
+use = require("./module").use;
+def = require("./module").def;
 // rest-api {{{1
 def("restapi", function(exports) {
     var platform = use("util").platform;

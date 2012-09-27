@@ -1534,7 +1534,7 @@ def("ast2rst", function(exports) {
                 ast.children.shift();
                 ast.children[0] = lhs;
                 ast.val = "=";
-            } else if(jsoperator[ast.val]) {
+            } else if(jsoperator["hasOwnProperty"](ast.val)) {
                 //operators - do nothing
             } else  {
                 // foo.bar(), foo['x'](bar)

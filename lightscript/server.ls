@@ -1,5 +1,6 @@
-use = require('./module').use;
-def = require('./module').def;
+
+use = require("./module").use;
+def = require("./module").def;
 // Server {{{1
 def("server", function(exports) {
     if(use("util").platform === "node") {
@@ -15,7 +16,7 @@ def("server", function(exports) {
             db.run("CREATE TABLE IF NOT EXISTS userdata (store, key, val, timestamp, PRIMARY KEY (store, key))");
             // # Pages from markdown {{{2
             var htmlTemplate = fs.readFileSync(__dirname + "/sites/solsort/template/html.mustache", "utf8");
-            var name2url = require('util').name2url;
+            var name2url = require("util").name2url;
             var file2entries = function(filename) {
                 var result = {};
                 fs.readFileSync(filename, "utf8").split("\n# ").slice(1).forEach(function(elem) {

@@ -1,5 +1,6 @@
-use = require('./module').use;
-def = require('./module').def;
+
+use = require("./module").use;
+def = require("./module").def;
 // publish web sites {{{1
 def("publish", function(exports) {
     exports.nodemain = function() {

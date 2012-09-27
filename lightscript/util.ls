@@ -1,5 +1,6 @@
-use = require('./module').use;
-def = require('./module').def;
+
+use = require("./module").use;
+def = require("./module").def;
 // Util {{{1
 def("util", function(exports) {
     exports.trycatch = Function("return function trycatch(fn,handle){try{return fn();}catch(e){return handle(e);}}")();
@@ -49,24 +50,24 @@ def("util", function(exports) {
         return result;
     };
     exports.name2url = function(name) {
-                return name.replace(RegExp("[^a-zA-Z0-9_-]", "g"), function(c) {
-                    var subs = {
-                        "Æ" : "AE",
-                        "Ø" : "O",
-                        "Å" : "AA",
-                        "æ" : "ae",
-                        "ø" : "o",
-                        "å" : "aa",
-                        "é" : "e",
-                        "?" : "",
-                        ":" : "",
-                        " " : "_",
-                    };
-                    if(typeof subs[c] === 'string') {
-                        return "_";
-                    } else  {
-                        return subs[c];
-                    };
-                });
+        return name.replace(RegExp("[^a-zA-Z0-9_-]", "g"), function(c) {
+            var subs = {
+                "Æ" : "AE",
+                "Ø" : "O",
+                "Å" : "AA",
+                "æ" : "ae",
+                "ø" : "o",
+                "å" : "aa",
+                "é" : "e",
+                "?" : "",
+                ":" : "",
+                " " : "_",
             };
+            if(typeof subs[c] === "string") {
+                return "_";
+            } else  {
+                return subs[c];
+            };
+        });
+    };
 });
