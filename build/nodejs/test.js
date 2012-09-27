@@ -1,7 +1,4 @@
-
-use = require("./module").use;
-def = require("./module").def;
-// Test {{{1
+use=require("./module").use;def=require("./module").def;
 def("test", function(exports) {
     // outer: use
     // outer: modules

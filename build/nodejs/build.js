@@ -1,7 +1,4 @@
-
-use = require("./module").use;
-def = require("./module").def;
-// Build {{{1
+use=require("./module").use;def=require("./module").def;
 def("build", function(exports) {
     // outer: use
     // outer: true
@@ -73,10 +70,13 @@ def("build", function(exports) {
                 // outer: done
                 // outer: js
                 // outer: fs
+                // outer: shortname
                 // outer: use
-                var t;
-                t = use("compiler").ls2js(src);
-                fs.writeFile(js, t, function() {
+                src = use("compiler").ls2js(src);
+                if(shortname !== "module.ls") {
+                    src = "use=require(\"./module\").use;def=require(\"./module\").def;" + src;
+                };
+                fs.writeFile(js, src, function() {
                     // outer: done
                     done();
                 });

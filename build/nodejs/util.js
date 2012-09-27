@@ -1,7 +1,4 @@
-
-use = require("./module").use;
-def = require("./module").def;
-// Util {{{1
+use=require("./module").use;def=require("./module").def;
 def("util", function(exports) {
     // outer: RegExp
     // outer: true

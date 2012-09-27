@@ -1,7 +1,4 @@
 
-use = require("./module").use;
-def = require("./module").def;
-// publish web sites {{{1
 def("publish", function(exports) {
     exports.nodemain = function() {
         console.log("copying sites to /usr/share/nginx/www/");
@@ -11,12 +8,5 @@ def("publish", function(exports) {
                 console.log("Error:", err);
             };
         });
-    };
-    if(1) {
-        2;
-    } else if(3) {
-        4;
-    } else  {
-        5;
     };
 });

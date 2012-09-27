@@ -1,7 +1,4 @@
-
-use = require("./module").use;
-def = require("./module").def;
-// publish web sites {{{1
+use=require("./module").use;def=require("./module").def;
 def("publish", function(exports) {
     // outer: require
     // outer: console
@@ -16,12 +13,5 @@ def("publish", function(exports) {
                 console.log("Error:", err);
             };
         });
-    };
-    if(1) {
-        2;
-    } else if(3) {
-        4;
-    } else  {
-        5;
     };
 });

@@ -1,7 +1,4 @@
 
-use = require("./module").use;
-def = require("./module").def;
-// Build {{{1
 def("build", function(exports) {
     var fs = require("fs");
     exports.nodemain = function(arg) {
@@ -31,8 +28,11 @@ def("build", function(exports) {
             console.log("compiling:", shortname);
             compiled[shortname] = true;
             fs.readFile(ls, "utf8", function(err, src) {
-                var t = use("compiler").ls2js(src);
-                fs.writeFile(js, t, function() {
+                src = use("compiler").ls2js(src);
+                if(shortname !== "module.ls") {
+                    src = "use=require(\"./module\").use;def=require(\"./module\").def;" + src;
+                };
+                fs.writeFile(js, src, function() {
                     done();
                 });
             });

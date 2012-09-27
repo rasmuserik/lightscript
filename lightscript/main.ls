@@ -1,7 +1,4 @@
 
-use = require("./module").use;
-def = require("./module").def;
-// Main {{{1
 def("main", function(exports) {
     var util = use("util");
     util.nextTick(function() {

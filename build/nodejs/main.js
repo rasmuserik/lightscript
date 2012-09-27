@@ -1,7 +1,4 @@
-
-use = require("./module").use;
-def = require("./module").def;
-// Main {{{1
+use=require("./module").use;def=require("./module").def;
 def("main", function(exports) {
     // outer: undefined
     // outer: window

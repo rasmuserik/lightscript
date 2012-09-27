@@ -1,7 +1,4 @@
 
-use = require("./module").use;
-def = require("./module").def;
-// Util {{{1
 def("util", function(exports) {
     exports.trycatch = Function("return function trycatch(fn,handle){try{return fn();}catch(e){return handle(e);}}")();
     exports.extend = function(a, b) {

@@ -1,25 +1,23 @@
 
-use = require("./module").use;
-def = require("./module").def;
 // web {{{1
 def("web", function(exports) {
     exports.main = function() {
         console.log("here");
         // TODO: remove the following line
         var solsort = exports;
-        // # Utility functions {{{2
-        // ## load an external .js file {{{3
+        // # Utility functions {{{1
+        // ## load an external .js file {{{2
         // TODO: callback parameter (+onreadychange etc.)
         exports.loadJS = function(url) {
             var scriptElem = document.createElement("script");
             scriptElem.src = url;
             document.body.appendChild(scriptElem);
         };
-        // ## identity function {{{3
+        // ## identity function {{{2
         exports.id = function(a) {
             return a;
         };
-        // ## Throttle a function {{{3
+        // ## Throttle a function {{{2
         exports.throttledFn = function(fn, delay) {
             var lastRun = 0;
             var scheduled = false;
@@ -36,7 +34,7 @@ def("web", function(exports) {
                 setTimeout(run, Math.max(0, delay - (Date.now() - lastRun)));
             };
         };
-        // ## extract url parameters {{{3
+        // ## extract url parameters {{{2
         exports.getVars = function() {
             // TODO: unencode urlencoding
             var result = {};
@@ -46,7 +44,7 @@ def("web", function(exports) {
             });
             return result;
         };
-        // ## jsonp {{{3
+        // ## jsonp {{{2
         exports.jsonp = function(uri, args, callback, callbackName) {
             // TODO: urlencode args
             // TODO: make reentrant
@@ -65,17 +63,17 @@ def("web", function(exports) {
             alert("Error on solsort.com: \n" + err + "\nSorry, not quite bug free, if you are online, then the error has been reported...");
             throw err;
         };
-        // # Storage  {{{2
+        // # Storage  {{{1
         var stores = {};
         exports.Storage = function(storageName, mergeFunction) {
             if(stores[storageName]) {
                 return stores[storageName];
             };
-            // ## Private data {{{3
+            // ## Private data {{{2
             var data = localStorage.getItem(storageName) || "{}";
             data = JSON.parse(storage.store);
             var syncCallbacks = [];
-            // ## Synchronise with localStorage and server {{{3
+            // ## Synchronise with localStorage and server {{{2
             var sync = function() {
                 var execSyncCallbacks = function() {
                     while(syncCallbacks.length) {
@@ -91,7 +89,7 @@ def("web", function(exports) {
                 // TODO: implement server-side sync
                 execSyncCallbacks();
             };
-            // ## Throttled version of synchronisation function {{{3
+            // ## Throttled version of synchronisation function {{{2
             var sync5s = exports.throttledFn(sync, 5000);
             var throttledSync = function(callback) {
                 if(callback) {
@@ -99,7 +97,7 @@ def("web", function(exports) {
                 };
                 sync5s();
             };
-            // ## setters/getters {{{3
+            // ## setters/getters {{{2
             var set = function(key, val) {
                 data[key] = JSON.stringify(val);
                 throttledSync();
@@ -107,7 +105,7 @@ def("web", function(exports) {
             var get = function(key) {
                 return JSON.parse(data[key]);
             };
-            // ## Create and return+cache store object {{{3
+            // ## Create and return+cache store object {{{2
             var storage = {
                 sync : throttledSync,
                 set : set,
@@ -116,8 +114,8 @@ def("web", function(exports) {
             stores[storageName] = storage;
             return storage;
         };
-        // # Login system {{{2
-        // ## Update user interface: add loginbuttons to `#solsortLogin` {{{3
+        // # Login system {{{1
+        // ## Update user interface: add loginbuttons to `#solsortLogin` {{{2
         var loginUI = function() {
             var solsortLogin = document.getElementById("solsortLogin");
             if(solsortLogin) {
@@ -134,13 +132,13 @@ def("web", function(exports) {
                 };
             };
         };
-        // ## Logout {{{3
+        // ## Logout {{{2
         exports.logout = function() {
             localStorage.removeItem("userId");
             localStorage.removeItem("userName");
             loginUI();
         };
-        // ## solsort.login {{{3
+        // ## solsort.login {{{2
         exports.login = function() {
             var i = 0;
             while(i < arguments.length) {
@@ -155,23 +153,23 @@ def("web", function(exports) {
             };
             throw "not implemented yet";
         };
-        // ## Internal utility functions {{{3
-        // ### Log in to facebook {{{3
+        // ## Internal utility functions {{{2
+        // ### Log in to facebook {{{2
         exports.loginFacebook = function() {
             localStorage.setItem("logging in", "facebook");
             window.location = "https://www.facebook.com/dialog/oauth?client_id=201142456681777&redirect_uri=http://solsort.com/&scope=&response_type=token";
         };
-        // ### Log in to github {{{4
+        // ### Log in to github {{{3
         exports.loginGitHub = function() {
             localStorage.setItem("logging in", "github");
             window.location = "https://github.com/login/oauth/authorize?client_id=cc14f7f75ff01bdbb1e7";
         };
-        // ### Log in to google {{{4
+        // ### Log in to google {{{3
         exports.loginGoogle = function() {
             localStorage.setItem("logging in", "google");
             window.location = "https://accounts.google.com/o/oauth2/auth?scope=https://www.googleapis.com/auth/userinfo.profile&state=&redirect_uri=http://solsort.com/&response_type=token&client_id=500223099774.apps.googleusercontent.com";
         };
-        // ### Utility for setting userid/username when logged in {{{4
+        // ### Utility for setting userid/username when logged in {{{3
         var loginAs = function(user, name) {
             localStorage.setItem("userId", user);
             localStorage.setItem("userName", name);
@@ -182,7 +180,7 @@ def("web", function(exports) {
                 window.location = loginFromUrl;
             };
         };
-        // ### Handle second part of login, if magic cookie {{{4
+        // ### Handle second part of login, if magic cookie {{{3
         var loggingIn = localStorage.getItem("logging in");
         if(loggingIn) {
             localStorage.removeItem("logging in");

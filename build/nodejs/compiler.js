@@ -1,6 +1,4 @@
-
-use = require("./module").use;
-def = require("./module").def;
+use=require("./module").use;def=require("./module").def;
 // Compiler {{{1
 def("compiler", function(exports) {
     // outer: use
@@ -37,7 +35,7 @@ def("compiler", function(exports) {
         }));
     };
 });
-// Tokeniser {{{2
+// Tokeniser {{{1
 def("tokeniser", function(exports) {
     // outer: true
     // outer: undefined
@@ -227,7 +225,7 @@ def("tokeniser", function(exports) {
         return tokens;
     };
 });
-// Ast object {{{2
+// Ast object {{{1
 def("ast", function(exports) {
     // outer: use
     // outer: this
@@ -316,7 +314,7 @@ def("ast", function(exports) {
         test.done();
     };
 });
-// Syntax {{{2
+// Syntax {{{1
 def("syntax", function(exports) {
     // outer: JSON
     // outer: this
@@ -355,7 +353,7 @@ def("syntax", function(exports) {
     // outer: use
     var extend;
     // outer: Array
-    // main {{{3
+    // main {{{2
     exports.nodemain = function() {
         // outer: console
         // outer: pplistlines
@@ -384,7 +382,7 @@ def("syntax", function(exports) {
             };
         };
     };
-    // toList {{{3
+    // toList {{{2
     exports.toList = function(ast) {
         // outer: exports
         var result;
@@ -392,7 +390,7 @@ def("syntax", function(exports) {
         result.unshift(ast.kind + ":" + ast.val);
         return result;
     };
-    // setup, token lookup, default token {{{3
+    // setup, token lookup, default token {{{2
     exports.errors = [];
     extend = use("util").extend;
     tokenLookup = exports.tokenLookup = function(orig) {
@@ -417,7 +415,7 @@ def("syntax", function(exports) {
             };
         },
     });
-    // parser {{{3
+    // parser {{{2
     token = undefined;
     nextToken = undefined;
     parse = function(rbp) {
@@ -470,7 +468,7 @@ def("syntax", function(exports) {
         };
         return result;
     };
-    // prettyprinter {{{3
+    // prettyprinter {{{2
     indent = - 4;
     defaultToken.pp = function() {
         // outer: ppPrio
@@ -593,7 +591,7 @@ def("syntax", function(exports) {
         // outer: JSON
         return JSON.stringify(this.val);
     };
-    // syntax constructors {{{3
+    // syntax constructors {{{2
     nudPrefix = function() {
         // outer: Array
         // outer: this
@@ -741,7 +739,7 @@ def("syntax", function(exports) {
         node.space = "";
         return node;
     };
-    // syntax definition {{{3
+    // syntax definition {{{2
     symb = {
         "." : nospace(infix(1000)),
         "[" : list("]")(1000),
@@ -833,7 +831,7 @@ def("syntax", function(exports) {
         "annotation:" : sep(),
     };
 });
-// rst2ast {{{2
+// rst2ast {{{1
 def("rst2ast", function(exports) {
     // outer: false
     // outer: Array
@@ -843,7 +841,7 @@ def("rst2ast", function(exports) {
     // outer: process
     // outer: use
     var rst2ast;
-    // main {{{3
+    // main {{{2
     exports.nodemain = function() {
         // outer: rst2ast
         // outer: console
@@ -877,7 +875,7 @@ def("rst2ast", function(exports) {
             });
         };
     };
-    // rst2ast {{{3
+    // rst2ast {{{2
     rst2ast = exports.rst2ast = function(ast) {
         // outer: false
         var lhs;
@@ -887,7 +885,7 @@ def("rst2ast", function(exports) {
         var children;
         // outer: true
         var isHashTable;
-        // Before recursive transformation {{{4
+        // Before recursive transformation {{{3
         // Object
         if(ast.isa("id:{")) {
             isHashTable = true;
@@ -925,34 +923,34 @@ def("rst2ast", function(exports) {
             ast.children.unshift(ast.create("id:Array"));
             ast.val = "new";
         };
-        // transform children {{{4
+        // transform children {{{3
         ast.children = ast.children.map(rst2ast);
-        // After recursive transformation {{{4
-        // parenthesie (x) -> x {{{5
+        // After recursive transformation {{{3
+        // parenthesie (x) -> x {{{4
         while(ast.isa("id:(") && ast.children.length === 1) {
             ast = ast.children[0];
         };
-        // call {{{5
+        // call {{{4
         if(ast.kind === "id" && ast.children.length > 0) {
             ast.kind = "call";
             ast.children = ast.children.filter(function(elem) {
                 return !elem.isa("id:,");
             });
         };
-        // remove var {{{5
+        // remove var {{{4
         if(ast.isa("call:var")) {
             ast = ast.children[0];
         };
-        // extract lhs and rhs {{{5
+        // extract lhs and rhs {{{4
         lhs = ast.children[0];
         rhs = ast.children[1];
-        // foo.bar -> foo.'bar' {{{5
+        // foo.bar -> foo.'bar' {{{4
         if(ast.isa("call:.")) {
             if(rhs.kind === "id") {
                 rhs.kind = "str";
             };
         };
-        // branches {{{5
+        // branches {{{4
         // return
         if(ast.isa("call:return")) {
             ast.kind = "branch";
@@ -969,7 +967,7 @@ def("rst2ast", function(exports) {
         if(ast.isa("call:||")) {
             ast.kind = "branch";
         };
-        // = {{{5
+        // = {{{4
         if(ast.isa("call:=")) {
             if(lhs.kind === "id") {
                 ast.kind = "assign";
@@ -987,7 +985,7 @@ def("rst2ast", function(exports) {
                 ast.children[1] = lhs.children[1];
             };
         };
-        // *{} {{{5
+        // *{} {{{4
         if(ast.isa("call:*{}")) {
             ast.children = ast.children.filter(function(elem) {
                 return !elem.isa("id:;");
@@ -1023,7 +1021,7 @@ def("rst2ast", function(exports) {
                 ast.children = lhs.children.slice(1).concat(ast.children.slice(1));
             };
         };
-        // else {{{5
+        // else {{{4
         if(ast.isa("call:else")) {
             if(lhs.isa("branch:cond")) {
                 if(rhs.isa("branch:cond")) {
@@ -1040,7 +1038,7 @@ def("rst2ast", function(exports) {
                 };
             };
         };
-        // method call {{{5
+        // method call {{{4
         if(ast.isa("call:*()")) {
             if(lhs.isa("call:.")) {
                 ast.val = lhs.children[1].val;
@@ -1050,7 +1048,7 @@ def("rst2ast", function(exports) {
         return ast;
     };
 });
-// code analysis {{{2
+// code analysis {{{1
 def("code_analysis", function(exports) {
     // outer: Number
     // outer: true
@@ -1169,7 +1167,7 @@ def("code_analysis", function(exports) {
         });
     };
 });
-// ast2js {{{2
+// ast2js {{{1
 def("ast2js", function(exports) {
     // outer: Object
     // outer: undefined
@@ -1187,7 +1185,7 @@ def("ast2js", function(exports) {
     var validIdSymbs;
     var jsoperator;
     var str2obj;
-    // main {{{3
+    // main {{{2
     exports.nodemain = function() {
         // outer: ast2js
         var asts;
@@ -1227,7 +1225,7 @@ def("ast2js", function(exports) {
             })));
         };
     };
-    // Utility / definitions {{{3
+    // Utility / definitions {{{2
     str2obj = function(str) {
         // outer: use
         return use("util").list2obj(str.split(" "));
@@ -1258,7 +1256,7 @@ def("ast2js", function(exports) {
         };
         return true;
     };
-    /// ast2js {{{3
+    /// ast2js {{{2
     ast2js = exports.ast2js = function(ast) {
         var extractBlocks;
         // outer: Object
@@ -1409,7 +1407,7 @@ def("ast2js", function(exports) {
         return ast;
     };
 });
-// ast2rst {{{2
+// ast2rst {{{1
 def("ast2rst", function(exports) {
     // outer: undefined
     // outer: Array
@@ -1426,7 +1424,7 @@ def("ast2rst", function(exports) {
     var validIdSymbs;
     var jsoperator;
     var str2obj;
-    // main {{{3
+    // main {{{2
     exports.nodemain = function() {
         // outer: ast2rst
         var asts;
@@ -1453,7 +1451,7 @@ def("ast2rst", function(exports) {
             })));
         };
     };
-    // Utility / definitions {{{3
+    // Utility / definitions {{{2
     str2obj = function(str) {
         // outer: use
         return use("util").list2obj(str.split(" "));
@@ -1484,7 +1482,7 @@ def("ast2rst", function(exports) {
         };
         return true;
     };
-    /// ast2rst {{{3
+    /// ast2rst {{{2
     ast2rst = exports.ast2rst = function(ast) {
         var extractBlocks;
         var len;

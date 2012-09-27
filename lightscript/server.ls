@@ -1,11 +1,8 @@
 
-use = require("./module").use;
-def = require("./module").def;
-// Server {{{1
 def("server", function(exports) {
     if(use("util").platform === "node") {
         exports.nodemain = function() {
-            // # includes and initialisation {{{2
+            // # includes and initialisation {{{1
             var express = require("express");
             var mustache = require("mustache");
             var fs = require("fs");
@@ -14,7 +11,7 @@ def("server", function(exports) {
             var https = require("https");
             var db = new sqlite3.Database(process.env.HOME + "/data/db.sqlite3");
             db.run("CREATE TABLE IF NOT EXISTS userdata (store, key, val, timestamp, PRIMARY KEY (store, key))");
-            // # Pages from markdown {{{2
+            // # Pages from markdown {{{1
             var htmlTemplate = fs.readFileSync(__dirname + "/sites/solsort/template/html.mustache", "utf8");
             var name2url = require("util").name2url;
             var file2entries = function(filename) {
@@ -33,7 +30,7 @@ def("server", function(exports) {
                 return result;
             };
             var notes = file2entries(__dirname + "/sites/solsort/notes.md");
-            // # Web content/server configuration {{{2
+            // # Web content/server configuration {{{1
             var configureApp = function(app) {
                 require("./sites/solsort/theodorelias/genindex.js").gen(htmlTemplate);
                 app.use(function(req, res, next) {
@@ -146,7 +143,7 @@ body: '<h1>The end of the Internet</h1>' +
 });
 */
             };
-            // # Setup the servers {{{2
+            // # Setup the servers {{{1
             //
             exports.expressCreateServer = function(hook_name, args, callback) {
                 configureApp(args.app);
