@@ -5,6 +5,7 @@
   "homepage": "http://rasmuserik.com",
   "description": "solsort.com web application",
   "dependencies": {
+    "async": "*",
     "mustache": "*",
     "glob": "*",
     "gm": "*",

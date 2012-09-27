@@ -1,49 +1,88 @@
-use = require('./module').use;
-def = require('./module').def;
+
+use = require("./module").use;
+def = require("./module").def;
 // Compiler {{{1
 def("compiler", function(exports) {
+    // outer: use
     exports.ls2js = function(ls) {
-        var tokenise = use("tokeniser").tokenise;
-        var syntax = use("syntax");
-        var rsts = syntax.parse(tokenise(ls));
-        var asts = rsts.map(use("rst2ast").rst2ast);
+        var asts;
+        var rsts;
+        var syntax;
+        // outer: use
+        var tokenise;
+        tokenise = use("tokeniser").tokenise;
+        syntax = use("syntax");
+        rsts = syntax.parse(tokenise(ls));
+        asts = rsts.map(use("rst2ast").rst2ast);
         asts = use("code_analysis").analyse(asts);
         return use("syntax").prettyprint(asts.map(function(ast) {
-            return use('ast2js').ast2js(ast);
+            // outer: use
+            return use("ast2js").ast2js(ast);
         }));
     };
-    exports.ls2ls = function(ls) {
-    }
+    exports.ls2ls = function(ls) {};
 });
 // Tokeniser {{{2
 def("tokeniser", function(exports) {
+    // outer: true
+    // outer: undefined
+    // outer: Array
+    // outer: Object
+    var createToken;
     "use strict";
-    var createToken = function(kind, val, pos) {
+    createToken = function(kind, val, pos) {
+        // outer: Object
         return {
-            kind : kind,
-            val : val,
-            pos : pos,
+            "kind" : kind,
+            "val" : val,
+            "pos" : pos,
         };
     };
     exports.tokenise = function(buffer) {
-        var pos = 0;
-        var start = {lineno : 0, pos : 0};
-        var lineno = 0;
-        var one_of = function(str) {
+        // outer: true
+        // outer: undefined
+        // outer: createToken
+        var token;
+        // outer: Array
+        var tokens;
+        var next;
+        var newToken;
+        var begin_token;
+        var pop;
+        var peek;
+        var starts_with;
+        var one_of;
+        var lineno;
+        // outer: Object
+        var start;
+        var pos;
+        pos = 0;
+        start = {"lineno" : 0, "pos" : 0};
+        lineno = 0;
+        one_of = function(str) {
+            // outer: peek
             return str.indexOf(peek()) !== - 1;
         };
-        var starts_with = function(str) {
+        starts_with = function(str) {
+            // outer: peek
             return peek(str.length) === str;
         };
-        var peek = function(n, delta) {
+        peek = function(n, delta) {
+            // outer: pos
+            // outer: buffer
             n = n || 1;
             delta = delta || 0;
             return buffer.slice(pos + delta, pos + delta + n);
         };
-        var pop = function(n) {
+        pop = function(n) {
+            // outer: lineno
+            // outer: pos
+            // outer: buffer
+            var result;
             n = n || 1;
-            var result = buffer.slice(pos, pos + n);
+            result = buffer.slice(pos, pos + n);
             result.split("").forEach(function(c) {
+                // outer: lineno
                 if(c === "\n") {
                     ++lineno;
                 };
@@ -51,22 +90,50 @@ def("tokeniser", function(exports) {
             pos += n;
             return result;
         };
-        var begin_token = function() {
-            start = {lineno : lineno, pos : pos};
+        begin_token = function() {
+            // outer: pos
+            // outer: lineno
+            // outer: Object
+            // outer: start
+            start = {"lineno" : lineno, "pos" : pos};
         };
-        var newToken = function(kind, val) {
-            var result = createToken(kind, val, "l" + start.lineno + "p" + start.pos + "-l" + lineno + "p" + pos);
+        newToken = function(kind, val) {
+            // outer: pos
+            // outer: lineno
+            // outer: start
+            // outer: createToken
+            var result;
+            result = createToken(kind, val, "l" + start.lineno + "p" + start.pos + "-l" + lineno + "p" + pos);
             return result;
         };
-        var next = function() {
-            var whitespace = " \t\r\n";
-            var single_symbol = "(){}[]:;,`?";
-            var joined_symbol = "=+-*/<>%!|&^~#.@";
-            var ident = "_qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM$";
-            var digits = "0123456789";
-            var hexdigits = digits + "abcdefABCDEF";
-            var s = undefined;
-            var c = undefined;
+        next = function() {
+            // outer: pos
+            // outer: Object
+            var quote;
+            // outer: newToken
+            // outer: starts_with
+            // outer: pop
+            // outer: one_of
+            // outer: peek
+            // outer: begin_token
+            // outer: true
+            var c;
+            // outer: undefined
+            var s;
+            var hexdigits;
+            var digits;
+            var ident;
+            var joined_symbol;
+            var single_symbol;
+            var whitespace;
+            whitespace = " \t\r\n";
+            single_symbol = "(){}[]:;,`?";
+            joined_symbol = "=+-*/<>%!|&^~#.@";
+            ident = "_qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM$";
+            digits = "0123456789";
+            hexdigits = digits + "abcdefABCDEF";
+            s = undefined;
+            c = undefined;
             while(true) {
                 begin_token();
                 if(peek() === "") {
@@ -89,15 +156,15 @@ def("tokeniser", function(exports) {
                     return newToken("note", s);
                 } else if(one_of("'\"")) {
                     s = "";
-                    var quote = pop();
+                    quote = pop();
                     while(!starts_with(quote)) {
                         c = pop();
                         if(c === "\\") {
                             c = pop();
                             c = {
-                                n : "\n",
-                                r : "\r",
-                                t : "\t",
+                                "n" : "\n",
+                                "r" : "\r",
+                                "t" : "\t",
                             }[c] || c;
                         };
                         s += c;
@@ -136,8 +203,8 @@ def("tokeniser", function(exports) {
                 };
             };
         };
-        var tokens = [];
-        var token = next();
+        tokens = [];
+        token = next();
         while(token) {
             tokens.push(token);
             token = next();
@@ -147,15 +214,30 @@ def("tokeniser", function(exports) {
 });
 // Ast object {{{2
 def("ast", function(exports) {
-    var defaultAst = {
-        create : function(arg) {
-            var args = Array.prototype.slice.call(arguments, 0);
-            var self = Object.create(defaultAst);
+    // outer: use
+    // outer: this
+    // outer: arguments
+    // outer: Array
+    // outer: Object
+    var defaultAst;
+    defaultAst = {
+        "create" : function(arg) {
+            var splitpos;
+            // outer: use
+            // outer: this
+            // outer: defaultAst
+            // outer: Object
+            var self;
+            // outer: arguments
+            // outer: Array
+            var args;
+            args = Array.prototype.slice.call(arguments, 0);
+            self = Object.create(defaultAst);
             self.pos = this.pos;
             if(typeof arg === "object") {
                 self = use("util").extend(self, arg);
             } else if(typeof arg === "string") {
-                var splitpos = arg.indexOf(":");
+                splitpos = arg.indexOf(":");
                 if(splitpos === - 1) {
                     self.kind = args.shift();
                     self.val = args.shift();
@@ -168,26 +250,38 @@ def("ast", function(exports) {
             };
             return self;
         },
-        isa : function(kindval) {
+        "isa" : function(kindval) {
+            // outer: this
             kindval = kindval.split(":");
             this.assertEqual(kindval.length, 2);
             return this.kind === kindval[0] && this.val === kindval[1];
         },
-        assertEqual : function(a, b) {
+        "assertEqual" : function(a, b) {
+            // outer: this
             if(a !== b) {
                 this.error("assert error: " + a + " !== " + b);
             };
         },
-        error : function(desc) {
-            throw {error : desc, token : this};
+        "error" : function(desc) {
+            // outer: this
+            // outer: Object
+            throw {"error" : desc, "token" : this};
         },
     };
     exports.create = function(arg) {
-        var args = Array.prototype.slice.call(arguments, 0);
+        // outer: defaultAst
+        // outer: arguments
+        // outer: Array
+        var args;
+        args = Array.prototype.slice.call(arguments, 0);
         return defaultAst.create.apply(defaultAst, args);
     };
     exports.test = function(test) {
-        var ast = exports.create("kind1:val1", "arg1");
+        // outer: Array
+        // outer: Object
+        // outer: exports
+        var ast;
+        ast = exports.create("kind1:val1", "arg1");
         test.assertEqual(ast.kind, "kind1");
         test.assertEqual(ast.val, "val1");
         test.assertEqual(ast.children[0], "arg1");
@@ -197,9 +291,9 @@ def("ast", function(exports) {
         test.assertEqual(ast.val, "val2");
         test.assertEqual(ast.children[0], "arg2");
         ast = exports.create({
-            kind : "kind3",
-            val : "val3",
-            children : ["arg3"],
+            "kind" : "kind3",
+            "val" : "val3",
+            "children" : ["arg3"],
         });
         test.assertEqual(ast.kind, "kind3");
         test.assertEqual(ast.val, "val3");
@@ -209,15 +303,63 @@ def("ast", function(exports) {
 });
 // Syntax {{{2
 def("syntax", function(exports) {
+    // outer: JSON
+    // outer: this
+    // outer: console
+    // outer: require
+    // outer: process
+    // outer: true
+    var symb;
+    var nospace;
+    var list;
+    var special;
+    var sep;
+    var prefix;
+    var rparen;
+    var infixr;
+    var infix;
+    var infixLed;
+    var nudPrefix;
+    var stringpp;
+    var blockpp;
+    var pplistlines;
+    var newline;
+    var infixlistpp;
+    var compactlistpp;
+    var listpp;
+    var ppPrio;
+    var pp;
+    var indent;
+    var parse;
+    var nextToken;
+    // outer: undefined
+    var token;
+    // outer: Object
+    var defaultToken;
+    var tokenLookup;
+    // outer: use
+    var extend;
+    // outer: Array
     // main {{{3
     exports.nodemain = function() {
-        var tokenise = use("tokeniser").tokenise;
-        var filename = process.argv[3] || process.argv[1];
-        var rsts = exports.parse(tokenise(require("fs").readFileSync(filename, "utf8")));
-        var asts = rsts.map(use("rst2ast").rst2ast);
+        // outer: console
+        // outer: pplistlines
+        var newCode;
+        var asts;
+        // outer: require
+        // outer: exports
+        var rsts;
+        // outer: process
+        var filename;
+        // outer: use
+        var tokenise;
+        tokenise = use("tokeniser").tokenise;
+        filename = process.argv[3] || process.argv[1];
+        rsts = exports.parse(tokenise(require("fs").readFileSync(filename, "utf8")));
+        asts = rsts.map(use("rst2ast").rst2ast);
         asts = use("code_analysis").analyse(asts);
         rsts = asts.map(use("ast2rst").ast2rst);
-        var newCode = pplistlines(rsts, ";");
+        newCode = pplistlines(rsts, ";");
         if(exports.errors.length) {
             console.log("errors:", exports.errors);
         } else  {
@@ -229,38 +371,50 @@ def("syntax", function(exports) {
     };
     // toList {{{3
     exports.toList = function(ast) {
-        var result = ast.children.map(exports.toList);
+        // outer: exports
+        var result;
+        result = ast.children.map(exports.toList);
         result.unshift(ast.kind + ":" + ast.val);
         return result;
     };
     // setup, token lookup, default token {{{3
     exports.errors = [];
-    var extend = use("util").extend;
-    var tokenLookup = exports.tokenLookup = function(orig) {
-        var proto = symb[orig.kind + ":"] || symb[orig.val] || (orig.val && symb[orig.val[orig.val.length - 1]]) || defaultToken;
+    extend = use("util").extend;
+    tokenLookup = exports.tokenLookup = function(orig) {
+        // outer: Object
+        // outer: extend
+        // outer: defaultToken
+        // outer: symb
+        var proto;
+        proto = symb[orig.kind + ":"] || symb[orig.val] || (orig.val && symb[orig.val[orig.val.length - 1]]) || defaultToken;
         return extend(Object.create(proto), orig);
     };
-    var defaultToken = use("ast").create({
-        nud : function() {},
-        bp : 0,
-        dbp : 0,
-        space : " ",
-        children : [],
-        assert : function(ok, desc) {
+    defaultToken = use("ast").create({
+        "nud" : function() {},
+        "bp" : 0,
+        "dbp" : 0,
+        "space" : " ",
+        "children" : [],
+        "assert" : function(ok, desc) {
+            // outer: this
             if(!ok) {
                 this.error(desc);
             };
         },
     });
     // parser {{{3
-    var token = undefined;
-    var nextToken = undefined;
-    var parse = function(rbp) {
+    token = undefined;
+    nextToken = undefined;
+    parse = function(rbp) {
+        var left;
+        // outer: nextToken
+        // outer: token
+        var t;
         rbp = rbp || 0;
-        var t = token;
+        t = token;
         nextToken();
         t.nud();
-        var left = t;
+        left = t;
         while(rbp < token.bp && !t.sep) {
             t = token;
             nextToken();
@@ -273,28 +427,47 @@ def("syntax", function(exports) {
         return left;
     };
     exports.parse = function(tokens) {
-        var pos = 0;
+        // outer: true
+        // outer: Object
+        // outer: tokenLookup
+        // outer: parse
+        // outer: token
+        // outer: Array
+        var result;
+        // outer: nextToken
+        var pos;
+        pos = 0;
         nextToken = function() {
-            token = tokenLookup(pos === tokens.length ? {kind : "eof", rparen : true} : tokens[pos]);
+            // outer: true
+            // outer: Object
+            // outer: tokens
+            // outer: pos
+            // outer: tokenLookup
+            // outer: token
+            token = tokenLookup(pos === tokens.length ? {"kind" : "eof", "rparen" : true} : tokens[pos]);
             ++pos;
             return tokenLookup(token);
         };
         nextToken();
-        var result = [];
+        result = [];
         while(token.kind !== "eof") {
             result.push(parse());
         };
         return result;
     };
     // prettyprinter {{{3
-    var indent = - 4;
+    indent = - 4;
     defaultToken.pp = function() {
+        // outer: ppPrio
+        var result;
+        // outer: pp
+        // outer: this
         if(this.children.length === 0) {
             return this.val;
         } else if(this.children.length === 1) {
             return this.val + this.space + pp(this.children[0]);
         } else if(this.children.length === 2) {
-            var result = "";
+            result = "";
             result += ppPrio(this.children[0], this.bp);
             result += this.space + this.val + this.space;
             result += ppPrio(this.children[1], this.bp + 1 - this.dbp);
@@ -304,14 +477,18 @@ def("syntax", function(exports) {
             this.error("cannot prettyprint...");
         };
     };
-    var pp = function(node) {
+    pp = function(node) {
+        // outer: tokenLookup
         return tokenLookup(node).pp();
     };
     exports.prettyprint = function(stmts) {
+        // outer: pplistlines
         return pplistlines(stmts, ";");
     };
-    var ppPrio = function(node, prio) {
-        var result = "";
+    ppPrio = function(node, prio) {
+        // outer: pp
+        var result;
+        result = "";
         if(node.bp && node.bp < prio) {
             result += "(";
         };
@@ -321,42 +498,62 @@ def("syntax", function(exports) {
         };
         return result;
     };
-    var listpp = function(nodes) {
+    listpp = function(nodes) {
+        // outer: compactlistpp
+        // outer: pplistlines
         if(nodes.length > 2) {
             return pplistlines(nodes, ",");
         } else  {
             return compactlistpp(nodes);
         };
     };
-    var compactlistpp = function(nodes) {
-        var args = nodes.filter(function(elem) {
+    compactlistpp = function(nodes) {
+        // outer: pp
+        var args;
+        args = nodes.filter(function(elem) {
             return elem.val !== "," || elem.kind !== "id";
         });
         return args.map(pp).join(", ");
     };
-    var infixlistpp = function() {
+    infixlistpp = function() {
+        // outer: compactlistpp
+        // outer: this
+        // outer: pp
         return pp(this.children[0]) + this.val[1] + compactlistpp(this.children.slice(1)) + this.val[2];
     };
-    var newline = function() {
-        var result = "\n";
-        var n = indent;
+    newline = function() {
+        // outer: indent
+        var n;
+        var result;
+        result = "\n";
+        n = indent;
         while(n > 0) {
             result += " ";
             --n;
         };
         return result;
     };
-    var pplistlines = function(nodes, sep) {
+    pplistlines = function(nodes, sep) {
+        // outer: tokenLookup
+        // outer: newline
+        // outer: indent
+        var listline;
+        var result;
         nodes = nodes.filter(function(elem) {
+            // outer: sep
             return elem.val !== sep || elem.kind !== "id";
         });
-        var result = "";
+        result = "";
         if(nodes.length === 0) {
             return result;
         };
-        var listline = function(node) {
+        listline = function(node) {
+            // outer: sep
+            // outer: newline
+            var lines;
+            // outer: tokenLookup
             node = tokenLookup(node);
-            var lines = newline() + node.pp();
+            lines = newline() + node.pp();
             if(!node.sep) {
                 lines += sep;
             };
@@ -368,60 +565,115 @@ def("syntax", function(exports) {
         result += newline();
         return result;
     };
-    var blockpp = function() {
+    blockpp = function() {
+        // outer: pplistlines
+        // outer: this
+        // outer: pp
         return pp(this.children[0]) + " {" + pplistlines(this.children.slice(1).filter(function(elem) {
             return elem.val !== ";" || elem.kind !== "id";
         }), ";") + "}";
     };
-    var stringpp = function() {
+    stringpp = function() {
+        // outer: this
+        // outer: JSON
         return JSON.stringify(this.val);
     };
     // syntax constructors {{{3
-    var nudPrefix = function() {
-        var child = parse();
+    nudPrefix = function() {
+        // outer: Array
+        // outer: this
+        // outer: parse
+        var child;
+        child = parse();
         if(parse.sep) {
             this.error("should be followed by a value, not a separator");
             child.error("missing something before this element");
         };
         this.children = [child];
     };
-    var infixLed = function(left) {
+    infixLed = function(left) {
+        // outer: parse
+        // outer: Array
+        // outer: true
+        // outer: this
         this.infix = true;
         this.children = [left, parse(this.bp - this.dbp)];
     };
-    var infix = function(bp) {
+    infix = function(bp) {
+        // outer: nudPrefix
+        // outer: infixLed
+        // outer: defaultToken
+        // outer: Object
+        // outer: extend
         return extend(Object.create(defaultToken), {
-            led : infixLed,
-            nud : nudPrefix,
-            bp : bp,
+            "led" : infixLed,
+            "nud" : nudPrefix,
+            "bp" : bp,
         });
     };
-    var infixr = function(bp) {
+    infixr = function(bp) {
+        // outer: nudPrefix
+        // outer: infixLed
+        // outer: defaultToken
+        // outer: Object
+        // outer: extend
         return extend(Object.create(defaultToken), {
-            led : infixLed,
-            nud : nudPrefix,
-            bp : bp,
-            dbp : 1,
+            "led" : infixLed,
+            "nud" : nudPrefix,
+            "bp" : bp,
+            "dbp" : 1,
         });
     };
-    var rparen = function() {
-        return extend(Object.create(defaultToken), {rparen : true, nud : function() {
+    rparen = function() {
+        // outer: this
+        // outer: true
+        // outer: defaultToken
+        // outer: Object
+        // outer: extend
+        return extend(Object.create(defaultToken), {"rparen" : true, "nud" : function() {
+            // outer: this
             this.error("unmatched rparen");
         }});
     };
-    var prefix = function(bp) {
-        return extend(Object.create(defaultToken), {nud : nudPrefix, bp : bp});
+    prefix = function(bp) {
+        // outer: nudPrefix
+        // outer: defaultToken
+        // outer: Object
+        // outer: extend
+        return extend(Object.create(defaultToken), {"nud" : nudPrefix, "bp" : bp});
     };
-    var sep = function() {
-        return extend(Object.create(defaultToken), {sep : true, pp : function() {
+    sep = function() {
+        // outer: true
+        // outer: defaultToken
+        // outer: Object
+        // outer: extend
+        return extend(Object.create(defaultToken), {"sep" : true, "pp" : function() {
             return "";
         }});
     };
-    var special = function(ext) {
+    special = function(ext) {
+        // outer: defaultToken
+        // outer: Object
+        // outer: extend
         return extend(Object.create(defaultToken), ext);
     };
-    var list = function(rparen) {
-        var readList = function(obj) {
+    list = function(rparen) {
+        // outer: listpp
+        // outer: true
+        // outer: Array
+        // outer: this
+        // outer: defaultToken
+        // outer: Object
+        // outer: extend
+        // outer: nextToken
+        // outer: parse
+        // outer: token
+        var readList;
+        readList = function(obj) {
+            // outer: nextToken
+            // outer: rparen
+            // outer: parse
+            // outer: token
             while(!token.rparen) {
                 obj.children.push(parse());
             };
@@ -432,39 +684,59 @@ def("syntax", function(exports) {
             nextToken();
         };
         return function(bp) {
+            // outer: listpp
+            // outer: readList
+            // outer: true
+            // outer: Array
+            // outer: rparen
+            // outer: this
+            // outer: defaultToken
+            // outer: Object
+            // outer: extend
             return extend(Object.create(defaultToken), {
-                led : function(left) {
+                "led" : function(left) {
+                    // outer: readList
+                    // outer: true
+                    // outer: Array
+                    // outer: rparen
+                    // outer: this
                     this.val = "*" + this.val + rparen;
                     this.children = [left];
                     this.infix = true;
                     readList(this);
                 },
-                nud : function() {
+                "nud" : function() {
+                    // outer: readList
+                    // outer: Array
+                    // outer: this
                     this.children = [];
                     readList(this);
                 },
-                bp : bp,
-                pp : function() {
+                "bp" : bp,
+                "pp" : function() {
+                    // outer: rparen
+                    // outer: listpp
+                    // outer: this
                     return this.val + listpp(this.children) + rparen;
                 },
             });
         };
     };
-    var nospace = function(node) {
+    nospace = function(node) {
         node.space = "";
         return node;
     };
     // syntax definition {{{3
-    var symb = {
+    symb = {
         "." : nospace(infix(1000)),
         "[" : list("]")(1000),
-        "*[]" : special({pp : infixlistpp}),
+        "*[]" : special({"pp" : infixlistpp}),
         "]" : rparen(),
         "{" : list("}")(1000),
-        "*{}" : special({pp : blockpp}),
+        "*{}" : special({"pp" : blockpp}),
         "}" : rparen(),
         "(" : list(")")(1000),
-        "*()" : special({pp : infixlistpp}),
+        "*()" : special({"pp" : infixlistpp}),
         ")" : rparen(),
         "#" : nospace(prefix(1000)),
         "@" : nospace(prefix(1000)),
@@ -497,21 +769,27 @@ def("syntax", function(exports) {
         ":" : infixr(200),
         "?" : infixr(200),
         "else" : special({
-            led : function(left) {
+            "led" : function(left) {
+                // outer: defaultToken
+                // outer: Object
+                // outer: extend
+                var child1;
+                // outer: this
+                // outer: infixLed
                 infixLed.call(this, left);
-                var child1 = this.children[1];
+                child1 = this.children[1];
                 if(child1.val === "{" && child1.kind === "id") {
                     child1.val = "*{}";
                     child1.children.unshift(extend(Object.create(defaultToken), {
-                        kind : "id",
-                        val : "",
-                        pos : this.pos,
+                        "kind" : "id",
+                        "val" : "",
+                        "pos" : this.pos,
                     }));
                 };
             },
-            nud : nudPrefix,
-            bp : 200,
-            dbp : 1,
+            "nud" : nudPrefix,
+            "bp" : 200,
+            "dbp" : 1,
         }),
         "=" : infixr(100),
         "," : sep(),
@@ -528,8 +806,9 @@ def("syntax", function(exports) {
         "new" : prefix(0),
         "typeof" : prefix(0),
         "var" : prefix(0),
-        "str:" : special({pp : stringpp}),
-        "note:" : special({sep : true, pp : function() {
+        "str:" : special({"pp" : stringpp}),
+        "note:" : special({"sep" : true, "pp" : function() {
+            // outer: this
             if(this.val.slice(0, 2) === "//") {
                 return this.val.slice(0, - 1);
             } else  {
@@ -541,17 +820,40 @@ def("syntax", function(exports) {
 });
 // rst2ast {{{2
 def("rst2ast", function(exports) {
+    // outer: false
+    // outer: Array
+    // outer: true
+    // outer: console
+    // outer: require
+    // outer: process
+    // outer: use
+    var rst2ast;
     // main {{{3
     exports.nodemain = function() {
-        var tokenise = use("tokeniser").tokenise;
-        var syntax = use("syntax");
-        var filename = process.argv[3] || process.argv[1];
-        var rsts = syntax.parse(tokenise(require("fs").readFileSync(filename, "utf8")));
+        // outer: rst2ast
+        // outer: console
+        // outer: require
+        var rsts;
+        // outer: process
+        var filename;
+        var syntax;
+        // outer: use
+        var tokenise;
+        tokenise = use("tokeniser").tokenise;
+        syntax = use("syntax");
+        filename = process.argv[3] || process.argv[1];
+        rsts = syntax.parse(tokenise(require("fs").readFileSync(filename, "utf8")));
         if(syntax.errors.length) {
             console.log("errors:", syntax.errors);
         } else  {
             rsts.forEach(function(rst) {
-                var f = function(elem) {
+                // outer: rst2ast
+                // outer: use
+                // outer: console
+                var f;
+                f = function(elem) {
+                    // outer: f
+                    // outer: console
                     console.log(elem.kind, elem.val);
                     elem.children.map(f);
                 };
@@ -561,13 +863,24 @@ def("rst2ast", function(exports) {
         };
     };
     // rst2ast {{{3
-    var rst2ast = exports.rst2ast = function(ast) {
+    rst2ast = exports.rst2ast = function(ast) {
+        // outer: false
+        var lhs;
+        // outer: rst2ast
+        var rhs;
+        // outer: Array
+        var children;
+        // outer: true
+        var isHashTable;
         // Before recursive transformation {{{4
         // Object
         if(ast.isa("id:{")) {
-            var isHashTable = true;
-            var children = [ast.create("id:Object")];
+            isHashTable = true;
+            children = [ast.create("id:Object")];
             ast.children.forEach(function(elem) {
+                // outer: false
+                // outer: isHashTable
+                // outer: children
                 if(elem.kind === "id" && elem.val === ":" && elem.children.length === 2) {
                     elem.children[0].kind = "str";
                     children = children.concat(elem.children);
@@ -584,7 +897,7 @@ def("rst2ast", function(exports) {
         };
         // ?: (here because of the :)
         if(ast.isa("id:?") && ast.children.length === 2) {
-            var rhs = ast.children[1];
+            rhs = ast.children[1];
             if(rhs.kind === "id" && rhs.val === ":" && rhs.children.length === 2) {
                 ast.children.push(rhs.children[1]);
                 ast.children[1] = rhs.children[0];
@@ -616,7 +929,7 @@ def("rst2ast", function(exports) {
             ast = ast.children[0];
         };
         // extract lhs and rhs {{{5
-        var lhs = ast.children[0];
+        lhs = ast.children[0];
         rhs = ast.children[1];
         // foo.bar -> foo.'bar' {{{5
         if(ast.isa("call:.")) {
@@ -724,22 +1037,51 @@ def("rst2ast", function(exports) {
 });
 // code analysis {{{2
 def("code_analysis", function(exports) {
+    // outer: Number
+    // outer: true
+    // outer: ;
+    // outer: Object
+    // outer: use
+    var localVars;
+    var localVar;
+    var box;
+    // outer: Array
+    var fns;
     // functions in post-order traversal
-    var fns = [];
+    fns = [];
     exports.analyse = function(asts) {
+        // outer: localVars
+        // outer: box
+        // outer: Object
+        // outer: use
+        var global;
+        // outer: Array
+        // outer: fns
         fns = [];
-        var global = use("ast").create("fn:0");
+        global = use("ast").create("fn:0");
         global.scope = {};
         global.children = asts;
         asts.forEach(function(elem) {
+            // outer: global
+            // outer: localVars
             localVars(elem, global);
         });
         fns.forEach(box);
         return asts;
     };
-    var box = function(fn) {
+    box = function(fn) {
+        // outer: localVar
+        // outer: true
+        // outer: ;
+        // outer: Object
         Object.keys(fn.scope).forEach(function(name) {
-            var t = fn.scope[name];
+            // outer: localVar
+            // outer: Object
+            // outer: true
+            // outer: ;
+            // outer: fn
+            var t;
+            t = fn.scope[name];
             if(t.argument) {
                 return ;
             };
@@ -747,6 +1089,10 @@ def("code_analysis", function(exports) {
                 if(fn.parent && typeof fn.parent.scope[name] === "object" || !t.set) {
                     t.boxed = true;
                     Object.keys(t).forEach(function(key) {
+                        // outer: t
+                        // outer: name
+                        // outer: fn
+                        // outer: localVar
                         localVar(fn.parent, name)[key] = localVar(fn.parent, name)[key] || t[key];
                     });
                 } else  {
@@ -758,22 +1104,36 @@ def("code_analysis", function(exports) {
             };
         });
     };
-    var localVar = function(ast, name) {
+    localVar = function(ast, name) {
+        // outer: Object
         if(typeof ast.scope[name] !== "object") {
             ast.scope[name] = {};
         };
         return ast.scope[name];
     };
-    var localVars = function(ast, parent) {
+    localVars = function(ast, parent) {
+        // outer: localVars
+        // outer: true
+        // outer: localVar
+        // outer: ;
+        // outer: fns
+        // outer: Number
+        var argc;
+        // outer: Object
         if(ast.kind === "fn") {
             ast.scope = {};
             ast.parent = parent;
-            var argc = Number(ast.val);
+            argc = Number(ast.val);
             ast.children.slice(0, argc).forEach(function(elem) {
+                // outer: true
+                // outer: localVar
+                // outer: ast
                 ast.assertEqual(elem.kind, "id");
                 localVar(ast, elem.val).argument = true;
             });
             ast.children.slice(argc).forEach(function(elem) {
+                // outer: ast
+                // outer: localVars
                 localVars(elem, ast);
             });
             fns.push(ast);
@@ -788,18 +1148,46 @@ def("code_analysis", function(exports) {
             localVar(parent, ast.val).set = true;
         };
         ast.children.forEach(function(elem) {
+            // outer: parent
+            // outer: localVars
             localVars(elem, parent);
         });
     };
 });
 // ast2js {{{2
 def("ast2js", function(exports) {
+    // outer: Object
+    // outer: undefined
+    // outer: Array
+    // outer: true
+    // outer: false
+    // outer: console
+    // outer: require
+    // outer: process
+    // outer: use
+    var ast2js;
+    var isValidId;
+    var reserved;
+    var num;
+    var validIdSymbs;
+    var jsoperator;
+    var str2obj;
     // main {{{3
     exports.nodemain = function() {
-        var tokenise = use("tokeniser").tokenise;
-        var syntax = use("syntax");
-        var filename = process.argv[3] || process.argv[1];
-        var rsts = syntax.parse(tokenise(require("fs").readFileSync(filename, "utf8")));
+        // outer: ast2js
+        var asts;
+        // outer: console
+        // outer: require
+        var rsts;
+        // outer: process
+        var filename;
+        var syntax;
+        // outer: use
+        var tokenise;
+        tokenise = use("tokeniser").tokenise;
+        syntax = use("syntax");
+        filename = process.argv[3] || process.argv[1];
+        rsts = syntax.parse(tokenise(require("fs").readFileSync(filename, "utf8")));
         if(syntax.errors.length) {
             console.log("errors:", syntax.errors);
         } else  {
@@ -816,29 +1204,37 @@ def("ast2js", function(exports) {
                 console.log(use("syntax").prettyprint([jsast]));
             });
             */
-            var asts = rsts.map(use("rst2ast").rst2ast);
+            asts = rsts.map(use("rst2ast").rst2ast);
             asts = use("code_analysis").analyse(asts);
             console.log(use("syntax").prettyprint(asts.map(function(ast) {
+                // outer: ast2js
                 return ast2js(ast);
             })));
         };
     };
     // Utility / definitions {{{3
-    var str2obj = function(str) {
+    str2obj = function(str) {
+        // outer: use
         return use("util").list2obj(str.split(" "));
     };
-    var jsoperator = str2obj("= === !== < <= > >= += -= *= /= ! | & ^ << >> ~ - + ++ -- * / ! % *() *[] typeof throw return");
-    var validIdSymbs = "QWERTYUIOPASDFGHJKLZXCVBNMqwertyuiopasdfghjklzxcvbnm1234567890_$";
-    var num = "1234567890";
-    var reserved = str2obj("break case catch continue debugger default delete do else finally for function if in instanceof new return switch this throw try typeof var void while with class enum export extends import super implements interface let package private protected public static yield");
-    var isValidId = function(str) {
+    jsoperator = str2obj("= === !== < <= > >= += -= *= /= ! | & ^ << >> ~ - + ++ -- * / ! % *() *[] typeof throw return");
+    validIdSymbs = "QWERTYUIOPASDFGHJKLZXCVBNMqwertyuiopasdfghjklzxcvbnm1234567890_$";
+    num = "1234567890";
+    reserved = str2obj("break case catch continue debugger default delete do else finally for function if in instanceof new return switch this throw try typeof var void while with class enum export extends import super implements interface let package private protected public static yield");
+    isValidId = function(str) {
+        // outer: true
+        // outer: validIdSymbs
+        var i;
+        // outer: num
+        // outer: false
+        // outer: reserved
         if(reserved[str]) {
             return false;
         };
         if(num.indexOf(str[0]) !== - 1) {
             return false;
         };
-        var i = str.length;
+        i = str.length;
         while(i) {
             --i;
             if(validIdSymbs.indexOf(str[i]) === - 1) {
@@ -848,10 +1244,22 @@ def("ast2js", function(exports) {
         return true;
     };
     /// ast2js {{{3
-    var ast2js = exports.ast2js = function(ast) {
+    ast2js = exports.ast2js = function(ast) {
+        var extractBlocks;
+        // outer: Object
+        var len;
+        // outer: undefined
+        var unblock;
+        // outer: isValidId
+        // outer: jsoperator
+        // outer: Array
+        var children;
+        var rhs;
+        var lhs;
+        // outer: ast2js
         ast.children = ast.children.map(ast2js);
-        var lhs = ast.children[0];
-        var rhs = ast.children[1];
+        lhs = ast.children[0];
+        rhs = ast.children[1];
         if(ast.kind === "call") {
             if(ast.val === ".") {
                 // foo.'bar' -> foo.bar
@@ -862,7 +1270,7 @@ def("ast2js", function(exports) {
                 ast.children = ast.children.slice(1);
                 ast.val = "[";
             } else if(ast.val === "new" && lhs.isa("id:Object")) {
-                var children = [];
+                children = [];
                 while(ast.children.length > 1) {
                     rhs = ast.children.pop();
                     lhs = ast.children.pop();
@@ -883,7 +1291,7 @@ def("ast2js", function(exports) {
                 ast.children.shift();
                 ast.children[0] = lhs;
                 ast.val = "=";
-            } else if(jsoperator.hasOwnProperty(ast.val)) {
+            } else if(jsoperator["hasOwnProperty"](ast.val)) {
                 //operators - do nothing
             } else  {
                 // foo.bar(), foo['x'](bar)
@@ -898,7 +1306,8 @@ def("ast2js", function(exports) {
             };
         };
         if(ast.kind === "branch") {
-            var unblock = function(node) {
+            unblock = function(node) {
+                // outer: Array
                 if(node.kind === "block") {
                     return node.children;
                 } else  {
@@ -941,12 +1350,13 @@ def("ast2js", function(exports) {
         };
         if(ast.kind === "fn") {
             // TODO: var
-            var len = + ast.val;
+            len = + ast.val;
             lhs = ast.create("id:*()", ast.create("id:function"));
             lhs.children = lhs.children.concat(ast.children.slice(0, len));
             ast.children = ast.children.slice(len);
             //ast.children.unshift(ast.create('str', 'XXX' + JSON.stringify(ast.scope)));
             Object.keys(ast.scope).forEach(function(varName) {
+                // outer: ast
                 if(ast.scope[varName].local) {
                     ast.children.unshift(ast.create("id:var", ast.create("id", varName)));
                 } else if(!ast.scope[varName].argument) {
@@ -968,7 +1378,9 @@ def("ast2js", function(exports) {
                 return ast.children[0];
             } else  {
                 children = [];
-                var extractBlocks = function(elem) {
+                extractBlocks = function(elem) {
+                    // outer: children
+                    // outer: extractBlocks
                     if(elem.kind === "block") {
                         elem.children.map(extractBlocks);
                     } else  {
@@ -984,38 +1396,71 @@ def("ast2js", function(exports) {
 });
 // ast2rst {{{2
 def("ast2rst", function(exports) {
+    // outer: undefined
+    // outer: Array
+    // outer: true
+    // outer: false
+    // outer: console
+    // outer: require
+    // outer: process
+    // outer: use
+    var ast2rst;
+    var isValidId;
+    var reserved;
+    var num;
+    var validIdSymbs;
+    var jsoperator;
+    var str2obj;
     // main {{{3
     exports.nodemain = function() {
-        var tokenise = use("tokeniser").tokenise;
-        var syntax = use("syntax");
-        var filename = process.argv[3] || process.argv[1];
-        var rsts = syntax.parse(tokenise(require("fs").readFileSync(filename, "utf8")));
+        // outer: ast2rst
+        var asts;
+        // outer: console
+        // outer: require
+        var rsts;
+        // outer: process
+        var filename;
+        var syntax;
+        // outer: use
+        var tokenise;
+        tokenise = use("tokeniser").tokenise;
+        syntax = use("syntax");
+        filename = process.argv[3] || process.argv[1];
+        rsts = syntax.parse(tokenise(require("fs").readFileSync(filename, "utf8")));
         if(syntax.errors.length) {
             console.log("errors:", syntax.errors);
         } else  {
-            var asts = rsts.map(use("rst2ast").rst2ast);
+            asts = rsts.map(use("rst2ast").rst2ast);
             asts = use("code_analysis").analyse(asts);
             console.log(use("syntax").prettyprint(asts.map(function(ast) {
+                // outer: ast2rst
                 return ast2rst(ast);
             })));
         };
     };
     // Utility / definitions {{{3
-    var str2obj = function(str) {
+    str2obj = function(str) {
+        // outer: use
         return use("util").list2obj(str.split(" "));
     };
-    var jsoperator = str2obj("= === !== < <= > >= += -= *= /= ! | & ^ << >> ~ - + ++ -- * / ! % *() *[] typeof throw return");
-    var validIdSymbs = "QWERTYUIOPASDFGHJKLZXCVBNMqwertyuiopasdfghjklzxcvbnm1234567890_$";
-    var num = "1234567890";
-    var reserved = str2obj("break case catch continue debugger default delete do else finally for function if in instanceof new return switch this throw try typeof var void while with class enum export extends import super implements interface let package private protected public static yield");
-    var isValidId = function(str) {
+    jsoperator = str2obj("= === !== < <= > >= += -= *= /= ! | & ^ << >> ~ - + ++ -- * / ! % *() *[] typeof throw return");
+    validIdSymbs = "QWERTYUIOPASDFGHJKLZXCVBNMqwertyuiopasdfghjklzxcvbnm1234567890_$";
+    num = "1234567890";
+    reserved = str2obj("break case catch continue debugger default delete do else finally for function if in instanceof new return switch this throw try typeof var void while with class enum export extends import super implements interface let package private protected public static yield");
+    isValidId = function(str) {
+        // outer: true
+        // outer: validIdSymbs
+        var i;
+        // outer: num
+        // outer: false
+        // outer: reserved
         if(reserved[str]) {
             return false;
         };
         if(num.indexOf(str[0]) !== - 1) {
             return false;
         };
-        var i = str.length;
+        i = str.length;
         while(i) {
             --i;
             if(validIdSymbs.indexOf(str[i]) === - 1) {
@@ -1025,10 +1470,21 @@ def("ast2rst", function(exports) {
         return true;
     };
     /// ast2rst {{{3
-    var ast2rst = exports.ast2rst = function(ast) {
+    ast2rst = exports.ast2rst = function(ast) {
+        var extractBlocks;
+        var len;
+        // outer: undefined
+        var unblock;
+        // outer: jsoperator
+        // outer: isValidId
+        // outer: Array
+        var children;
+        var rhs;
+        var lhs;
+        // outer: ast2rst
         ast.children = ast.children.map(ast2rst);
-        var lhs = ast.children[0];
-        var rhs = ast.children[1];
+        lhs = ast.children[0];
+        rhs = ast.children[1];
         if(ast.kind === "call") {
             if(ast.val === ".") {
                 // foo.'bar' -> foo.bar
@@ -1039,7 +1495,7 @@ def("ast2rst", function(exports) {
                 ast.children = ast.children.slice(1);
                 ast.val = "[";
             } else if(ast.val === "new" && lhs.isa("id:Object")) {
-                var children = [];
+                children = [];
                 while(ast.children.length > 1) {
                     rhs = ast.children.pop();
                     lhs = ast.children.pop();
@@ -1078,7 +1534,8 @@ def("ast2rst", function(exports) {
             };
         };
         if(ast.kind === "branch") {
-            var unblock = function(node) {
+            unblock = function(node) {
+                // outer: Array
                 if(node.kind === "block") {
                     return node.children;
                 } else  {
@@ -1120,7 +1577,7 @@ def("ast2rst", function(exports) {
             };
         };
         if(ast.kind === "fn") {
-            var len = + ast.val;
+            len = + ast.val;
             lhs = ast.create("id:*()", ast.create("id:function"));
             lhs.children = lhs.children.concat(ast.children.slice(0, len));
             ast.children = ast.children.slice(len);
@@ -1143,7 +1600,9 @@ def("ast2rst", function(exports) {
                 return ast.children[0];
             } else  {
                 children = [];
-                var extractBlocks = function(elem) {
+                extractBlocks = function(elem) {
+                    // outer: children
+                    // outer: extractBlocks
                     if(elem.kind === "block") {
                         elem.children.map(extractBlocks);
                     } else  {
