@@ -13,6 +13,14 @@ def("compiler", function(exports) {
         }));
     };
     exports.ls2ls = function(ls) {
+        var tokenise = use("tokeniser").tokenise;
+        var syntax = use("syntax");
+        var rsts = syntax.parse(tokenise(ls));
+        var asts = rsts.map(use("rst2ast").rst2ast);
+        asts = use("code_analysis").analyse(asts);
+        return use("syntax").prettyprint(asts.map(function(ast) {
+            return use('ast2rst').ast2rst(ast);
+        }));
     }
 });
 // Tokeniser {{{2

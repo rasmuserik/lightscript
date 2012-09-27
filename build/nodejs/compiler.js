@@ -20,7 +20,22 @@ def("compiler", function(exports) {
             return use("ast2js").ast2js(ast);
         }));
     };
-    exports.ls2ls = function(ls) {};
+    exports.ls2ls = function(ls) {
+        var asts;
+        var rsts;
+        var syntax;
+        // outer: use
+        var tokenise;
+        tokenise = use("tokeniser").tokenise;
+        syntax = use("syntax");
+        rsts = syntax.parse(tokenise(ls));
+        asts = rsts.map(use("rst2ast").rst2ast);
+        asts = use("code_analysis").analyse(asts);
+        return use("syntax").prettyprint(asts.map(function(ast) {
+            // outer: use
+            return use("ast2rst").ast2rst(ast);
+        }));
+    };
 });
 // Tokeniser {{{2
 def("tokeniser", function(exports) {

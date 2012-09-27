@@ -100,7 +100,9 @@ Intended backends / packaging:
 
 # Roadmap
 
-- restructure: lightscript/ build/
+- build system
+    - restructure: lightscript/ build/
+    - prettyprinting as part of build
 - backup+version of etherpad-notes
 - app: REST-api
 - app: persistant storage

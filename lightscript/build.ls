@@ -3,7 +3,7 @@ def = require('./module').def;
 // Build {{{1
 def("build", function(exports) {
     var fs = require('fs');
-    exports.nodemain = function() {
+    exports.nodemain = function(arg) {
         var sourcepath = '/home/rasmuserik/solsort/lightscript/';
     /*__dirname + '/../lightscript/';*/
         var buildpath = sourcepath + '../build/';
@@ -34,6 +34,13 @@ def("build", function(exports) {
                 fs.writeFile(js, t, function() {
                     done();
                 });
+            });
+        }
+        if(arg === 'pretty') {
+            sourcefiles.forEach(function(filename) {
+                console.log('prettyprinting:', filename);
+                var src = fs.readFileSync(sourcepath + filename, 'utf8');
+                src = use('compiler').ls2ls(src);
             });
         }
         require('async').forEach(sourcefiles, function(filename, done) {
