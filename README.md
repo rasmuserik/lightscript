@@ -72,6 +72,7 @@ Intended backends / packaging:
 - JavaScript (with codemaps)
     - node-server
     - html5-app
+    - (NB: mozilla ignite)
     - (note:http://developers.facebook.com/html5/distribution/?_fb_noscript=1)
     - (firefox-plugin)
     - (phonegap-app)
@@ -100,10 +101,12 @@ Intended backends / packaging:
 # Roadmap
 
 - restructure: lightscript/ build/
+- backup+version of etherpad-notes
 - app: REST-api
 - app: persistant storage
 - check if `!(foo&&bar)`-bug still exists and fix it - bug: prefix-parenthesis
 - refactor rst2js/rst2ast
+- code maps
 - Java backend
 - open source repository (filter out personal stuff, api-keys etc. from private repos)
 - C backend
