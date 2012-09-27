@@ -1,6 +1,20 @@
 use = require('./module').use;
 def = require('./module').def;
 // Compiler {{{1
+def("compiler", function(exports) {
+    exports.ls2js = function(ls) {
+        var tokenise = use("tokeniser").tokenise;
+        var syntax = use("syntax");
+        var rsts = syntax.parse(tokenise(ls));
+        var asts = rsts.map(use("rst2ast").rst2ast);
+        asts = use("code_analysis").analyse(asts);
+        return use("syntax").prettyprint(asts.map(function(ast) {
+            return use('ast2js').ast2js(ast);
+        }));
+    };
+    exports.ls2ls = function(ls) {
+    }
+});
 // Tokeniser {{{2
 def("tokeniser", function(exports) {
     "use strict";

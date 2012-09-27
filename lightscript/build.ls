@@ -4,7 +4,8 @@ def = require('./module').def;
 def("build", function(exports) {
     var fs = require('fs');
     exports.nodemain = function() {
-        var sourcepath = __dirname + '/../lightscript/';
+        var sourcepath = '/home/rasmuserik/solsort/lightscript/';
+    /*__dirname + '/../lightscript/';*/
         var buildpath = sourcepath + '../build/';
         var sourcefiles = fs.readdirSync(sourcepath).filter(function(name) { 
             return name.slice(-3) === '.ls'; 
@@ -22,13 +23,15 @@ def("build", function(exports) {
             });
         }
         var compileToJS = function(ls, js) {
-            console.log('compile:', ls, '->', js);
+            console.log('compiling:', ls.split('/').slice(-1)[0]);
+            fs.readFile(ls, 'utf8', function(err, src) {
+                var t = use('compiler').ls2js(src);
+                fs.writeFile(js, t);
+            });
         }
         sourcefiles.forEach(function(filename) {
             var destfile = buildpath + 'nodejs/' + filename.replace('.ls', '.js');
             optionalCompile(sourcepath + filename, destfile, compileToJS);
         });
-
-        console.log(sourcefiles);
     };
 });
