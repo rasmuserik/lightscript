@@ -100,9 +100,6 @@ Intended backends / packaging:
 
 # Roadmap
 
-- build system
-    - restructure: lightscript/ build/
-    - prettyprinting as part of build
 - backup+version of etherpad-notes
 - app: REST-api
 - app: persistant storage
@@ -119,6 +116,7 @@ Intended backends / packaging:
 
 # Changelog
 
+- 2012-09-27 build system + split up in several files + fully bootstrapped (ie. syntax may now start to diverge from JS)
 - 2012-09-26 working transformation from AST to LightScript RST/source code
 - 2012-09-25 working JavaScript backend / code generation via RST
 - 2012-09-24 working transformation from RST to AST
