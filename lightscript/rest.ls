@@ -1,4 +1,5 @@
 def("rest", function(exports) {
+    exports.api = {};
     exports.nodemain = function() {
         // setup server
         var express = require("express");
@@ -11,6 +12,19 @@ def("rest", function(exports) {
         });
         server.get("/solsort.js", function(req, res, next) {
             res.end(solsortjs);
+        });
+        // setup apis
+        var apis = {store : use("storage").restapi};
+        Object.keys(apis).forEach(function(name) {
+            var platform = use("util").platform;
+            // setup request handle
+            server.all("/" + name, function(req, res, next) {});
+            // create api functions
+            if(platform === "web") {
+                exports.api[name] = function() {};
+            } else if(platform === "node") {
+                exports.api[name] = function() {};
+            };
         });
         // sample api function
         var testFn = function(req, res, next) {

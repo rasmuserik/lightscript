@@ -185,7 +185,7 @@ def("ast", function(exports) {
             };
         },
         error : function(desc) {
-            throw {error : desc, token : this};
+            throw require("util").inspect({error : desc, token : this});
         },
     };
     exports.create = function(arg) {

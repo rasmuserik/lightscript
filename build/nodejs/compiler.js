@@ -227,6 +227,7 @@ def("tokeniser", function(exports) {
 });
 // Ast object {{{1
 def("ast", function(exports) {
+    // outer: require
     // outer: use
     // outer: this
     // outer: arguments
@@ -278,7 +279,8 @@ def("ast", function(exports) {
         "error" : function(desc) {
             // outer: this
             // outer: Object
-            throw {"error" : desc, "token" : this};
+            // outer: require
+            throw require("util").inspect({"error" : desc, "token" : this});
         },
     };
     exports.create = function(arg) {

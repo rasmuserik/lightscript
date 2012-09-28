@@ -8,7 +8,9 @@ def("util", function(exports) {
     // outer: navigator
     // outer: undefined
     // outer: Function
+    // try-catch
     exports.trycatch = Function("return function trycatch(fn,handle){try{return fn();}catch(e){return handle(e);}}")();
+    // extend
     exports.extend = function(a, b) {
         // outer: Object
         Object.keys(b).forEach(function(key) {
@@ -18,6 +20,7 @@ def("util", function(exports) {
         });
         return a;
     };
+    // platform
     exports.platform = undefined;
     if(typeof navigator !== "undefined" && navigator.userAgent) {
         exports.platform = "web";
@@ -25,6 +28,7 @@ def("util", function(exports) {
     if(typeof process !== "undefined" && process.versions && process.versions.node) {
         exports.platform = "node";
     };
+    // nextTick
     if(exports.platform === "node") {
         exports.nextTick = process.nextTick;
     } else  {
@@ -33,6 +37,7 @@ def("util", function(exports) {
             setTimeout(f, 0);
         };
     };
+    // list-prettyprint
     exports.listpp = function(list, indent) {
         // outer: exports
         var len;
@@ -57,6 +62,7 @@ def("util", function(exports) {
             return "[" + result.join("\n" + indent) + "]";
         };
     };
+    // list to object
     exports.list2obj = function(arr) {
         // outer: true
         // outer: Object
@@ -69,6 +75,7 @@ def("util", function(exports) {
         });
         return result;
     };
+    // transform to urlsafe string
     exports.name2url = function(name) {
         // outer: Object
         // outer: RegExp
