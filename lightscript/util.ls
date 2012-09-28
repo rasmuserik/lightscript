@@ -1,11 +1,14 @@
 def("util", function(exports) {
+    // try-catch
     exports.trycatch = Function("return function trycatch(fn,handle){try{return fn();}catch(e){return handle(e);}}")();
+    // extend
     exports.extend = function(a, b) {
         Object.keys(b).forEach(function(key) {
             a[key] = b[key];
         });
         return a;
     };
+    // platform
     exports.platform = undefined;
     if(typeof navigator !== "undefined" && navigator.userAgent) {
         exports.platform = "web";
@@ -13,6 +16,7 @@ def("util", function(exports) {
     if(typeof process !== "undefined" && process.versions && process.versions.node) {
         exports.platform = "node";
     };
+    // nextTick
     if(exports.platform === "node") {
         exports.nextTick = process.nextTick;
     } else  {
@@ -20,6 +24,7 @@ def("util", function(exports) {
             setTimeout(f, 0);
         };
     };
+    // list-prettyprint
     exports.listpp = function(list, indent) {
         indent = indent || "  ";
         if(typeof list === "string") {
@@ -38,6 +43,7 @@ def("util", function(exports) {
             return "[" + result.join("\n" + indent) + "]";
         };
     };
+    // list to object
     exports.list2obj = function(arr) {
         var result = {};
         arr.forEach(function(elem) {
@@ -45,6 +51,7 @@ def("util", function(exports) {
         });
         return result;
     };
+    // transform to urlsafe string
     exports.name2url = function(name) {
         return name.replace(RegExp("[^a-zA-Z0-9_-]", "g"), function(c) {
             var subs = {
