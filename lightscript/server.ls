@@ -1,5 +1,5 @@
 def("server", function(exports) {
-    var rootdir = __dirname + '/../..'
+    var rootdir = __dirname + "/../..";
     if(use("util").platform === "node") {
         exports.nodemain = function() {
             // # includes and initialisation {{{1
