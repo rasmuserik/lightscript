@@ -10,7 +10,7 @@ def("rest", function(exports) {
                 xhr.onreadystatechange=function() {
                     if(xhr.readyState === 4) {
                         if(xhr.status === 200) {
-                            callback(JSON.parse(xhr.responseText));
+                            callback(util.trycatch(function() { return JSON.parse(xhr.responseText); }, function() {return {err: 'cannot parse: ' + xhr.responseText}; }));
                         } else {
                             callback({err: 'HTTP-status !== 200', status: xhr.status, statusText: xhr.statusText, content: xhr.responseText});
                         }

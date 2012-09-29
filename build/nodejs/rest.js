@@ -26,6 +26,7 @@ def("rest", function(exports) {
         if(util.platform === "web") {
             exports.api[name] = function(args, callback) {
                 // outer: Object
+                // outer: util
                 // outer: JSON
                 // outer: true
                 // outer: name
@@ -33,13 +34,22 @@ def("rest", function(exports) {
                 var xhr;
                 xhr = new XMLHttpRequest();
                 xhr.onreadystatechange = function() {
-                    // outer: Object
                     // outer: JSON
+                    // outer: Object
+                    // outer: util
                     // outer: callback
                     // outer: xhr
                     if(xhr.readyState === 4) {
                         if(xhr.status === 200) {
-                            callback(JSON.parse(xhr.responseText));
+                            callback(util.trycatch(function() {
+                                // outer: xhr
+                                // outer: JSON
+                                return JSON.parse(xhr.responseText);
+                            }, function() {
+                                // outer: xhr
+                                // outer: Object
+                                return {"err" : "cannot parse: " + xhr.responseText};
+                            }));
                         } else  {
                             callback({
                                 "err" : "HTTP-status !== 200",
