@@ -9,22 +9,9 @@ def("storage", function(exports) {
             if(args.owner === undefined || args.store === undefined || args.timestamp === undefined) {
                 return rest.done({err : "missing owner, store, or timestamp parameter"});
             };
-            var getTimestamp = function(callback) {
-                db.get("SELECT timestamp FROM storage WHERE owner=$owner AND store=$store AND key=$key;", {
-                    $owner : args.owner,
-                    $store : args.store,
-                    $key : $args.key,
-                }, function(err, rows) {
-                    if(err) {
-                        return rest.done({err : "DB-error: " + String(err)});
-                    };
-                    console.log("timestamp:", rows[0]);
-                    callback(rows.length && rows[0]);
-                });
-            };
             if(!args.key && !args.val) {
                 // sync / get changes since timestamp
-                db.get("SELECT timestamp, key, val FROM storage WHERE owner=$owner AND store=$store AND timestamp>=$timestamp ORDER BY timestamp ASC LIMIT 100;", {
+                db.all("SELECT timestamp, key, val FROM storage WHERE owner=$owner AND store=$store AND timestamp>=$timestamp ORDER BY timestamp ASC LIMIT 100;", {
                     $owner : args.owner,
                     $store : args.store,
                     $timestamp : args.timestamp,
@@ -35,38 +22,49 @@ def("storage", function(exports) {
                     rest.done(rows);
                 });
             } else  {
-                getTimestamp(function(timestamp) {
-                    if(!timestamp) {
-                        db.get("INSERT INTO storage VALUES ($owner, $store, $timestamp, $key, $val);", {
+                    var timestamp = Date.now();
+                    if(args.timestamp === 0) {
+                        db.run("INSERT INTO storage VALUES ($owner, $store, $timestamp, $key, $val);", {
                             $owner : args.owner,
                             $store : args.store,
-                            $timestamp : Date.now(),
+                            $timestamp : timestamp,
                             $key : args.key,
                             $val : args.val,
-                        }, function(err, rows) {
+                        }, function(err) {
                             if(err) {
-                                return rest.done({err : "DB-error: " + String(err)});
+                                return rest.done({err : 'out-of-sync',  DBerror: String(err)});
                             };
                             rest.done({ok : true});
                         });
-                    } else if(iftimestamp === args.timestamp) {
-                        db.get("UPDATE storage SET timestamp=$timestamp, val=$val WHERE owner=$owner AND store=$store AND timestamp=$timestamp AND key=$key;", {
+                    } else {
+                        db.run("UPDATE storage SET timestamp=$timestamp, val=$val WHERE owner=$owner AND store=$store AND timestamp=$prevtime AND key=$key;", {
+                            $timestamp : timestamp,
+                            $val : args.val,
                             $owner : args.owner,
                             $store : args.store,
-                            $prevtime : timestamp,
-                            $timestamp : Date.now(),
+                            $prevtime : args.timestamp,
                             $key : args.key,
-                            $val : args.val,
-                        }, function(err, rows) {
+                        }, function(err) {
                             if(err) {
                                 return rest.done({err : "DB-error: " + String(err)});
                             };
-                            rest.done({ok : true});
+                            db.get("SELECT * FROM storage WHERE owner=$owner AND store=$store AND timestamp=$timestamp AND key=$key;", {
+                            $owner : args.owner,
+                            $store : args.store,
+                            $timestamp : timestamp,
+                            $key : args.key,
+                            }, function(err, row) {
+                            if(err) {
+                                return rest.done({err : "DB-error: " + String(err)});
+                            };
+                            if(!row) {
+                                return rest.done({err: 'out-of-sync'});
+                            }
+                            row.ok = true;
+                            rest.done(row);
+                            });
                         });
-                    } else  {
-                        rest.done({err : "out of sync"});
                     };
-                });
             };
         };
     };
