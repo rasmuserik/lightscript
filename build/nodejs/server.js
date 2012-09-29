@@ -8,10 +8,12 @@ def("server", function(exports) {
     // outer: Object
     // outer: undefined
     // outer: console
-    // outer: __dirname
     // outer: process
     // outer: require
     // outer: use
+    // outer: __dirname
+    var rootdir;
+    rootdir = __dirname + "/../..";
     if(use("util").platform === "node") {
         exports.nodemain = function() {
             // outer: Date
@@ -27,8 +29,9 @@ def("server", function(exports) {
             var configureApp;
             var notes;
             var file2entries;
+            // outer: use
             var name2url;
-            // outer: __dirname
+            // outer: rootdir
             var htmlTemplate;
             // outer: process
             var db;
@@ -49,8 +52,8 @@ def("server", function(exports) {
             db = new sqlite3.Database(process.env.HOME + "/data/db.sqlite3");
             db.run("CREATE TABLE IF NOT EXISTS userdata (store, key, val, timestamp, PRIMARY KEY (store, key))");
             // # Pages from markdown {{{1
-            htmlTemplate = fs.readFileSync(__dirname + "/sites/solsort/template/html.mustache", "utf8");
-            name2url = require("util").name2url;
+            htmlTemplate = fs.readFileSync(rootdir + "/sites/solsort/template/html.mustache", "utf8");
+            name2url = use("util").name2url;
             file2entries = function(filename) {
                 // outer: require
                 // outer: name2url
@@ -77,7 +80,7 @@ def("server", function(exports) {
                 });
                 return result;
             };
-            notes = file2entries(__dirname + "/sites/solsort/notes.md");
+            notes = file2entries(rootdir + "/sites/solsort/notes.md");
             // # Web content/server configuration {{{1
             configureApp = function(app) {
                 // outer: fs
@@ -91,7 +94,7 @@ def("server", function(exports) {
                 // outer: https
                 // outer: RegExp
                 // outer: mustache
-                // outer: __dirname
+                // outer: rootdir
                 var storeHandle;
                 var fixLinks;
                 // outer: notes
@@ -101,7 +104,7 @@ def("server", function(exports) {
                 // outer: Object
                 // outer: htmlTemplate
                 // outer: require
-                require("./sites/solsort/theodorelias/genindex.js").gen(htmlTemplate);
+                require("../../sites/solsort/theodorelias/genindex.js").gen(htmlTemplate);
                 app.use(function(req, res, next) {
                     res.removeHeader("X-Powered-By");
                     next();
@@ -236,9 +239,9 @@ def("server", function(exports) {
                     // outer: Object
                     // outer: mustache
                     // outer: fixLinks
-                    // outer: __dirname
+                    // outer: rootdir
                     // outer: fs
-                    fs.readFile(__dirname + "/sites/solsort/template/index.html.mustache", "utf8", function(err, frontpage) {
+                    fs.readFile(rootdir + "/sites/solsort/template/index.html.mustache", "utf8", function(err, frontpage) {
                         // outer: RegExp
                         // outer: notes
                         // outer: Object
@@ -266,7 +269,7 @@ def("server", function(exports) {
                 app.get("/https", function(req, res) {
                     res.redirect("https://" + req.originalUrl.slice(7));
                 });
-                app.get("*", express["static"](__dirname + "/sites/solsort"));
+                app.get("*", express["static"](rootdir + "/sites/solsort"));
                 /*
 app.get('*', function(req, res){
 res.send(

@@ -1,4 +1,5 @@
 def("server", function(exports) {
+    var rootdir = __dirname + '/../..'
     if(use("util").platform === "node") {
         exports.nodemain = function() {
             // # includes and initialisation {{{1
@@ -11,8 +12,8 @@ def("server", function(exports) {
             var db = new sqlite3.Database(process.env.HOME + "/data/db.sqlite3");
             db.run("CREATE TABLE IF NOT EXISTS userdata (store, key, val, timestamp, PRIMARY KEY (store, key))");
             // # Pages from markdown {{{1
-            var htmlTemplate = fs.readFileSync(__dirname + "/sites/solsort/template/html.mustache", "utf8");
-            var name2url = require("util").name2url;
+            var htmlTemplate = fs.readFileSync(rootdir + "/sites/solsort/template/html.mustache", "utf8");
+            var name2url = use("util").name2url;
             var file2entries = function(filename) {
                 var result = {};
                 fs.readFileSync(filename, "utf8").split("\n# ").slice(1).forEach(function(elem) {
@@ -28,10 +29,10 @@ def("server", function(exports) {
                 });
                 return result;
             };
-            var notes = file2entries(__dirname + "/sites/solsort/notes.md");
+            var notes = file2entries(rootdir + "/sites/solsort/notes.md");
             // # Web content/server configuration {{{1
             var configureApp = function(app) {
-                require("./sites/solsort/theodorelias/genindex.js").gen(htmlTemplate);
+                require("../../sites/solsort/theodorelias/genindex.js").gen(htmlTemplate);
                 app.use(function(req, res, next) {
                     res.removeHeader("X-Powered-By");
                     next();
@@ -107,7 +108,7 @@ def("server", function(exports) {
                     });
                 };
                 app.get("/", function(req, res) {
-                    fs.readFile(__dirname + "/sites/solsort/template/index.html.mustache", "utf8", function(err, frontpage) {
+                    fs.readFile(rootdir + "/sites/solsort/template/index.html.mustache", "utf8", function(err, frontpage) {
                         res.send(fixLinks(mustache.to_html(frontpage, {notes : Object.keys(notes).map(function(noteName) {
                             var title = notes[noteName].title;
                             return "<a class=\"solsortBtn\" href=\"/" + notes[noteName].url + "\">" + title.replace(RegExp(":", "g"), ":<br/>") + "</a>";
@@ -126,7 +127,7 @@ def("server", function(exports) {
                 app.get("/https", function(req, res) {
                     res.redirect("https://" + req.originalUrl.slice(7));
                 });
-                app.get("*", express["static"](__dirname + "/sites/solsort"));
+                app.get("*", express["static"](rootdir + "/sites/solsort"));
                 /*
 app.get('*', function(req, res){
 res.send(

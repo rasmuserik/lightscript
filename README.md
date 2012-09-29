@@ -100,11 +100,14 @@ Intended backends / packaging:
 
 # Roadmap
 
-- backup+version of etherpad-notes
 - app: REST-api
+    - rest.api.fnblah({foo:x, bar:y, baz:z}, callback) - rest-call over http
+    - rest.nodemain - setup rest-server
 - app: persistant storage
+- backup+version of etherpad-notes
 - check if `!(foo&&bar)`-bug still exists and fix it - bug: prefix-parenthesis
 - refactor rst2js/rst2ast
+- rework type inference (including boxing) (fix bug {var x{ { { x=...}}}})
 - code maps
 - Java backend
 - open source repository (filter out personal stuff, api-keys etc. from private repos)
