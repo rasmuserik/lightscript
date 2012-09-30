@@ -1,4 +1,6 @@
 def("util", function(exports) {
+    var util = exports;
+    // Basic platform/language {{{1
     // try-catch
     exports.trycatch = Function("return function trycatch(fn,handle){try{return fn();}catch(e){return handle(e);}}")();
     // extend
@@ -17,13 +19,43 @@ def("util", function(exports) {
         exports.platform = "node";
     };
     // nextTick
-    if(exports.platform === "node") {
+    if(util.platform === "node") {
         exports.nextTick = process.nextTick;
     } else  {
         exports.nextTick = function(f) {
             setTimeout(f, 0);
         };
     };
+    // throttle function {{{1
+        // ## Throttle a function {{{2
+        exports.throttledFn = function(fn, delay) {
+            delay = delay || 5000;
+            var lastRun = 0;
+            var scheduled = false;
+            var callbacks = [];
+            return function(callback) {
+                if(callback) {
+                    callbacks.push(callback);
+                }
+                if(scheduled) {
+                    return ;
+                };
+                var run = function() {
+                    scheduled = false;
+                    callbacks = [];
+                    lastRun = Date.now();
+                    fn(function() {
+                        callbacks.forEach(function(f) {
+                            f();
+                        });
+                    });
+                };
+                scheduled = true;
+                setTimeout(run, Math.max(0, delay - (Date.now() - lastRun)));
+            };
+        };
+
+    // List utils {{{1
     // list-prettyprint
     exports.listpp = function(list, indent) {
         indent = indent || "  ";
@@ -51,6 +83,7 @@ def("util", function(exports) {
         });
         return result;
     };
+    // uri/string-escape {{{1
     // transform to urlsafe string
     exports.name2url = function(name) {
         return name.replace(RegExp("[^a-zA-Z0-9_-]", "g"), function(c) {
@@ -73,4 +106,32 @@ def("util", function(exports) {
             };
         });
     };
+    // local storage {{{1
+    if(util.platform === 'node') {
+        !function(){
+         var db = util.trycatch(function() { return JSON.parse(require('fs').readFileSync(process.env.HOME + "/data/local.sqlite3")) }, function() { return {} });
+         var syncLocalStorage = util.throttledFn(function() {
+             require('fs').writeFile(process.env.HOME + "/data/local.sqlite3", JSON.stringify(db, null, "  "));
+         });
+         var lastSync = 0;
+         exports.local = {
+             set: function(key, val) {
+                 db[key] = val;
+                 syncLocalStorage();
+             },
+             get: function(key) {
+                 return db[key];
+             },
+         }
+        }();
+    } else if(typeof localStorage !== 'undefined') {
+        exports.local = {
+            set: function(key, val) {
+                localStorage.setItem(key, val);
+            }, 
+            get: function(key) {
+                localStorage.getItem(key);
+            }
+        }
+    }
 });
