@@ -1,5 +1,6 @@
 def("test", function(exports) {
-    modules = modules;
+    var modules = modules;
+    var platform = use("util").platform;
     var test = {};
     test.name = "";
     test.error = function(description) {
@@ -40,28 +41,31 @@ def("test", function(exports) {
         return self;
     };
     var runTest = function(moduleName) {
-            var module = use(moduleName);
-            if(!module) {
-                return;
-            }
-            if(module.test) {
-                module.test(test.create(moduleName));
-            };
-            var pname = "test" + use("util").platform;
-            if(module[pname]) {
-                module[pname](test.create(use("util".platform) + ":" + moduleName));
-            };
-    }
+        var module = use(moduleName);
+        if(!module) {
+            return ;
+        };
+        if(module.test) {
+            module.test(test.create(moduleName));
+        };
+        if(module[platform + test]) {
+            module.test(test.create(moduleName + "-" + platform));
+        };
+        var pname = "test" + use("util").platform;
+        if(module[pname]) {
+            module[pname](test.create(use("util".platform) + ":" + moduleName));
+        };
+    };
     exports.webmain = function() {
         Object.keys(window.modules).forEach(function(moduleName) {
             console.log(moduleName);
         });
-    }
+    };
     exports.nodemain = function() {
-        require('fs').readdirSync(__dirname).filter(function(name) {
-            return name.slice(-3) === '.js';
+        require("fs").readdirSync(__dirname).filter(function(name) {
+            return name.slice(- 3) === ".js";
         }).map(function(name) {
-            return name.slice(0, -3);
+            return name.slice(0, - 3);
         }).forEach(function(moduleName) {
             runTest(moduleName);
         });

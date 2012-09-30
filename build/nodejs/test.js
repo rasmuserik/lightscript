@@ -4,7 +4,6 @@ def("test", function(exports) {
     // outer: require
     // outer: window
     // outer: ;
-    // outer: use
     // outer: setTimeout
     // outer: clearTimeout
     // outer: true
@@ -13,8 +12,11 @@ def("test", function(exports) {
     var runTest;
     // outer: Object
     var test;
+    // outer: use
+    var platform;
     var modules;
     modules = modules;
+    platform = use("util").platform;
     test = {};
     test.name = "";
     test.error = function(description) {
@@ -71,6 +73,7 @@ def("test", function(exports) {
     };
     runTest = function(moduleName) {
         var pname;
+        // outer: platform
         // outer: test
         // outer: ;
         // outer: use
@@ -81,6 +84,9 @@ def("test", function(exports) {
         };
         if(module.test) {
             module.test(test.create(moduleName));
+        };
+        if(module[platform + test]) {
+            module.test(test.create(moduleName + "-" + platform));
         };
         pname = "test" + use("util").platform;
         if(module[pname]) {
