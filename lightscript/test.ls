@@ -1,4 +1,5 @@
 def("test", function(exports) {
+    modules = modules;
     var test = {};
     test.name = "";
     test.error = function(description) {
@@ -38,9 +39,11 @@ def("test", function(exports) {
         }, timeout);
         return self;
     };
-    exports.nodemain = function() {
-        Object.keys(modules).forEach(function(moduleName) {
+    var runTest = function(moduleName) {
             var module = use(moduleName);
+            if(!module) {
+                return;
+            }
             if(module.test) {
                 module.test(test.create(moduleName));
             };
@@ -48,6 +51,19 @@ def("test", function(exports) {
             if(module[pname]) {
                 module[pname](test.create(use("util".platform) + ":" + moduleName));
             };
+    }
+    exports.webmain = function() {
+        Object.keys(window.modules).forEach(function(moduleName) {
+            console.log(moduleName);
+        });
+    }
+    exports.nodemain = function() {
+        require('fs').readdirSync(__dirname).filter(function(name) {
+            return name.slice(-3) === '.js';
+        }).map(function(name) {
+            return name.slice(0, -3);
+        }).forEach(function(moduleName) {
+            runTest(moduleName);
         });
     };
 });

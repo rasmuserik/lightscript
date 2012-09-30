@@ -1,14 +1,20 @@
 if(typeof require==='function'){use=require('./module').use;def=require('./module').def}else{modules=window.modules||{};def=function(name,fn){modules[name]=fn};use=function(name){if(typeof modules[name]==='function'){var exports={};modules[name](exports);modules[name]=exports;}return modules[name];};}
 def("test", function(exports) {
+    // outer: __dirname
+    // outer: require
+    // outer: window
+    // outer: ;
     // outer: use
-    // outer: modules
     // outer: setTimeout
     // outer: clearTimeout
     // outer: true
     // outer: console
     // outer: this
+    var runTest;
     // outer: Object
     var test;
+    var modules;
+    modules = modules;
     test = {};
     test.name = "";
     test.error = function(description) {
@@ -63,24 +69,44 @@ def("test", function(exports) {
         }, timeout);
         return self;
     };
-    exports.nodemain = function() {
+    runTest = function(moduleName) {
+        var pname;
         // outer: test
+        // outer: ;
         // outer: use
-        // outer: modules
+        var module;
+        module = use(moduleName);
+        if(!module) {
+            return ;
+        };
+        if(module.test) {
+            module.test(test.create(moduleName));
+        };
+        pname = "test" + use("util").platform;
+        if(module[pname]) {
+            module[pname](test.create(use("util".platform) + ":" + moduleName));
+        };
+    };
+    exports.webmain = function() {
+        // outer: console
+        // outer: window
         // outer: Object
-        Object.keys(modules).forEach(function(moduleName) {
-            var pname;
-            // outer: test
-            // outer: use
-            var module;
-            module = use(moduleName);
-            if(module.test) {
-                module.test(test.create(moduleName));
-            };
-            pname = "test" + use("util").platform;
-            if(module[pname]) {
-                module[pname](test.create(use("util".platform) + ":" + moduleName));
-            };
+        Object.keys(window.modules).forEach(function(moduleName) {
+            // outer: console
+            console.log(moduleName);
+        });
+    };
+    exports.nodemain = function() {
+        // outer: runTest
+        // outer: __dirname
+        // outer: require
+        require("fs").readdirSync(__dirname).filter(function(name) {
+            return name.slice(- 3) === ".js";
+        }).map(function(name) {
+            return name.slice(0, - 3);
+        }).forEach(function(moduleName) {
+            // outer: runTest
+            runTest(moduleName);
         });
     };
 });
