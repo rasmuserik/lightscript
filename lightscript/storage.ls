@@ -6,34 +6,37 @@ def("storage", function(exports) {
             if(!this.lastSync) {
                 // TODO: this should be gotten/stored in localstorage
                 this.lastSync = 0;
-            }
+            };
             util = util;
             var self = this;
             var newServer = {};
             var connectTimeout = 10000;
             var serverSync = function(callback) {
-                use('rest').store({owner: self.owner, store: self.store, timestamp: self.lastSync}, function(result) {
+                util = util;
+                use("rest").store({
+                    owner : self.owner,
+                    store : self.store,
+                    timestamp : self.lastSync,
+                }, function(result) {
                     if(result.err) {
                         // retry exponentially later on connection failure
                         connectTimeout *= 1.5;
-                        setTimeout(function() {self.sync(callback);}, connectTimeout);
-                        return;
-                    }
-                    connectTimeout = 10000;
-                    result.forEach(obj) {
-                        newServer[obj.key] = obj;
-                    }
+                        setTimeout(function() {
+                            self.sync(callback);
+                        }, connectTimeout);
+                        return ;
+                    };
+                    var connectTimeout = 10000;
+                    result.forEach(obj)["*{}"](newServer[obj.key] = obj);
                     if(result.length === 100) {
                         util.nextTick(function() {
                             serverSync(callback);
                         });
-                    } else {
-                        callback()
+                    } else  {
+                        callback();
                     };
                 });
-            }
-            }
-
+            };
             var syncLocal = function() {
                 var changedKeys = Object.keys(util.extend(util.extend({}, self.local), newServer));
                 newServer = newServer;
@@ -49,27 +52,35 @@ def("storage", function(exports) {
                         util.delprop(local, key);
                         util.delprop(local, key);
                         done();
-                    } else {
+                    } else  {
                         needSync = true;
                         self.local[key] = self.mergeFn(prevVal, localVal, serverVal);
-                        var timestamp = timestamp || (newServer[key] && newServer[key].timestamp)
-                        timestamp = timestamp || (self.server[key] && self.server[key].timestamp)
+                        var timestamp = timestamp || (newServer[key] && newServer[key].timestamp);
+                        timestamp = timestamp || (self.server[key] && self.server[key].timestamp);
                         timestamp = timestamp || 0;
-                        use('rest').store({owner: self.owner, store: self.store, timestamp: timestamp, key: key, val:self.local[key]}, function(result) {
+                        use("rest").store({
+                            owner : self.owner,
+                            store : self.store,
+                            timestamp : timestamp,
+                            key : key,
+                            val : self.local[key],
+                        }, function(result) {
                             if(result.err) {
                                 console.log(result);
-                            } 
+                            };
                             done();
                         });
-                    }
+                    };
                 }, function() {
                     serverSync = serverSync;
                     syncLocal = syncLocal;
                     if(needSync) {
-                        util.nextTick(function(){ serverSync(syncLocal);});
-                    }
+                        util.nextTick(function() {
+                            serverSync(syncLocal);
+                        });
+                    };
                 });
-            });
+            };
         }),
         set : function(key, val) {
             this.local[key] = val;
@@ -87,9 +98,9 @@ def("storage", function(exports) {
         },
     };
     exports.create = function(owner, store, mergefn) {
-        var store = Object.create(storeProto);
+        store = Object.create(storeProto);
         store.owner = owner;
-        store.store= store;
+        store.store = store;
         store.mergefn = mergefn;
         store.local = {};
         store.server = {};

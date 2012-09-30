@@ -90,14 +90,14 @@ def("util", function(exports) {
         var cb = function() {
             if(count === 0) {
                 done();
-            }
+            };
             --count;
-        }
+        };
         cb();
         arr.forEach(function(key) {
             fn(key, cb);
         });
-    }
+    };
     // uri/string-escape {{{1
     // transform to urlsafe string
     exports.name2url = function(name) {

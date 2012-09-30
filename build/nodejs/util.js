@@ -22,6 +22,8 @@ def("util", function(exports) {
     // Basic platform/language {{{1
     // try-catch
     exports.trycatch = Function("return function trycatch(fn,handle){try{return fn();}catch(e){return handle(e);}}")();
+    // delprop
+    exports.delprop = Function("return function delprop(obj,key){delete obj[key]}")();
     // extend
     exports.extend = function(a, b) {
         // outer: Object
@@ -146,6 +148,26 @@ def("util", function(exports) {
             result[elem] = true;
         });
         return result;
+    };
+    // async {{{3
+    exports.aForEach = function(arr, fn, done) {
+        var cb;
+        var count;
+        count = arr.length;
+        cb = function() {
+            // outer: done
+            // outer: count
+            if(count === 0) {
+                done();
+            };
+            --count;
+        };
+        cb();
+        arr.forEach(function(key) {
+            // outer: cb
+            // outer: fn
+            fn(key, cb);
+        });
     };
     // uri/string-escape {{{1
     // transform to urlsafe string

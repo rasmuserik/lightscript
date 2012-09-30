@@ -64,7 +64,9 @@ def("rest", function(exports) {
                 xhr.send(JSON.stringify(args));
             };
         } else if(util.platform === "node") {
-            exports.api[name] = function() {};
+            exports.api[name] = function(args, callback) {
+                throw "not implemented yet";
+            };
         };
     });
     RestObject = function(req, res, next) {

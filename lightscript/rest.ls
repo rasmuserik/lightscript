@@ -30,7 +30,7 @@ def("rest", function(exports) {
             };
         } else if(util.platform === "node") {
             exports.api[name] = function(args, callback) {
-                throw 'not implemented yet'
+                throw "not implemented yet";
             };
         };
     });

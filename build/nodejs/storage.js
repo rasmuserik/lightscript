@@ -4,10 +4,15 @@ def("storage", function(exports) {
     // outer: Date
     // outer: process
     // outer: require
-    // outer: true
     // outer: sync
-    // outer: this
     // outer: console
+    // outer: true
+    // outer: local
+    // outer: false
+    // outer: obj
+    // outer: ;
+    // outer: setTimeout
+    // outer: this
     // outer: undefined
     var db;
     // outer: Object
@@ -19,8 +24,155 @@ def("storage", function(exports) {
     storeProto = {
         "sync" : util.throttledFn(function(done) {
             // outer: console
-            // TODO: implement
-            console.log("sync request");
+            // outer: true
+            // outer: local
+            // outer: false
+            // outer: obj
+            // outer: ;
+            // outer: setTimeout
+            // outer: use
+            var syncLocal;
+            var serverSync;
+            var connectTimeout;
+            // outer: Object
+            var newServer;
+            var self;
+            // outer: util
+            // outer: this
+            if(!this.lastSync) {
+                // TODO: this should be gotten/stored in localstorage
+                this.lastSync = 0;
+            };
+            util = util;
+            self = this;
+            newServer = {};
+            connectTimeout = 10000;
+            serverSync = function(callback) {
+                // outer: serverSync
+                // outer: newServer
+                // outer: obj
+                // outer: ;
+                // outer: setTimeout
+                // outer: self
+                // outer: Object
+                // outer: use
+                // outer: util
+                util = util;
+                use("rest").store({
+                    "owner" : self.owner,
+                    "store" : self.store,
+                    "timestamp" : self.lastSync,
+                }, function(result) {
+                    // outer: serverSync
+                    // outer: self
+                    // outer: callback
+                    // outer: util
+                    // outer: newServer
+                    // outer: obj
+                    // outer: ;
+                    // outer: setTimeout
+                    var connectTimeout;
+                    if(result.err) {
+                        // retry exponentially later on connection failure
+                        connectTimeout *= 1.5;
+                        setTimeout(function() {
+                            // outer: callback
+                            // outer: self
+                            self.sync(callback);
+                        }, connectTimeout);
+                        return ;
+                    };
+                    connectTimeout = 10000;
+                    result.forEach(obj)["*{}"](newServer[obj.key] = obj);
+                    if(result.length === 100) {
+                        util.nextTick(function() {
+                            // outer: callback
+                            // outer: serverSync
+                            serverSync(callback);
+                        });
+                    } else  {
+                        callback();
+                    };
+                });
+            };
+            syncLocal = function() {
+                // outer: console
+                // outer: use
+                // outer: true
+                // outer: local
+                // outer: false
+                var needSync;
+                // outer: syncLocal
+                // outer: serverSync
+                // outer: newServer
+                // outer: self
+                // outer: util
+                // outer: Object
+                var changedKeys;
+                changedKeys = Object.keys(util.extend(util.extend({}, self.local), newServer));
+                newServer = newServer;
+                serverSync = serverSync;
+                syncLocal = syncLocal;
+                needSync = false;
+                util.aForEach(changedKeys, function(key, done) {
+                    // outer: console
+                    // outer: Object
+                    // outer: use
+                    var timestamp;
+                    // outer: true
+                    // outer: needSync
+                    // outer: local
+                    // outer: util
+                    // outer: newServer
+                    var serverVal;
+                    var localVal;
+                    // outer: self
+                    var prevVal;
+                    prevVal = self.server[key] && self.server[key].val;
+                    localVal = self.local[key];
+                    serverVal = newServer[key] && newServer[key].val;
+                    if(localVal === serverVal) {
+                        self.server[key] = newServer[key];
+                        util.delprop(local, key);
+                        util.delprop(local, key);
+                        done();
+                    } else  {
+                        needSync = true;
+                        self.local[key] = self.mergeFn(prevVal, localVal, serverVal);
+                        timestamp = timestamp || (newServer[key] && newServer[key].timestamp);
+                        timestamp = timestamp || (self.server[key] && self.server[key].timestamp);
+                        timestamp = timestamp || 0;
+                        use("rest").store({
+                            "owner" : self.owner,
+                            "store" : self.store,
+                            "timestamp" : timestamp,
+                            "key" : key,
+                            "val" : self.local[key],
+                        }, function(result) {
+                            // outer: done
+                            // outer: console
+                            if(result.err) {
+                                console.log(result);
+                            };
+                            done();
+                        });
+                    };
+                }, function() {
+                    // outer: util
+                    // outer: needSync
+                    // outer: syncLocal
+                    // outer: serverSync
+                    serverSync = serverSync;
+                    syncLocal = syncLocal;
+                    if(needSync) {
+                        util.nextTick(function() {
+                            // outer: syncLocal
+                            // outer: serverSync
+                            serverSync(syncLocal);
+                        });
+                    };
+                });
+            };
         }),
         "set" : function(key, val) {
             // outer: sync
@@ -46,13 +198,12 @@ def("storage", function(exports) {
             return Object.keys(result);
         },
     };
-    exports.create = function(owner, storename, mergefn) {
+    exports.create = function(owner, store, mergefn) {
         // outer: storeProto
         // outer: Object
-        var store;
         store = Object.create(storeProto);
         store.owner = owner;
-        store.storename = storename;
+        store.store = store;
         store.mergefn = mergefn;
         store.local = {};
         store.server = {};
