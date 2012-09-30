@@ -1,66 +1,52 @@
 if(typeof require==='function'){use=require('./module').use;def=require('./module').def}else{modules=window.modules||{};def=function(name,fn){modules[name]=fn};use=function(name){if(typeof modules[name]==='function'){var exports={};modules[name](exports);modules[name]=exports;}return modules[name];};}
 def("storage", function(exports) {
     // outer: String
+    // outer: Date
     // outer: process
     // outer: require
-    // outer: Array
-    // outer: requestSync
-    // outer: Date
-    // outer: Math
-    // outer: setTimeout
     // outer: true
-    // outer: ;
+    // outer: sync
     // outer: this
+    // outer: console
     // outer: undefined
     var db;
     // outer: Object
     var storeProto;
     // outer: use
     var util;
-    var throttleWait;
-    throttleWait = 5000;
     util = use("util");
+    // sync api
     storeProto = {
-        "requestSync" : function(callback) {
-            // outer: Date
-            // outer: Math
-            // outer: throttleWait
-            // outer: setTimeout
-            // outer: true
-            var self;
-            // outer: ;
-            // outer: this
-            if(callback) {
-                this.callbacks.push(callback);
-            };
-            if(this.syncRequested) {
-                return ;
-            };
-            self = this;
-            this.syncRequested = true;
-            setTimeout(function() {
-                // outer: self
-                self.sync();
-            }, throttleWait - Math.min(Date.now() - this.lastsync, throttleWait));
-        },
+        "sync" : util.throttledFn(function(done) {
+            // outer: console
+            // TODO: implement
+            console.log("sync request");
+        }),
         "set" : function(key, val) {
-            // outer: requestSync
+            // outer: sync
             // outer: this
             this.local[key] = val;
-            requestSync();
+            sync();
         },
         "get" : function(key) {
             // outer: this
             return this.local[key] || this.server[key].val;
         },
         "keys" : function() {
+            // outer: true
             // outer: this
             // outer: Object
-            return Object.keys(this.local);
+            var result;
+            result = {};
+            Object.keys(this.local).concat(Object.keys(this.server)).forEach(function(key) {
+                // outer: true
+                // outer: result
+                result[key] = true;
+            });
+            return Object.keys(result);
         },
     };
     exports.create = function(owner, storename, mergefn) {
-        // outer: Array
         // outer: storeProto
         // outer: Object
         var store;
@@ -68,11 +54,10 @@ def("storage", function(exports) {
         store.owner = owner;
         store.storename = storename;
         store.mergefn = mergefn;
-        store.callbacks = [];
         store.local = {};
-        store.lastsync = 0;
         store.server = {};
     };
+    // storage server-database/rest-api;
     if(util.platform === "node") {
         db = undefined;
         exports.restapi = function(args, rest) {

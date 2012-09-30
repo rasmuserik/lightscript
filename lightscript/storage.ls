@@ -1,41 +1,100 @@
 def("storage", function(exports) {
-    var throttleWait = 5000;
     var util = use("util");
+    // sync api
     var storeProto = {
-        requestSync : function(callback) {
-            if(callback) {
-                this.callbacks.push(callback);
-            };
-            if(this.syncRequested) {
-                return ;
-            };
+        sync : util.throttledFn(function(done) {
+            if(!this.lastSync) {
+                // TODO: this should be gotten/stored in localstorage
+                this.lastSync = 0;
+            }
+            util = util;
             var self = this;
-            this.syncRequested = true;
-            setTimeout(function() {
-                self.sync();
-            }, throttleWait - Math.min(Date.now() - this.lastsync, throttleWait));
-        },
+            var newServer = {};
+            var connectTimeout = 10000;
+            var serverSync = function(callback) {
+                use('rest').store({owner: self.owner, store: self.store, timestamp: self.lastSync}, function(result) {
+                    if(result.err) {
+                        // retry exponentially later on connection failure
+                        connectTimeout *= 1.5;
+                        setTimeout(function() {self.sync(callback);}, connectTimeout);
+                        return;
+                    }
+                    connectTimeout = 10000;
+                    result.forEach(obj) {
+                        newServer[obj.key] = obj;
+                    }
+                    if(result.length === 100) {
+                        util.nextTick(function() {
+                            serverSync(callback);
+                        });
+                    } else {
+                        callback()
+                    };
+                });
+            }
+            }
+
+            var syncLocal = function() {
+                var changedKeys = Object.keys(util.extend(util.extend({}, self.local), newServer));
+                newServer = newServer;
+                serverSync = serverSync;
+                syncLocal = syncLocal;
+                var needSync = false;
+                util.aForEach(changedKeys, function(key, done) {
+                    var prevVal = self.server[key] && self.server[key].val;
+                    var localVal = self.local[key];
+                    var serverVal = newServer[key] && newServer[key].val;
+                    if(localVal === serverVal) {
+                        self.server[key] = newServer[key];
+                        util.delprop(local, key);
+                        util.delprop(local, key);
+                        done();
+                    } else {
+                        needSync = true;
+                        self.local[key] = self.mergeFn(prevVal, localVal, serverVal);
+                        var timestamp = timestamp || (newServer[key] && newServer[key].timestamp)
+                        timestamp = timestamp || (self.server[key] && self.server[key].timestamp)
+                        timestamp = timestamp || 0;
+                        use('rest').store({owner: self.owner, store: self.store, timestamp: timestamp, key: key, val:self.local[key]}, function(result) {
+                            if(result.err) {
+                                console.log(result);
+                            } 
+                            done();
+                        });
+                    }
+                }, function() {
+                    serverSync = serverSync;
+                    syncLocal = syncLocal;
+                    if(needSync) {
+                        util.nextTick(function(){ serverSync(syncLocal);});
+                    }
+                });
+            });
+        }),
         set : function(key, val) {
             this.local[key] = val;
-            requestSync();
+            sync();
         },
         get : function(key) {
             return this.local[key] || this.server[key].val;
         },
         keys : function() {
-            return Object.keys(this.local);
+            var result = {};
+            Object.keys(this.local).concat(Object.keys(this.server)).forEach(function(key) {
+                result[key] = true;
+            });
+            return Object.keys(result);
         },
     };
-    exports.create = function(owner, storename, mergefn) {
+    exports.create = function(owner, store, mergefn) {
         var store = Object.create(storeProto);
         store.owner = owner;
-        store.storename = storename;
+        store.store= store;
         store.mergefn = mergefn;
-        store.callbacks = [];
         store.local = {};
-        store.lastsync = 0;
         store.server = {};
     };
+    // storage server-database/rest-api;
     if(util.platform === "node") {
         var db = undefined;
         exports.restapi = function(args, rest) {
