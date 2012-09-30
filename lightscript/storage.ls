@@ -1,11 +1,49 @@
 def("storage", function(exports) {
+    var throttleWait = 5000;
     var util = use("util");
+    var storeProto = {
+        requestSync : function(callback) {
+            if(callback) {
+                this.callbacks.push(callback);
+            };
+            if(this.syncRequested) {
+                return ;
+            };
+            var self = this;
+            this.syncRequested = true;
+            setTimeout(function() {
+                self.sync();
+            }, throttleWait - Math.min(Date.now() - this.lastsync, throttleWait));
+        },
+        set : function(key, val) {
+            this.local[key] = val;
+            requestSync();
+        },
+        get : function(key) {
+            return this.local[key] || this.server[key].val;
+        },
+        keys : function() {
+            return Object.keys(this.local);
+        },
+    };
+    exports.create = function(owner, storename, mergefn) {
+        var store = Object.create(storeProto);
+        store.owner = owner;
+        store.storename = storename;
+        store.mergefn = mergefn;
+        store.callbacks = [];
+        store.local = {};
+        store.lastsync = 0;
+        store.server = {};
+    };
     if(util.platform === "node") {
-        var sqlite3 = require("sqlite3");
-        var db = new sqlite3.Database(process.env.HOME + "/data/storage.sqlite3");
-        db.run("CREATE TABLE IF NOT EXISTS storage (owner, store, timestamp, key, val, PRIMARY KEY (owner, store, timestamp, key), UNIQUE (owner, store, key));");
+        var db = undefined;
         exports.restapi = function(args, rest) {
-            console.log(args);
+            var sqlite3 = require("sqlite3");
+            if(!db) {
+                db = new sqlite3.Database(process.env.HOME + "/data/storage.sqlite3");
+                db.run("CREATE TABLE IF NOT EXISTS storage (owner, store, timestamp, key, val, PRIMARY KEY (owner, store, timestamp, key), UNIQUE (owner, store, key));");
+            };
             if(args.owner === undefined || args.store === undefined || args.timestamp === undefined) {
                 return rest.done({err : "missing owner, store, or timestamp parameter"});
             };

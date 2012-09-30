@@ -1,32 +1,96 @@
 if(typeof require==='function'){use=require('./module').use;def=require('./module').def}else{modules=window.modules||{};def=function(name,fn){modules[name]=fn};use=function(name){if(typeof modules[name]==='function'){var exports={};modules[name](exports);modules[name]=exports;}return modules[name];};}
 def("storage", function(exports) {
-    // outer: true
     // outer: String
-    // outer: Date
-    // outer: Object
-    // outer: undefined
-    // outer: console
     // outer: process
-    var db;
     // outer: require
-    var sqlite3;
+    // outer: Array
+    // outer: requestSync
+    // outer: Date
+    // outer: Math
+    // outer: setTimeout
+    // outer: true
+    // outer: ;
+    // outer: this
+    // outer: undefined
+    var db;
+    // outer: Object
+    var storeProto;
     // outer: use
     var util;
+    var throttleWait;
+    throttleWait = 5000;
     util = use("util");
+    storeProto = {
+        "requestSync" : function(callback) {
+            // outer: Date
+            // outer: Math
+            // outer: throttleWait
+            // outer: setTimeout
+            // outer: true
+            var self;
+            // outer: ;
+            // outer: this
+            if(callback) {
+                this.callbacks.push(callback);
+            };
+            if(this.syncRequested) {
+                return ;
+            };
+            self = this;
+            this.syncRequested = true;
+            setTimeout(function() {
+                // outer: self
+                self.sync();
+            }, throttleWait - Math.min(Date.now() - this.lastsync, throttleWait));
+        },
+        "set" : function(key, val) {
+            // outer: requestSync
+            // outer: this
+            this.local[key] = val;
+            requestSync();
+        },
+        "get" : function(key) {
+            // outer: this
+            return this.local[key] || this.server[key].val;
+        },
+        "keys" : function() {
+            // outer: this
+            // outer: Object
+            return Object.keys(this.local);
+        },
+    };
+    exports.create = function(owner, storename, mergefn) {
+        // outer: Array
+        // outer: storeProto
+        // outer: Object
+        var store;
+        store = Object.create(storeProto);
+        store.owner = owner;
+        store.storename = storename;
+        store.mergefn = mergefn;
+        store.callbacks = [];
+        store.local = {};
+        store.lastsync = 0;
+        store.server = {};
+    };
     if(util.platform === "node") {
-        sqlite3 = require("sqlite3");
-        db = new sqlite3.Database(process.env.HOME + "/data/storage.sqlite3");
-        db.run("CREATE TABLE IF NOT EXISTS storage (owner, store, timestamp, key, val, PRIMARY KEY (owner, store, timestamp, key), UNIQUE (owner, store, key));");
+        db = undefined;
         exports.restapi = function(args, rest) {
             // outer: true
             // outer: String
             // outer: Date
             var timestamp;
-            // outer: db
             // outer: Object
             // outer: undefined
-            // outer: console
-            console.log(args);
+            // outer: process
+            // outer: db
+            // outer: require
+            var sqlite3;
+            sqlite3 = require("sqlite3");
+            if(!db) {
+                db = new sqlite3.Database(process.env.HOME + "/data/storage.sqlite3");
+                db.run("CREATE TABLE IF NOT EXISTS storage (owner, store, timestamp, key, val, PRIMARY KEY (owner, store, timestamp, key), UNIQUE (owner, store, key));");
+            };
             if(args.owner === undefined || args.store === undefined || args.timestamp === undefined) {
                 return rest.done({"err" : "missing owner, store, or timestamp parameter"});
             };
