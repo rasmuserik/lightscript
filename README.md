@@ -100,17 +100,15 @@ Intended backends / packaging:
 
 # Roadmap
 
-- app: REST-api
-    - rest.api.fnblah({foo:x, bar:y, baz:z}, callback) - rest-call over http
-    - rest.nodemain - setup rest-server
-- app: persistant storage
+- open source repository (filter out personal stuff, api-keys etc. from private repos)
+    - keep private stuff in solsort-repository, move remaining stuf to lightscript-repository
+- refactor + doc + code review
 - backup+version of etherpad-notes
 - check if `!(foo&&bar)`-bug still exists and fix it - bug: prefix-parenthesis
 - refactor rst2js/rst2ast
 - rework type inference (including boxing) (fix bug {var x{ { { x=...}}}})
 - code maps
 - Java backend
-- open source repository (filter out personal stuff, api-keys etc. from private repos)
 - C backend
 - syntax-bug: (function() {...})()
 - syntax: for(;;)
@@ -119,6 +117,9 @@ Intended backends / packaging:
 
 # Changelog
 
+- 2012-10-01 first version of storage up and running
+- 2012-09-30 update test-framework to new build system
+- 2012-09-28 rest-api
 - 2012-09-27 build system + split up in several files + fully bootstrapped (ie. syntax may now start to diverge from JS)
 - 2012-09-26 working transformation from AST to LightScript RST/source code
 - 2012-09-25 working JavaScript backend / code generation via RST
