@@ -1,34 +1,8 @@
-# LightScript 2 - not really publishable / worth looking at for others at the moment.
+# LightScript - not really publishable / worth looking at for others at the moment.
 
 This language is in development and heavy flux, no need to look at it yet.
 
 Code also interspersed with other projects.
-
-# Hacking notes
-Data layers
-- Raw syntax tree - generic syntax, both used for parsing, and also for generating code for c-like languages.
-    - `kind` required, kind of node: `str`, `note`, `num`, `id`/anything-else
-    - `val` required, data connected to the node, ie. identifier/symbol, string content, comment, or number value
-    - `pos` position in the source file of the node
-    - `children` required, array of child nodes
-- Abstract syntax tree 
-    - `kind`: `id`, `str`, `note`, `num`, `call`, `fn`, `branch`, `assign`, `block`
-    - `val`: method-name on `call`, number of args on `fn`, identifier-name on `assign`
-        branch-vals:`cond`, `?:`, `while`, `throw`, `return`, `||`, `&&`
-    - `children`
-    - `pos`
-
-# Apps/libs
-- webapi-dispatch
-- sync'ed storage
-    - open(owner, storageName, mergeFn);
-    - get(key), set(key, val)
-## TODO
-- file upload
-- image catalog
-- content-editor
-    - content editing with mercury
-- update lightscript.net
 
 # LightScript Language
 
@@ -71,10 +45,37 @@ Intended backends / packaging:
 - (interpreted stack-language)
 - (php - drupal module)
 
+# Hacking notes
+Data layers
+- Raw syntax tree - generic syntax, both used for parsing, and also for generating code for c-like languages.
+    - `kind` required, kind of node: `str`, `note`, `num`, `id`/anything-else
+    - `val` required, data connected to the node, ie. identifier/symbol, string content, comment, or number value
+    - `pos` position in the source file of the node
+    - `children` required, array of child nodes
+- Abstract syntax tree 
+    - `kind`: `id`, `str`, `note`, `num`, `call`, `fn`, `branch`, `assign`, `block`
+    - `val`: method-name on `call`, number of args on `fn`, identifier-name on `assign`
+        branch-vals:`cond`, `?:`, `while`, `throw`, `return`, `||`, `&&`
+    - `children`
+    - `pos`
+
+# Libs
+- webapi-dispatch
+- sync'ed storage
+    - open(owner, storageName, mergeFn);
+    - get(key), set(key, val)
+## TODO
+- file upload
+- image catalog
+- content-editor
+    - content editing with mercury
+- update lightscript.net
+
 # Roadmap
 
 - open source repository (filter out personal stuff, api-keys etc. from private repos)
     - keep private stuff in solsort-repository, move remaining stuf to lightscript-repository
+    - travis-ci
 - refactor + bugfix + doc + code review + tests
     - refactor rst2js/rst2ast
     - 
