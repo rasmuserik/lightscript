@@ -124,7 +124,7 @@ def("util", function(exports) {
     };
     // local storage {{{1
     if(util.platform === "node") {
-        !function() {
+        !(function() {
             var db = util.trycatch(function() {
                 return JSON.parse(require("fs").readFileSync(process.env.HOME + "/data/local.sqlite3"));
             }, function() {
@@ -140,7 +140,7 @@ def("util", function(exports) {
             }, get : function(key) {
                 return db[key];
             }};
-        }();
+        })();
     } else if(typeof localStorage !== "undefined") {
         exports.local = {set : function(key, val) {
             localStorage.setItem(key, val);

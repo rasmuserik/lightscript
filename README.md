@@ -76,7 +76,7 @@ Data layers
 
 - refactor + bugfix + doc + code review + tests
     - (done) check if `!(foo&&bar)`-bug still exists and fix it - bug: prefix-parenthesis
-    - syntax-bug - check if issue still exists with: (function() {...})()
+    - (done) syntax-bug - check if issue still exists with: (function() {...})()
     - refactor module-traversal to be a function.
     - refactor rst2js/rst2ast
     - make sure there are tests in every module

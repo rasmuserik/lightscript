@@ -204,7 +204,7 @@ def("util", function(exports) {
     };
     // local storage {{{1
     if(util.platform === "node") {
-        !function() {
+        !(function() {
             // outer: null
             // outer: process
             // outer: require
@@ -242,7 +242,7 @@ def("util", function(exports) {
                 // outer: db
                 return db[key];
             }};
-        }();
+        })();
     } else if(typeof localStorage !== "undefined") {
         exports.local = {"set" : function(key, val) {
             // outer: localStorage

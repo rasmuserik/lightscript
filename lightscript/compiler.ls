@@ -100,11 +100,11 @@ def("tokeniser", function(exports) {
                         c = pop();
                         if(c === "\\") {
                             c = pop();
-                            c = {
+                            c = ({
                                 n : "\n",
                                 r : "\r",
                                 t : "\t",
-                            }[c] || c;
+                            })[c] || c;
                         };
                         s += c;
                     };
@@ -341,7 +341,7 @@ def("syntax", function(exports) {
         return args.map(pp).join(", ");
     };
     var infixlistpp = function() {
-        return pp(this.children[0]) + this.val[1] + compactlistpp(this.children.slice(1)) + this.val[2];
+        return ppPrio(this.children[0], this.bp) + this.val[1] + compactlistpp(this.children.slice(1)) + this.val[2];
     };
     var newline = function() {
         var result = "\n";
@@ -462,16 +462,16 @@ def("syntax", function(exports) {
     };
     // syntax definition {{{2
     var symb = {
-        "." : nospace(infix(1100)),
-        "[" : list("]")(1100),
-        "*[]" : special({pp : infixlistpp}),
+        "." : nospace(infix(1200)),
+        "[" : list("]")(1200),
+        "*[]" : special({pp : infixlistpp, bp : 1200}),
         "]" : rparen(),
-        "{" : list("}")(1100),
-        "*{}" : special({pp : blockpp}),
-        "}" : rparen(),
-        "(" : list(")")(1100),
-        "*()" : special({pp : infixlistpp}),
+        "(" : list(")")(1200),
+        "*()" : special({pp : infixlistpp, bp : 1200}),
         ")" : rparen(),
+        "{" : list("}")(1100),
+        "*{}" : special({pp : blockpp, bp : 1100}),
+        "}" : rparen(),
         "#" : nospace(prefix(1000)),
         "@" : nospace(prefix(1000)),
         "++" : nospace(prefix(1000)),

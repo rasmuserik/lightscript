@@ -243,11 +243,11 @@ def("web", function(exports) {
                 if(!userId) {
                     solsortLogin.innerHTML = "<ul class=\"nav\"><li class=\"dropdown\">" + "<a href=\"#\" class=\"dropdown-toggle\" data-toggle=\"dropdown\">Login<b class=\"caret\"></b></a>" + "<ul class=\"dropdown-menu\">" + "<li><a href=\"javascript:use('web').loginGitHub()\"><span class=\"icon-github\"></span> github</a></li>" + "<li><a href=\"#\" onclick=\"use('web').loginFacebook()\"><span class=\"icon-facebook-sign\"></span> facebook</a></li>" + "<li><a href=\"#\" onclick=\"use('web').loginGoogle()\"><span class=\"icon-google-plus-sign\"></span> google</a></li>" + "</ul></li></ul>";
                 } else  {
-                    solsortLogin.innerHTML = "<ul class=\"nav\"><li><a onclick=\"use('web').logout();\">" + userName + "<span class=\"icon-" + {
+                    solsortLogin.innerHTML = "<ul class=\"nav\"><li><a onclick=\"use('web').logout();\">" + userName + "<span class=\"icon-" + ({
                         "github" : "github",
                         "facebook" : "facebook-sign",
                         "google" : "google-plus-sign",
-                    }[userId.split(":")[0]] + " icon-large\"></span>" + "logout" + "</a></li></ul>";
+                    })[userId.split(":")[0]] + " icon-large\"></span>" + "logout" + "</a></li></ul>";
                 };
             };
         };
