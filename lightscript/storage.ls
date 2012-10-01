@@ -55,8 +55,8 @@ def("storage", function(exports) {
                         needSync = true;
                         self.local[key] = self.mergeFn(prevVal, localVal, serverVal, key);
                         if(!self.local[key]) {
-                            throw 'empty mergeFn result';
-                        }
+                            throw "empty mergeFn result";
+                        };
                         var timestamp = timestamp || (newServer[key] && newServer[key].timestamp);
                         timestamp = timestamp || (self.server[key] && self.server[key].timestamp);
                         timestamp = timestamp || 0;
@@ -99,7 +99,7 @@ def("storage", function(exports) {
         },
     };
     exports.create = function(owner, storename, mergeFn) {
-        store = Object.create(storeProto);
+        var store = Object.create(storeProto);
         store.owner = owner;
         store.storename = storename;
         store.mergeFn = mergeFn;

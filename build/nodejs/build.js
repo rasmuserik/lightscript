@@ -5,6 +5,7 @@ def("build", function(exports) {
     // outer: console
     // outer: ;
     // outer: Object
+    // outer: __dirname
     // outer: require
     var fs;
     fs = require("fs");
@@ -22,9 +23,9 @@ def("build", function(exports) {
         // outer: Object
         var compiled;
         var buildpath;
+        // outer: __dirname
         var sourcepath;
-        sourcepath = "/home/rasmuserik/solsort/lightscript/";
-        /*__dirname + '/../lightscript/';*/
+        sourcepath = __dirname + "/../../lightscript/";
         buildpath = sourcepath + "../build/";
         compiled = {};
         sourcefiles = fs.readdirSync(sourcepath).filter(function(name) {
