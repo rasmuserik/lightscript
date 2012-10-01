@@ -1,4 +1,4 @@
-[![ci](https://secure.travis-ci.org/rasmuserik/lightscript.png)](http://travis-ci.org/rasmuserik/lightscript])
+[![ci](https://secure.travis-ci.org/rasmuserik/lightscript.png)](http://travis-ci.org/rasmuserik/lightscript)
 # LightScript - not really publishable / worth looking at for others at the moment.
 
 This language is in development and heavy flux, no need to look at it yet.
