@@ -1,8 +1,7 @@
 def("build", function(exports) {
     var fs = require("fs");
     exports.nodemain = function(arg) {
-        var sourcepath = "/home/rasmuserik/solsort/lightscript/";
-        /*__dirname + '/../lightscript/';*/
+        var sourcepath = __dirname + '/../../lightscript/';
         var buildpath = sourcepath + "../build/";
         var compiled = {};
         var sourcefiles = fs.readdirSync(sourcepath).filter(function(name) {
