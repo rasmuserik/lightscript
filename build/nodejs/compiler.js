@@ -473,14 +473,14 @@ def("syntax", function(exports) {
     // prettyprinter {{{2
     indent = - 4;
     defaultToken.pp = function() {
-        // outer: ppPrio
-        var result;
         // outer: pp
+        var result;
+        // outer: ppPrio
         // outer: this
         if(this.children.length === 0) {
             return this.val;
         } else if(this.children.length === 1) {
-            return this.val + this.space + pp(this.children[0]);
+            return this.val + this.space + ppPrio(this.children[0], this.bp);
         } else if(this.children.length === 2) {
             result = "";
             result += ppPrio(this.children[0], this.bp);
@@ -599,7 +599,7 @@ def("syntax", function(exports) {
         // outer: this
         // outer: parse
         var child;
-        child = parse();
+        child = parse(this.bp);
         if(parse.sep) {
             this.error("should be followed by a value, not a separator");
             child.error("missing something before this element");
@@ -743,14 +743,14 @@ def("syntax", function(exports) {
     };
     // syntax definition {{{2
     symb = {
-        "." : nospace(infix(1000)),
-        "[" : list("]")(1000),
+        "." : nospace(infix(1100)),
+        "[" : list("]")(1100),
         "*[]" : special({"pp" : infixlistpp}),
         "]" : rparen(),
-        "{" : list("}")(1000),
+        "{" : list("}")(1100),
         "*{}" : special({"pp" : blockpp}),
         "}" : rparen(),
-        "(" : list(")")(1000),
+        "(" : list(")")(1100),
         "*()" : special({"pp" : infixlistpp}),
         ")" : rparen(),
         "#" : nospace(prefix(1000)),
