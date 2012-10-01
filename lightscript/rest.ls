@@ -6,6 +6,7 @@ def("rest", function(exports) {
         // create api functions
         if(util.platform === "web") {
             exports.api[name] = function(args, callback) {
+                console.log('rest:', name, args);
                 var xhr = new XMLHttpRequest();
                 xhr.onreadystatechange = function() {
                     if(xhr.readyState === 4) {

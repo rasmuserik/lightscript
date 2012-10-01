@@ -7,6 +7,7 @@ def("util", function(exports) {
     // outer: Date
     // outer: Math
     // outer: true
+    // outer: this
     // outer: ;
     // outer: Array
     // outer: false
@@ -58,6 +59,7 @@ def("util", function(exports) {
         // outer: Math
         // outer: setTimeout
         // outer: true
+        // outer: this
         // outer: ;
         // outer: Array
         var callbacks;
@@ -79,6 +81,8 @@ def("util", function(exports) {
             // outer: setTimeout
             // outer: true
             var run;
+            // outer: this
+            var self;
             // outer: ;
             // outer: scheduled
             // outer: callbacks
@@ -88,7 +92,9 @@ def("util", function(exports) {
             if(scheduled) {
                 return ;
             };
+            self = this;
             run = function() {
+                // outer: self
                 // outer: fn
                 // outer: Date
                 // outer: lastRun
@@ -99,7 +105,7 @@ def("util", function(exports) {
                 scheduled = false;
                 callbacks = [];
                 lastRun = Date.now();
-                fn(function() {
+                fn.call(self, function() {
                     // outer: callbacks
                     callbacks.forEach(function(f) {
                         f();

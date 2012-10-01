@@ -7,6 +7,7 @@ def("rest", function(exports) {
     // outer: JSON
     // outer: true
     // outer: XMLHttpRequest
+    // outer: console
     var RestObject;
     var util;
     // outer: use
@@ -20,6 +21,7 @@ def("rest", function(exports) {
         // outer: JSON
         // outer: true
         // outer: XMLHttpRequest
+        // outer: console
         // outer: exports
         // outer: util
         // create api functions
@@ -29,9 +31,11 @@ def("rest", function(exports) {
                 // outer: util
                 // outer: JSON
                 // outer: true
-                // outer: name
                 // outer: XMLHttpRequest
                 var xhr;
+                // outer: name
+                // outer: console
+                console.log("rest:", name, args);
                 xhr = new XMLHttpRequest();
                 xhr.onreadystatechange = function() {
                     // outer: JSON

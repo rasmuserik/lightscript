@@ -13,9 +13,9 @@ def("storage", function(exports) {
             var connectTimeout = 10000;
             var serverSync = function(callback) {
                 util = util;
-                use("rest").store({
+                use("rest").api.store({
                     owner : self.owner,
-                    store : self.store,
+                    store : self.storename,
                     timestamp : self.lastSync,
                 }, function(result) {
                     if(result.err) {
@@ -27,7 +27,9 @@ def("storage", function(exports) {
                         return ;
                     };
                     var connectTimeout = 10000;
-                    result.forEach(obj)["*{}"](newServer[obj.key] = obj);
+                    result.forEach(function(obj) {
+                        newServer[obj.key] = obj;
+                    });
                     if(result.length === 100) {
                         util.nextTick(function() {
                             serverSync(callback);
@@ -39,9 +41,6 @@ def("storage", function(exports) {
             };
             var syncLocal = function() {
                 var changedKeys = Object.keys(util.extend(util.extend({}, self.local), newServer));
-                newServer = newServer;
-                serverSync = serverSync;
-                syncLocal = syncLocal;
                 var needSync = false;
                 util.aForEach(changedKeys, function(key, done) {
                     var prevVal = self.server[key] && self.server[key].val;
@@ -49,18 +48,21 @@ def("storage", function(exports) {
                     var serverVal = newServer[key] && newServer[key].val;
                     if(localVal === serverVal) {
                         self.server[key] = newServer[key];
-                        util.delprop(local, key);
-                        util.delprop(local, key);
+                        util.delprop(self.local, key);
+                        util.delprop(serverVal, key);
                         done();
                     } else  {
                         needSync = true;
-                        self.local[key] = self.mergeFn(prevVal, localVal, serverVal);
+                        self.local[key] = self.mergeFn(prevVal, localVal, serverVal, key);
+                        if(!self.local[key]) {
+                            throw 'empty mergeFn result';
+                        }
                         var timestamp = timestamp || (newServer[key] && newServer[key].timestamp);
                         timestamp = timestamp || (self.server[key] && self.server[key].timestamp);
                         timestamp = timestamp || 0;
-                        use("rest").store({
+                        use("rest").api.store({
                             owner : self.owner,
-                            store : self.store,
+                            store : self.storename,
                             timestamp : timestamp,
                             key : key,
                             val : self.local[key],
@@ -72,8 +74,6 @@ def("storage", function(exports) {
                         });
                     };
                 }, function() {
-                    serverSync = serverSync;
-                    syncLocal = syncLocal;
                     if(needSync) {
                         util.nextTick(function() {
                             serverSync(syncLocal);
@@ -81,13 +81,14 @@ def("storage", function(exports) {
                     };
                 });
             };
+            serverSync(syncLocal);
         }),
         set : function(key, val) {
             this.local[key] = val;
-            sync();
+            this.sync();
         },
         get : function(key) {
-            return this.local[key] || this.server[key].val;
+            return this.local[key] || this.server[key] && this.server[key].val;
         },
         keys : function() {
             var result = {};
@@ -97,13 +98,15 @@ def("storage", function(exports) {
             return Object.keys(result);
         },
     };
-    exports.create = function(owner, store, mergefn) {
+    exports.create = function(owner, storename, mergeFn) {
         store = Object.create(storeProto);
         store.owner = owner;
-        store.store = store;
-        store.mergefn = mergefn;
+        store.storename = storename;
+        store.mergeFn = mergeFn;
         store.local = {};
         store.server = {};
+        store.sync();
+        return store;
     };
     // storage server-database/rest-api;
     if(util.platform === "node") {
@@ -165,6 +168,7 @@ def("storage", function(exports) {
                             if(err) {
                                 return rest.done({err : "DB-error: " + String(err)});
                             };
+                            console.log(args, row);
                             if(!row) {
                                 return rest.done({err : "out-of-sync"});
                             };

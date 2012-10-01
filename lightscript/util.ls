@@ -42,11 +42,12 @@ def("util", function(exports) {
             if(scheduled) {
                 return ;
             };
+            var self = this;
             var run = function() {
                 scheduled = false;
                 callbacks = [];
                 lastRun = Date.now();
-                fn(function() {
+                fn.call(self, function() {
                     callbacks.forEach(function(f) {
                         f();
                     });
