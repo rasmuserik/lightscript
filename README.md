@@ -75,12 +75,12 @@ Data layers
 # Roadmap
 
 - refactor + bugfix + doc + code review + tests
+    - (done) check if `!(foo&&bar)`-bug still exists and fix it - bug: prefix-parenthesis
+    - syntax-bug - check if issue still exists with: (function() {...})()
     - refactor module-traversal to be a function.
-    - check if `!(foo&&bar)`-bug still exists and fix it - bug: prefix-parenthesis
     - refactor rst2js/rst2ast
     - make sure there are tests in every module
     - rework type inference (including boxing) (fix bug {var x{ { { x=...}}}})
-    - syntax-bug - check if issue still exists with: (function() {...})()
     - single def in compiler
     - change build system to remove need for def(...)
 - macro system
