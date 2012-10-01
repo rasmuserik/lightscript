@@ -15,7 +15,7 @@
     "express-logger": "*"
   },
   "scripts": {
-      "test": "touch lightscript/*; ./run.sh test"
+      "test": "./run.sh build pretty && ./run.sh test"
   },
   "engines": {"node": "*"}
 }
