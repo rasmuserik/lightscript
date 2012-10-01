@@ -1,3 +1,9 @@
+# LightScript 2 - not really publishable / worth looking at for others at the moment.
+
+This language is in development and heavy flux, no need to look at it yet.
+
+Code also interspersed with other projects.
+
 # Hacking notes
 Data layers
 - Raw syntax tree - generic syntax, both used for parsing, and also for generating code for c-like languages.
@@ -13,49 +19,16 @@ Data layers
     - `pos`
 
 # Apps/libs
-## TODO
 - webapi-dispatch
 - sync'ed storage
     - open(owner, storageName, mergeFn);
     - get(key), set(key, val)
+## TODO
 - file upload
-- several domains with common base
-    - domains
-        - api.solsort.com
-            - database/dynamic content.
-        - solsort.com / solsort.dk
-            - konsulentvirksomhed
-            - list of pages, with screenshot overlayed with url and description (solsort.dk first)
-        - rasmuserik.com
-            - personlig side m. noter etc.
-        - skolevangen.dk
-        - blaagaard-kdas.dk
-            - dybe links til portal.ucc.dk, webmail etc.
-            - links til facebook for kdas-grupper
-            - link til techtutorer.blogspot.dk
-            - pad.blaagaard-kdas.dk
-            - shoutbox
-                - shout-text, then login via github/facebook/google
-            - kalender
-            - announce
-        - evt. spirekor.dk
-        - evt. eventyrheksen.dk
-        - evt. lightscript.net
-        - evt. annevoel.dk
-            - evt. + galleri
-        - evt. techtutor.dk
-            - om techtutor
-                - Hvad
-                - kontakt /info
-                - ...
-            - kurser
-        - evt. minna tegning freelance
-        - evt. quiz.solsort.com
-        - evt. lightscript.net
 - image catalog
 - content-editor
     - content editing with mercury
-- static via nginx
+- update lightscript.net
 
 # LightScript Language
 
@@ -73,7 +46,7 @@ Intended backends / packaging:
     - node-server
     - html5-app
     - (NB: mozilla ignite)
-    - (note:http://developers.facebook.com/html5/distribution/?_fb_noscript=1)
+    - (note:http://developers.facebook.com/html5/distribution/?_fb_noscript=1 http://5apps.com)
     - (firefox-plugin)
     - (phonegap-app)
     - (mozilla-marketplace)
@@ -102,10 +75,12 @@ Intended backends / packaging:
 
 - open source repository (filter out personal stuff, api-keys etc. from private repos)
     - keep private stuff in solsort-repository, move remaining stuf to lightscript-repository
-- refactor + doc + code review
+- refactor + bugfix + doc + code review + tests
+    - refactor rst2js/rst2ast
+    - 
+    - make sure there are tests in every module
 - backup+version of etherpad-notes
 - check if `!(foo&&bar)`-bug still exists and fix it - bug: prefix-parenthesis
-- refactor rst2js/rst2ast
 - rework type inference (including boxing) (fix bug {var x{ { { x=...}}}})
 - code maps
 - Java backend

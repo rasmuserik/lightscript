@@ -1,9 +1,9 @@
 {
-  "name": "solsort",
+  "name": "lightscript",
   "version": "0.0.1",
   "author": "Rasmus Erik Voel Jensen",
-  "homepage": "http://rasmuserik.com",
-  "description": "solsort.com web application",
+  "homepage": "http://lightscript.net",
+  "description": "the lightscript programming language",
   "dependencies": {
     "async": "*",
     "mustache": "*",
