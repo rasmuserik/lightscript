@@ -93,7 +93,7 @@ Data layers
 
 # Changelog
 
-- 2012-10-01 public github repository
+- 2012-10-01 public github repository + travis-ci
 - 2012-10-01 first version of storage up and running
 - 2012-09-30 update test-framework to new build system
 - 2012-09-28 rest-api

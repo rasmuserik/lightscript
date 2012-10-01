@@ -1,5 +1,5 @@
 def("server", function(exports) {
-    var rootdir = __dirname + "/../..";
+    var rootdir = __dirname + "/../../../solsort/";
     if(use("util").platform === "node") {
         exports.nodemain = function() {
             // # includes and initialisation {{{1
@@ -32,7 +32,7 @@ def("server", function(exports) {
             var notes = file2entries(rootdir + "/sites/solsort/notes.md");
             // # Web content/server configuration {{{1
             var configureApp = function(app) {
-                require("../../sites/solsort/theodorelias/genindex.js").gen(htmlTemplate);
+                require(rootdir + "/sites/solsort/theodorelias/genindex.js").gen(htmlTemplate);
                 app.use(function(req, res, next) {
                     res.removeHeader("X-Powered-By");
                     next();

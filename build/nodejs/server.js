@@ -13,7 +13,7 @@ def("server", function(exports) {
     // outer: use
     // outer: __dirname
     var rootdir;
-    rootdir = __dirname + "/../..";
+    rootdir = __dirname + "/../../../solsort/";
     if(use("util").platform === "node") {
         exports.nodemain = function() {
             // outer: Date
@@ -94,7 +94,6 @@ def("server", function(exports) {
                 // outer: https
                 // outer: RegExp
                 // outer: mustache
-                // outer: rootdir
                 var storeHandle;
                 var fixLinks;
                 // outer: notes
@@ -103,8 +102,9 @@ def("server", function(exports) {
                 // outer: logger
                 // outer: Object
                 // outer: htmlTemplate
+                // outer: rootdir
                 // outer: require
-                require("../../sites/solsort/theodorelias/genindex.js").gen(htmlTemplate);
+                require(rootdir + "/sites/solsort/theodorelias/genindex.js").gen(htmlTemplate);
                 app.use(function(req, res, next) {
                     res.removeHeader("X-Powered-By");
                     next();
