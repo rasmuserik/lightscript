@@ -74,20 +74,15 @@ Data layers
 
 # Roadmap
 
-- open source repository (filter out personal stuff, api-keys etc. from private repos)
-    - keep private stuff in solsort-repository, move remaining stuf to lightscript-repository
-    - travis-ci
 - refactor + bugfix + doc + code review + tests
     - refactor rst2js/rst2ast
-    - 
     - make sure there are tests in every module
-- backup+version of etherpad-notes
-- check if `!(foo&&bar)`-bug still exists and fix it - bug: prefix-parenthesis
-- rework type inference (including boxing) (fix bug {var x{ { { x=...}}}})
-- code maps
+    - check if `!(foo&&bar)`-bug still exists and fix it - bug: prefix-parenthesis
+    - rework type inference (including boxing) (fix bug {var x{ { { x=...}}}})
+- syntax-bug - check if issue still exists with: (function() {...})()
+- sourcemaps
 - Java backend
 - C backend
-- syntax-bug: (function() {...})()
 - syntax: for(;;)
 - Static type system / type inference
 - type inference
