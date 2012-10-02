@@ -366,4 +366,4 @@ def("web", function(exports) {
         loginUI();
         exports.loadJS("http://solsort.com/store.js");
     };
-});
+}, exports);

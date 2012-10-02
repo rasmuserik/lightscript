@@ -2,15 +2,12 @@
 if(typeof exports !== "undefined") {
     modules = {};
     exports.use = function(name) {
-        // outer: modules
         // outer: require
-        require("./" + name);
-        return modules[name];
+        return require("./" + name);
     };
-    def = exports.def = function(name, fn) {
-        // outer: Object
+    def = exports.def = function(name, fn, exports) {
         // outer: modules
-        modules[name] = {};
+        modules[name] = exports;
         fn(modules[name]);
     };
 };
@@ -36,4 +33,4 @@ def("module", function(exports) {
             return Object.keys(modules);
         };
     };
-});
+}, exports);

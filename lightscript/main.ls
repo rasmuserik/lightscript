@@ -18,7 +18,7 @@ def("main", function(exports) {
             use(platform).main.apply(undefined, args);
         };
     });
-});
+}, exports);
 setTimeout(function() {
     use("main");
 }, 0);

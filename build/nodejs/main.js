@@ -34,7 +34,7 @@ def("main", function(exports) {
             use(platform).main.apply(undefined, args);
         };
     });
-});
+}, exports);
 setTimeout(function() {
     // outer: use
     use("main");

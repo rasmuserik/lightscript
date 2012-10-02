@@ -1084,4 +1084,4 @@ def("compiler", function(exports) {
             return ast;
         };
     })();
-});
+}, exports);

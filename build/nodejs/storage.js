@@ -307,4 +307,4 @@ def("storage", function(exports) {
             };
         };
     };
-});
+}, exports);

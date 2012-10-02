@@ -148,4 +148,4 @@ def("util", function(exports) {
             localStorage.getItem(key);
         }};
     };
-});
+}, exports);

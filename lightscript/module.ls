@@ -1,11 +1,10 @@
 if(typeof exports !== "undefined") {
     modules = {};
     exports.use = function(name) {
-        require("./" + name);
-        return modules[name];
+        return require("./" + name);
     };
-    def = exports.def = function(name, fn) {
-        modules[name] = {};
+    def = exports.def = function(name, fn, exports) {
+        modules[name] = exports;
         fn(modules[name]);
     };
 };
@@ -21,4 +20,4 @@ def("module", function(exports) {
             return Object.keys(modules);
         };
     };
-});
+}, exports);

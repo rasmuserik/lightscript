@@ -117,4 +117,4 @@ def("test", function(exports) {
         });
     };
     */
-});
+}, exports);

@@ -14,4 +14,4 @@ def("publish", function(exports) {
             };
         });
     };
-});
+}, exports);

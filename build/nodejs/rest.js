@@ -173,4 +173,4 @@ def("rest", function(exports) {
         // start the server
         server.listen(8002);
     };
-});
+}, exports);

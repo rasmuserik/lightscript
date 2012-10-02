@@ -132,4 +132,4 @@ def("build", function(exports) {
             };
         });
     };
-});
+}, exports);
