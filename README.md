@@ -74,13 +74,6 @@ Data layers
 
 # Roadmap
 
-- refactor + bugfix + doc + code review + tests
-    - (done) check if `!(foo&&bar)`-bug still exists and fix it - bug: prefix-parenthesis
-    - (done) syntax-bug - check if issue still exists with: (function() {...})()
-    - (done) single def in compiler
-    - (done) refactor module-traversal to be a function.
-    - change build system to remove need for def(...)
-        - currently working with node, fix in web-browser
 - macro system
     - pattern matching
     - refactor rst2js/rst2ast
@@ -93,6 +86,7 @@ Data layers
 
 # Changelog
 
+- 2012-10-02 change module-system to be similar to commonjs + code refactoring
 - 2012-10-01 public github repository + travis-ci
 - 2012-10-01 first version of storage up and running
 - 2012-09-30 update test-framework to new build system
