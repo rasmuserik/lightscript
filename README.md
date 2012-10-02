@@ -79,17 +79,16 @@ Data layers
     - (done) syntax-bug - check if issue still exists with: (function() {...})()
     - (done) single def in compiler
     - (done) refactor module-traversal to be a function.
-    - refactor rst2js/rst2ast
-    - make sure there are tests in every module
-    - rework type inference (including boxing) (fix bug {var x{ { { x=...}}}})
     - change build system to remove need for def(...)
 - macro system
+    - pattern matching
+    - refactor rst2js/rst2ast
     - syntax: for(;;)
 - Java backend
+- more tests and docs
+- Static type system / type inference - rework type inference (including boxing) (fix bug {var x{ { { x=...}}}})
 - sourcemaps
 - C backend
-- Static type system / type inference
-- type inference
 
 # Changelog
 
