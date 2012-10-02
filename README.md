@@ -80,6 +80,7 @@ Data layers
     - (done) single def in compiler
     - (done) refactor module-traversal to be a function.
     - change build system to remove need for def(...)
+        - currently working with node, fix in web-browser
 - macro system
     - pattern matching
     - refactor rst2js/rst2ast
