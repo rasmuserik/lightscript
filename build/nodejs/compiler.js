@@ -227,12 +227,14 @@ tokenise = undefined;
     };
 })();
 // Ast object {{{1
-def("ast", function(exports) {
+Ast = undefined;
+(function() {
     // outer: require
     // outer: use
     // outer: this
     // outer: arguments
     // outer: Array
+    // outer: Ast
     // outer: Object
     var defaultAst;
     defaultAst = {
@@ -284,7 +286,7 @@ def("ast", function(exports) {
             throw require("util").inspect({"error" : desc, "token" : this});
         },
     };
-    exports.create = function(arg) {
+    Ast = function(arg) {
         // outer: defaultAst
         // outer: arguments
         // outer: Array
@@ -292,31 +294,31 @@ def("ast", function(exports) {
         args = Array.prototype.slice.call(arguments, 0);
         return defaultAst.create.apply(defaultAst, args);
     };
-    exports.test = function(test) {
-        // outer: Array
-        // outer: Object
-        // outer: exports
-        var ast;
-        ast = exports.create("kind1:val1", "arg1");
-        test.assertEqual(ast.kind, "kind1");
-        test.assertEqual(ast.val, "val1");
-        test.assertEqual(ast.children[0], "arg1");
-        test.assertEqual(typeof ast.create, "function", "has create function");
-        ast = exports.create("kind2", "val2", "arg2");
-        test.assertEqual(ast.kind, "kind2");
-        test.assertEqual(ast.val, "val2");
-        test.assertEqual(ast.children[0], "arg2");
-        ast = exports.create({
-            "kind" : "kind3",
-            "val" : "val3",
-            "children" : ["arg3"],
-        });
-        test.assertEqual(ast.kind, "kind3");
-        test.assertEqual(ast.val, "val3");
-        test.assertEqual(ast.children[0], "arg3");
-        test.done();
-    };
-});
+})();
+exports.test = function(test) {
+    // outer: Array
+    // outer: Object
+    // outer: Ast
+    var ast;
+    ast = Ast("kind1:val1", "arg1");
+    test.assertEqual(ast.kind, "kind1");
+    test.assertEqual(ast.val, "val1");
+    test.assertEqual(ast.children[0], "arg1");
+    test.assertEqual(typeof ast.create, "function", "has create function");
+    ast = Ast("kind2", "val2", "arg2");
+    test.assertEqual(ast.kind, "kind2");
+    test.assertEqual(ast.val, "val2");
+    test.assertEqual(ast.children[0], "arg2");
+    ast = Ast({
+        "kind" : "kind3",
+        "val" : "val3",
+        "children" : ["arg3"],
+    });
+    test.assertEqual(ast.kind, "kind3");
+    test.assertEqual(ast.val, "val3");
+    test.assertEqual(ast.children[0], "arg3");
+    test.done();
+};
 // Syntax {{{1
 def("syntax", function(exports) {
     // outer: JSON
@@ -352,6 +354,7 @@ def("syntax", function(exports) {
     // outer: undefined
     var token;
     // outer: Object
+    // outer: Ast
     var defaultToken;
     var tokenLookup;
     // outer: use
@@ -405,7 +408,7 @@ def("syntax", function(exports) {
         proto = symb[orig.kind + ":"] || symb[orig.val] || (orig.val && symb[orig.val[orig.val.length - 1]]) || defaultToken;
         return extend(Object.create(proto), orig);
     };
-    defaultToken = use("ast").create({
+    defaultToken = Ast({
         "nud" : function() {},
         "bp" : 0,
         "dbp" : 0,
@@ -1057,7 +1060,7 @@ def("code_analysis", function(exports) {
     // outer: true
     // outer: ;
     // outer: Object
-    // outer: use
+    // outer: Ast
     var localVars;
     var localVar;
     var box;
@@ -1069,12 +1072,12 @@ def("code_analysis", function(exports) {
         // outer: localVars
         // outer: box
         // outer: Object
-        // outer: use
+        // outer: Ast
         var global;
         // outer: Array
         // outer: fns
         fns = [];
-        global = use("ast").create("fn:0");
+        global = Ast("fn:0");
         global.scope = {};
         global.children = asts;
         asts.forEach(function(elem) {
