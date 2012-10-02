@@ -1,7 +1,6 @@
 // Compiler {{{1
 def("compiler", function(exports) {
     exports.ls2js = function(ls) {
-        var tokenise = use("tokeniser").tokenise;
         var syntax = use("syntax");
         var rsts = syntax.parse(tokenise(ls));
         var asts = rsts.map(use("rst2ast").rst2ast);
@@ -11,7 +10,6 @@ def("compiler", function(exports) {
         }));
     };
     exports.ls2ls = function(ls) {
-        var tokenise = use("tokeniser").tokenise;
         var syntax = use("syntax");
         var rsts = syntax.parse(tokenise(ls));
         var asts = rsts.map(use("rst2ast").rst2ast);
@@ -22,7 +20,8 @@ def("compiler", function(exports) {
     };
 });
 // Tokeniser {{{1
-def("tokeniser", function(exports) {
+tokenise = undefined;
+(function() {
     "use strict";
     var createToken = function(kind, val, pos) {
         return {
@@ -31,7 +30,7 @@ def("tokeniser", function(exports) {
             pos : pos,
         };
     };
-    exports.tokenise = function(buffer) {
+    tokenise = function(buffer) {
         var pos = 0;
         var start = {lineno : 0, pos : 0};
         var lineno = 0;
@@ -150,7 +149,7 @@ def("tokeniser", function(exports) {
         };
         return tokens;
     };
-});
+})();
 // Ast object {{{1
 def("ast", function(exports) {
     var defaultAst = {
@@ -217,7 +216,6 @@ def("ast", function(exports) {
 def("syntax", function(exports) {
     // main {{{2
     exports.nodemain = function() {
-        var tokenise = use("tokeniser").tokenise;
         var filename = process.argv[3] || process.argv[1];
         var rsts = exports.parse(tokenise(require("fs").readFileSync(filename, "utf8")));
         var asts = rsts.map(use("rst2ast").rst2ast);
@@ -549,7 +547,6 @@ def("syntax", function(exports) {
 def("rst2ast", function(exports) {
     // main {{{2
     exports.nodemain = function() {
-        var tokenise = use("tokeniser").tokenise;
         var syntax = use("syntax");
         var filename = process.argv[3] || process.argv[1];
         var rsts = syntax.parse(tokenise(require("fs").readFileSync(filename, "utf8")));
@@ -802,7 +799,6 @@ def("code_analysis", function(exports) {
 def("ast2js", function(exports) {
     // main {{{2
     exports.nodemain = function() {
-        var tokenise = use("tokeniser").tokenise;
         var syntax = use("syntax");
         var filename = process.argv[3] || process.argv[1];
         var rsts = syntax.parse(tokenise(require("fs").readFileSync(filename, "utf8")));
@@ -992,7 +988,6 @@ def("ast2js", function(exports) {
 def("ast2rst", function(exports) {
     // main {{{2
     exports.nodemain = function() {
-        var tokenise = use("tokeniser").tokenise;
         var syntax = use("syntax");
         var filename = process.argv[3] || process.argv[1];
         var rsts = syntax.parse(tokenise(require("fs").readFileSync(filename, "utf8")));

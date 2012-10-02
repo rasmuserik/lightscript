@@ -1,14 +1,14 @@
 if(typeof require==='function'){use=require('./module').use;def=require('./module').def}else{modules=window.modules||{};def=function(name,fn){modules[name]=fn};use=function(name){if(typeof modules[name]==='function'){var exports={};modules[name](exports);modules[name]=exports;}return modules[name];};}
 // Compiler {{{1
 def("compiler", function(exports) {
+    // outer: tokenise
     // outer: use
     exports.ls2js = function(ls) {
         var asts;
+        // outer: tokenise
         var rsts;
-        var syntax;
         // outer: use
-        var tokenise;
-        tokenise = use("tokeniser").tokenise;
+        var syntax;
         syntax = use("syntax");
         rsts = syntax.parse(tokenise(ls));
         asts = rsts.map(use("rst2ast").rst2ast);
@@ -20,11 +20,10 @@ def("compiler", function(exports) {
     };
     exports.ls2ls = function(ls) {
         var asts;
+        // outer: tokenise
         var rsts;
-        var syntax;
         // outer: use
-        var tokenise;
-        tokenise = use("tokeniser").tokenise;
+        var syntax;
         syntax = use("syntax");
         rsts = syntax.parse(tokenise(ls));
         asts = rsts.map(use("rst2ast").rst2ast);
@@ -36,11 +35,13 @@ def("compiler", function(exports) {
     };
 });
 // Tokeniser {{{1
-def("tokeniser", function(exports) {
+tokenise = undefined;
+(function() {
     // outer: true
     // outer: undefined
     // outer: Array
     // outer: Object
+    // outer: tokenise
     var createToken;
     "use strict";
     createToken = function(kind, val, pos) {
@@ -51,7 +52,7 @@ def("tokeniser", function(exports) {
             "pos" : pos,
         };
     };
-    exports.tokenise = function(buffer) {
+    tokenise = function(buffer) {
         // outer: true
         // outer: undefined
         // outer: createToken
@@ -224,7 +225,7 @@ def("tokeniser", function(exports) {
         };
         return tokens;
     };
-});
+})();
 // Ast object {{{1
 def("ast", function(exports) {
     // outer: require
@@ -322,6 +323,7 @@ def("syntax", function(exports) {
     // outer: this
     // outer: console
     // outer: require
+    // outer: tokenise
     // outer: process
     // outer: true
     var symb;
@@ -360,15 +362,14 @@ def("syntax", function(exports) {
         // outer: console
         // outer: pplistlines
         var newCode;
+        // outer: use
         var asts;
         // outer: require
+        // outer: tokenise
         // outer: exports
         var rsts;
         // outer: process
         var filename;
-        // outer: use
-        var tokenise;
-        tokenise = use("tokeniser").tokenise;
         filename = process.argv[3] || process.argv[1];
         rsts = exports.parse(tokenise(require("fs").readFileSync(filename, "utf8")));
         asts = rsts.map(use("rst2ast").rst2ast);
@@ -840,6 +841,7 @@ def("rst2ast", function(exports) {
     // outer: true
     // outer: console
     // outer: require
+    // outer: tokenise
     // outer: process
     // outer: use
     var rst2ast;
@@ -848,13 +850,12 @@ def("rst2ast", function(exports) {
         // outer: rst2ast
         // outer: console
         // outer: require
+        // outer: tokenise
         var rsts;
         // outer: process
         var filename;
-        var syntax;
         // outer: use
-        var tokenise;
-        tokenise = use("tokeniser").tokenise;
+        var syntax;
         syntax = use("syntax");
         filename = process.argv[3] || process.argv[1];
         rsts = syntax.parse(tokenise(require("fs").readFileSync(filename, "utf8")));
@@ -1178,6 +1179,7 @@ def("ast2js", function(exports) {
     // outer: false
     // outer: console
     // outer: require
+    // outer: tokenise
     // outer: process
     // outer: use
     var ast2js;
@@ -1193,13 +1195,12 @@ def("ast2js", function(exports) {
         var asts;
         // outer: console
         // outer: require
+        // outer: tokenise
         var rsts;
         // outer: process
         var filename;
-        var syntax;
         // outer: use
-        var tokenise;
-        tokenise = use("tokeniser").tokenise;
+        var syntax;
         syntax = use("syntax");
         filename = process.argv[3] || process.argv[1];
         rsts = syntax.parse(tokenise(require("fs").readFileSync(filename, "utf8")));
@@ -1417,6 +1418,7 @@ def("ast2rst", function(exports) {
     // outer: false
     // outer: console
     // outer: require
+    // outer: tokenise
     // outer: process
     // outer: use
     var ast2rst;
@@ -1432,13 +1434,12 @@ def("ast2rst", function(exports) {
         var asts;
         // outer: console
         // outer: require
+        // outer: tokenise
         var rsts;
         // outer: process
         var filename;
-        var syntax;
         // outer: use
-        var tokenise;
-        tokenise = use("tokeniser").tokenise;
+        var syntax;
         syntax = use("syntax");
         filename = process.argv[3] || process.argv[1];
         rsts = syntax.parse(tokenise(require("fs").readFileSync(filename, "utf8")));
