@@ -15,40 +15,39 @@ def("compiler", function(exports) {
     // outer: use
     var analyse;
     // outer: def
+    var prettyprint;
     var parse;
     var Ast;
     // outer: undefined
     var tokenise;
     exports.ls2js = function(ls) {
+        // outer: prettyprint
         // outer: analyse
+        // outer: use
         var asts;
         // outer: tokenise
         // outer: parse
         var rsts;
-        // outer: use
-        var syntax;
-        syntax = use("syntax");
         rsts = parse(tokenise(ls));
         asts = rsts.map(use("rst2ast").rst2ast);
         asts = analyse(asts);
-        return use("syntax").prettyprint(asts.map(function(ast) {
+        return prettyprint(asts.map(function(ast) {
             // outer: use
             return use("ast2js").ast2js(ast);
         }));
     };
     exports.ls2ls = function(ls) {
+        // outer: prettyprint
         // outer: analyse
+        // outer: use
         var asts;
         // outer: tokenise
         // outer: parse
         var rsts;
-        // outer: use
-        var syntax;
-        syntax = use("syntax");
         rsts = parse(tokenise(ls));
         asts = rsts.map(use("rst2ast").rst2ast);
         asts = analyse(asts);
-        return use("syntax").prettyprint(asts.map(function(ast) {
+        return prettyprint(asts.map(function(ast) {
             // outer: use
             return use("ast2rst").ast2rst(ast);
         })).slice(1);
@@ -351,7 +350,8 @@ def("compiler", function(exports) {
     };
     // Syntax {{{1
     parse = undefined;
-    def("syntax", function(exports) {
+    prettyprint = undefined;
+    (function() {
         // outer: JSON
         // outer: this
         // outer: true
@@ -374,6 +374,7 @@ def("compiler", function(exports) {
         var compactlistpp;
         var listpp;
         var ppPrio;
+        // outer: prettyprint
         var pp;
         var indent;
         // outer: parse
@@ -491,7 +492,7 @@ def("compiler", function(exports) {
             // outer: tokenLookup
             return tokenLookup(node).pp();
         };
-        exports.prettyprint = function(stmts) {
+        prettyprint = function(stmts) {
             // outer: pplistlines
             return pplistlines(stmts, ";");
         };
@@ -827,7 +828,7 @@ def("compiler", function(exports) {
             }}),
             "annotation:" : sep(),
         };
-    });
+    })();
     // rst2ast {{{1
     def("rst2ast", function(exports) {
         // outer: false

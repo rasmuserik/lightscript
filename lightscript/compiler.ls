@@ -1,20 +1,18 @@
 // Compiler {{{1
 def("compiler", function(exports) {
     exports.ls2js = function(ls) {
-        var syntax = use("syntax");
         var rsts = parse(tokenise(ls));
         var asts = rsts.map(use("rst2ast").rst2ast);
         asts = analyse(asts);
-        return use("syntax").prettyprint(asts.map(function(ast) {
+        return prettyprint(asts.map(function(ast) {
             return use("ast2js").ast2js(ast);
         }));
     };
     exports.ls2ls = function(ls) {
-        var syntax = use("syntax");
         var rsts = parse(tokenise(ls));
         var asts = rsts.map(use("rst2ast").rst2ast);
         asts = analyse(asts);
-        return use("syntax").prettyprint(asts.map(function(ast) {
+        return prettyprint(asts.map(function(ast) {
             return use("ast2rst").ast2rst(ast);
         })).slice(1);
     };
@@ -221,7 +219,8 @@ def("compiler", function(exports) {
     };
     // Syntax {{{1
     var parse = undefined;
-    def("syntax", function(exports) {
+    var prettyprint = undefined;
+    (function() {
         // setup, token lookup, default token {{{2
         var extend = use("util").extend;
         var tokenLookup = function(orig) {
@@ -295,7 +294,7 @@ def("compiler", function(exports) {
         var pp = function(node) {
             return tokenLookup(node).pp();
         };
-        exports.prettyprint = function(stmts) {
+        prettyprint = function(stmts) {
             return pplistlines(stmts, ";");
         };
         var ppPrio = function(node, prio) {
@@ -526,7 +525,7 @@ def("compiler", function(exports) {
             }}),
             "annotation:" : sep(),
         };
-    });
+    })();
     // rst2ast {{{1
     def("rst2ast", function(exports) {
         // rst2ast {{{2
