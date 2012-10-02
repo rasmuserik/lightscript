@@ -4,7 +4,7 @@ def("compiler", function(exports) {
         var syntax = use("syntax");
         var rsts = syntax.parse(tokenise(ls));
         var asts = rsts.map(use("rst2ast").rst2ast);
-        asts = use("code_analysis").analyse(asts);
+        asts = analyse(asts);
         return use("syntax").prettyprint(asts.map(function(ast) {
             return use("ast2js").ast2js(ast);
         }));
@@ -13,7 +13,7 @@ def("compiler", function(exports) {
         var syntax = use("syntax");
         var rsts = syntax.parse(tokenise(ls));
         var asts = rsts.map(use("rst2ast").rst2ast);
-        asts = use("code_analysis").analyse(asts);
+        asts = analyse(asts);
         return use("syntax").prettyprint(asts.map(function(ast) {
             return use("ast2rst").ast2rst(ast);
         })).slice(1);
@@ -215,23 +215,6 @@ exports.test = function(test) {
 };
 // Syntax {{{1
 def("syntax", function(exports) {
-    // main {{{2
-    exports.nodemain = function() {
-        var filename = process.argv[3] || process.argv[1];
-        var rsts = exports.parse(tokenise(require("fs").readFileSync(filename, "utf8")));
-        var asts = rsts.map(use("rst2ast").rst2ast);
-        asts = use("code_analysis").analyse(asts);
-        rsts = asts.map(use("ast2rst").ast2rst);
-        var newCode = pplistlines(rsts, ";");
-        if(exports.errors.length) {
-            console.log("errors:", exports.errors);
-        } else  {
-            console.log(newCode);
-            if(!process.argv[3]) {
-                require("fs").writeFileSync(filename + "", newCode);
-            };
-        };
-    };
     // toList {{{2
     exports.toList = function(ast) {
         var result = ast.children.map(exports.toList);
@@ -239,7 +222,6 @@ def("syntax", function(exports) {
         return result;
     };
     // setup, token lookup, default token {{{2
-    exports.errors = [];
     var extend = use("util").extend;
     var tokenLookup = exports.tokenLookup = function(orig) {
         var proto = symb[orig.kind + ":"] || symb[orig.val] || (orig.val && symb[orig.val[orig.val.length - 1]]) || defaultToken;
@@ -546,24 +528,6 @@ def("syntax", function(exports) {
 });
 // rst2ast {{{1
 def("rst2ast", function(exports) {
-    // main {{{2
-    exports.nodemain = function() {
-        var syntax = use("syntax");
-        var filename = process.argv[3] || process.argv[1];
-        var rsts = syntax.parse(tokenise(require("fs").readFileSync(filename, "utf8")));
-        if(syntax.errors.length) {
-            console.log("errors:", syntax.errors);
-        } else  {
-            rsts.forEach(function(rst) {
-                var f = function(elem) {
-                    console.log(elem.kind, elem.val);
-                    elem.children.map(f);
-                };
-                //f(rst2ast(rst));
-                console.log(use("util").listpp(use("syntax").toList(rst2ast(rst))));
-            });
-        };
-    };
     // rst2ast {{{2
     var rst2ast = exports.rst2ast = function(ast) {
         // Before recursive transformation {{{3
@@ -727,10 +691,11 @@ def("rst2ast", function(exports) {
     };
 });
 // code analysis {{{1
-def("code_analysis", function(exports) {
+analyse = undefined;
+(function() {
     // functions in post-order traversal
     var fns = [];
-    exports.analyse = function(asts) {
+    analyse = function(asts) {
         fns = [];
         var global = Ast("fn:0");
         global.scope = {};
@@ -795,37 +760,9 @@ def("code_analysis", function(exports) {
             localVars(elem, parent);
         });
     };
-});
+})();
 // ast2js {{{1
 def("ast2js", function(exports) {
-    // main {{{2
-    exports.nodemain = function() {
-        var syntax = use("syntax");
-        var filename = process.argv[3] || process.argv[1];
-        var rsts = syntax.parse(tokenise(require("fs").readFileSync(filename, "utf8")));
-        if(syntax.errors.length) {
-            console.log("errors:", syntax.errors);
-        } else  {
-            /*
-            rsts.forEach(function(rst) {
-                var f = function(elem) {
-                    console.log(elem.kind, elem.val);
-                    elem.children.map(f);
-                };
-                //f(rst2ast(rst));
-                //console.log(use("util").listpp(use("syntax").toList(rst)));
-                var jsast = ast2js(use("rst2ast").rst2ast(rst));
-                //console.log(use("util").listpp(use("syntax").toList(jsast)));
-                console.log(use("syntax").prettyprint([jsast]));
-            });
-            */
-            var asts = rsts.map(use("rst2ast").rst2ast);
-            asts = use("code_analysis").analyse(asts);
-            console.log(use("syntax").prettyprint(asts.map(function(ast) {
-                return ast2js(ast);
-            })));
-        };
-    };
     // Utility / definitions {{{2
     var str2obj = function(str) {
         return use("util").list2obj(str.split(" "));
@@ -987,21 +924,6 @@ def("ast2js", function(exports) {
 });
 // ast2rst {{{1
 def("ast2rst", function(exports) {
-    // main {{{2
-    exports.nodemain = function() {
-        var syntax = use("syntax");
-        var filename = process.argv[3] || process.argv[1];
-        var rsts = syntax.parse(tokenise(require("fs").readFileSync(filename, "utf8")));
-        if(syntax.errors.length) {
-            console.log("errors:", syntax.errors);
-        } else  {
-            var asts = rsts.map(use("rst2ast").rst2ast);
-            asts = use("code_analysis").analyse(asts);
-            console.log(use("syntax").prettyprint(asts.map(function(ast) {
-                return ast2rst(ast);
-            })));
-        };
-    };
     // Utility / definitions {{{2
     var str2obj = function(str) {
         return use("util").list2obj(str.split(" "));

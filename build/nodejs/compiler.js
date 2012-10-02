@@ -1,9 +1,11 @@
 if(typeof require==='function'){use=require('./module').use;def=require('./module').def}else{modules=window.modules||{};def=function(name,fn){modules[name]=fn};use=function(name){if(typeof modules[name]==='function'){var exports={};modules[name](exports);modules[name]=exports;}return modules[name];};}
 // Compiler {{{1
 def("compiler", function(exports) {
+    // outer: analyse
     // outer: tokenise
     // outer: use
     exports.ls2js = function(ls) {
+        // outer: analyse
         var asts;
         // outer: tokenise
         var rsts;
@@ -12,13 +14,14 @@ def("compiler", function(exports) {
         syntax = use("syntax");
         rsts = syntax.parse(tokenise(ls));
         asts = rsts.map(use("rst2ast").rst2ast);
-        asts = use("code_analysis").analyse(asts);
+        asts = analyse(asts);
         return use("syntax").prettyprint(asts.map(function(ast) {
             // outer: use
             return use("ast2js").ast2js(ast);
         }));
     };
     exports.ls2ls = function(ls) {
+        // outer: analyse
         var asts;
         // outer: tokenise
         var rsts;
@@ -27,7 +30,7 @@ def("compiler", function(exports) {
         syntax = use("syntax");
         rsts = syntax.parse(tokenise(ls));
         asts = rsts.map(use("rst2ast").rst2ast);
-        asts = use("code_analysis").analyse(asts);
+        asts = analyse(asts);
         return use("syntax").prettyprint(asts.map(function(ast) {
             // outer: use
             return use("ast2rst").ast2rst(ast);
@@ -323,10 +326,6 @@ exports.test = function(test) {
 def("syntax", function(exports) {
     // outer: JSON
     // outer: this
-    // outer: console
-    // outer: require
-    // outer: tokenise
-    // outer: process
     // outer: true
     var symb;
     var nospace;
@@ -353,41 +352,13 @@ def("syntax", function(exports) {
     var nextToken;
     // outer: undefined
     var token;
+    // outer: Array
     // outer: Object
     // outer: Ast
     var defaultToken;
     var tokenLookup;
     // outer: use
     var extend;
-    // outer: Array
-    // main {{{2
-    exports.nodemain = function() {
-        // outer: console
-        // outer: pplistlines
-        var newCode;
-        // outer: use
-        var asts;
-        // outer: require
-        // outer: tokenise
-        // outer: exports
-        var rsts;
-        // outer: process
-        var filename;
-        filename = process.argv[3] || process.argv[1];
-        rsts = exports.parse(tokenise(require("fs").readFileSync(filename, "utf8")));
-        asts = rsts.map(use("rst2ast").rst2ast);
-        asts = use("code_analysis").analyse(asts);
-        rsts = asts.map(use("ast2rst").ast2rst);
-        newCode = pplistlines(rsts, ";");
-        if(exports.errors.length) {
-            console.log("errors:", exports.errors);
-        } else  {
-            console.log(newCode);
-            if(!process.argv[3]) {
-                require("fs").writeFileSync(filename + "", newCode);
-            };
-        };
-    };
     // toList {{{2
     exports.toList = function(ast) {
         // outer: exports
@@ -397,7 +368,6 @@ def("syntax", function(exports) {
         return result;
     };
     // setup, token lookup, default token {{{2
-    exports.errors = [];
     extend = use("util").extend;
     tokenLookup = exports.tokenLookup = function(orig) {
         // outer: Object
@@ -842,45 +812,7 @@ def("rst2ast", function(exports) {
     // outer: false
     // outer: Array
     // outer: true
-    // outer: console
-    // outer: require
-    // outer: tokenise
-    // outer: process
-    // outer: use
     var rst2ast;
-    // main {{{2
-    exports.nodemain = function() {
-        // outer: rst2ast
-        // outer: console
-        // outer: require
-        // outer: tokenise
-        var rsts;
-        // outer: process
-        var filename;
-        // outer: use
-        var syntax;
-        syntax = use("syntax");
-        filename = process.argv[3] || process.argv[1];
-        rsts = syntax.parse(tokenise(require("fs").readFileSync(filename, "utf8")));
-        if(syntax.errors.length) {
-            console.log("errors:", syntax.errors);
-        } else  {
-            rsts.forEach(function(rst) {
-                // outer: rst2ast
-                // outer: use
-                // outer: console
-                var f;
-                f = function(elem) {
-                    // outer: f
-                    // outer: console
-                    console.log(elem.kind, elem.val);
-                    elem.children.map(f);
-                };
-                //f(rst2ast(rst));
-                console.log(use("util").listpp(use("syntax").toList(rst2ast(rst))));
-            });
-        };
-    };
     // rst2ast {{{2
     rst2ast = exports.rst2ast = function(ast) {
         // outer: false
@@ -1055,7 +987,8 @@ def("rst2ast", function(exports) {
     };
 });
 // code analysis {{{1
-def("code_analysis", function(exports) {
+analyse = undefined;
+(function() {
     // outer: Number
     // outer: true
     // outer: ;
@@ -1064,11 +997,12 @@ def("code_analysis", function(exports) {
     var localVars;
     var localVar;
     var box;
+    // outer: analyse
     // outer: Array
     var fns;
     // functions in post-order traversal
     fns = [];
-    exports.analyse = function(asts) {
+    analyse = function(asts) {
         // outer: localVars
         // outer: box
         // outer: Object
@@ -1172,7 +1106,7 @@ def("code_analysis", function(exports) {
             localVars(elem, parent);
         });
     };
-});
+})();
 // ast2js {{{1
 def("ast2js", function(exports) {
     // outer: Object
@@ -1180,10 +1114,6 @@ def("ast2js", function(exports) {
     // outer: Array
     // outer: true
     // outer: false
-    // outer: console
-    // outer: require
-    // outer: tokenise
-    // outer: process
     // outer: use
     var ast2js;
     var isValidId;
@@ -1192,45 +1122,6 @@ def("ast2js", function(exports) {
     var validIdSymbs;
     var jsoperator;
     var str2obj;
-    // main {{{2
-    exports.nodemain = function() {
-        // outer: ast2js
-        var asts;
-        // outer: console
-        // outer: require
-        // outer: tokenise
-        var rsts;
-        // outer: process
-        var filename;
-        // outer: use
-        var syntax;
-        syntax = use("syntax");
-        filename = process.argv[3] || process.argv[1];
-        rsts = syntax.parse(tokenise(require("fs").readFileSync(filename, "utf8")));
-        if(syntax.errors.length) {
-            console.log("errors:", syntax.errors);
-        } else  {
-            /*
-            rsts.forEach(function(rst) {
-                var f = function(elem) {
-                    console.log(elem.kind, elem.val);
-                    elem.children.map(f);
-                };
-                //f(rst2ast(rst));
-                //console.log(use("util").listpp(use("syntax").toList(rst)));
-                var jsast = ast2js(use("rst2ast").rst2ast(rst));
-                //console.log(use("util").listpp(use("syntax").toList(jsast)));
-                console.log(use("syntax").prettyprint([jsast]));
-            });
-            */
-            asts = rsts.map(use("rst2ast").rst2ast);
-            asts = use("code_analysis").analyse(asts);
-            console.log(use("syntax").prettyprint(asts.map(function(ast) {
-                // outer: ast2js
-                return ast2js(ast);
-            })));
-        };
-    };
     // Utility / definitions {{{2
     str2obj = function(str) {
         // outer: use
@@ -1419,10 +1310,6 @@ def("ast2rst", function(exports) {
     // outer: Array
     // outer: true
     // outer: false
-    // outer: console
-    // outer: require
-    // outer: tokenise
-    // outer: process
     // outer: use
     var ast2rst;
     var isValidId;
@@ -1431,32 +1318,6 @@ def("ast2rst", function(exports) {
     var validIdSymbs;
     var jsoperator;
     var str2obj;
-    // main {{{2
-    exports.nodemain = function() {
-        // outer: ast2rst
-        var asts;
-        // outer: console
-        // outer: require
-        // outer: tokenise
-        var rsts;
-        // outer: process
-        var filename;
-        // outer: use
-        var syntax;
-        syntax = use("syntax");
-        filename = process.argv[3] || process.argv[1];
-        rsts = syntax.parse(tokenise(require("fs").readFileSync(filename, "utf8")));
-        if(syntax.errors.length) {
-            console.log("errors:", syntax.errors);
-        } else  {
-            asts = rsts.map(use("rst2ast").rst2ast);
-            asts = use("code_analysis").analyse(asts);
-            console.log(use("syntax").prettyprint(asts.map(function(ast) {
-                // outer: ast2rst
-                return ast2rst(ast);
-            })));
-        };
-    };
     // Utility / definitions {{{2
     str2obj = function(str) {
         // outer: use
