@@ -13,23 +13,25 @@ def("compiler", function(exports) {
     // outer: Array
     // outer: Object
     // outer: use
-    var analyse;
     // outer: def
+    var analyse;
+    var rst2ast;
     var prettyprint;
     var parse;
     var Ast;
     // outer: undefined
     var tokenise;
     exports.ls2js = function(ls) {
+        // outer: use
         // outer: prettyprint
         // outer: analyse
-        // outer: use
+        // outer: rst2ast
         var asts;
         // outer: tokenise
         // outer: parse
         var rsts;
         rsts = parse(tokenise(ls));
-        asts = rsts.map(use("rst2ast").rst2ast);
+        asts = rsts.map(rst2ast);
         asts = analyse(asts);
         return prettyprint(asts.map(function(ast) {
             // outer: use
@@ -37,15 +39,16 @@ def("compiler", function(exports) {
         }));
     };
     exports.ls2ls = function(ls) {
+        // outer: use
         // outer: prettyprint
         // outer: analyse
-        // outer: use
+        // outer: rst2ast
         var asts;
         // outer: tokenise
         // outer: parse
         var rsts;
         rsts = parse(tokenise(ls));
-        asts = rsts.map(use("rst2ast").rst2ast);
+        asts = rsts.map(rst2ast);
         asts = analyse(asts);
         return prettyprint(asts.map(function(ast) {
             // outer: use
@@ -830,13 +833,14 @@ def("compiler", function(exports) {
         };
     })();
     // rst2ast {{{1
-    def("rst2ast", function(exports) {
+    rst2ast = undefined;
+    (function() {
         // outer: false
         // outer: Array
         // outer: true
-        var rst2ast;
+        // outer: rst2ast
         // rst2ast {{{2
-        rst2ast = exports.rst2ast = function(ast) {
+        rst2ast = function(ast) {
             // outer: false
             var lhs;
             // outer: rst2ast
@@ -1007,7 +1011,7 @@ def("compiler", function(exports) {
             };
             return ast;
         };
-    });
+    })();
     // code analysis {{{1
     analyse = undefined;
     (function() {

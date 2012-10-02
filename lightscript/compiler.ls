@@ -2,7 +2,7 @@
 def("compiler", function(exports) {
     exports.ls2js = function(ls) {
         var rsts = parse(tokenise(ls));
-        var asts = rsts.map(use("rst2ast").rst2ast);
+        var asts = rsts.map(rst2ast);
         asts = analyse(asts);
         return prettyprint(asts.map(function(ast) {
             return use("ast2js").ast2js(ast);
@@ -10,7 +10,7 @@ def("compiler", function(exports) {
     };
     exports.ls2ls = function(ls) {
         var rsts = parse(tokenise(ls));
-        var asts = rsts.map(use("rst2ast").rst2ast);
+        var asts = rsts.map(rst2ast);
         asts = analyse(asts);
         return prettyprint(asts.map(function(ast) {
             return use("ast2rst").ast2rst(ast);
@@ -527,9 +527,10 @@ def("compiler", function(exports) {
         };
     })();
     // rst2ast {{{1
-    def("rst2ast", function(exports) {
+    var rst2ast = undefined;
+    (function() {
         // rst2ast {{{2
-        var rst2ast = exports.rst2ast = function(ast) {
+        rst2ast = function(ast) {
             // Before recursive transformation {{{3
             // Object
             if(ast.isa("id:{")) {
@@ -689,7 +690,7 @@ def("compiler", function(exports) {
             };
             return ast;
         };
-    });
+    })();
     // code analysis {{{1
     var analyse = undefined;
     (function() {
