@@ -15,6 +15,7 @@ def("compiler", function(exports) {
     // outer: use
     var analyse;
     // outer: def
+    var parse;
     var Ast;
     // outer: undefined
     var tokenise;
@@ -22,11 +23,12 @@ def("compiler", function(exports) {
         // outer: analyse
         var asts;
         // outer: tokenise
+        // outer: parse
         var rsts;
         // outer: use
         var syntax;
         syntax = use("syntax");
-        rsts = syntax.parse(tokenise(ls));
+        rsts = parse(tokenise(ls));
         asts = rsts.map(use("rst2ast").rst2ast);
         asts = analyse(asts);
         return use("syntax").prettyprint(asts.map(function(ast) {
@@ -38,11 +40,12 @@ def("compiler", function(exports) {
         // outer: analyse
         var asts;
         // outer: tokenise
+        // outer: parse
         var rsts;
         // outer: use
         var syntax;
         syntax = use("syntax");
-        rsts = syntax.parse(tokenise(ls));
+        rsts = parse(tokenise(ls));
         asts = rsts.map(use("rst2ast").rst2ast);
         asts = analyse(asts);
         return use("syntax").prettyprint(asts.map(function(ast) {
@@ -347,6 +350,7 @@ def("compiler", function(exports) {
         test.done();
     };
     // Syntax {{{1
+    parse = undefined;
     def("syntax", function(exports) {
         // outer: JSON
         // outer: this
@@ -372,7 +376,8 @@ def("compiler", function(exports) {
         var ppPrio;
         var pp;
         var indent;
-        var parse;
+        // outer: parse
+        var parseExpr;
         var nextToken;
         // outer: undefined
         var token;
@@ -385,7 +390,7 @@ def("compiler", function(exports) {
         var extend;
         // setup, token lookup, default token {{{2
         extend = use("util").extend;
-        tokenLookup = exports.tokenLookup = function(orig) {
+        tokenLookup = function(orig) {
             // outer: Object
             // outer: extend
             // outer: defaultToken
@@ -410,7 +415,7 @@ def("compiler", function(exports) {
         // parser {{{2
         token = undefined;
         nextToken = undefined;
-        parse = function(rbp) {
+        parseExpr = function(rbp) {
             var left;
             // outer: nextToken
             // outer: token
@@ -431,11 +436,11 @@ def("compiler", function(exports) {
             };
             return left;
         };
-        exports.parse = function(tokens) {
+        parse = function(tokens) {
             // outer: true
             // outer: Object
             // outer: tokenLookup
-            // outer: parse
+            // outer: parseExpr
             // outer: token
             // outer: Array
             var result;
@@ -456,7 +461,7 @@ def("compiler", function(exports) {
             nextToken();
             result = [];
             while(token.kind !== "eof") {
-                result.push(parse());
+                result.push(parseExpr());
             };
             return result;
         };
@@ -587,22 +592,22 @@ def("compiler", function(exports) {
         nudPrefix = function() {
             // outer: Array
             // outer: this
-            // outer: parse
+            // outer: parseExpr
             var child;
-            child = parse(this.bp);
-            if(parse.sep) {
+            child = parseExpr(this.bp);
+            if(parseExpr.sep) {
                 this.error("should be followed by a value, not a separator");
                 child.error("missing something before this element");
             };
             this.children = [child];
         };
         infixLed = function(left) {
-            // outer: parse
+            // outer: parseExpr
             // outer: Array
             // outer: true
             // outer: this
             this.infix = true;
-            this.children = [left, parse(this.bp - this.dbp)];
+            this.children = [left, parseExpr(this.bp - this.dbp)];
         };
         infix = function(bp) {
             // outer: nudPrefix
@@ -671,16 +676,16 @@ def("compiler", function(exports) {
             // outer: Object
             // outer: extend
             // outer: nextToken
-            // outer: parse
+            // outer: parseExpr
             // outer: token
             var readList;
             readList = function(obj) {
                 // outer: nextToken
                 // outer: rparen
-                // outer: parse
+                // outer: parseExpr
                 // outer: token
                 while(!token.rparen) {
-                    obj.children.push(parse());
+                    obj.children.push(parseExpr());
                 };
                 if(token.val !== rparen) {
                     obj.error("Paren mismatch begin");

@@ -2,7 +2,7 @@
 def("compiler", function(exports) {
     exports.ls2js = function(ls) {
         var syntax = use("syntax");
-        var rsts = syntax.parse(tokenise(ls));
+        var rsts = parse(tokenise(ls));
         var asts = rsts.map(use("rst2ast").rst2ast);
         asts = analyse(asts);
         return use("syntax").prettyprint(asts.map(function(ast) {
@@ -11,7 +11,7 @@ def("compiler", function(exports) {
     };
     exports.ls2ls = function(ls) {
         var syntax = use("syntax");
-        var rsts = syntax.parse(tokenise(ls));
+        var rsts = parse(tokenise(ls));
         var asts = rsts.map(use("rst2ast").rst2ast);
         asts = analyse(asts);
         return use("syntax").prettyprint(asts.map(function(ast) {
@@ -220,10 +220,11 @@ def("compiler", function(exports) {
         test.done();
     };
     // Syntax {{{1
+    var parse = undefined;
     def("syntax", function(exports) {
         // setup, token lookup, default token {{{2
         var extend = use("util").extend;
-        var tokenLookup = exports.tokenLookup = function(orig) {
+        var tokenLookup = function(orig) {
             var proto = symb[orig.kind + ":"] || symb[orig.val] || (orig.val && symb[orig.val[orig.val.length - 1]]) || defaultToken;
             return extend(Object.create(proto), orig);
         };
@@ -242,7 +243,7 @@ def("compiler", function(exports) {
         // parser {{{2
         var token = undefined;
         var nextToken = undefined;
-        var parse = function(rbp) {
+        var parseExpr = function(rbp) {
             rbp = rbp || 0;
             var t = token;
             nextToken();
@@ -259,7 +260,7 @@ def("compiler", function(exports) {
             };
             return left;
         };
-        exports.parse = function(tokens) {
+        parse = function(tokens) {
             var pos = 0;
             nextToken = function() {
                 token = tokenLookup(pos === tokens.length ? {kind : "eof", rparen : true} : tokens[pos]);
@@ -269,7 +270,7 @@ def("compiler", function(exports) {
             nextToken();
             var result = [];
             while(token.kind !== "eof") {
-                result.push(parse());
+                result.push(parseExpr());
             };
             return result;
         };
@@ -365,8 +366,8 @@ def("compiler", function(exports) {
         };
         // syntax constructors {{{2
         var nudPrefix = function() {
-            var child = parse(this.bp);
-            if(parse.sep) {
+            var child = parseExpr(this.bp);
+            if(parseExpr.sep) {
                 this.error("should be followed by a value, not a separator");
                 child.error("missing something before this element");
             };
@@ -374,7 +375,7 @@ def("compiler", function(exports) {
         };
         var infixLed = function(left) {
             this.infix = true;
-            this.children = [left, parse(this.bp - this.dbp)];
+            this.children = [left, parseExpr(this.bp - this.dbp)];
         };
         var infix = function(bp) {
             return extend(Object.create(defaultToken), {
@@ -410,7 +411,7 @@ def("compiler", function(exports) {
         var list = function(rparen) {
             var readList = function(obj) {
                 while(!token.rparen) {
-                    obj.children.push(parse());
+                    obj.children.push(parseExpr());
                 };
                 if(token.val !== rparen) {
                     obj.error("Paren mismatch begin");
