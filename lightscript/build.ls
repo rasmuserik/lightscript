@@ -1,6 +1,6 @@
 def("build", function(exports) {
-    var fs = require("fs");
     exports.nodemain = function(arg) {
+        var fs = require("fs");
         var sourcepath = __dirname + "/../../lightscript/";
         var buildpath = sourcepath + "../build/";
         var compiled = {};

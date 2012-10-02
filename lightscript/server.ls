@@ -1,6 +1,6 @@
 def("server", function(exports) {
-    var rootdir = __dirname + "/../../../solsort/";
     if(use("util").platform === "node") {
+        var rootdir = __dirname + "/../../../solsort/";
         exports.nodemain = function() {
             // # includes and initialisation {{{1
             var express = require("express");

@@ -1,8 +1,5 @@
 if(typeof require==='function'){use=require('./module').use;def=require('./module').def}else{modules=window.modules||{};def=function(name,fn){modules[name]=fn};use=function(name){if(typeof modules[name]==='function'){var exports={};modules[name](exports);modules[name]=exports;}return modules[name];};}
 def("test", function(exports) {
-    // outer: __dirname
-    // outer: require
-    // outer: window
     // outer: ;
     // outer: setTimeout
     // outer: clearTimeout
@@ -93,26 +90,31 @@ def("test", function(exports) {
             module[pname](test.create(use("util".platform) + ":" + moduleName));
         };
     };
-    exports.webmain = function() {
+    exports.main = function() {
+        // outer: runTest
         // outer: console
-        // outer: window
-        // outer: Object
-        Object.keys(window.modules).forEach(function(moduleName) {
+        // outer: use
+        use("module").list().forEach(function(moduleName) {
+            // outer: runTest
             // outer: console
+            console.log(moduleName);
+            runTest(moduleName);
+        });
+    };
+    /*
+    exports.webmain = function() {
+        Object.keys(window.modules).forEach(function(moduleName) {
             console.log(moduleName);
         });
     };
     exports.nodemain = function() {
-        // outer: runTest
-        // outer: __dirname
-        // outer: require
         require("fs").readdirSync(__dirname).filter(function(name) {
             return name.slice(- 3) === ".js";
         }).map(function(name) {
             return name.slice(0, - 3);
         }).forEach(function(moduleName) {
-            // outer: runTest
             runTest(moduleName);
         });
     };
+    */
 });

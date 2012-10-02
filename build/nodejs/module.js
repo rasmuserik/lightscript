@@ -1,32 +1,39 @@
 
 if(typeof exports !== "undefined") {
     modules = {};
-    compiler = {
-        "tokeniser" : true,
-        "ast" : true,
-        "syntax" : true,
-        "rst2ast" : true,
-        "code_analysis" : true,
-        "ast2js" : true,
-        "ast2rst" : true,
-    };
     exports.use = function(name) {
-        // outer: require
-        // outer: compiler
         // outer: modules
-        if(!modules[name]) {
-            if(compiler[name]) {
-                require("./compiler");
-            } else  {
-                require("./" + name);
-            };
-        };
+        // outer: require
+        require("./" + name);
         return modules[name];
     };
-    exports.def = function(name, fn) {
+    def = exports.def = function(name, fn) {
         // outer: Object
         // outer: modules
         modules[name] = {};
         fn(modules[name]);
     };
 };
+def("module", function(exports) {
+    // outer: modules
+    // outer: Object
+    // outer: __dirname
+    // outer: require
+    // outer: use
+    exports.list = function() {
+        // outer: modules
+        // outer: Object
+        // outer: __dirname
+        // outer: require
+        // outer: use
+        if(use("util").platform === "node") {
+            return require("fs").readdirSync(__dirname).filter(function(name) {
+                return name.slice(- 3) === ".js";
+            }).map(function(name) {
+                return name.slice(0, - 3);
+            });
+        } else  {
+            return Object.keys(modules);
+        };
+    };
+});

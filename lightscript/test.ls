@@ -56,6 +56,13 @@ def("test", function(exports) {
             module[pname](test.create(use("util".platform) + ":" + moduleName));
         };
     };
+    exports.main = function() {
+        use("module").list().forEach(function(moduleName) {
+            console.log(moduleName);
+            runTest(moduleName);
+        });
+    };
+    /*
     exports.webmain = function() {
         Object.keys(window.modules).forEach(function(moduleName) {
             console.log(moduleName);
@@ -70,4 +77,5 @@ def("test", function(exports) {
             runTest(moduleName);
         });
     };
+    */
 });

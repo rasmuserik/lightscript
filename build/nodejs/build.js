@@ -7,24 +7,23 @@ def("build", function(exports) {
     // outer: Object
     // outer: __dirname
     // outer: require
-    var fs;
-    fs = require("fs");
     exports.nodemain = function(arg) {
         // outer: use
         // outer: true
         // outer: console
         // outer: ;
-        // outer: require
         var createSolsortJS;
         var compileToJS;
         var optionalCompile;
-        // outer: fs
         var sourcefiles;
         // outer: Object
         var compiled;
         var buildpath;
         // outer: __dirname
         var sourcepath;
+        // outer: require
+        var fs;
+        fs = require("fs");
         sourcepath = __dirname + "/../../lightscript/";
         buildpath = sourcepath + "../build/";
         compiled = {};

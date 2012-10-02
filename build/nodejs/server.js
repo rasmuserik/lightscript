@@ -10,11 +10,11 @@ def("server", function(exports) {
     // outer: console
     // outer: process
     // outer: require
-    // outer: use
     // outer: __dirname
     var rootdir;
-    rootdir = __dirname + "/../../../solsort/";
+    // outer: use
     if(use("util").platform === "node") {
+        rootdir = __dirname + "/../../../solsort/";
         exports.nodemain = function() {
             // outer: Date
             // outer: String
