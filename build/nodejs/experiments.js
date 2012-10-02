@@ -1,6 +1,4 @@
 if(typeof require==='function'){use=require('./module').use;def=require('./module').def}else{modules=window.modules||{};def=function(name,fn){modules[name]=fn};use=function(name){if(typeof modules[name]==='function'){var exports={};modules[name](exports);modules[name]=exports;}return modules[name];};}
-def("experiments", function(exports) {
-    (function() {
-        return 1;
-    })();
-}, exports);
+(function() {
+    return 1;
+})();

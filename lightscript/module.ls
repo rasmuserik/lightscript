@@ -8,14 +8,14 @@ if(typeof exports !== "undefined") {
         fn(modules[name]);
     };
 };
-    exports.list = function() {
-        if(use("util").platform === "node") {
-            return require("fs").readdirSync(__dirname).filter(function(name) {
-                return name.slice(- 3) === ".js";
-            }).map(function(name) {
-                return name.slice(0, - 3);
-            });
-        } else  {
-            return Object.keys(modules);
-        };
+exports.list = function() {
+    if(use("util").platform === "node") {
+        return require("fs").readdirSync(__dirname).filter(function(name) {
+            return name.slice(- 3) === ".js";
+        }).map(function(name) {
+            return name.slice(0, - 3);
+        });
+    } else  {
+        return Object.keys(modules);
     };
+};
