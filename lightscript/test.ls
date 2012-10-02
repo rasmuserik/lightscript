@@ -1,4 +1,3 @@
-def("test", function(exports) {
     var modules = modules;
     var platform = use("util").platform;
     var test = {};
@@ -62,20 +61,3 @@ def("test", function(exports) {
             runTest(moduleName);
         });
     };
-    /*
-    exports.webmain = function() {
-        Object.keys(window.modules).forEach(function(moduleName) {
-            console.log(moduleName);
-        });
-    };
-    exports.nodemain = function() {
-        require("fs").readdirSync(__dirname).filter(function(name) {
-            return name.slice(- 3) === ".js";
-        }).map(function(name) {
-            return name.slice(0, - 3);
-        }).forEach(function(moduleName) {
-            runTest(moduleName);
-        });
-    };
-    */
-}, exports);

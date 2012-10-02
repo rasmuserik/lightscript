@@ -8,7 +8,6 @@ if(typeof exports !== "undefined") {
         fn(modules[name]);
     };
 };
-def("module", function(exports) {
     exports.list = function() {
         if(use("util").platform === "node") {
             return require("fs").readdirSync(__dirname).filter(function(name) {
@@ -20,4 +19,3 @@ def("module", function(exports) {
             return Object.keys(modules);
         };
     };
-}, exports);

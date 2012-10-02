@@ -11,26 +11,19 @@ if(typeof exports !== "undefined") {
         fn(modules[name]);
     };
 };
-def("module", function(exports) {
+exports.list = function() {
     // outer: modules
     // outer: Object
     // outer: __dirname
     // outer: require
     // outer: use
-    exports.list = function() {
-        // outer: modules
-        // outer: Object
-        // outer: __dirname
-        // outer: require
-        // outer: use
-        if(use("util").platform === "node") {
-            return require("fs").readdirSync(__dirname).filter(function(name) {
-                return name.slice(- 3) === ".js";
-            }).map(function(name) {
-                return name.slice(0, - 3);
-            });
-        } else  {
-            return Object.keys(modules);
-        };
+    if(use("util").platform === "node") {
+        return require("fs").readdirSync(__dirname).filter(function(name) {
+            return name.slice(- 3) === ".js";
+        }).map(function(name) {
+            return name.slice(0, - 3);
+        });
+    } else  {
+        return Object.keys(modules);
     };
-}, exports);
+};
