@@ -1,18 +1,10 @@
 
-if(typeof exports !== "undefined") {
-    modules = {};
-    exports.use = function(name) {
-        // outer: require
-        return require("./" + name);
-    };
-    def = exports.def = function(name, fn, exports) {
-        // outer: modules
-        modules[name] = exports;
-        fn(modules[name]);
-    };
+exports.use = function(name) {
+    // outer: require
+    return require("./" + name);
 };
 exports.list = function() {
-    // outer: modules
+    // outer: window
     // outer: Object
     // outer: __dirname
     // outer: require
@@ -22,7 +14,8 @@ exports.list = function() {
         }).map(function(name) {
             return name.slice(0, - 3);
         });
-    } else  {
-        return Object.keys(modules);
+    };
+    if(require("./util").platform === "web") {
+        return Object.keys(window.modules);
     };
 };

@@ -1,12 +1,5 @@
-if(typeof exports !== "undefined") {
-    modules = {};
-    exports.use = function(name) {
-        return require("./" + name);
-    };
-    def = exports.def = function(name, fn, exports) {
-        modules[name] = exports;
-        fn(modules[name]);
-    };
+exports.use = function(name) {
+    return require("./" + name);
 };
 exports.list = function() {
     if(require("./util").platform === "node") {
@@ -15,7 +8,8 @@ exports.list = function() {
         }).map(function(name) {
             return name.slice(0, - 3);
         });
-    } else  {
-        return Object.keys(modules);
+    };
+    if(require("./util").platform === "web") {
+        return Object.keys(window.modules);
     };
 };
