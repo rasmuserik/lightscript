@@ -1,4 +1,3 @@
-def("main", function(exports) {
     var util = use("util");
     util.nextTick(function() {
         var platform = util.platform;
@@ -18,7 +17,3 @@ def("main", function(exports) {
             use(platform).main.apply(undefined, args);
         };
     });
-}, exports);
-setTimeout(function() {
-    use("main");
-}, 0);

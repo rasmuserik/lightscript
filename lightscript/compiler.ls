@@ -1,5 +1,4 @@
 // Compiler {{{1
-def("compiler", function(exports) {
     exports.ls2js = function(ls) {
         var rsts = parse(tokenise(ls));
         var asts = rsts.map(rst2ast);
@@ -1084,4 +1083,3 @@ def("compiler", function(exports) {
             return ast;
         };
     })();
-}, exports);

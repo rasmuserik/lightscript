@@ -1,4 +1,3 @@
-def("server", function(exports) {
     if(use("util").platform === "node") {
         var rootdir = __dirname + "/../../../solsort/";
         exports.nodemain = function() {
@@ -157,4 +156,3 @@ body: '<h1>The end of the Internet</h1>' +
             });
         };
     };
-}, exports);

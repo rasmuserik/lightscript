@@ -1,4 +1,3 @@
-def("rest", function(exports) {
     exports.api = {};
     var apis = {store : use("storage").restapi};
     var util = use("util");
@@ -78,4 +77,3 @@ def("rest", function(exports) {
         // start the server
         server.listen(8002);
     };
-}, exports);

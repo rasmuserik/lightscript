@@ -1,4 +1,3 @@
-def("util", function(exports) {
     var util = exports;
     // Basic platform/language {{{1
     // try-catch
@@ -148,4 +147,3 @@ def("util", function(exports) {
             localStorage.getItem(key);
         }};
     };
-}, exports);

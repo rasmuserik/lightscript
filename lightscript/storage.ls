@@ -1,4 +1,3 @@
-def("storage", function(exports) {
     var util = use("util");
     // sync api
     var storeProto = {
@@ -180,4 +179,3 @@ def("storage", function(exports) {
             };
         };
     };
-}, exports);

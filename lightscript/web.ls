@@ -1,5 +1,4 @@
 // web {{{1
-def("web", function(exports) {
     exports.main = function() {
         console.log("here");
         // TODO: remove the following line
@@ -217,4 +216,3 @@ def("web", function(exports) {
         loginUI();
         exports.loadJS("http://solsort.com/store.js");
     };
-}, exports);

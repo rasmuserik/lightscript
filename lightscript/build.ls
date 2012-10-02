@@ -1,4 +1,3 @@
-def("build", function(exports) {
     exports.nodemain = function(arg) {
         var fs = require("fs");
         var sourcepath = __dirname + "/../../lightscript/";
@@ -60,4 +59,3 @@ def("build", function(exports) {
             };
         });
     };
-}, exports);
