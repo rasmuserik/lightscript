@@ -1,8 +1,4 @@
 
-exports.use = function(name) {
-    // outer: require
-    return require("./" + name);
-};
 exports.list = function() {
     // outer: window
     // outer: Object

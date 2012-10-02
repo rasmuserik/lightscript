@@ -1,5 +1,9 @@
 
 util = require("./util");
+use = function(name) {
+    // outer: require
+    return require("./" + name);
+};
 util.nextTick(function() {
     // outer: undefined
     // outer: use

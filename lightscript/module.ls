@@ -1,6 +1,3 @@
-exports.use = function(name) {
-    return require("./" + name);
-};
 exports.list = function() {
     if(require("./util").platform === "node") {
         return require("fs").readdirSync(__dirname).filter(function(name) {

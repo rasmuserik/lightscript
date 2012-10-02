@@ -64,11 +64,6 @@ exports.nodemain = function(arg) {
             // outer: fs
             // outer: require
             src = require("./compiler").ls2js(src);
-            /*
-            if(shortname !== "module.ls") {
-                src = "if(typeof require==='function'){use=require('./module').use;def=require('./module').def}else{modules=window.modules||{};def=function(name,fn){modules[name]=fn};use=function(name){if(typeof modules[name]==='function'){var exports={};modules[name](exports);modules[name]=exports;}return modules[name];};}" + src;
-            };
-            */
             fs.writeFile(js, src, function() {
                 // outer: done
                 done();
@@ -90,8 +85,26 @@ exports.nodemain = function(arg) {
     };
     createSolsortJS = function() {
         // outer: buildpath
+        // outer: fs
         // outer: require
-        require("child_process").exec("cat " + buildpath + "nodejs/* > " + buildpath + "webjs/solsort.js");
+        var result;
+        result = "modules={};";
+        result += "require = function(name){";
+        result += "  name = name.slice(2);";
+        result += "  var t = modules[name];";
+        result += "  if(typeof t === \"function\") { t(modules[name]={}); return modules[name]}";
+        result += "  return t;};";
+        result += "define = function(name,fn){modules[name]=fn};";
+        require("./module").list().forEach(function(name) {
+            // outer: buildpath
+            // outer: fs
+            // outer: result
+            result += "define(\"" + name + "\",function(exports){";
+            result += fs.readFileSync(buildpath + "nodejs/" + name + ".js");
+            result += "});";
+        });
+        result += "require(\"./main\")";
+        fs.writeFile(buildpath + "webjs/solsort.js", result);
     };
     require("async").forEach(sourcefiles, function(filename, done) {
         // outer: compileToJS
