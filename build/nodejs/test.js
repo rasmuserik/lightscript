@@ -1,5 +1,4 @@
 
-modules = modules;
 platform = require("./util").platform;
 test = {};
 test.name = "";
