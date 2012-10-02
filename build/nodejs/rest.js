@@ -1,7 +1,7 @@
 if(typeof require==='function'){use=require('./module').use;def=require('./module').def}else{modules=window.modules||{};def=function(name,fn){modules[name]=fn};use=function(name){if(typeof modules[name]==='function'){var exports={};modules[name](exports);modules[name]=exports;}return modules[name];};}
 exports.api = {};
-apis = {"store" : use("storage").restapi};
-util = use("util");
+apis = {"store" : require("./storage").restapi};
+util = require("./util");
 Object.keys(apis).forEach(function(name) {
     // outer: Object
     // outer: JSON

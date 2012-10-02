@@ -1,6 +1,5 @@
 if(typeof require==='function'){use=require('./module').use;def=require('./module').def}else{modules=window.modules||{};def=function(name,fn){modules[name]=fn};use=function(name){if(typeof modules[name]==='function'){var exports={};modules[name](exports);modules[name]=exports;}return modules[name];};}
 exports.nodemain = function(arg) {
-    // outer: use
     // outer: true
     // outer: console
     // outer: ;
@@ -50,7 +49,7 @@ exports.nodemain = function(arg) {
         });
     };
     compileToJS = function(ls, js, done) {
-        // outer: use
+        // outer: require
         // outer: fs
         // outer: true
         // outer: compiled
@@ -64,8 +63,8 @@ exports.nodemain = function(arg) {
             // outer: js
             // outer: fs
             // outer: shortname
-            // outer: use
-            src = use("compiler").ls2js(src);
+            // outer: require
+            src = require("./compiler").ls2js(src);
             if(shortname !== "module.ls") {
                 src = "if(typeof require==='function'){use=require('./module').use;def=require('./module').def}else{modules=window.modules||{};def=function(name,fn){modules[name]=fn};use=function(name){if(typeof modules[name]==='function'){var exports={};modules[name](exports);modules[name]=exports;}return modules[name];};}" + src;
             };
@@ -77,14 +76,14 @@ exports.nodemain = function(arg) {
     };
     if(arg === "pretty") {
         sourcefiles.forEach(function(filename) {
-            // outer: use
+            // outer: require
             // outer: sourcepath
             // outer: fs
             var src;
             // outer: console
             console.log("prettyprinting:", filename);
             src = fs.readFileSync(sourcepath + filename, "utf8");
-            src = use("compiler").ls2ls(src);
+            src = require("./compiler").ls2ls(src);
             fs.writeFileSync(sourcepath + filename, src);
         });
     };

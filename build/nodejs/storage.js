@@ -1,5 +1,5 @@
 if(typeof require==='function'){use=require('./module').use;def=require('./module').def}else{modules=window.modules||{};def=function(name,fn){modules[name]=fn};use=function(name){if(typeof modules[name]==='function'){var exports={};modules[name](exports);modules[name]=exports;}return modules[name];};}
-util = use("util");
+util = require("./util");
 // sync api
 storeProto = {
     "sync" : util.throttledFn(function(done) {
@@ -8,7 +8,7 @@ storeProto = {
         // outer: false
         // outer: ;
         // outer: setTimeout
-        // outer: use
+        // outer: require
         var syncLocal;
         var serverSync;
         var connectTimeout;
@@ -32,10 +32,10 @@ storeProto = {
             // outer: setTimeout
             // outer: self
             // outer: Object
-            // outer: use
+            // outer: require
             // outer: util
             util = util;
-            use("rest").api.store({
+            require("./rest").api.store({
                 "owner" : self.owner,
                 "store" : self.storename,
                 "timestamp" : self.lastSync,
@@ -78,7 +78,7 @@ storeProto = {
             // outer: syncLocal
             // outer: serverSync
             // outer: console
-            // outer: use
+            // outer: require
             // outer: true
             // outer: false
             var needSync;
@@ -92,7 +92,7 @@ storeProto = {
             util.aForEach(changedKeys, function(key, done) {
                 // outer: console
                 // outer: Object
-                // outer: use
+                // outer: require
                 var timestamp;
                 // outer: true
                 // outer: needSync
@@ -119,7 +119,7 @@ storeProto = {
                     timestamp = timestamp || (newServer[key] && newServer[key].timestamp);
                     timestamp = timestamp || (self.server[key] && self.server[key].timestamp);
                     timestamp = timestamp || 0;
-                    use("rest").api.store({
+                    require("./rest").api.store({
                         "owner" : self.owner,
                         "store" : self.storename,
                         "timestamp" : timestamp,

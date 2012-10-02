@@ -231,7 +231,6 @@ Ast = undefined;
 (function() {
     // outer: ast
     // outer: require
-    // outer: use
     // outer: this
     // outer: arguments
     // outer: Array
@@ -241,7 +240,7 @@ Ast = undefined;
     defaultAst = {
         "create" : function(arg) {
             var splitpos;
-            // outer: use
+            // outer: require
             // outer: this
             // outer: defaultAst
             // outer: Object
@@ -253,7 +252,7 @@ Ast = undefined;
             self = Object.create(defaultAst);
             self.pos = this.pos;
             if(typeof arg === "object") {
-                self = use("util").extend(self, arg);
+                self = require("./util").extend(self, arg);
             } else if(typeof arg === "string") {
                 splitpos = arg.indexOf(":");
                 if(splitpos === - 1) {
@@ -369,10 +368,10 @@ prettyprint = undefined;
     // outer: Ast
     var defaultToken;
     var tokenLookup;
-    // outer: use
+    // outer: require
     var extend;
     // setup, token lookup, default token {{{2
-    extend = use("util").extend;
+    extend = require("./util").extend;
     tokenLookup = function(orig) {
         // outer: Object
         // outer: extend
@@ -1120,7 +1119,7 @@ ast2js = undefined;
     // outer: Array
     // outer: true
     // outer: false
-    // outer: use
+    // outer: require
     // outer: ast2js
     var isValidId;
     var reserved;
@@ -1130,8 +1129,8 @@ ast2js = undefined;
     var str2obj;
     // Utility / definitions {{{2
     str2obj = function(str) {
-        // outer: use
-        return use("util").list2obj(str.split(" "));
+        // outer: require
+        return require("./util").list2obj(str.split(" "));
     };
     jsoperator = str2obj("= === !== < <= > >= += -= *= /= ! | & ^ << >> ~ - + ++ -- * / ! % *() *[] typeof throw return");
     validIdSymbs = "QWERTYUIOPASDFGHJKLZXCVBNMqwertyuiopasdfghjklzxcvbnm1234567890_$";
@@ -1317,7 +1316,7 @@ ast2rst = undefined;
     // outer: Array
     // outer: true
     // outer: false
-    // outer: use
+    // outer: require
     // outer: ast2rst
     var isValidId;
     var reserved;
@@ -1327,8 +1326,8 @@ ast2rst = undefined;
     var str2obj;
     // Utility / definitions {{{2
     str2obj = function(str) {
-        // outer: use
-        return use("util").list2obj(str.split(" "));
+        // outer: require
+        return require("./util").list2obj(str.split(" "));
     };
     jsoperator = str2obj("= === !== < <= > >= += -= *= /= ! | & ^ << >> ~ - + ++ -- * / ! % *() *[] typeof throw return");
     validIdSymbs = "QWERTYUIOPASDFGHJKLZXCVBNMqwertyuiopasdfghjklzxcvbnm1234567890_$";

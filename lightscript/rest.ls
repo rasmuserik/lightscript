@@ -1,6 +1,6 @@
 exports.api = {};
-apis = {store : use("storage").restapi};
-util = use("util");
+apis = {store : require("./storage").restapi};
+util = require("./util");
 Object.keys(apis).forEach(function(name) {
     // create api functions
     if(util.platform === "web") {

@@ -1,6 +1,6 @@
 if(typeof require==='function'){use=require('./module').use;def=require('./module').def}else{modules=window.modules||{};def=function(name,fn){modules[name]=fn};use=function(name){if(typeof modules[name]==='function'){var exports={};modules[name](exports);modules[name]=exports;}return modules[name];};}
 modules = modules;
-platform = use("util").platform;
+platform = require("./util").platform;
 test = {};
 test.name = "";
 test.error = function(description) {
@@ -56,6 +56,7 @@ test.create = function(name, timeout) {
     return self;
 };
 runTest = function(moduleName) {
+    // outer: require
     var pname;
     // outer: platform
     // outer: test
@@ -72,16 +73,16 @@ runTest = function(moduleName) {
     if(module[platform + test]) {
         module.test(test.create(moduleName + "-" + platform));
     };
-    pname = "test" + use("util").platform;
+    pname = "test" + require("./util").platform;
     if(module[pname]) {
-        module[pname](test.create(use("util".platform) + ":" + moduleName));
+        module[pname](test.create(require("./util".platform) + ":" + moduleName));
     };
 };
 exports.main = function() {
     // outer: runTest
     // outer: console
-    // outer: use
-    use("module").list().forEach(function(moduleName) {
+    // outer: require
+    require("./module").list().forEach(function(moduleName) {
         // outer: runTest
         // outer: console
         console.log(moduleName);

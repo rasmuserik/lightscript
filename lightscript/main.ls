@@ -1,4 +1,4 @@
-util = use("util");
+util = require("./util");
 util.nextTick(function() {
     var platform = util.platform;
     var args = [];

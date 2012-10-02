@@ -155,7 +155,7 @@ Ast = undefined;
             var self = Object.create(defaultAst);
             self.pos = this.pos;
             if(typeof arg === "object") {
-                self = use("util").extend(self, arg);
+                self = require("./util").extend(self, arg);
             } else if(typeof arg === "string") {
                 var splitpos = arg.indexOf(":");
                 if(splitpos === - 1) {
@@ -221,7 +221,7 @@ parse = undefined;
 prettyprint = undefined;
 (function() {
     // setup, token lookup, default token {{{2
-    var extend = use("util").extend;
+    var extend = require("./util").extend;
     var tokenLookup = function(orig) {
         var proto = symb[orig.kind + ":"] || symb[orig.val] || (orig.val && symb[orig.val[orig.val.length - 1]]) || defaultToken;
         return extend(Object.create(proto), orig);
@@ -766,7 +766,7 @@ ast2js = undefined;
 (function() {
     // Utility / definitions {{{2
     var str2obj = function(str) {
-        return use("util").list2obj(str.split(" "));
+        return require("./util").list2obj(str.split(" "));
     };
     var jsoperator = str2obj("= === !== < <= > >= += -= *= /= ! | & ^ << >> ~ - + ++ -- * / ! % *() *[] typeof throw return");
     var validIdSymbs = "QWERTYUIOPASDFGHJKLZXCVBNMqwertyuiopasdfghjklzxcvbnm1234567890_$";
@@ -928,7 +928,7 @@ ast2rst = undefined;
 (function() {
     // Utility / definitions {{{2
     var str2obj = function(str) {
-        return use("util").list2obj(str.split(" "));
+        return require("./util").list2obj(str.split(" "));
     };
     var jsoperator = str2obj("= === !== < <= > >= += -= *= /= ! | & ^ << >> ~ - + ++ -- * / ! % *() *[] typeof throw return");
     var validIdSymbs = "QWERTYUIOPASDFGHJKLZXCVBNMqwertyuiopasdfghjklzxcvbnm1234567890_$";

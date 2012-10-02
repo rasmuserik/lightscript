@@ -1,4 +1,4 @@
-util = use("util");
+util = require("./util");
 // sync api
 storeProto = {
     sync : util.throttledFn(function(done) {
@@ -12,7 +12,7 @@ storeProto = {
         var connectTimeout = 10000;
         var serverSync = function(callback) {
             util = util;
-            use("rest").api.store({
+            require("./rest").api.store({
                 owner : self.owner,
                 store : self.storename,
                 timestamp : self.lastSync,
@@ -59,7 +59,7 @@ storeProto = {
                     var timestamp = timestamp || (newServer[key] && newServer[key].timestamp);
                     timestamp = timestamp || (self.server[key] && self.server[key].timestamp);
                     timestamp = timestamp || 0;
-                    use("rest").api.store({
+                    require("./rest").api.store({
                         owner : self.owner,
                         store : self.storename,
                         timestamp : timestamp,

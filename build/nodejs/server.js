@@ -1,5 +1,5 @@
 if(typeof require==='function'){use=require('./module').use;def=require('./module').def}else{modules=window.modules||{};def=function(name,fn){modules[name]=fn};use=function(name){if(typeof modules[name]==='function'){var exports={};modules[name](exports);modules[name]=exports;}return modules[name];};}
-if(use("util").platform === "node") {
+if(require("./util").platform === "node") {
     rootdir = __dirname + "/../../../solsort/";
     exports.nodemain = function() {
         // outer: Date
@@ -15,7 +15,6 @@ if(use("util").platform === "node") {
         var configureApp;
         var notes;
         var file2entries;
-        // outer: use
         var name2url;
         // outer: rootdir
         var htmlTemplate;
@@ -39,7 +38,7 @@ if(use("util").platform === "node") {
         db.run("CREATE TABLE IF NOT EXISTS userdata (store, key, val, timestamp, PRIMARY KEY (store, key))");
         // # Pages from markdown {{{1
         htmlTemplate = fs.readFileSync(rootdir + "/sites/solsort/template/html.mustache", "utf8");
-        name2url = use("util").name2url;
+        name2url = require("./util").name2url;
         file2entries = function(filename) {
             // outer: require
             // outer: name2url

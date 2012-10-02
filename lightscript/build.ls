@@ -25,7 +25,7 @@ exports.nodemain = function(arg) {
         console.log("compiling:", shortname);
         compiled[shortname] = true;
         fs.readFile(ls, "utf8", function(err, src) {
-            src = use("compiler").ls2js(src);
+            src = require("./compiler").ls2js(src);
             if(shortname !== "module.ls") {
                 src = "if(typeof require==='function'){use=require('./module').use;def=require('./module').def}else{modules=window.modules||{};def=function(name,fn){modules[name]=fn};use=function(name){if(typeof modules[name]==='function'){var exports={};modules[name](exports);modules[name]=exports;}return modules[name];};}" + src;
             };
@@ -38,7 +38,7 @@ exports.nodemain = function(arg) {
         sourcefiles.forEach(function(filename) {
             console.log("prettyprinting:", filename);
             var src = fs.readFileSync(sourcepath + filename, "utf8");
-            src = use("compiler").ls2ls(src);
+            src = require("./compiler").ls2ls(src);
             fs.writeFileSync(sourcepath + filename, src);
         });
     };

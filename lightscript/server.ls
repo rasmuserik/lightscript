@@ -1,4 +1,4 @@
-if(use("util").platform === "node") {
+if(require("./util").platform === "node") {
     rootdir = __dirname + "/../../../solsort/";
     exports.nodemain = function() {
         // # includes and initialisation {{{1
@@ -12,7 +12,7 @@ if(use("util").platform === "node") {
         db.run("CREATE TABLE IF NOT EXISTS userdata (store, key, val, timestamp, PRIMARY KEY (store, key))");
         // # Pages from markdown {{{1
         var htmlTemplate = fs.readFileSync(rootdir + "/sites/solsort/template/html.mustache", "utf8");
-        var name2url = use("util").name2url;
+        var name2url = require("./util").name2url;
         var file2entries = function(filename) {
             var result = {};
             fs.readFileSync(filename, "utf8").split("\n# ").slice(1).forEach(function(elem) {
