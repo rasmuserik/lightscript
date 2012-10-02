@@ -7,13 +7,14 @@ def("compiler", function(exports) {
     // outer: JSON
     var ast;
     // outer: require
+    // outer: use
     // outer: this
     // outer: arguments
     // outer: true
     // outer: Array
     // outer: Object
-    // outer: use
-    // outer: def
+    var ast2rst;
+    var ast2js;
     var analyse;
     var rst2ast;
     var prettyprint;
@@ -22,7 +23,7 @@ def("compiler", function(exports) {
     // outer: undefined
     var tokenise;
     exports.ls2js = function(ls) {
-        // outer: use
+        // outer: ast2js
         // outer: prettyprint
         // outer: analyse
         // outer: rst2ast
@@ -34,12 +35,12 @@ def("compiler", function(exports) {
         asts = rsts.map(rst2ast);
         asts = analyse(asts);
         return prettyprint(asts.map(function(ast) {
-            // outer: use
-            return use("ast2js").ast2js(ast);
+            // outer: ast2js
+            return ast2js(ast);
         }));
     };
     exports.ls2ls = function(ls) {
-        // outer: use
+        // outer: ast2rst
         // outer: prettyprint
         // outer: analyse
         // outer: rst2ast
@@ -51,8 +52,8 @@ def("compiler", function(exports) {
         asts = rsts.map(rst2ast);
         asts = analyse(asts);
         return prettyprint(asts.map(function(ast) {
-            // outer: use
-            return use("ast2rst").ast2rst(ast);
+            // outer: ast2rst
+            return ast2rst(ast);
         })).slice(1);
     };
     // Tokeniser {{{1
@@ -1134,14 +1135,15 @@ def("compiler", function(exports) {
         };
     })();
     // ast2js {{{1
-    def("ast2js", function(exports) {
+    ast2js = undefined;
+    (function() {
         // outer: Object
         // outer: undefined
         // outer: Array
         // outer: true
         // outer: false
         // outer: use
-        var ast2js;
+        // outer: ast2js
         var isValidId;
         var reserved;
         var num;
@@ -1180,7 +1182,7 @@ def("compiler", function(exports) {
             return true;
         };
         /// ast2js {{{2
-        ast2js = exports.ast2js = function(ast) {
+        ast2js = function(ast) {
             var extractBlocks;
             // outer: Object
             var len;
@@ -1329,15 +1331,16 @@ def("compiler", function(exports) {
             };
             return ast;
         };
-    });
+    })();
     // ast2rst {{{1
-    def("ast2rst", function(exports) {
+    ast2rst = undefined;
+    (function() {
         // outer: undefined
         // outer: Array
         // outer: true
         // outer: false
         // outer: use
-        var ast2rst;
+        // outer: ast2rst
         var isValidId;
         var reserved;
         var num;
@@ -1376,7 +1379,7 @@ def("compiler", function(exports) {
             return true;
         };
         /// ast2rst {{{2
-        ast2rst = exports.ast2rst = function(ast) {
+        ast2rst = function(ast) {
             var extractBlocks;
             var len;
             // outer: undefined
@@ -1521,5 +1524,5 @@ def("compiler", function(exports) {
             };
             return ast;
         };
-    });
+    })();
 });

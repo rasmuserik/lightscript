@@ -5,7 +5,7 @@ def("compiler", function(exports) {
         var asts = rsts.map(rst2ast);
         asts = analyse(asts);
         return prettyprint(asts.map(function(ast) {
-            return use("ast2js").ast2js(ast);
+            return ast2js(ast);
         }));
     };
     exports.ls2ls = function(ls) {
@@ -13,7 +13,7 @@ def("compiler", function(exports) {
         var asts = rsts.map(rst2ast);
         asts = analyse(asts);
         return prettyprint(asts.map(function(ast) {
-            return use("ast2rst").ast2rst(ast);
+            return ast2rst(ast);
         })).slice(1);
     };
     // Tokeniser {{{1
@@ -763,7 +763,8 @@ def("compiler", function(exports) {
         };
     })();
     // ast2js {{{1
-    def("ast2js", function(exports) {
+    var ast2js = undefined;
+    (function() {
         // Utility / definitions {{{2
         var str2obj = function(str) {
             return use("util").list2obj(str.split(" "));
@@ -789,7 +790,7 @@ def("compiler", function(exports) {
             return true;
         };
         /// ast2js {{{2
-        var ast2js = exports.ast2js = function(ast) {
+        ast2js = function(ast) {
             ast.children = ast.children.map(ast2js);
             var lhs = ast.children[0];
             var rhs = ast.children[1];
@@ -922,9 +923,10 @@ def("compiler", function(exports) {
             };
             return ast;
         };
-    });
+    })();
     // ast2rst {{{1
-    def("ast2rst", function(exports) {
+    var ast2rst = undefined;
+    (function() {
         // Utility / definitions {{{2
         var str2obj = function(str) {
             return use("util").list2obj(str.split(" "));
@@ -950,7 +952,7 @@ def("compiler", function(exports) {
             return true;
         };
         /// ast2rst {{{2
-        var ast2rst = exports.ast2rst = function(ast) {
+        ast2rst = function(ast) {
             ast.children = ast.children.map(ast2rst);
             var lhs = ast.children[0];
             var rhs = ast.children[1];
@@ -1081,5 +1083,5 @@ def("compiler", function(exports) {
             };
             return ast;
         };
-    });
+    })();
 });
