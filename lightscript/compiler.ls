@@ -547,7 +547,7 @@ MacroSystem = undefined;
             var fn = valTable[node.val] || valTable[""];
         };
         if(fn) {
-            return fn(node);
+            return fn(node) || node;
         };
         return node;
     };
@@ -997,22 +997,21 @@ ast2rst = undefined;
         };
         return true;
     };
-    /// ast2rst {{{2
-    ast2rst = function(ast) {
-        ast.children = ast.children.map(ast2rst);
+    // Macros {{{2
+    macros = MacroSystem();
+    macros.postMacro("call:.", function(ast) {
+        if(ast.children[1].kind === "str") {
+            // foo.'bar' -> foo.bar
+            ast.children[1].kind = "id";
+        };
+    });
+    macros.postMacro("call:new", function(ast) {
         var lhs = ast.children[0];
-        var rhs = ast.children[1];
-        if(ast.kind === "call") {
-            if(ast.val === ".") {
-                // foo.'bar' -> foo.bar
-                if(rhs.kind === "str") {
-                    rhs.kind = "id";
-                };
-            } else if(ast.val === "new" && lhs.isa("id:Array")) {
+        if(lhs.isa("id:Array")) {
                 ast.children = ast.children.slice(1);
                 ast.val = "[";
-            } else if(ast.val === "new" && lhs.isa("id:Object")) {
-                var children = [];
+        } else if(lhs.isa("id:Object")) {
+            var children = [];
                 while(ast.children.length > 1) {
                     rhs = ast.children.pop();
                     lhs = ast.children.pop();
@@ -1020,25 +1019,31 @@ ast2rst = undefined;
                         lhs.kind = "id";
                     };
                     children.push(ast.create("id", ":", lhs, rhs));
-                };
+            };
                 ast.children = children.reverse();
                 ast.val = "{";
-            } else if(ast.val === "new") {
-                // do nothing
-            } else if(ast.val === "[]=") {
-                lhs = ast.create("id:*[]", ast.children[0], ast.children[1]);
-                ast.children.shift();
-                ast.children[0] = lhs;
-                ast.val = "=";
-            } else if(ast.val === ".=") {
+       } else {
+           // do nothing
+       }
+    });
+    macros.postMacro("call:[]=", function(ast) {
+        var lhs = ast.create("id:*[]", ast.children[0], ast.children[1]);
+        ast.children.shift();
+        ast.children[0] = lhs;
+        ast.val = "=";
+    });
+    macros.postMacro("call:.=", function(ast) {
                 lhs = ast.create("id:.", ast.children[0], ast.children[1]);
                 ast.children[1].kind = "id";
                 ast.children.shift();
                 ast.children[0] = lhs;
                 ast.val = "=";
-            } else if(jsoperator["hasOwnProperty"](ast.val)) {
-                //operators - do nothing
-            } else  {
+    });
+    jsoperator.forEach(function(operatorName) {
+        //operators - do nothing
+        macros.postMacro("call:" + operatorName, function() {});
+    });
+    macros.postMacro("call", function(ast) {
                 // foo.bar(), foo['x'](bar)
                 if(isValidId(ast.val)) {
                     lhs = ast.create("id:.", ast.create("id", ast.val));
@@ -1048,19 +1053,16 @@ ast2rst = undefined;
                 lhs.children.unshift(ast.children[0]);
                 ast.children[0] = lhs;
                 ast.val = "*()";
-            };
+    });
+    var unblock = function(node) {
+        if(node.kind === "block") {
+            return node.children;
+        } else  {
+        return [node];
         };
-        if(ast.kind === "branch") {
-            var unblock = function(node) {
-                if(node.kind === "block") {
-                    return node.children;
-                } else  {
-                    return [node];
-                };
-            };
-            if(ast.val === "cond") {
+    };
+    macros.postMacro("branch:cond", function(ast) {
                 children = ast.children;
-                rhs = undefined;
                 if(children.length & 1) {
                     rhs = ast.create("id:*{}");
                     rhs.children = unblock(children.pop());
@@ -1076,23 +1078,20 @@ ast2rst = undefined;
                         rhs = lhs;
                     };
                 };
-                ast = rhs;
-            } else if(ast.val === "while") {
+                return rhs;
+    });
+    macros.postMacro("branch:while", function(ast) {
                 ast.val = "*{}";
                 ast.children[0] = ast.create("id:*()", ast.create("id:while"), ast.children[0]);
                 ast.children = ast.children.concat(unblock(ast.children.pop()));
-            } else if(ast.val === "?:") {
+    });
+    macros.postMacro("branch:?:", function(ast) {
                 rhs = ast.create("id", ":", ast.children[1], ast.children[2]);
                 ast.children.pop();
                 ast.children[1] = rhs;
                 ast.val = "?";
-            } else if(ast.val === "return") {
-                // do nothing
-            } else if(ast.val === "throw") {
-                // do nothing
-            };
-        };
-        if(ast.kind === "fn") {
+    });
+    macros.postMacro("fn", function(ast) {
             var len = + ast.val;
             lhs = ast.create("id:*()", ast.create("id:function"));
             lhs.children = lhs.children.concat(ast.children.slice(0, len));
@@ -1100,8 +1099,8 @@ ast2rst = undefined;
             ast.children.unshift(lhs);
             ast.kind = "id";
             ast.val = "*{}";
-        };
-        if(ast.kind === "assign") {
+    });
+    macros.postMacro("fn", function(ast) {
             // =
             lhs = ast.create("id", ast.val);
             if(ast.doTypeAnnotate) {
@@ -1110,8 +1109,8 @@ ast2rst = undefined;
             };
             ast.children.unshift(lhs);
             ast.val = "=";
-        };
-        if(ast.kind === "block") {
+    });
+    macros.postMacro("fn", function(ast) {
             if(ast.children.length === 1) {
                 return ast.children[0];
             } else  {
@@ -1126,7 +1125,9 @@ ast2rst = undefined;
                 extractBlocks(ast);
                 ast.children = children;
             };
-        };
-        return ast;
+    });
+    /// ast2rst {{{2
+    ast2rst = function(ast) {
+        return macros.execute(ast);
     };
 })();
