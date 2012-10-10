@@ -846,7 +846,7 @@ MacroSystem = undefined;
             fn = valTable[node.val] || valTable[""];
         };
         if(fn) {
-            return fn(node);
+            node = fn(node) || node;
         };
         return node;
     };
@@ -862,14 +862,16 @@ MacroSystem = undefined;
             addMacro(this.postMacros, pattern, fn);
         },
         "execute" : function(tree) {
-            // outer: this
             // outer: executeMacros
+            // outer: this
+            var self;
+            self = this;
             tree = executeMacros(this.preMacros, tree);
             tree.children = tree.children.map(function(elem) {
-                // outer: this
-                return this.execute(elem);
+                // outer: self
+                return self.execute(elem);
             });
-            tree = executeMacros(this.postMacros, tree);
+            return executeMacros(this.postMacros, tree);
         },
     };
     MacroSystem = function() {
@@ -879,6 +881,7 @@ MacroSystem = undefined;
         self = Object.create(MacroPrototype);
         self.preMacros = {};
         self.postMacros = {};
+        return self;
     };
 })();
 // rst2ast {{{1
@@ -1383,12 +1386,14 @@ ast2js = undefined;
 // ast2rst {{{1
 ast2rst = undefined;
 (function() {
-    // outer: undefined
     // outer: Array
     // outer: true
     // outer: false
     // outer: require
     // outer: ast2rst
+    var unblock;
+    // outer: MacroSystem
+    var macros;
     var isValidId;
     var reserved;
     var num;
@@ -1400,7 +1405,7 @@ ast2rst = undefined;
         // outer: require
         return require("./util").list2obj(str.split(" "));
     };
-    jsoperator = str2obj("= === !== < <= > >= += -= *= /= ! | & ^ << >> ~ - + ++ -- * / ! % *() *[] typeof throw return");
+    jsoperator = "= === !== < <= > >= += -= *= /= ! | & ^ << >> ~ - + ++ -- * / ! % *() *[] typeof throw return".split(" ");
     validIdSymbs = "QWERTYUIOPASDFGHJKLZXCVBNMqwertyuiopasdfghjklzxcvbnm1234567890_$";
     num = "1234567890";
     reserved = str2obj("break case catch continue debugger default delete do else finally for function if in instanceof new return switch this throw try typeof var void while with class enum export extends import super implements interface let package private protected public static yield");
@@ -1426,150 +1431,163 @@ ast2rst = undefined;
         };
         return true;
     };
-    /// ast2rst {{{2
-    ast2rst = function(ast) {
-        var extractBlocks;
-        var len;
-        // outer: undefined
-        var unblock;
-        // outer: jsoperator
+    // Macros {{{2
+    macros = MacroSystem();
+    macros.postMacro("call:.", function(ast) {
+        if(ast.children[1].kind === "str") {
+            // foo.'bar' -> foo.bar
+            ast.children[1].kind = "id";
+        };
+    });
+    macros.postMacro("call:new", function(ast) {
         // outer: isValidId
+        var rhs;
         // outer: Array
         var children;
-        var rhs;
         var lhs;
-        // outer: ast2rst
-        ast.children = ast.children.map(ast2rst);
         lhs = ast.children[0];
-        rhs = ast.children[1];
-        if(ast.kind === "call") {
-            if(ast.val === ".") {
-                // foo.'bar' -> foo.bar
-                if(rhs.kind === "str") {
-                    rhs.kind = "id";
+        if(lhs.isa("id:Array")) {
+            ast.children = ast.children.slice(1);
+            ast.val = "[";
+        } else if(lhs.isa("id:Object")) {
+            children = [];
+            while(ast.children.length > 1) {
+                rhs = ast.children.pop();
+                lhs = ast.children.pop();
+                if(lhs.kind === "str" && isValidId(lhs.val)) {
+                    lhs.kind = "id";
                 };
-            } else if(ast.val === "new" && lhs.isa("id:Array")) {
-                ast.children = ast.children.slice(1);
-                ast.val = "[";
-            } else if(ast.val === "new" && lhs.isa("id:Object")) {
-                children = [];
-                while(ast.children.length > 1) {
-                    rhs = ast.children.pop();
-                    lhs = ast.children.pop();
-                    if(lhs.kind === "str" && isValidId(lhs.val)) {
-                        lhs.kind = "id";
-                    };
-                    children.push(ast.create("id", ":", lhs, rhs));
-                };
-                ast.children = children.reverse();
-                ast.val = "{";
-            } else if(ast.val === "new") {
-                // do nothing
-            } else if(ast.val === "[]=") {
-                lhs = ast.create("id:*[]", ast.children[0], ast.children[1]);
-                ast.children.shift();
-                ast.children[0] = lhs;
-                ast.val = "=";
-            } else if(ast.val === ".=") {
-                lhs = ast.create("id:.", ast.children[0], ast.children[1]);
-                ast.children[1].kind = "id";
-                ast.children.shift();
-                ast.children[0] = lhs;
-                ast.val = "=";
-            } else if(jsoperator["hasOwnProperty"](ast.val)) {
-                //operators - do nothing
+                children.push(ast.create("id", ":", lhs, rhs));
+            };
+            ast.children = children.reverse();
+            ast.val = "{";
+        } else  {
+            // do nothing
+        };
+    });
+    macros.postMacro("call:[]=", function(ast) {
+        var lhs;
+        lhs = ast.create("id:*[]", ast.children[0], ast.children[1]);
+        ast.children.shift();
+        ast.children[0] = lhs;
+        ast.val = "=";
+    });
+    macros.postMacro("call:.=", function(ast) {
+        var lhs;
+        lhs = ast.create("id:.", ast.children[0], ast.children[1]);
+        ast.children[1].kind = "id";
+        ast.children.shift();
+        ast.children[0] = lhs;
+        ast.val = "=";
+    });
+    jsoperator.forEach(function(operatorName) {
+        // outer: macros
+        //operators - do nothing
+        macros.postMacro("call:" + operatorName, function() {});
+    });
+    macros.postMacro("call", function(ast) {
+        var lhs;
+        // outer: isValidId
+        // foo.bar(), foo['x'](bar)
+        if(isValidId(ast.val)) {
+            lhs = ast.create("id:.", ast.create("id", ast.val));
+        } else  {
+            lhs = ast.create("id:*[]", ast.create("str", ast.val));
+        };
+        lhs.children.unshift(ast.children[0]);
+        ast.children[0] = lhs;
+        ast.val = "*()";
+    });
+    unblock = function(node) {
+        // outer: Array
+        if(node.kind === "block") {
+            return node.children;
+        } else  {
+            return [node];
+        };
+    };
+    macros.postMacro("branch:cond", function(ast) {
+        var lhs;
+        // outer: unblock
+        var rhs;
+        var children;
+        children = ast.children;
+        if(children.length & 1) {
+            rhs = ast.create("id:*{}");
+            rhs.children = unblock(children.pop());
+            rhs.children.unshift(ast.create("id:"));
+        };
+        while(children.length) {
+            lhs = ast.create("id:*{}");
+            lhs.children = unblock(children.pop());
+            lhs.children.unshift(ast.create("id:*()", ast.create("id:if"), children.pop()));
+            if(rhs) {
+                rhs = ast.create("id:else", lhs, rhs);
             } else  {
-                // foo.bar(), foo['x'](bar)
-                if(isValidId(ast.val)) {
-                    lhs = ast.create("id:.", ast.create("id", ast.val));
+                rhs = lhs;
+            };
+        };
+        return rhs;
+    });
+    macros.postMacro("branch:while", function(ast) {
+        // outer: unblock
+        ast.val = "*{}";
+        ast.children[0] = ast.create("id:*()", ast.create("id:while"), ast.children[0]);
+        ast.children = ast.children.concat(unblock(ast.children.pop()));
+    });
+    macros.postMacro("branch:?:", function(ast) {
+        var rhs;
+        rhs = ast.create("id", ":", ast.children[1], ast.children[2]);
+        ast.children.pop();
+        ast.children[1] = rhs;
+        ast.val = "?";
+    });
+    macros.postMacro("fn", function(ast) {
+        var lhs;
+        var len;
+        len = + ast.val;
+        lhs = ast.create("id:*()", ast.create("id:function"));
+        lhs.children = lhs.children.concat(ast.children.slice(0, len));
+        ast.children = ast.children.slice(len);
+        ast.children.unshift(lhs);
+        ast.kind = "id";
+        ast.val = "*{}";
+    });
+    macros.postMacro("assign", function(ast) {
+        var lhs;
+        // =
+        lhs = ast.create("id", ast.val);
+        if(ast.doTypeAnnotate) {
+            //lhs = ast.create('call', ':', lhs, ast.type || ast.create('id:Any'));
+            lhs = ast.create("call", "var", lhs);
+        };
+        ast.children.unshift(lhs);
+        ast.val = "=";
+    });
+    macros.postMacro("block", function(ast) {
+        var extractBlocks;
+        // outer: Array
+        var children;
+        if(ast.children.length === 1) {
+            return ast.children[0];
+        } else  {
+            children = [];
+            extractBlocks = function(elem) {
+                // outer: children
+                // outer: extractBlocks
+                if(elem.kind === "block") {
+                    elem.children.map(extractBlocks);
                 } else  {
-                    lhs = ast.create("id:*[]", ast.create("str", ast.val));
-                };
-                lhs.children.unshift(ast.children[0]);
-                ast.children[0] = lhs;
-                ast.val = "*()";
-            };
-        };
-        if(ast.kind === "branch") {
-            unblock = function(node) {
-                // outer: Array
-                if(node.kind === "block") {
-                    return node.children;
-                } else  {
-                    return [node];
+                    children.push(elem);
                 };
             };
-            if(ast.val === "cond") {
-                children = ast.children;
-                rhs = undefined;
-                if(children.length & 1) {
-                    rhs = ast.create("id:*{}");
-                    rhs.children = unblock(children.pop());
-                    rhs.children.unshift(ast.create("id:"));
-                };
-                while(children.length) {
-                    lhs = ast.create("id:*{}");
-                    lhs.children = unblock(children.pop());
-                    lhs.children.unshift(ast.create("id:*()", ast.create("id:if"), children.pop()));
-                    if(rhs) {
-                        rhs = ast.create("id:else", lhs, rhs);
-                    } else  {
-                        rhs = lhs;
-                    };
-                };
-                ast = rhs;
-            } else if(ast.val === "while") {
-                ast.val = "*{}";
-                ast.children[0] = ast.create("id:*()", ast.create("id:while"), ast.children[0]);
-                ast.children = ast.children.concat(unblock(ast.children.pop()));
-            } else if(ast.val === "?:") {
-                rhs = ast.create("id", ":", ast.children[1], ast.children[2]);
-                ast.children.pop();
-                ast.children[1] = rhs;
-                ast.val = "?";
-            } else if(ast.val === "return") {
-                // do nothing
-            } else if(ast.val === "throw") {
-                // do nothing
-            };
+            extractBlocks(ast);
+            ast.children = children;
         };
-        if(ast.kind === "fn") {
-            len = + ast.val;
-            lhs = ast.create("id:*()", ast.create("id:function"));
-            lhs.children = lhs.children.concat(ast.children.slice(0, len));
-            ast.children = ast.children.slice(len);
-            ast.children.unshift(lhs);
-            ast.kind = "id";
-            ast.val = "*{}";
-        };
-        if(ast.kind === "assign") {
-            // =
-            lhs = ast.create("id", ast.val);
-            if(ast.doTypeAnnotate) {
-                //lhs = ast.create('call', ':', lhs, ast.type || ast.create('id:Any'));
-                lhs = ast.create("call", "var", lhs);
-            };
-            ast.children.unshift(lhs);
-            ast.val = "=";
-        };
-        if(ast.kind === "block") {
-            if(ast.children.length === 1) {
-                return ast.children[0];
-            } else  {
-                children = [];
-                extractBlocks = function(elem) {
-                    // outer: children
-                    // outer: extractBlocks
-                    if(elem.kind === "block") {
-                        elem.children.map(extractBlocks);
-                    } else  {
-                        children.push(elem);
-                    };
-                };
-                extractBlocks(ast);
-                ast.children = children;
-            };
-        };
-        return ast;
+    });
+    /// ast2rst {{{2
+    ast2rst = function(ast) {
+        // outer: macros
+        return macros.execute(ast);
     };
 })();
