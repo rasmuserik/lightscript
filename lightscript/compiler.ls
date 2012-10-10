@@ -525,6 +525,51 @@ prettyprint = undefined;
         "annotation:" : sep(),
     };
 })();
+// macro system {{{1
+MacroSystem = undefined;
+(function() {
+    kindPart = function(pattern) {
+        return pattern.split(':')[0];
+    };
+    valPart = function(pattern) {
+        return pattern.split(':').slice(1).join(':');
+    };
+    addMacro = function(table, pattern, fn) {
+        var kind = kindPart(pattern);
+        if(!table[kind]) {
+            table[kind] = {};
+        }
+        table[kind][valPart(pattern)] = fn;
+    };
+    executeMacros = function(table, node) {
+        var valTable = table[node.kind];
+        if(valTable) {
+            fn = valTable[node.val] || valTable[""];
+        }
+        if(fn) {
+            return fn(node);
+        }
+        return node;
+    };
+    MacroPrototype = {
+        preMacro: function(pattern, fn) {
+            addMacro(this.preMacros, pattern, fn);
+        },
+        postMacro: function(pattern, fn) {
+            addMacro(this.postMacros, pattern, fn);
+        },
+        execute: function(tree) {
+            tree = executeMacros(this.preMacros, tree)
+            tree.children = tree.children.map(function(elem) { return this.execute(elem); });
+            tree = executeMacros(this.postMacros, tree)
+        },
+    };
+    MacroSystem = function() {
+        self = Object.create(MacroPrototype);
+        self.preMacros = {};
+        self.postMacros = {};
+    }
+})();
 // rst2ast {{{1
 rst2ast = undefined;
 (function() {
