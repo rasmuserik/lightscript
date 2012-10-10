@@ -810,6 +810,77 @@ prettyprint = undefined;
         "annotation:" : sep(),
     };
 })();
+// macro system {{{1
+MacroSystem = undefined;
+(function() {
+    // outer: this
+    // outer: MacroSystem
+    // outer: Object
+    var MacroPrototype;
+    var executeMacros;
+    var addMacro;
+    var valPart;
+    var kindPart;
+    kindPart = function(pattern) {
+        return pattern.split(":")[0];
+    };
+    valPart = function(pattern) {
+        return pattern.split(":").slice(1).join(":");
+    };
+    addMacro = function(table, pattern, fn) {
+        // outer: valPart
+        // outer: Object
+        // outer: kindPart
+        var kind;
+        kind = kindPart(pattern);
+        if(!table[kind]) {
+            table[kind] = {};
+        };
+        table[kind][valPart(pattern)] = fn;
+    };
+    executeMacros = function(table, node) {
+        var fn;
+        var valTable;
+        valTable = table[node.kind];
+        if(valTable) {
+            fn = valTable[node.val] || valTable[""];
+        };
+        if(fn) {
+            return fn(node);
+        };
+        return node;
+    };
+    MacroPrototype = {
+        "preMacro" : function(pattern, fn) {
+            // outer: this
+            // outer: addMacro
+            addMacro(this.preMacros, pattern, fn);
+        },
+        "postMacro" : function(pattern, fn) {
+            // outer: this
+            // outer: addMacro
+            addMacro(this.postMacros, pattern, fn);
+        },
+        "execute" : function(tree) {
+            // outer: this
+            // outer: executeMacros
+            tree = executeMacros(this.preMacros, tree);
+            tree.children = tree.children.map(function(elem) {
+                // outer: this
+                return this.execute(elem);
+            });
+            tree = executeMacros(this.postMacros, tree);
+        },
+    };
+    MacroSystem = function() {
+        // outer: MacroPrototype
+        // outer: Object
+        var self;
+        self = Object.create(MacroPrototype);
+        self.preMacros = {};
+        self.postMacros = {};
+    };
+})();
 // rst2ast {{{1
 rst2ast = undefined;
 (function() {
