@@ -74,7 +74,6 @@ Data layers
 
 # Roadmap
 
-- app: replace server.ls with publish.ls
 - macro system
     - pattern matching
     - pre-macros with possible break, child-apply, post-macros
@@ -87,6 +86,7 @@ Data layers
         - post-child-apply
     - refactor rst2js/rst2ast
     - syntax: for(;;)
+- app: replace server.ls with publish.ls
 - Java backend
 - more tests and docs
 - Static type system / type inference - rework type inference (including boxing) (fix bug {var x{ { { x=...}}}})
