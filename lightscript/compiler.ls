@@ -985,36 +985,38 @@ ast2rst = undefined;
         ast.children.unshift(lhs);
         ast.val = "=";
     };
-    // ast2 js/rst common macros
+    // ast2 js/rst common macros {{{2
     var jsrstMacros = function() {
-        var macros = MacroSystem();
-        macros.postMacro("call:.", macroLhsStr2Id);
-        macros.postMacro("call:new", macroNew);
-        macros.postMacro("call:[]=", macroPut2Assign("id:*[]"));
-        macros.postMacro("call:.=", fog(macroPut2Assign("id:."), macroLhsStr2Id));
+        var macros = {};
+        addMacro(macros, "call:.", macroLhsStr2Id);
+        addMacro(macros, "call:new", macroNew);
+        addMacro(macros, "call:[]=", macroPut2Assign("id:*[]"));
+        addMacro(macros, "call:.=", fog(macroPut2Assign("id:."), macroLhsStr2Id));
         jsoperator.forEach(function(operatorName) {
             //operators - do nothing
-            macros.postMacro("call:" + operatorName, function() {});
+            addMacro(macros, "call:" + operatorName, function() {});
         });
-        macros.postMacro("call", macroJsCallMethod);
-        macros.postMacro("branch:cond", macroCond2IfElse);
-        macros.postMacro("branch:while", macroJsWhile);
-        macros.postMacro("branch:?:", macroJsInfixIf);
-        macros.postMacro("block", macroFlattenBlock);
+        addMacro(macros, "call", macroJsCallMethod);
+        addMacro(macros, "branch:cond", macroCond2IfElse);
+        addMacro(macros, "branch:while", macroJsWhile);
+        addMacro(macros, "branch:?:", macroJsInfixIf);
+        addMacro(macros, "block", macroFlattenBlock);
         return macros;
     };
     // ast2js {{{2
     var jsMacros = jsrstMacros();
-    jsMacros.postMacro("fn", macroJsFn);
-    jsMacros.postMacro("assign", macroJsAssign);
+    addMacro(jsMacros, "fn", macroJsFn);
+    addMacro(jsMacros, "assign", macroJsAssign);
     ast2js = function(ast) {
-        return jsMacros.execute(ast);
+        ast.children = ast.children.map(ast2js);
+        return runMacro(jsMacros, ast);
     };
     // ast2rst {{{2
     var rstMacros = jsrstMacros();
-    rstMacros.postMacro("fn", macroFnDef);
-    rstMacros.postMacro("assign", macroLsAssign);
+    addMacro(rstMacros, "fn", macroFnDef);
+    addMacro(rstMacros, "assign", macroLsAssign);
     ast2rst = function(ast) {
-        return rstMacros.execute(ast);
+        ast.children = ast.children.map(ast2rst);
+        return runMacro(rstMacros, ast);
     };
 })();
