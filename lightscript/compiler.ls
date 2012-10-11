@@ -527,6 +527,8 @@ prettyprint = undefined;
 })();
 // macro system {{{1
 MacroSystem = undefined;
+addMacro = undefined;
+runMacro = undefined;
 (function() {
     var kindPart = function(pattern) {
         return pattern.split(":")[0];
@@ -534,14 +536,14 @@ MacroSystem = undefined;
     var valPart = function(pattern) {
         return pattern.split(":").slice(1).join(":");
     };
-    var addMacro = function(table, pattern, fn) {
+    addMacro = function(table, pattern, fn) {
         var kind = kindPart(pattern);
         if(!table[kind]) {
             table[kind] = {};
         };
         table[kind][valPart(pattern)] = fn;
     };
-    var executeMacros = function(table, node) {
+    runMacro = function(table, node) {
         var valTable = table[node.kind];
         if(valTable) {
             var fn = valTable[node.val] || valTable[""];
@@ -560,11 +562,11 @@ MacroSystem = undefined;
         },
         execute : function(tree) {
             var self = this;
-            tree = executeMacros(this.preMacros, tree);
+            tree = runMacro(this.preMacros, tree);
             tree.children = tree.children.map(function(elem) {
                 return self.execute(elem);
             });
-            return executeMacros(this.postMacros, tree);
+            return runMacro(this.postMacros, tree);
         },
     };
     MacroSystem = function() {
