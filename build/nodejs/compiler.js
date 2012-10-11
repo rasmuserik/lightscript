@@ -1185,8 +1185,9 @@ analyse = undefined;
         });
     };
 })();
-// ast2js {{{1
+// ast2rst {{{1
 ast2js = undefined;
+ast2rst = undefined;
 (function() {
     // outer: Object
     // outer: undefined
@@ -1194,205 +1195,10 @@ ast2js = undefined;
     // outer: true
     // outer: false
     // outer: require
-    // outer: ast2js
-    var isValidId;
-    var reserved;
-    var num;
-    var validIdSymbs;
-    var jsoperator;
-    var str2obj;
-    // Utility / definitions {{{2
-    str2obj = function(str) {
-        // outer: require
-        return require("./util").list2obj(str.split(" "));
-    };
-    jsoperator = str2obj("= === !== < <= > >= += -= *= /= ! | & ^ << >> ~ - + ++ -- * / ! % *() *[] typeof throw return");
-    validIdSymbs = "QWERTYUIOPASDFGHJKLZXCVBNMqwertyuiopasdfghjklzxcvbnm1234567890_$";
-    num = "1234567890";
-    reserved = str2obj("break case catch continue debugger default delete do else finally for function if in instanceof new return switch this throw try typeof var void while with class enum export extends import super implements interface let package private protected public static yield");
-    isValidId = function(str) {
-        // outer: true
-        // outer: validIdSymbs
-        var i;
-        // outer: num
-        // outer: false
-        // outer: reserved
-        if(reserved[str]) {
-            return false;
-        };
-        if(num.indexOf(str[0]) !== - 1) {
-            return false;
-        };
-        i = str.length;
-        while(i) {
-            --i;
-            if(validIdSymbs.indexOf(str[i]) === - 1) {
-                return false;
-            };
-        };
-        return true;
-    };
-    /// ast2js {{{2
-    ast2js = function(ast) {
-        var extractBlocks;
-        // outer: Object
-        var len;
-        // outer: undefined
-        var unblock;
-        // outer: isValidId
-        // outer: jsoperator
-        // outer: Array
-        var children;
-        var rhs;
-        var lhs;
-        // outer: ast2js
-        ast.children = ast.children.map(ast2js);
-        lhs = ast.children[0];
-        rhs = ast.children[1];
-        if(ast.kind === "call") {
-            if(ast.val === ".") {
-                // foo.'bar' -> foo.bar
-                if(rhs.kind === "str") {
-                    rhs.kind = "id";
-                };
-            } else if(ast.val === "new" && lhs.isa("id:Array")) {
-                ast.children = ast.children.slice(1);
-                ast.val = "[";
-            } else if(ast.val === "new" && lhs.isa("id:Object")) {
-                children = [];
-                while(ast.children.length > 1) {
-                    rhs = ast.children.pop();
-                    lhs = ast.children.pop();
-                    children.push(ast.create("id", ":", lhs, rhs));
-                };
-                ast.children = children.reverse();
-                ast.val = "{";
-            } else if(ast.val === "new") {
-                // do nothing
-            } else if(ast.val === "[]=") {
-                lhs = ast.create("id:*[]", ast.children[0], ast.children[1]);
-                ast.children.shift();
-                ast.children[0] = lhs;
-                ast.val = "=";
-            } else if(ast.val === ".=") {
-                lhs = ast.create("id:.", ast.children[0], ast.children[1]);
-                ast.children[1].kind = "id";
-                ast.children.shift();
-                ast.children[0] = lhs;
-                ast.val = "=";
-            } else if(jsoperator["hasOwnProperty"](ast.val)) {
-                //operators - do nothing
-            } else  {
-                // foo.bar(), foo['x'](bar)
-                if(isValidId(ast.val)) {
-                    lhs = ast.create("id:.", ast.create("id", ast.val));
-                } else  {
-                    lhs = ast.create("id:*[]", ast.create("str", ast.val));
-                };
-                lhs.children.unshift(ast.children[0]);
-                ast.children[0] = lhs;
-                ast.val = "*()";
-            };
-        };
-        if(ast.kind === "branch") {
-            unblock = function(node) {
-                // outer: Array
-                if(node.kind === "block") {
-                    return node.children;
-                } else  {
-                    return [node];
-                };
-            };
-            if(ast.val === "cond") {
-                children = ast.children;
-                rhs = undefined;
-                if(children.length & 1) {
-                    rhs = ast.create("id:*{}");
-                    rhs.children = unblock(children.pop());
-                    rhs.children.unshift(ast.create("id:"));
-                };
-                while(children.length) {
-                    lhs = ast.create("id:*{}");
-                    lhs.children = unblock(children.pop());
-                    lhs.children.unshift(ast.create("id:*()", ast.create("id:if"), children.pop()));
-                    if(rhs) {
-                        rhs = ast.create("id:else", lhs, rhs);
-                    } else  {
-                        rhs = lhs;
-                    };
-                };
-                ast = rhs;
-            } else if(ast.val === "while") {
-                ast.val = "*{}";
-                ast.children[0] = ast.create("id:*()", ast.create("id:while"), ast.children[0]);
-                ast.children = ast.children.concat(unblock(ast.children.pop()));
-            } else if(ast.val === "?:") {
-                rhs = ast.create("id", ":", ast.children[1], ast.children[2]);
-                ast.children.pop();
-                ast.children[1] = rhs;
-                ast.val = "?";
-            } else if(ast.val === "return") {
-                // do nothing
-            } else if(ast.val === "throw") {
-                // do nothing
-            };
-        };
-        if(ast.kind === "fn") {
-            // TODO: var
-            len = + ast.val;
-            lhs = ast.create("id:*()", ast.create("id:function"));
-            lhs.children = lhs.children.concat(ast.children.slice(0, len));
-            ast.children = ast.children.slice(len);
-            //ast.children.unshift(ast.create('str', 'XXX' + JSON.stringify(ast.scope)));
-            Object.keys(ast.scope).forEach(function(varName) {
-                // outer: ast
-                if(ast.scope[varName].local) {
-                    ast.children.unshift(ast.create("id:var", ast.create("id", varName)));
-                } else if(!ast.scope[varName].argument) {
-                    ast.children.unshift(ast.create("note", "// outer: " + varName + "\n"));
-                };
-            });
-            ast.children.unshift(lhs);
-            ast.kind = "id";
-            ast.val = "*{}";
-        };
-        if(ast.kind === "assign") {
-            // =
-            lhs = ast.create("id", ast.val);
-            ast.children.unshift(lhs);
-            ast.val = "=";
-        };
-        if(ast.kind === "block") {
-            if(ast.children.length === 1) {
-                return ast.children[0];
-            } else  {
-                children = [];
-                extractBlocks = function(elem) {
-                    // outer: children
-                    // outer: extractBlocks
-                    if(elem.kind === "block") {
-                        elem.children.map(extractBlocks);
-                    } else  {
-                        children.push(elem);
-                    };
-                };
-                extractBlocks(ast);
-                ast.children = children;
-            };
-        };
-        return ast;
-    };
-})();
-// ast2rst {{{1
-ast2rst = undefined;
-(function() {
-    // outer: Array
-    // outer: true
-    // outer: false
-    // outer: require
     // outer: ast2rst
     // outer: MacroSystem
-    var macros;
+    var rstMacros;
+    // outer: ast2js
     var macroFlattenBlock;
     var macroLsAssign;
     var macroFnDef;
@@ -1442,7 +1248,7 @@ ast2rst = undefined;
         };
         return true;
     };
-    // Utility functions {{2
+    // Utility functions {{{2
     unblock = function(node) {
         // outer: Array
         if(node.kind === "block") {
@@ -1590,27 +1396,176 @@ ast2rst = undefined;
             ast.children = children;
         };
     };
-    // ast2rst-macros
-    macros = MacroSystem();
-    macros.postMacro("call:.", macroLhsStr2Id);
-    macros.postMacro("call:new", macroNew);
-    macros.postMacro("call:[]=", macroPut2Assign("id:*[]"));
-    macros.postMacro("call:.=", fog(macroPut2Assign("id:."), macroLhsStr2Id));
+    /// ast2js {{{2
+    ast2js = function(ast) {
+        var extractBlocks;
+        // outer: Object
+        var len;
+        // outer: undefined
+        // outer: unblock
+        // outer: isValidId
+        // outer: jsoperator
+        // outer: Array
+        var children;
+        var rhs;
+        var lhs;
+        // outer: ast2js
+        ast.children = ast.children.map(ast2js);
+        lhs = ast.children[0];
+        rhs = ast.children[1];
+        if(ast.kind === "call") {
+            if(ast.val === ".") {
+                // foo.'bar' -> foo.bar
+                if(rhs.kind === "str") {
+                    rhs.kind = "id";
+                };
+            } else if(ast.val === "new" && lhs.isa("id:Array")) {
+                ast.children = ast.children.slice(1);
+                ast.val = "[";
+            } else if(ast.val === "new" && lhs.isa("id:Object")) {
+                children = [];
+                while(ast.children.length > 1) {
+                    rhs = ast.children.pop();
+                    lhs = ast.children.pop();
+                    children.push(ast.create("id", ":", lhs, rhs));
+                };
+                ast.children = children.reverse();
+                ast.val = "{";
+            } else if(ast.val === "new") {
+                // do nothing
+            } else if(ast.val === "[]=") {
+                lhs = ast.create("id:*[]", ast.children[0], ast.children[1]);
+                ast.children.shift();
+                ast.children[0] = lhs;
+                ast.val = "=";
+            } else if(ast.val === ".=") {
+                lhs = ast.create("id:.", ast.children[0], ast.children[1]);
+                ast.children[1].kind = "id";
+                ast.children.shift();
+                ast.children[0] = lhs;
+                ast.val = "=";
+            } else if(jsoperator.indexOf(ast.val) !== - 1) {
+                //operators - do nothing
+            } else  {
+                // foo.bar(), foo['x'](bar)
+                if(isValidId(ast.val)) {
+                    lhs = ast.create("id:.", ast.create("id", ast.val));
+                } else  {
+                    lhs = ast.create("id:*[]", ast.create("str", ast.val));
+                };
+                lhs.children.unshift(ast.children[0]);
+                ast.children[0] = lhs;
+                ast.val = "*()";
+            };
+        };
+        if(ast.kind === "branch") {
+            unblock = function(node) {
+                // outer: Array
+                if(node.kind === "block") {
+                    return node.children;
+                } else  {
+                    return [node];
+                };
+            };
+            if(ast.val === "cond") {
+                children = ast.children;
+                rhs = undefined;
+                if(children.length & 1) {
+                    rhs = ast.create("id:*{}");
+                    rhs.children = unblock(children.pop());
+                    rhs.children.unshift(ast.create("id:"));
+                };
+                while(children.length) {
+                    lhs = ast.create("id:*{}");
+                    lhs.children = unblock(children.pop());
+                    lhs.children.unshift(ast.create("id:*()", ast.create("id:if"), children.pop()));
+                    if(rhs) {
+                        rhs = ast.create("id:else", lhs, rhs);
+                    } else  {
+                        rhs = lhs;
+                    };
+                };
+                ast = rhs;
+            } else if(ast.val === "while") {
+                ast.val = "*{}";
+                ast.children[0] = ast.create("id:*()", ast.create("id:while"), ast.children[0]);
+                ast.children = ast.children.concat(unblock(ast.children.pop()));
+            } else if(ast.val === "?:") {
+                rhs = ast.create("id", ":", ast.children[1], ast.children[2]);
+                ast.children.pop();
+                ast.children[1] = rhs;
+                ast.val = "?";
+            } else if(ast.val === "return") {
+                // do nothing
+            } else if(ast.val === "throw") {
+                // do nothing
+            };
+        };
+        if(ast.kind === "fn") {
+            // TODO: var
+            len = + ast.val;
+            lhs = ast.create("id:*()", ast.create("id:function"));
+            lhs.children = lhs.children.concat(ast.children.slice(0, len));
+            ast.children = ast.children.slice(len);
+            //ast.children.unshift(ast.create('str', 'XXX' + JSON.stringify(ast.scope)));
+            Object.keys(ast.scope).forEach(function(varName) {
+                // outer: ast
+                if(ast.scope[varName].local) {
+                    ast.children.unshift(ast.create("id:var", ast.create("id", varName)));
+                } else if(!ast.scope[varName].argument) {
+                    ast.children.unshift(ast.create("note", "// outer: " + varName + "\n"));
+                };
+            });
+            ast.children.unshift(lhs);
+            ast.kind = "id";
+            ast.val = "*{}";
+        };
+        if(ast.kind === "assign") {
+            // =
+            lhs = ast.create("id", ast.val);
+            ast.children.unshift(lhs);
+            ast.val = "=";
+        };
+        if(ast.kind === "block") {
+            if(ast.children.length === 1) {
+                return ast.children[0];
+            } else  {
+                children = [];
+                extractBlocks = function(elem) {
+                    // outer: children
+                    // outer: extractBlocks
+                    if(elem.kind === "block") {
+                        elem.children.map(extractBlocks);
+                    } else  {
+                        children.push(elem);
+                    };
+                };
+                extractBlocks(ast);
+                ast.children = children;
+            };
+        };
+        return ast;
+    };
+    // ast2rst {{{2
+    rstMacros = MacroSystem();
+    rstMacros.postMacro("call:.", macroLhsStr2Id);
+    rstMacros.postMacro("call:new", macroNew);
+    rstMacros.postMacro("call:[]=", macroPut2Assign("id:*[]"));
+    rstMacros.postMacro("call:.=", fog(macroPut2Assign("id:."), macroLhsStr2Id));
     jsoperator.forEach(function(operatorName) {
-        // outer: macros
+        // outer: rstMacros
         //operators - do nothing
-        macros.postMacro("call:" + operatorName, function() {});
+        rstMacros.postMacro("call:" + operatorName, function() {});
     });
-    macros.postMacro("call", macroJsCallMethod);
-    macros.postMacro("branch:cond", macroCond2IfElse);
-    macros.postMacro("branch:while", macroJsWhile);
-    macros.postMacro("branch:?:", macroJsInfixIf);
-    macros.postMacro("fn", macroFnDef);
-    macros.postMacro("assign", macroLsAssign);
-    macros.postMacro("block", macroFlattenBlock);
-    /// ast2rst {{{2
+    rstMacros.postMacro("call", macroJsCallMethod);
+    rstMacros.postMacro("branch:cond", macroCond2IfElse);
+    rstMacros.postMacro("branch:while", macroJsWhile);
+    rstMacros.postMacro("branch:?:", macroJsInfixIf);
+    rstMacros.postMacro("fn", macroFnDef);
+    rstMacros.postMacro("assign", macroLsAssign);
+    rstMacros.postMacro("block", macroFlattenBlock);
     ast2rst = function(ast) {
-        // outer: macros
-        return macros.execute(ast);
+        // outer: rstMacros
+        return rstMacros.execute(ast);
     };
 })();
