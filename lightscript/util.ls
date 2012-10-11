@@ -152,7 +152,6 @@ util.deepcopy = function(obj) {
     if(Array.isArray(obj)) {
         return obj.map(util.deepcopy);
     } else if(typeof obj === "object") {
-        console.log(obj.prototype);
         var result = Object.create(obj.prototype || Object.prototype);
         Object.keys(obj).forEach(function(key) {
             result[key] = util.deepcopy(obj[key]);
