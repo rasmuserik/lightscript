@@ -35,20 +35,22 @@ compileTime = undefined;
             });
         };
         visitAsts(asts);
-    if(platform === "node" || platform === "web") {
-        var asts2fn = function(args, body) {
-            args = args.map(function(ast) {
-                ast.assertEqual(ast.kind, "id");
-                return ast.val;
-            });
-            args.push(codegen(ast2js, [body]));
-            console.log("Function", args);
-            return Function.apply(args);
+        if(platform === "node" || platform === "web") {
+            var code = codegen(ast2js, compiletimeasts);
+            console.log(code);
+            var asts2fn = function(args, body) {
+                args = args.map(function(ast) {
+                    ast.assertEqual(ast.kind, "id");
+                    return ast.val;
+                });
+                args.push(codegen(ast2js, [body]));
+                console.log("Function", args);
+                return Function.apply(args);
+            };
+        } else  {
+            `(foo = bar);
+            throw "unsupported platform";
         };
-    } else  {
-        `(foo = bar);
-        throw "unsupported platform";
-    };
     };
 })();
 // Tokeniser {{{1

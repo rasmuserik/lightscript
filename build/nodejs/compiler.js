@@ -49,11 +49,18 @@ compileTime = undefined;
     // outer: ast2js
     // outer: codegen
     // outer: Array
-    var asts2fn;
+    var compiletime;
     // outer: use
     var platform;
-    var compiletime;
+    platform = use("util").platform;
     compiletime = function(asts) {
+        // outer: Function
+        var asts2fn;
+        // outer: console
+        // outer: ast2js
+        // outer: codegen
+        var code;
+        // outer: platform
         var visitAsts;
         var compiletimevals;
         // outer: Array
@@ -73,26 +80,28 @@ compileTime = undefined;
                 };
             });
         };
-    };
-    platform = use("util").platform;
-    if(platform === "node" || platform === "web") {
-        asts2fn = function(args, body) {
-            // outer: Function
-            // outer: console
-            // outer: Array
-            // outer: ast2js
-            // outer: codegen
-            args = args.map(function(ast) {
-                ast.assertEqual(ast.kind, "id");
-                return ast.val;
-            });
-            args.push(codegen(ast2js, [body]));
-            console.log("Function", args);
-            return Function.apply(args);
+        visitAsts(asts);
+        if(platform === "node" || platform === "web") {
+            code = codegen(ast2js, compiletimeasts);
+            console.log(code);
+            asts2fn = function(args, body) {
+                // outer: Function
+                // outer: console
+                // outer: Array
+                // outer: ast2js
+                // outer: codegen
+                args = args.map(function(ast) {
+                    ast.assertEqual(ast.kind, "id");
+                    return ast.val;
+                });
+                args.push(codegen(ast2js, [body]));
+                console.log("Function", args);
+                return Function.apply(args);
+            };
+        } else  {
+            
+            throw "unsupported platform";
         };
-    } else  {
-        
-        throw "unsupported platform";
     };
 })();
 // Tokeniser {{{1
