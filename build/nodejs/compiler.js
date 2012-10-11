@@ -904,8 +904,8 @@ rst2ast = undefined;
     // outer: runMacro
     // outer: Array
     // outer: true
-    // outer: addMacro
     // outer: rst2ast
+    // outer: addMacro
     // outer: Object
     var postMacros;
     postMacros = {};
@@ -915,6 +915,9 @@ rst2ast = undefined;
         addMacro(postMacros, pattern, function(ast) {
             ast.kind = "branch";
         });
+    });
+    addMacro(postMacros, "call:`", function(ast) {
+        ast.kind = "compiletime";
     });
     // rst2ast {{{2
     rst2ast = function(ast) {
@@ -1477,6 +1480,11 @@ ast2rst = undefined;
     jsMacros = jsrstMacros();
     addMacro(jsMacros, "fn", macroJsFn);
     addMacro(jsMacros, "assign", macroJsAssign);
+    addMacro(jsMacros, "compiletime", function(ast) {
+        // outer: Array
+        ast.kind = "note";
+        ast.children = [];
+    });
     ast2js = function(ast) {
         // outer: jsMacros
         // outer: runMacro
@@ -1488,6 +1496,10 @@ ast2rst = undefined;
     rstMacros = jsrstMacros();
     addMacro(rstMacros, "fn", macroFnDef);
     addMacro(rstMacros, "assign", macroLsAssign);
+    addMacro(rstMacros, "compiletime", function(ast) {
+        ast.kind = "id";
+        ast.val = "`";
+    });
     ast2rst = function(ast) {
         // outer: rstMacros
         // outer: runMacro

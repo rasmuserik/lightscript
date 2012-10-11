@@ -588,6 +588,9 @@ rst2ast = undefined;
             ast.kind = "branch";
         });
     });
+    addMacro(postMacros, "call:`", function(ast) {
+        ast.kind = "compiletime";
+    });
     // rst2ast {{{2
     rst2ast = function(ast) {
         // Before recursive transformation {{{3
@@ -1001,6 +1004,10 @@ ast2rst = undefined;
     var jsMacros = jsrstMacros();
     addMacro(jsMacros, "fn", macroJsFn);
     addMacro(jsMacros, "assign", macroJsAssign);
+    addMacro(jsMacros, "compiletime", function(ast) {
+        ast.kind = "note";
+        ast.children = [];
+    });
     ast2js = function(ast) {
         ast.children = ast.children.map(ast2js);
         return runMacro(jsMacros, ast);
@@ -1009,6 +1016,10 @@ ast2rst = undefined;
     var rstMacros = jsrstMacros();
     addMacro(rstMacros, "fn", macroFnDef);
     addMacro(rstMacros, "assign", macroLsAssign);
+    addMacro(rstMacros, "compiletime", function(ast) {
+        ast.kind = "id";
+        ast.val = "`";
+    });
     ast2rst = function(ast) {
         ast.children = ast.children.map(ast2rst);
         return runMacro(rstMacros, ast);
