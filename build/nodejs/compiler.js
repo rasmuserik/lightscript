@@ -42,16 +42,38 @@ codegen = undefined;
     };
 })();
 // ast to function {{{1
-asts2fn = undefined;
+compileTime = undefined;
 (function() {
     // outer: Function
     // outer: console
-    // outer: Array
     // outer: ast2js
     // outer: codegen
-    // outer: asts2fn
+    // outer: Array
+    var asts2fn;
     // outer: use
     var platform;
+    var compiletime;
+    compiletime = function(asts) {
+        var visitAsts;
+        var compiletimevals;
+        // outer: Array
+        var compiletimeasts;
+        compiletimeasts = [];
+        compiletimevals = [];
+        visitAsts = function(asts) {
+            // outer: visitAsts
+            // outer: compiletimeasts
+            asts.forEach(function(ast) {
+                // outer: visitAsts
+                // outer: compiletimeasts
+                if(ast.kind === "compiletime") {
+                    compiletimeasts.push(ast);
+                } else  {
+                    visitAsts(ast.children);
+                };
+            });
+        };
+    };
     platform = use("util").platform;
     if(platform === "node" || platform === "web") {
         asts2fn = function(args, body) {

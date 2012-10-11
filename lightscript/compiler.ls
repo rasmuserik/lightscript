@@ -19,11 +19,24 @@ codegen = undefined;
     };
 })();
 // ast to function {{{1
-asts2fn = undefined;
+compileTime = undefined;
 (function() {
+    var compiletime = function(asts) {
+        var compiletimeasts = [];
+        var compiletimevals = [];
+        var visitAsts = function(asts) {
+            asts.forEach(function(ast) {
+                if(ast.kind === "compiletime") {
+                    compiletimeasts.push(ast);
+                } else  {
+                    visitAsts(ast.children);
+                };
+            });
+        };
+    };
     var platform = use("util").platform;
     if(platform === "node" || platform === "web") {
-        asts2fn = function(args, body) {
+        var asts2fn = function(args, body) {
             args = args.map(function(ast) {
                 ast.assertEqual(ast.kind, "id");
                 return ast.val;
