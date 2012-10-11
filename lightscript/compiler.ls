@@ -33,6 +33,7 @@ asts2fn = undefined;
             return Function.apply(args);
         };
     } else  {
+        `foo;
         throw "unsupported platform";
     };
 })();
@@ -590,6 +591,7 @@ rst2ast = undefined;
     });
     addMacro(postMacros, "call:`", function(ast) {
         ast.kind = "compiletime";
+        ast.val = "compiletime";
     });
     // rst2ast {{{2
     rst2ast = function(ast) {
@@ -1005,7 +1007,8 @@ ast2rst = undefined;
     addMacro(jsMacros, "fn", macroJsFn);
     addMacro(jsMacros, "assign", macroJsAssign);
     addMacro(jsMacros, "compiletime", function(ast) {
-        ast.kind = "note";
+        ast.kind = "id";
+        ast.val = ";";
         ast.children = [];
     });
     ast2js = function(ast) {

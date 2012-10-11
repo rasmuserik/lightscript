@@ -49,6 +49,7 @@ asts2fn = undefined;
     // outer: Array
     // outer: ast2js
     // outer: codegen
+    // outer: foo
     // outer: asts2fn
     // outer: use
     var platform;
@@ -918,6 +919,7 @@ rst2ast = undefined;
     });
     addMacro(postMacros, "call:`", function(ast) {
         ast.kind = "compiletime";
+        ast.val = "compiletime";
     });
     // rst2ast {{{2
     rst2ast = function(ast) {
@@ -1482,7 +1484,8 @@ ast2rst = undefined;
     addMacro(jsMacros, "assign", macroJsAssign);
     addMacro(jsMacros, "compiletime", function(ast) {
         // outer: Array
-        ast.kind = "note";
+        ast.kind = "id";
+        ast.val = ";";
         ast.children = [];
     });
     ast2js = function(ast) {
