@@ -1,21 +1,21 @@
 // Compiler {{{1
 (function() {
-    ls2asts = function(ls) {
-        rsts = parse(tokenise(ls));
-        asts = rsts.map(rst2ast);
+    var ls2asts = function(ls) {
+        var rsts = parse(tokenise(ls));
+        var asts = rsts.map(rst2ast);
         return asts;
-    }
-    codegen = function(astTransform, asts) {
-            asts = analyse(asts);
-            asts = asts.map(astTransform);
-            return prettyprint(asts).slice(1);
-    }
-exports.ls2js = function(ls) {
-    return codegen(ast2js, ls2asts(ls));
-};
-exports.ls2ls = function(ls) {
-    return codegen(ast2rst, ls2asts(ls));
-};
+    };
+    var codegen = function(astTransform, asts) {
+        asts = analyse(asts);
+        asts = asts.map(astTransform);
+        return prettyprint(asts).slice(1);
+    };
+    exports.ls2js = function(ls) {
+        return codegen(ast2js, ls2asts(ls));
+    };
+    exports.ls2ls = function(ls) {
+        return codegen(ast2rst, ls2asts(ls));
+    };
 })();
 // Tokeniser {{{1
 tokenise = undefined;
@@ -558,11 +558,12 @@ runMacro = undefined;
 // rst2ast {{{1
 rst2ast = undefined;
 (function() {
-    postMacros = {};
+    var postMacros = {};
     "call:return call:throw call:&& call:||".split(" ").forEach(function(pattern) {
-        addMacro(postMacros, pattern, function(ast) { ast.kind = 'branch'});
+        addMacro(postMacros, pattern, function(ast) {
+            ast.kind = "branch";
+        });
     });
-
     // rst2ast {{{2
     rst2ast = function(ast) {
         // Before recursive transformation {{{3
