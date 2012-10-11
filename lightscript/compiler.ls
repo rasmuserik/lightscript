@@ -810,7 +810,7 @@ analyse = undefined;
         });
     };
 })();
-// ast2rst {{{1
+// ast2rst, ast2js {{{1
 ast2js = undefined;
 ast2rst = undefined;
 (function() {
@@ -961,46 +961,46 @@ ast2rst = undefined;
         };
     };
     var macroJsFn = function(ast) {
-            var len = + ast.val;
-            lhs = ast.create("id:*()", ast.create("id:function"));
-            lhs.children = lhs.children.concat(ast.children.slice(0, len));
-            ast.children = ast.children.slice(len);
-            //ast.children.unshift(ast.create('str', 'XXX' + JSON.stringify(ast.scope)));
-            Object.keys(ast.scope).forEach(function(varName) {
-                if(ast.scope[varName].local) {
-                    ast.children.unshift(ast.create("id:var", ast.create("id", varName)));
-                } else if(!ast.scope[varName].argument) {
-                    ast.children.unshift(ast.create("note", "// outer: " + varName + "\n"));
-                };
-            });
-            ast.children.unshift(lhs);
-            ast.kind = "id";
-            ast.val = "*{}";
+        var len = + ast.val;
+        var lhs = ast.create("id:*()", ast.create("id:function"));
+        lhs.children = lhs.children.concat(ast.children.slice(0, len));
+        ast.children = ast.children.slice(len);
+        //ast.children.unshift(ast.create('str', 'XXX' + JSON.stringify(ast.scope)));
+        Object.keys(ast.scope).forEach(function(varName) {
+            if(ast.scope[varName].local) {
+                ast.children.unshift(ast.create("id:var", ast.create("id", varName)));
+            } else if(!ast.scope[varName].argument) {
+                ast.children.unshift(ast.create("note", "// outer: " + varName + "\n"));
+            };
+        });
+        ast.children.unshift(lhs);
+        ast.kind = "id";
+        ast.val = "*{}";
     };
     var macroJsAssign = function(ast) {
-            // =
-            lhs = ast.create("id", ast.val);
-            ast.children.unshift(lhs);
-            ast.val = "=";
+        // =
+        var lhs = ast.create("id", ast.val);
+        ast.children.unshift(lhs);
+        ast.val = "=";
     };
     // ast2 js/rst common macros
-    jsrstMacros = function() {
+    var jsrstMacros = function() {
         var macros = MacroSystem();
-    macros.postMacro("call:.", macroLhsStr2Id);
-    macros.postMacro("call:new", macroNew);
-    macros.postMacro("call:[]=", macroPut2Assign("id:*[]"));
-    macros.postMacro("call:.=", fog(macroPut2Assign("id:."), macroLhsStr2Id));
-    jsoperator.forEach(function(operatorName) {
-        //operators - do nothing
-        macros.postMacro("call:" + operatorName, function() {});
-    });
-    macros.postMacro("call", macroJsCallMethod);
-    macros.postMacro("branch:cond", macroCond2IfElse);
-    macros.postMacro("branch:while", macroJsWhile);
-    macros.postMacro("branch:?:", macroJsInfixIf);
-    macros.postMacro("block", macroFlattenBlock);
-        return macros
-    }
+        macros.postMacro("call:.", macroLhsStr2Id);
+        macros.postMacro("call:new", macroNew);
+        macros.postMacro("call:[]=", macroPut2Assign("id:*[]"));
+        macros.postMacro("call:.=", fog(macroPut2Assign("id:."), macroLhsStr2Id));
+        jsoperator.forEach(function(operatorName) {
+            //operators - do nothing
+            macros.postMacro("call:" + operatorName, function() {});
+        });
+        macros.postMacro("call", macroJsCallMethod);
+        macros.postMacro("branch:cond", macroCond2IfElse);
+        macros.postMacro("branch:while", macroJsWhile);
+        macros.postMacro("branch:?:", macroJsInfixIf);
+        macros.postMacro("block", macroFlattenBlock);
+        return macros;
+    };
     // ast2js {{{2
     var jsMacros = jsrstMacros();
     jsMacros.postMacro("fn", macroJsFn);
