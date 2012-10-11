@@ -526,7 +526,6 @@ prettyprint = undefined;
     };
 })();
 // macro system {{{1
-MacroSystem = undefined;
 addMacro = undefined;
 runMacro = undefined;
 (function() {
@@ -552,28 +551,6 @@ runMacro = undefined;
             node = fn(node) || node;
         };
         return node;
-    };
-    var MacroPrototype = {
-        preMacro : function(pattern, fn) {
-            addMacro(this.preMacros, pattern, fn);
-        },
-        postMacro : function(pattern, fn) {
-            addMacro(this.postMacros, pattern, fn);
-        },
-        execute : function(tree) {
-            var self = this;
-            tree = runMacro(this.preMacros, tree);
-            tree.children = tree.children.map(function(elem) {
-                return self.execute(elem);
-            });
-            return runMacro(this.postMacros, tree);
-        },
-    };
-    MacroSystem = function() {
-        var self = Object.create(MacroPrototype);
-        self.preMacros = {};
-        self.postMacros = {};
-        return self;
     };
 })();
 // rst2ast {{{1
