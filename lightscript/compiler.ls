@@ -21,6 +21,7 @@ codegen = undefined;
 // ast to function {{{1
 compileTime = undefined;
 (function() {
+    var platform = use("util").platform;
     var compiletime = function(asts) {
         var compiletimeasts = [];
         var compiletimevals = [];
@@ -33,8 +34,7 @@ compileTime = undefined;
                 };
             });
         };
-    };
-    var platform = use("util").platform;
+        visitAsts(asts);
     if(platform === "node" || platform === "web") {
         var asts2fn = function(args, body) {
             args = args.map(function(ast) {
@@ -48,6 +48,7 @@ compileTime = undefined;
     } else  {
         `(foo = bar);
         throw "unsupported platform";
+    };
     };
 })();
 // Tokeniser {{{1
