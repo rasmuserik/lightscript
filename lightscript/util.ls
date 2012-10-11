@@ -147,17 +147,3 @@ if(util.platform === "node") {
         localStorage.getItem(key);
     }};
 };
-// deep copy object {{{1
-util.deepcopy = function(obj) {
-    if(Array.isArray(obj)) {
-        return obj.map(util.deepcopy);
-    } else if(typeof obj === "object") {
-        var result = Object.create(obj.prototype || Object.prototype);
-        Object.keys(obj).forEach(function(key) {
-            result[key] = util.deepcopy(obj[key]);
-        });
-        return result;
-    } else  {
-        return obj;
-    };
-};

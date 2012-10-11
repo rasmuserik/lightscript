@@ -38,11 +38,26 @@ compiletime = undefined;
             });
         };
         visitAsts(asts);
-        asts = use("util").deepcopy(compiletimeasts);
+        var deepcopy = function(ast) {
+            var result = ast.create(ast);
+            result.children = ast.children.map(deepcopy);
+            return result;
+        };
+        asts = compiletimeasts.map(deepcopy);
+        `(x = 1);
+        var i = 0;
+        while(i < asts.length) {
+            var ast = asts[i];
+            if(!ast.isa("branch:cond") && !ast.isa("branch:while") && !ast.isa("branch:return")) {
+                asts[i] = ast.create("call:[]=", ast.create("id:__compiletimevals"), ast.create("num", i), ast);
+            };
+            ++i;
+        };
         if(platform === "node" || platform === "web") {
-            //console.log("code", asts);
-            //var code = codegen(ast2js, asts);
-            //console.log(code);
+            console.log("code", asts);
+            var code = codegen(ast2js, asts);
+            console.log(code);
+            /*
             var asts2fn = function(args, body) {
                 args = args.map(function(ast) {
                     ast.assertEqual(ast.kind, "id");
@@ -50,11 +65,7 @@ compiletime = undefined;
                 });
                 args.push(codegen(ast2js, [body]));
                 console.log("Function", args);
-                return Function.apply(args);
-            };
-        } else  {
-            `(foo = bar);
-            throw "unsupported platform";
+        */
         };
     };
 })();

@@ -231,26 +231,3 @@ if(util.platform === "node") {
         localStorage.getItem(key);
     }};
 };
-// deep copy object {{{1
-util.deepcopy = function(obj) {
-    // outer: Object
-    var result;
-    // outer: console
-    // outer: util
-    // outer: Array
-    if(Array.isArray(obj)) {
-        return obj.map(util.deepcopy);
-    } else if(typeof obj === "object") {
-        console.log(obj.prototype);
-        result = Object.create(obj.prototype || Object.prototype);
-        Object.keys(obj).forEach(function(key) {
-            // outer: obj
-            // outer: util
-            // outer: result
-            result[key] = util.deepcopy(obj[key]);
-        });
-        return result;
-    } else  {
-        return obj;
-    };
-};

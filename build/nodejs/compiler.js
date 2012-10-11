@@ -47,23 +47,23 @@ codegen = undefined;
 // compile-time-execution {{{1
 compiletime = undefined;
 (function() {
-    // outer: Function
-    // outer: console
     // outer: ast2js
     // outer: codegen
+    // outer: console
     // outer: Array
     // outer: compiletime
     // outer: use
     var platform;
     platform = use("util").platform;
     compiletime = function(asts) {
-        // outer: Function
-        // outer: console
         // outer: ast2js
         // outer: codegen
-        var asts2fn;
+        var code;
+        // outer: console
         // outer: platform
-        // outer: use
+        var ast;
+        var i;
+        var deepcopy;
         var visitAsts;
         var compiletimevals;
         // outer: Array
@@ -86,28 +86,36 @@ compiletime = undefined;
             });
         };
         visitAsts(asts);
-        asts = use("util").deepcopy(compiletimeasts);
+        deepcopy = function(ast) {
+            // outer: deepcopy
+            var result;
+            result = ast.create(ast);
+            result.children = ast.children.map(deepcopy);
+            return result;
+        };
+        asts = compiletimeasts.map(deepcopy);
+        
+        i = 0;
+        while(i < asts.length) {
+            ast = asts[i];
+            if(!ast.isa("branch:cond") && !ast.isa("branch:while") && !ast.isa("branch:return")) {
+                asts[i] = ast.create("call:[]=", ast.create("id:__compiletimevals"), ast.create("num", i), ast);
+            };
+            ++i;
+        };
         if(platform === "node" || platform === "web") {
-            //console.log("code", asts);
-            //var code = codegen(ast2js, asts);
-            //console.log(code);
-            asts2fn = function(args, body) {
-                // outer: Function
-                // outer: console
-                // outer: Array
-                // outer: ast2js
-                // outer: codegen
+            console.log("code", asts);
+            code = codegen(ast2js, asts);
+            console.log(code);
+            /*
+            var asts2fn = function(args, body) {
                 args = args.map(function(ast) {
                     ast.assertEqual(ast.kind, "id");
                     return ast.val;
                 });
                 args.push(codegen(ast2js, [body]));
                 console.log("Function", args);
-                return Function.apply(args);
-            };
-        } else  {
-            
-            throw "unsupported platform";
+        */
         };
     };
 })();
