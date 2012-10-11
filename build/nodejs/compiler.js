@@ -47,6 +47,7 @@ codegen = undefined;
 // compile-time-execution {{{1
 compiletime = undefined;
 (function() {
+    // outer: JSON
     // outer: Function
     // outer: ast2js
     // outer: codegen
@@ -58,6 +59,8 @@ compiletime = undefined;
     util = use("util");
     platform = util.platform;
     compiletime = function(asts) {
+        // outer: JSON
+        // outer: util
         // outer: Function
         var fn;
         // outer: ast2js
@@ -82,7 +85,7 @@ compiletime = undefined;
                 // outer: compiletimeasts
                 if(ast.kind === "compiletime") {
                     ast.assertEqual(ast.children.length, 1);
-                    compiletimeasts.push(ast.children[0]);
+                    compiletimeasts.push(ast);
                 } else  {
                     visitAsts(ast.children);
                 };
@@ -96,9 +99,11 @@ compiletime = undefined;
             result.children = ast.children.map(deepcopy);
             return result;
         };
-        asts = compiletimeasts.map(deepcopy);
-        
-        
+        asts = compiletimeasts.map(function(ast) {
+            return ast.children[0];
+        }).map(deepcopy);
+        1;
+        undefined;
         i = 0;
         while(i < asts.length) {
             ast = asts[i];
@@ -114,7 +119,14 @@ compiletime = undefined;
         };
         i = 0;
         while(i < compiletimeasts.length) {
-            //compiletimeasts.val = util.trycatch(function() { return JSON.stringify(compiletimevals[i]); }, function() { return 'undefined'; });
+            compiletimeasts[i].val = util.trycatch(function() {
+                // outer: i
+                // outer: compiletimevals
+                // outer: JSON
+                return JSON.stringify(compiletimevals[i]);
+            }, function() {
+                return "undefined";
+            });
             ++i;
         };
     };
@@ -1532,7 +1544,6 @@ ast2rst = undefined;
     addMacro(jsMacros, "assign", macroJsAssign);
     addMacro(jsMacros, "compiletime", function(ast) {
         // outer: Array
-        ast.val = ";";
         ast.children = [];
     });
     ast2js = function(ast) {

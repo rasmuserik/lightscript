@@ -32,7 +32,7 @@ compiletime = undefined;
             asts.forEach(function(ast) {
                 if(ast.kind === "compiletime") {
                     ast.assertEqual(ast.children.length, 1);
-                    compiletimeasts.push(ast.children[0]);
+                    compiletimeasts.push(ast);
                 } else  {
                     visitAsts(ast.children);
                 };
@@ -44,7 +44,9 @@ compiletime = undefined;
             result.children = ast.children.map(deepcopy);
             return result;
         };
-        asts = compiletimeasts.map(deepcopy);
+        asts = compiletimeasts.map(function(ast) {
+            return ast.children[0];
+        }).map(deepcopy);
         `(x = 1);
         `console.log("compiletime", x);
         var i = 0;
@@ -62,7 +64,11 @@ compiletime = undefined;
         };
         i = 0;
         while(i < compiletimeasts.length) {
-            //compiletimeasts.val = util.trycatch(function() { return JSON.stringify(compiletimevals[i]); }, function() { return 'undefined'; });
+            compiletimeasts[i].val = util.trycatch(function() {
+                return JSON.stringify(compiletimevals[i]);
+            }, function() {
+                return "undefined";
+            });
             ++i;
         };
     };
@@ -1039,7 +1045,6 @@ ast2rst = undefined;
     addMacro(jsMacros, "fn", macroJsFn);
     addMacro(jsMacros, "assign", macroJsAssign);
     addMacro(jsMacros, "compiletime", function(ast) {
-        ast.val = ";";
         ast.children = [];
     });
     ast2js = function(ast) {
