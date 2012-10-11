@@ -49,7 +49,6 @@ asts2fn = undefined;
     // outer: Array
     // outer: ast2js
     // outer: codegen
-    // outer: foo
     // outer: asts2fn
     // outer: use
     var platform;
@@ -70,6 +69,7 @@ asts2fn = undefined;
             return Function.apply(args);
         };
     } else  {
+        
         throw "unsupported platform";
     };
 })();
@@ -919,7 +919,6 @@ rst2ast = undefined;
     });
     addMacro(postMacros, "call:`", function(ast) {
         ast.kind = "compiletime";
-        ast.val = "compiletime";
     });
     // rst2ast {{{2
     rst2ast = function(ast) {
@@ -1086,7 +1085,7 @@ analyse = undefined;
 (function() {
     // outer: Number
     // outer: true
-    // outer: ;
+    // outer: undefined
     // outer: Object
     // outer: Ast
     var localVars;
@@ -1120,18 +1119,18 @@ analyse = undefined;
     box = function(fn) {
         // outer: localVar
         // outer: true
-        // outer: ;
+        // outer: undefined
         // outer: Object
         Object.keys(fn.scope).forEach(function(name) {
             // outer: localVar
             // outer: Object
             // outer: true
-            // outer: ;
+            // outer: undefined
             // outer: fn
             var t;
             t = fn.scope[name];
             if(t.argument) {
-                return ;
+                return undefined;
             };
             if(!t.argument) {
                 if(fn.parent && typeof fn.parent.scope[name] === "object" || !t.set) {
@@ -1163,11 +1162,14 @@ analyse = undefined;
         // outer: localVars
         // outer: true
         // outer: localVar
-        // outer: ;
         // outer: fns
         // outer: Number
         var argc;
         // outer: Object
+        // outer: undefined
+        if(ast.kind === "compiletime") {
+            return undefined;
+        };
         if(ast.kind === "fn") {
             ast.scope = {};
             ast.parent = parent;
@@ -1185,7 +1187,7 @@ analyse = undefined;
                 localVars(elem, ast);
             });
             fns.push(ast);
-            return ;
+            return undefined;
         };
         if(ast.kind === "id") {
             localVar(parent, ast.val).get = true;
@@ -1484,7 +1486,6 @@ ast2rst = undefined;
     addMacro(jsMacros, "assign", macroJsAssign);
     addMacro(jsMacros, "compiletime", function(ast) {
         // outer: Array
-        ast.kind = "id";
         ast.val = ";";
         ast.children = [];
     });
@@ -1500,7 +1501,6 @@ ast2rst = undefined;
     addMacro(rstMacros, "fn", macroFnDef);
     addMacro(rstMacros, "assign", macroLsAssign);
     addMacro(rstMacros, "compiletime", function(ast) {
-        ast.kind = "id";
         ast.val = "`";
     });
     ast2rst = function(ast) {
