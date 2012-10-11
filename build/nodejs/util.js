@@ -1,4 +1,3 @@
-
 util = exports;
 // Basic platform/language {{{1
 // try-catch

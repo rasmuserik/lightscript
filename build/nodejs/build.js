@@ -1,4 +1,3 @@
-
 exports.nodemain = function(arg) {
     // outer: true
     // outer: console

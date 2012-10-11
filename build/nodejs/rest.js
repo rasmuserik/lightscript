@@ -1,4 +1,3 @@
-
 exports.api = {};
 apis = {store : require("./storage").restapi};
 util = require("./util");

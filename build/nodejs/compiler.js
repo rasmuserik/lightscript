@@ -1,39 +1,45 @@
-
 // Compiler {{{1
-exports.ls2js = function(ls) {
+(function() {
+    // outer: ast2rst
     // outer: ast2js
     // outer: prettyprint
     // outer: analyse
     // outer: rst2ast
-    var asts;
     // outer: tokenise
     // outer: parse
-    var rsts;
-    rsts = parse(tokenise(ls));
-    asts = rsts.map(rst2ast);
-    asts = analyse(asts);
-    return prettyprint(asts.map(function(ast) {
+    // outer: exports
+    var codegen;
+    var ls2asts;
+    ls2asts = function(ls) {
+        // outer: rst2ast
+        var asts;
+        // outer: tokenise
+        // outer: parse
+        var rsts;
+        rsts = parse(tokenise(ls));
+        asts = rsts.map(rst2ast);
+        return asts;
+    };
+    codegen = function(astTransform, asts) {
+        // outer: prettyprint
+        // outer: analyse
+        asts = analyse(asts);
+        asts = asts.map(astTransform);
+        return prettyprint(asts).slice(1);
+    };
+    exports.ls2js = function(ls) {
+        // outer: ls2asts
         // outer: ast2js
-        return ast2js(ast);
-    }));
-};
-exports.ls2ls = function(ls) {
-    // outer: ast2rst
-    // outer: prettyprint
-    // outer: analyse
-    // outer: rst2ast
-    var asts;
-    // outer: tokenise
-    // outer: parse
-    var rsts;
-    rsts = parse(tokenise(ls));
-    asts = rsts.map(rst2ast);
-    asts = analyse(asts);
-    return prettyprint(asts.map(function(ast) {
+        // outer: codegen
+        return codegen(ast2js, ls2asts(ls));
+    };
+    exports.ls2ls = function(ls) {
+        // outer: ls2asts
         // outer: ast2rst
-        return ast2rst(ast);
-    })).slice(1);
-};
+        // outer: codegen
+        return codegen(ast2rst, ls2asts(ls));
+    };
+})();
 // Tokeniser {{{1
 tokenise = undefined;
 (function() {
@@ -853,12 +859,26 @@ runMacro = undefined;
 rst2ast = undefined;
 (function() {
     // outer: false
+    // outer: runMacro
     // outer: Array
     // outer: true
+    // outer: addMacro
     // outer: rst2ast
+    // outer: Object
+    var postMacros;
+    postMacros = {};
+    "call:return call:throw call:&& call:||".split(" ").forEach(function(pattern) {
+        // outer: postMacros
+        // outer: addMacro
+        addMacro(postMacros, pattern, function(ast) {
+            ast.kind = "branch";
+        });
+    });
     // rst2ast {{{2
     rst2ast = function(ast) {
         // outer: false
+        // outer: postMacros
+        // outer: runMacro
         var lhs;
         // outer: rst2ast
         var rhs;
@@ -931,23 +951,8 @@ rst2ast = undefined;
                 rhs.kind = "str";
             };
         };
-        // branches {{{4
-        // return
-        if(ast.isa("call:return")) {
-            ast.kind = "branch";
-        };
-        // throw 
-        if(ast.isa("call:return")) {
-            ast.kind = "branch";
-        };
-        // &&
-        if(ast.isa("call:&&")) {
-            ast.kind = "branch";
-        };
-        // ||
-        if(ast.isa("call:||")) {
-            ast.kind = "branch";
-        };
+        // run postMacros
+        ast = runMacro(postMacros, ast);
         // = {{{4
         if(ast.isa("call:=")) {
             if(lhs.kind === "id") {

@@ -97,6 +97,7 @@ Data layers
 
 # Changelog
 
+- 2012-10-11 refactor ast2js/ast2rst
 - 2012-10-02 change module-system to be similar to commonjs + code refactoring
 - 2012-10-01 public github repository + travis-ci
 - 2012-10-01 first version of storage up and running

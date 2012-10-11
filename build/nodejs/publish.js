@@ -1,4 +1,3 @@
-
 exports.nodemain = function() {
     // outer: require
     // outer: console

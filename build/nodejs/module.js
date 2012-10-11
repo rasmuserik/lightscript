@@ -1,4 +1,3 @@
-
 exports.list = function() {
     // outer: window
     // outer: Object
