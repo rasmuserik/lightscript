@@ -1429,51 +1429,47 @@ ast2rst = undefined;
     };
     // ast2 js/rst common macros
     jsrstMacros = function() {
+        // outer: macroFlattenBlock
+        // outer: macroJsInfixIf
+        // outer: macroJsWhile
+        // outer: macroCond2IfElse
+        // outer: macroJsCallMethod
+        // outer: jsoperator
+        // outer: fog
+        // outer: macroPut2Assign
+        // outer: macroNew
+        // outer: macroLhsStr2Id
         // outer: MacroSystem
         var macros;
         macros = MacroSystem();
+        macros.postMacro("call:.", macroLhsStr2Id);
+        macros.postMacro("call:new", macroNew);
+        macros.postMacro("call:[]=", macroPut2Assign("id:*[]"));
+        macros.postMacro("call:.=", fog(macroPut2Assign("id:."), macroLhsStr2Id));
+        jsoperator.forEach(function(operatorName) {
+            // outer: macros
+            //operators - do nothing
+            macros.postMacro("call:" + operatorName, function() {});
+        });
+        macros.postMacro("call", macroJsCallMethod);
+        macros.postMacro("branch:cond", macroCond2IfElse);
+        macros.postMacro("branch:while", macroJsWhile);
+        macros.postMacro("branch:?:", macroJsInfixIf);
+        macros.postMacro("block", macroFlattenBlock);
         return macros;
     };
     // ast2js {{{2
     jsMacros = jsrstMacros();
-    jsMacros.postMacro("call:.", macroLhsStr2Id);
-    jsMacros.postMacro("call:new", macroNew);
-    jsMacros.postMacro("call:[]=", macroPut2Assign("id:*[]"));
-    jsMacros.postMacro("call:.=", fog(macroPut2Assign("id:."), macroLhsStr2Id));
-    jsoperator.forEach(function(operatorName) {
-        // outer: jsMacros
-        //operators - do nothing
-        jsMacros.postMacro("call:" + operatorName, function() {});
-    });
-    jsMacros.postMacro("call", macroJsCallMethod);
-    jsMacros.postMacro("branch:cond", macroCond2IfElse);
-    jsMacros.postMacro("branch:while", macroJsWhile);
-    jsMacros.postMacro("branch:?:", macroJsInfixIf);
     jsMacros.postMacro("fn", macroJsFn);
     jsMacros.postMacro("assign", macroJsAssign);
-    jsMacros.postMacro("block", macroFlattenBlock);
     ast2js = function(ast) {
         // outer: jsMacros
         return jsMacros.execute(ast);
     };
     // ast2rst {{{2
     rstMacros = jsrstMacros();
-    rstMacros.postMacro("call:.", macroLhsStr2Id);
-    rstMacros.postMacro("call:new", macroNew);
-    rstMacros.postMacro("call:[]=", macroPut2Assign("id:*[]"));
-    rstMacros.postMacro("call:.=", fog(macroPut2Assign("id:."), macroLhsStr2Id));
-    jsoperator.forEach(function(operatorName) {
-        // outer: rstMacros
-        //operators - do nothing
-        rstMacros.postMacro("call:" + operatorName, function() {});
-    });
-    rstMacros.postMacro("call", macroJsCallMethod);
-    rstMacros.postMacro("branch:cond", macroCond2IfElse);
-    rstMacros.postMacro("branch:while", macroJsWhile);
-    rstMacros.postMacro("branch:?:", macroJsInfixIf);
     rstMacros.postMacro("fn", macroFnDef);
     rstMacros.postMacro("assign", macroLsAssign);
-    rstMacros.postMacro("block", macroFlattenBlock);
     ast2rst = function(ast) {
         // outer: rstMacros
         return rstMacros.execute(ast);
