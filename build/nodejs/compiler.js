@@ -47,9 +47,9 @@ tokenise = undefined;
     createToken = function(kind, val, pos) {
         // outer: Object
         return {
-            "kind" : kind,
-            "val" : val,
-            "pos" : pos,
+            kind : kind,
+            val : val,
+            pos : pos,
         };
     };
     tokenise = function(buffer) {
@@ -71,7 +71,7 @@ tokenise = undefined;
         var start;
         var pos;
         pos = 0;
-        start = {"lineno" : 0, "pos" : 0};
+        start = {lineno : 0, pos : 0};
         lineno = 0;
         one_of = function(str) {
             // outer: peek
@@ -109,7 +109,7 @@ tokenise = undefined;
             // outer: lineno
             // outer: Object
             // outer: start
-            start = {"lineno" : lineno, "pos" : pos};
+            start = {lineno : lineno, pos : pos};
         };
         newToken = function(kind, val) {
             // outer: pos
@@ -176,9 +176,9 @@ tokenise = undefined;
                         if(c === "\\") {
                             c = pop();
                             c = ({
-                                "n" : "\n",
-                                "r" : "\r",
-                                "t" : "\t",
+                                n : "\n",
+                                r : "\r",
+                                t : "\t",
                             })[c] || c;
                         };
                         s += c;
@@ -238,7 +238,7 @@ Ast = undefined;
     // outer: Object
     var defaultAst;
     defaultAst = {
-        "create" : function(arg) {
+        create : function(arg) {
             var splitpos;
             // outer: require
             // outer: this
@@ -267,25 +267,25 @@ Ast = undefined;
             };
             return self;
         },
-        "isa" : function(kindval) {
+        isa : function(kindval) {
             // outer: this
             kindval = kindval.split(":");
             this.assertEqual(kindval.length, 2);
             return this.kind === kindval[0] && this.val === kindval[1];
         },
-        "assertEqual" : function(a, b) {
+        assertEqual : function(a, b) {
             // outer: this
             if(a !== b) {
                 this.error("assert error: " + a + " !== " + b);
             };
         },
-        "error" : function(desc) {
+        error : function(desc) {
             // outer: this
             // outer: Object
             // outer: require
-            throw require("util").inspect({"error" : desc, "token" : this});
+            throw require("util").inspect({error : desc, token : this});
         },
-        "toList" : function() {
+        toList : function() {
             // outer: ast
             // outer: this
             var result;
@@ -320,9 +320,9 @@ exports.test = function(test) {
     test.assertEqual(ast.val, "val2");
     test.assertEqual(ast.children[0], "arg2");
     ast = Ast({
-        "kind" : "kind3",
-        "val" : "val3",
-        "children" : ["arg3"],
+        kind : "kind3",
+        val : "val3",
+        children : ["arg3"],
     });
     test.assertEqual(ast.kind, "kind3");
     test.assertEqual(ast.val, "val3");
@@ -382,12 +382,12 @@ prettyprint = undefined;
         return extend(Object.create(proto), orig);
     };
     defaultToken = Ast({
-        "nud" : function() {},
-        "bp" : 0,
-        "dbp" : 0,
-        "space" : " ",
-        "children" : [],
-        "assert" : function(ok, desc) {
+        nud : function() {},
+        bp : 0,
+        dbp : 0,
+        space : " ",
+        children : [],
+        assert : function(ok, desc) {
             // outer: this
             if(!ok) {
                 this.error(desc);
@@ -436,7 +436,7 @@ prettyprint = undefined;
             // outer: pos
             // outer: tokenLookup
             // outer: token
-            token = tokenLookup(pos === tokens.length ? {"kind" : "eof", "rparen" : true} : tokens[pos]);
+            token = tokenLookup(pos === tokens.length ? {kind : "eof", rparen : true} : tokens[pos]);
             ++pos;
             return tokenLookup(token);
         };
@@ -598,9 +598,9 @@ prettyprint = undefined;
         // outer: Object
         // outer: extend
         return extend(Object.create(defaultToken), {
-            "led" : infixLed,
-            "nud" : nudPrefix,
-            "bp" : bp,
+            led : infixLed,
+            nud : nudPrefix,
+            bp : bp,
         });
     };
     infixr = function(bp) {
@@ -610,10 +610,10 @@ prettyprint = undefined;
         // outer: Object
         // outer: extend
         return extend(Object.create(defaultToken), {
-            "led" : infixLed,
-            "nud" : nudPrefix,
-            "bp" : bp,
-            "dbp" : 1,
+            led : infixLed,
+            nud : nudPrefix,
+            bp : bp,
+            dbp : 1,
         });
     };
     rparen = function() {
@@ -622,7 +622,7 @@ prettyprint = undefined;
         // outer: defaultToken
         // outer: Object
         // outer: extend
-        return extend(Object.create(defaultToken), {"rparen" : true, "nud" : function() {
+        return extend(Object.create(defaultToken), {rparen : true, nud : function() {
             // outer: this
             this.error("unmatched rparen");
         }});
@@ -632,14 +632,14 @@ prettyprint = undefined;
         // outer: defaultToken
         // outer: Object
         // outer: extend
-        return extend(Object.create(defaultToken), {"nud" : nudPrefix, "bp" : bp});
+        return extend(Object.create(defaultToken), {nud : nudPrefix, bp : bp});
     };
     sep = function() {
         // outer: true
         // outer: defaultToken
         // outer: Object
         // outer: extend
-        return extend(Object.create(defaultToken), {"sep" : true, "pp" : function() {
+        return extend(Object.create(defaultToken), {sep : true, pp : function() {
             return "";
         }});
     };
@@ -686,7 +686,7 @@ prettyprint = undefined;
             // outer: Object
             // outer: extend
             return extend(Object.create(defaultToken), {
-                "led" : function(left) {
+                led : function(left) {
                     // outer: readList
                     // outer: true
                     // outer: Array
@@ -697,15 +697,15 @@ prettyprint = undefined;
                     this.infix = true;
                     readList(this);
                 },
-                "nud" : function() {
+                nud : function() {
                     // outer: readList
                     // outer: Array
                     // outer: this
                     this.children = [];
                     readList(this);
                 },
-                "bp" : bp,
-                "pp" : function() {
+                bp : bp,
+                pp : function() {
                     // outer: rparen
                     // outer: listpp
                     // outer: this
@@ -722,13 +722,13 @@ prettyprint = undefined;
     symb = {
         "." : nospace(infix(1200)),
         "[" : list("]")(1200),
-        "*[]" : special({"pp" : infixlistpp, "bp" : 1200}),
+        "*[]" : special({pp : infixlistpp, bp : 1200}),
         "]" : rparen(),
         "(" : list(")")(1200),
-        "*()" : special({"pp" : infixlistpp, "bp" : 1200}),
+        "*()" : special({pp : infixlistpp, bp : 1200}),
         ")" : rparen(),
         "{" : list("}")(1100),
-        "*{}" : special({"pp" : blockpp, "bp" : 1100}),
+        "*{}" : special({pp : blockpp, bp : 1100}),
         "}" : rparen(),
         "#" : nospace(prefix(1000)),
         "@" : nospace(prefix(1000)),
@@ -761,7 +761,7 @@ prettyprint = undefined;
         ":" : infixr(200),
         "?" : infixr(200),
         "else" : special({
-            "led" : function(left) {
+            led : function(left) {
                 // outer: defaultToken
                 // outer: Object
                 // outer: extend
@@ -773,15 +773,15 @@ prettyprint = undefined;
                 if(child1.val === "{" && child1.kind === "id") {
                     child1.val = "*{}";
                     child1.children.unshift(extend(Object.create(defaultToken), {
-                        "kind" : "id",
-                        "val" : "",
-                        "pos" : this.pos,
+                        kind : "id",
+                        val : "",
+                        pos : this.pos,
                     }));
                 };
             },
-            "nud" : nudPrefix,
-            "bp" : 200,
-            "dbp" : 1,
+            nud : nudPrefix,
+            bp : 200,
+            dbp : 1,
         }),
         "=" : infixr(100),
         "," : sep(),
@@ -798,8 +798,8 @@ prettyprint = undefined;
         "new" : prefix(0),
         "typeof" : prefix(0),
         "var" : prefix(0),
-        "str:" : special({"pp" : stringpp}),
-        "note:" : special({"sep" : true, "pp" : function() {
+        "str:" : special({pp : stringpp}),
+        "note:" : special({sep : true, pp : function() {
             // outer: this
             if(this.val.slice(0, 2) === "//") {
                 return this.val.slice(0, - 1);
@@ -851,17 +851,17 @@ MacroSystem = undefined;
         return node;
     };
     MacroPrototype = {
-        "preMacro" : function(pattern, fn) {
+        preMacro : function(pattern, fn) {
             // outer: this
             // outer: addMacro
             addMacro(this.preMacros, pattern, fn);
         },
-        "postMacro" : function(pattern, fn) {
+        postMacro : function(pattern, fn) {
             // outer: this
             // outer: addMacro
             addMacro(this.postMacros, pattern, fn);
         },
-        "execute" : function(tree) {
+        execute : function(tree) {
             // outer: executeMacros
             // outer: this
             var self;
@@ -1189,16 +1189,19 @@ analyse = undefined;
 ast2js = undefined;
 ast2rst = undefined;
 (function() {
+    // outer: MacroSystem
     // outer: Object
-    // outer: undefined
     // outer: Array
     // outer: true
     // outer: false
     // outer: require
     // outer: ast2rst
-    // outer: MacroSystem
     var rstMacros;
     // outer: ast2js
+    var jsMacros;
+    var jsrstMacros;
+    var macroJsAssign;
+    var macroJsFn;
     var macroFlattenBlock;
     var macroLsAssign;
     var macroFnDef;
@@ -1396,158 +1399,65 @@ ast2rst = undefined;
             ast.children = children;
         };
     };
-    /// ast2js {{{2
-    ast2js = function(ast) {
-        var extractBlocks;
+    macroJsFn = function(ast) {
         // outer: Object
-        var len;
-        // outer: undefined
-        // outer: unblock
-        // outer: isValidId
-        // outer: jsoperator
-        // outer: Array
-        var children;
-        var rhs;
         var lhs;
-        // outer: ast2js
-        ast.children = ast.children.map(ast2js);
-        lhs = ast.children[0];
-        rhs = ast.children[1];
-        if(ast.kind === "call") {
-            if(ast.val === ".") {
-                // foo.'bar' -> foo.bar
-                if(rhs.kind === "str") {
-                    rhs.kind = "id";
-                };
-            } else if(ast.val === "new" && lhs.isa("id:Array")) {
-                ast.children = ast.children.slice(1);
-                ast.val = "[";
-            } else if(ast.val === "new" && lhs.isa("id:Object")) {
-                children = [];
-                while(ast.children.length > 1) {
-                    rhs = ast.children.pop();
-                    lhs = ast.children.pop();
-                    children.push(ast.create("id", ":", lhs, rhs));
-                };
-                ast.children = children.reverse();
-                ast.val = "{";
-            } else if(ast.val === "new") {
-                // do nothing
-            } else if(ast.val === "[]=") {
-                lhs = ast.create("id:*[]", ast.children[0], ast.children[1]);
-                ast.children.shift();
-                ast.children[0] = lhs;
-                ast.val = "=";
-            } else if(ast.val === ".=") {
-                lhs = ast.create("id:.", ast.children[0], ast.children[1]);
-                ast.children[1].kind = "id";
-                ast.children.shift();
-                ast.children[0] = lhs;
-                ast.val = "=";
-            } else if(jsoperator.indexOf(ast.val) !== - 1) {
-                //operators - do nothing
-            } else  {
-                // foo.bar(), foo['x'](bar)
-                if(isValidId(ast.val)) {
-                    lhs = ast.create("id:.", ast.create("id", ast.val));
-                } else  {
-                    lhs = ast.create("id:*[]", ast.create("str", ast.val));
-                };
-                lhs.children.unshift(ast.children[0]);
-                ast.children[0] = lhs;
-                ast.val = "*()";
+        var len;
+        len = + ast.val;
+        lhs = ast.create("id:*()", ast.create("id:function"));
+        lhs.children = lhs.children.concat(ast.children.slice(0, len));
+        ast.children = ast.children.slice(len);
+        //ast.children.unshift(ast.create('str', 'XXX' + JSON.stringify(ast.scope)));
+        Object.keys(ast.scope).forEach(function(varName) {
+            // outer: ast
+            if(ast.scope[varName].local) {
+                ast.children.unshift(ast.create("id:var", ast.create("id", varName)));
+            } else if(!ast.scope[varName].argument) {
+                ast.children.unshift(ast.create("note", "// outer: " + varName + "\n"));
             };
-        };
-        if(ast.kind === "branch") {
-            unblock = function(node) {
-                // outer: Array
-                if(node.kind === "block") {
-                    return node.children;
-                } else  {
-                    return [node];
-                };
-            };
-            if(ast.val === "cond") {
-                children = ast.children;
-                rhs = undefined;
-                if(children.length & 1) {
-                    rhs = ast.create("id:*{}");
-                    rhs.children = unblock(children.pop());
-                    rhs.children.unshift(ast.create("id:"));
-                };
-                while(children.length) {
-                    lhs = ast.create("id:*{}");
-                    lhs.children = unblock(children.pop());
-                    lhs.children.unshift(ast.create("id:*()", ast.create("id:if"), children.pop()));
-                    if(rhs) {
-                        rhs = ast.create("id:else", lhs, rhs);
-                    } else  {
-                        rhs = lhs;
-                    };
-                };
-                ast = rhs;
-            } else if(ast.val === "while") {
-                ast.val = "*{}";
-                ast.children[0] = ast.create("id:*()", ast.create("id:while"), ast.children[0]);
-                ast.children = ast.children.concat(unblock(ast.children.pop()));
-            } else if(ast.val === "?:") {
-                rhs = ast.create("id", ":", ast.children[1], ast.children[2]);
-                ast.children.pop();
-                ast.children[1] = rhs;
-                ast.val = "?";
-            } else if(ast.val === "return") {
-                // do nothing
-            } else if(ast.val === "throw") {
-                // do nothing
-            };
-        };
-        if(ast.kind === "fn") {
-            // TODO: var
-            len = + ast.val;
-            lhs = ast.create("id:*()", ast.create("id:function"));
-            lhs.children = lhs.children.concat(ast.children.slice(0, len));
-            ast.children = ast.children.slice(len);
-            //ast.children.unshift(ast.create('str', 'XXX' + JSON.stringify(ast.scope)));
-            Object.keys(ast.scope).forEach(function(varName) {
-                // outer: ast
-                if(ast.scope[varName].local) {
-                    ast.children.unshift(ast.create("id:var", ast.create("id", varName)));
-                } else if(!ast.scope[varName].argument) {
-                    ast.children.unshift(ast.create("note", "// outer: " + varName + "\n"));
-                };
-            });
-            ast.children.unshift(lhs);
-            ast.kind = "id";
-            ast.val = "*{}";
-        };
-        if(ast.kind === "assign") {
-            // =
-            lhs = ast.create("id", ast.val);
-            ast.children.unshift(lhs);
-            ast.val = "=";
-        };
-        if(ast.kind === "block") {
-            if(ast.children.length === 1) {
-                return ast.children[0];
-            } else  {
-                children = [];
-                extractBlocks = function(elem) {
-                    // outer: children
-                    // outer: extractBlocks
-                    if(elem.kind === "block") {
-                        elem.children.map(extractBlocks);
-                    } else  {
-                        children.push(elem);
-                    };
-                };
-                extractBlocks(ast);
-                ast.children = children;
-            };
-        };
-        return ast;
+        });
+        ast.children.unshift(lhs);
+        ast.kind = "id";
+        ast.val = "*{}";
+    };
+    macroJsAssign = function(ast) {
+        var lhs;
+        // =
+        lhs = ast.create("id", ast.val);
+        ast.children.unshift(lhs);
+        ast.val = "=";
+    };
+    // ast2 js/rst common macros
+    jsrstMacros = function() {
+        // outer: MacroSystem
+        var macros;
+        macros = MacroSystem();
+        return macros;
+    };
+    // ast2js {{{2
+    jsMacros = jsrstMacros();
+    jsMacros.postMacro("call:.", macroLhsStr2Id);
+    jsMacros.postMacro("call:new", macroNew);
+    jsMacros.postMacro("call:[]=", macroPut2Assign("id:*[]"));
+    jsMacros.postMacro("call:.=", fog(macroPut2Assign("id:."), macroLhsStr2Id));
+    jsoperator.forEach(function(operatorName) {
+        // outer: jsMacros
+        //operators - do nothing
+        jsMacros.postMacro("call:" + operatorName, function() {});
+    });
+    jsMacros.postMacro("call", macroJsCallMethod);
+    jsMacros.postMacro("branch:cond", macroCond2IfElse);
+    jsMacros.postMacro("branch:while", macroJsWhile);
+    jsMacros.postMacro("branch:?:", macroJsInfixIf);
+    jsMacros.postMacro("fn", macroJsFn);
+    jsMacros.postMacro("assign", macroJsAssign);
+    jsMacros.postMacro("block", macroFlattenBlock);
+    ast2js = function(ast) {
+        // outer: jsMacros
+        return jsMacros.execute(ast);
     };
     // ast2rst {{{2
-    rstMacros = MacroSystem();
+    rstMacros = jsrstMacros();
     rstMacros.postMacro("call:.", macroLhsStr2Id);
     rstMacros.postMacro("call:new", macroNew);
     rstMacros.postMacro("call:[]=", macroPut2Assign("id:*[]"));

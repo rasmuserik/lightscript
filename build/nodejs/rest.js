@@ -1,6 +1,6 @@
 
 exports.api = {};
-apis = {"store" : require("./storage").restapi};
+apis = {store : require("./storage").restapi};
 util = require("./util");
 Object.keys(apis).forEach(function(name) {
     // outer: Object
@@ -38,14 +38,14 @@ Object.keys(apis).forEach(function(name) {
                         }, function() {
                             // outer: xhr
                             // outer: Object
-                            return {"err" : "cannot parse: " + xhr.responseText};
+                            return {err : "cannot parse: " + xhr.responseText};
                         }));
                     } else  {
                         callback({
-                            "err" : "HTTP-status !== 200",
-                            "status" : xhr.status,
-                            "statusText" : xhr.statusText,
-                            "content" : xhr.responseText,
+                            err : "HTTP-status !== 200",
+                            status : xhr.status,
+                            statusText : xhr.statusText,
+                            content : xhr.responseText,
                         });
                     };
                 };
@@ -151,7 +151,7 @@ exports.nodemain = function() {
                     // outer: Object
                     // outer: JSON
                     // outer: res
-                    res.send(JSON.stringify({"err" : "Server error: " + String(e)}));
+                    res.send(JSON.stringify({err : "Server error: " + String(e)}));
                 });
             });
         });

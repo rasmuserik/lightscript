@@ -213,21 +213,21 @@ if(util.platform === "node") {
             require("fs").writeFile(process.env.HOME + "/data/local.sqlite3", JSON.stringify(db, null, "  "));
         });
         lastSync = 0;
-        exports.local = {"set" : function(key, val) {
+        exports.local = {set : function(key, val) {
             // outer: syncLocalStorage
             // outer: db
             db[key] = val;
             syncLocalStorage();
-        }, "get" : function(key) {
+        }, get : function(key) {
             // outer: db
             return db[key];
         }};
     })();
 } else if(typeof localStorage !== "undefined") {
-    exports.local = {"set" : function(key, val) {
+    exports.local = {set : function(key, val) {
         // outer: localStorage
         localStorage.setItem(key, val);
-    }, "get" : function(key) {
+    }, get : function(key) {
         // outer: localStorage
         localStorage.getItem(key);
     }};

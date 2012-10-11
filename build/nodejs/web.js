@@ -122,7 +122,7 @@ exports.main = function() {
         // outer: String
         // outer: Object
         // outer: exports
-        exports.jsonp("http://solsort.com/clientError", {"error" : String(err)});
+        exports.jsonp("http://solsort.com/clientError", {error : String(err)});
         alert("Error on solsort.com: \n" + err + "\nSorry, not quite bug free, if you are online, then the error has been reported...");
         throw err;
     };
@@ -201,9 +201,9 @@ exports.main = function() {
         };
         // ## Create and return+cache store object {{{2
         storage = {
-            "sync" : throttledSync,
-            "set" : set,
-            "get" : get,
+            sync : throttledSync,
+            set : set,
+            get : get,
         };
         stores[storageName] = storage;
         return storage;
@@ -225,9 +225,9 @@ exports.main = function() {
                 solsortLogin.innerHTML = "<ul class=\"nav\"><li class=\"dropdown\">" + "<a href=\"#\" class=\"dropdown-toggle\" data-toggle=\"dropdown\">Login<b class=\"caret\"></b></a>" + "<ul class=\"dropdown-menu\">" + "<li><a href=\"javascript:use('web').loginGitHub()\"><span class=\"icon-github\"></span> github</a></li>" + "<li><a href=\"#\" onclick=\"use('web').loginFacebook()\"><span class=\"icon-facebook-sign\"></span> facebook</a></li>" + "<li><a href=\"#\" onclick=\"use('web').loginGoogle()\"><span class=\"icon-google-plus-sign\"></span> google</a></li>" + "</ul></li></ul>";
             } else  {
                 solsortLogin.innerHTML = "<ul class=\"nav\"><li><a onclick=\"use('web').logout();\">" + userName + "<span class=\"icon-" + ({
-                    "github" : "github",
-                    "facebook" : "facebook-sign",
-                    "google" : "google-plus-sign",
+                    github : "github",
+                    facebook : "facebook-sign",
+                    google : "google-plus-sign",
                 })[userId.split(":")[0]] + " icon-large\"></span>" + "logout" + "</a></li></ul>";
             };
         };
@@ -291,7 +291,7 @@ exports.main = function() {
         // outer: localStorage
         localStorage.setItem("userId", user);
         localStorage.setItem("userName", name);
-        exports.jsonp("http://solsort.com/", {"user" : user, "name" : name});
+        exports.jsonp("http://solsort.com/", {user : user, name : name});
         loginFromUrl = localStorage.getItem("loginFromUrl");
         if(loginFromUrl) {
             localStorage.removeItem("loginFromUrl");
@@ -310,7 +310,7 @@ exports.main = function() {
                 // outer: exports
                 // outer: RegExp
                 access_token = access_token.replace(RegExp(".*access_token="), "").replace(RegExp("&.*"), "");
-                exports.jsonp("https://api.github.com/user", {"access_token" : access_token}, function(data) {
+                exports.jsonp("https://api.github.com/user", {access_token : access_token}, function(data) {
                     // outer: loginUI
                     // outer: loginAs
                     if(data.data.login) {
@@ -322,7 +322,7 @@ exports.main = function() {
         };
         if(loggingIn === "facebook") {
             access_token = location.hash.replace(RegExp(".*access_token="), "").replace(RegExp("&.*"), "");
-            exports.jsonp("https://graph.facebook.com/me", {"access_token" : access_token}, function(data) {
+            exports.jsonp("https://graph.facebook.com/me", {access_token : access_token}, function(data) {
                 // outer: loginUI
                 // outer: loginAs
                 if(data.id) {
@@ -333,7 +333,7 @@ exports.main = function() {
         };
         if(loggingIn === "google") {
             access_token = location.hash.replace(RegExp(".*access_token="), "").replace(RegExp("&.*"), "");
-            exports.jsonp("https://www.googleapis.com/oauth2/v1/userinfo", {"access_token" : access_token}, function(data) {
+            exports.jsonp("https://www.googleapis.com/oauth2/v1/userinfo", {access_token : access_token}, function(data) {
                 // outer: loginUI
                 // outer: loginAs
                 if(data.id) {

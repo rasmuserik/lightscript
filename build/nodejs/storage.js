@@ -2,7 +2,7 @@
 util = require("./util");
 // sync api
 storeProto = {
-    "sync" : util.throttledFn(function(done) {
+    sync : util.throttledFn(function(done) {
         // outer: console
         // outer: true
         // outer: false
@@ -36,9 +36,9 @@ storeProto = {
             // outer: util
             util = util;
             require("./rest").api.store({
-                "owner" : self.owner,
-                "store" : self.storename,
-                "timestamp" : self.lastSync,
+                owner : self.owner,
+                store : self.storename,
+                timestamp : self.lastSync,
             }, function(result) {
                 // outer: serverSync
                 // outer: newServer
@@ -120,11 +120,11 @@ storeProto = {
                     timestamp = timestamp || (self.server[key] && self.server[key].timestamp);
                     timestamp = timestamp || 0;
                     require("./rest").api.store({
-                        "owner" : self.owner,
-                        "store" : self.storename,
-                        "timestamp" : timestamp,
-                        "key" : key,
-                        "val" : self.local[key],
+                        owner : self.owner,
+                        store : self.storename,
+                        timestamp : timestamp,
+                        key : key,
+                        val : self.local[key],
                     }, function(result) {
                         // outer: done
                         // outer: console
@@ -150,16 +150,16 @@ storeProto = {
         };
         serverSync(syncLocal);
     }),
-    "set" : function(key, val) {
+    set : function(key, val) {
         // outer: this
         this.local[key] = val;
         this.sync();
     },
-    "get" : function(key) {
+    get : function(key) {
         // outer: this
         return this.local[key] || this.server[key] && this.server[key].val;
     },
-    "keys" : function() {
+    keys : function() {
         // outer: true
         // outer: this
         // outer: Object
@@ -207,20 +207,20 @@ if(util.platform === "node") {
             db.run("CREATE TABLE IF NOT EXISTS storage (owner, store, timestamp, key, val, PRIMARY KEY (owner, store, timestamp, key), UNIQUE (owner, store, key));");
         };
         if(args.owner === undefined || args.store === undefined || args.timestamp === undefined) {
-            return rest.done({"err" : "missing owner, store, or timestamp parameter"});
+            return rest.done({err : "missing owner, store, or timestamp parameter"});
         };
         if(!args.key && !args.val) {
             // sync / get changes since timestamp
             db.all("SELECT timestamp, key, val FROM storage WHERE owner=$owner AND store=$store AND timestamp>=$timestamp ORDER BY timestamp ASC LIMIT 100;", {
-                "$owner" : args.owner,
-                "$store" : args.store,
-                "$timestamp" : args.timestamp,
+                $owner : args.owner,
+                $store : args.store,
+                $timestamp : args.timestamp,
             }, function(err, rows) {
                 // outer: String
                 // outer: Object
                 // outer: rest
                 if(err) {
-                    return rest.done({"err" : "DB-error: " + String(err)});
+                    return rest.done({err : "DB-error: " + String(err)});
                 };
                 rest.done(rows);
             });
@@ -228,29 +228,29 @@ if(util.platform === "node") {
             timestamp = Date.now();
             if(args.timestamp === 0) {
                 db.run("INSERT INTO storage VALUES ($owner, $store, $timestamp, $key, $val);", {
-                    "$owner" : args.owner,
-                    "$store" : args.store,
-                    "$timestamp" : timestamp,
-                    "$key" : args.key,
-                    "$val" : args.val,
+                    $owner : args.owner,
+                    $store : args.store,
+                    $timestamp : timestamp,
+                    $key : args.key,
+                    $val : args.val,
                 }, function(err) {
                     // outer: true
                     // outer: String
                     // outer: Object
                     // outer: rest
                     if(err) {
-                        return rest.done({"err" : "out-of-sync", "DBerror" : String(err)});
+                        return rest.done({err : "out-of-sync", DBerror : String(err)});
                     };
-                    rest.done({"ok" : true});
+                    rest.done({ok : true});
                 });
             } else  {
                 db.run("UPDATE storage SET timestamp=$timestamp, val=$val WHERE owner=$owner AND store=$store AND timestamp=$prevtime AND key=$key;", {
-                    "$timestamp" : timestamp,
-                    "$val" : args.val,
-                    "$owner" : args.owner,
-                    "$store" : args.store,
-                    "$prevtime" : args.timestamp,
-                    "$key" : args.key,
+                    $timestamp : timestamp,
+                    $val : args.val,
+                    $owner : args.owner,
+                    $store : args.store,
+                    $prevtime : args.timestamp,
+                    $key : args.key,
                 }, function(err) {
                     // outer: true
                     // outer: console
@@ -261,13 +261,13 @@ if(util.platform === "node") {
                     // outer: Object
                     // outer: rest
                     if(err) {
-                        return rest.done({"err" : "DB-error: " + String(err)});
+                        return rest.done({err : "DB-error: " + String(err)});
                     };
                     db.get("SELECT * FROM storage WHERE owner=$owner AND store=$store AND timestamp=$timestamp AND key=$key;", {
-                        "$owner" : args.owner,
-                        "$store" : args.store,
-                        "$timestamp" : timestamp,
-                        "$key" : args.key,
+                        $owner : args.owner,
+                        $store : args.store,
+                        $timestamp : timestamp,
+                        $key : args.key,
                     }, function(err, row) {
                         // outer: true
                         // outer: args
@@ -276,11 +276,11 @@ if(util.platform === "node") {
                         // outer: Object
                         // outer: rest
                         if(err) {
-                            return rest.done({"err" : "DB-error: " + String(err)});
+                            return rest.done({err : "DB-error: " + String(err)});
                         };
                         console.log(args, row);
                         if(!row) {
-                            return rest.done({"err" : "out-of-sync"});
+                            return rest.done({err : "out-of-sync"});
                         };
                         row.ok = true;
                         rest.done(row);

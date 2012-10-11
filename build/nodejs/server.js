@@ -58,9 +58,9 @@ if(require("./util").platform === "node") {
                     throw "duplicate title in \"" + filename + "\": " + title;
                 };
                 result[title] = {
-                    "title" : title,
-                    "url" : name2url(title),
-                    "html" : require("markdown").markdown.toHTML("# " + elem),
+                    title : title,
+                    url : name2url(title),
+                    html : require("markdown").markdown.toHTML("# " + elem),
                 };
             });
             return result;
@@ -94,7 +94,7 @@ if(require("./util").platform === "node") {
                 res.removeHeader("X-Powered-By");
                 next();
             });
-            app.stack.unshift({"route" : "", "handle" : logger({"path" : process.env.HOME + "/data/httpd.log"})});
+            app.stack.unshift({route : "", handle : logger({path : process.env.HOME + "/data/httpd.log"})});
             app.use(express.bodyParser());
             Object.keys(notes).forEach(function(key) {
                 // outer: Object
@@ -110,7 +110,7 @@ if(require("./util").platform === "node") {
                     // outer: htmlTemplate
                     // outer: mustache
                     // outer: fixLinks
-                    res.send(fixLinks(mustache.to_html(htmlTemplate, {"title" : key, "body" : notes[key].html})));
+                    res.send(fixLinks(mustache.to_html(htmlTemplate, {title : key, body : notes[key].html})));
                 });
             });
             fixLinks = function(html) {
@@ -122,7 +122,7 @@ if(require("./util").platform === "node") {
             app.get("/githubLogin", function(req, res) {
                 // outer: Object
                 // outer: https
-                https.get({"host" : "github.com", "path" : "/login/oauth/access_token?client_id=cc14f7f75ff01bdbb1e7&client_secret=d978cb4e2e1cdb35d4ae9e194b9c36fa0c2f607e&code=" + req.query.code + "&state=" + req.query.state}, function(con) {
+                https.get({host : "github.com", path : "/login/oauth/access_token?client_id=cc14f7f75ff01bdbb1e7&client_secret=d978cb4e2e1cdb35d4ae9e194b9c36fa0c2f607e&code=" + req.query.code + "&state=" + req.query.state}, function(con) {
                     // outer: Object
                     // outer: req
                     // outer: res
@@ -164,7 +164,7 @@ if(require("./util").platform === "node") {
                 };
                 if(!key) {
                     result = [];
-                    db.all("SELECT key, timestamp FROM userdata WHERE store=$store;", {"$store" : store}, function(err, val) {
+                    db.all("SELECT key, timestamp FROM userdata WHERE store=$store;", {$store : store}, function(err, val) {
                         // outer: Object
                         // outer: String
                         // outer: res
@@ -175,7 +175,7 @@ if(require("./util").platform === "node") {
                     });
                     return ;
                 };
-                db.get("SELECT * FROM userdata WHERE store=$store AND key=$key;", {"$store" : store, "$key" : key}, function(err, row) {
+                db.get("SELECT * FROM userdata WHERE store=$store AND key=$key;", {$store : store, $key : key}, function(err, row) {
                     // outer: Date
                     // outer: key
                     // outer: store
@@ -193,15 +193,15 @@ if(require("./util").platform === "node") {
                     };
                     val = row && row.val;
                     if(newVal !== undefined) {
-                        console.log({"val" : val, "prevVal" : prevVal});
+                        console.log({val : val, prevVal : prevVal});
                         if(prevVal["!="](val)) {
                             return res.send(val, {"Content-Type" : "text/plain"}, 409);
                         };
                         return db.run("INSERT OR REPLACE INTO userdata VALUES ($store, $key, $val, $timestamp);", {
-                            "$store" : store,
-                            "$key" : key,
-                            "$val" : newVal,
-                            "$timestamp" : Date.now(),
+                            $store : store,
+                            $key : key,
+                            $val : newVal,
+                            $timestamp : Date.now(),
                         }, function(err) {
                             // outer: Object
                             // outer: String
@@ -233,7 +233,7 @@ if(require("./util").platform === "node") {
                     // outer: mustache
                     // outer: fixLinks
                     // outer: res
-                    res.send(fixLinks(mustache.to_html(frontpage, {"notes" : Object.keys(notes).map(function(noteName) {
+                    res.send(fixLinks(mustache.to_html(frontpage, {notes : Object.keys(notes).map(function(noteName) {
                         // outer: RegExp
                         // outer: notes
                         var title;
@@ -279,7 +279,7 @@ body: '<h1>The end of the Internet</h1>' +
         };
         app = express.createServer();
         console.log(app);
-        exports.expressCreateServer(undefined, {"app" : app}, function() {
+        exports.expressCreateServer(undefined, {app : app}, function() {
             // outer: console
             // outer: app
             app.listen(8080);
