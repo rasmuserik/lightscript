@@ -1,4 +1,5 @@
 // Compiler {{{1
+codegen = undefined;
 (function() {
     // outer: ast2rst
     // outer: ast2js
@@ -8,7 +9,7 @@
     // outer: tokenise
     // outer: parse
     // outer: exports
-    var codegen;
+    // outer: codegen
     var ls2asts;
     ls2asts = function(ls) {
         // outer: rst2ast
@@ -38,6 +39,37 @@
         // outer: ast2rst
         // outer: codegen
         return codegen(ast2rst, ls2asts(ls));
+    };
+})();
+// ast to function {{{1
+asts2fn = undefined;
+(function() {
+    // outer: Function
+    // outer: console
+    // outer: Array
+    // outer: ast2js
+    // outer: codegen
+    // outer: asts2fn
+    // outer: use
+    var platform;
+    platform = use("util").platform;
+    if(platform === "node" || platform === "web") {
+        asts2fn = function(args, body) {
+            // outer: Function
+            // outer: console
+            // outer: Array
+            // outer: ast2js
+            // outer: codegen
+            args = args.map(function(ast) {
+                ast.assertEqual(ast.kind, "id");
+                return ast.val;
+            });
+            args.push(codegen(ast2js, [body]));
+            console.log("Function", args);
+            return Function.apply(args);
+        };
+    } else  {
+        throw "unsupported platform";
     };
 })();
 // Tokeniser {{{1
@@ -832,15 +864,25 @@ runMacro = undefined;
         return pattern.split(":").slice(1).join(":");
     };
     addMacro = function(table, pattern, fn) {
-        // outer: valPart
+        var orig_fn;
         // outer: Object
+        var table_kind;
+        // outer: valPart
+        var val;
         // outer: kindPart
         var kind;
         kind = kindPart(pattern);
-        if(!table[kind]) {
-            table[kind] = {};
+        val = valPart(pattern);
+        table_kind = table[kind];
+        if(!table_kind) {
+            table[kind] = table_kind = {};
         };
-        table[kind][valPart(pattern)] = fn;
+        orig_fn = table_kind[val];
+        table_kind[val] = orig_fn ? function(ast) {
+            // outer: orig_fn
+            // outer: fn
+            return fn(ast) || orig_fn(ast);
+        } : fn;
     };
     runMacro = function(table, node) {
         var fn;

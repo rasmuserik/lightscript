@@ -1,11 +1,12 @@
 // Compiler {{{1
+codegen = undefined;
 (function() {
     var ls2asts = function(ls) {
         var rsts = parse(tokenise(ls));
         var asts = rsts.map(rst2ast);
         return asts;
     };
-    var codegen = function(astTransform, asts) {
+    codegen = function(astTransform, asts) {
         asts = analyse(asts);
         asts = asts.map(astTransform);
         return prettyprint(asts).slice(1);
@@ -15,6 +16,24 @@
     };
     exports.ls2ls = function(ls) {
         return codegen(ast2rst, ls2asts(ls));
+    };
+})();
+// ast to function {{{1
+asts2fn = undefined;
+(function() {
+    var platform = use("util").platform;
+    if(platform === "node" || platform === "web") {
+        asts2fn = function(args, body) {
+            args = args.map(function(ast) {
+                ast.assertEqual(ast.kind, "id");
+                return ast.val;
+            });
+            args.push(codegen(ast2js, [body]));
+            console.log("Function", args);
+            return Function.apply(args);
+        };
+    } else  {
+        throw "unsupported platform";
     };
 })();
 // Tokeniser {{{1
@@ -539,10 +558,15 @@ runMacro = undefined;
     };
     addMacro = function(table, pattern, fn) {
         var kind = kindPart(pattern);
-        if(!table[kind]) {
-            table[kind] = {};
+        var val = valPart(pattern);
+        var table_kind = table[kind];
+        if(!table_kind) {
+            table[kind] = table_kind = {};
         };
-        table[kind][valPart(pattern)] = fn;
+        var orig_fn = table_kind[val];
+        table_kind[val] = orig_fn ? function(ast) {
+            return fn(ast) || orig_fn(ast);
+        } : fn;
     };
     runMacro = function(table, node) {
         var valTable = table[node.kind];
