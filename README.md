@@ -75,8 +75,9 @@ Data layers
 # Roadmap
 
 - macro system
-    - compiletime, prettyprinttime code
-    - pattern matching
+    - (done)compiletime code
+    - (done) refactor rst2js/rst2ast
+    - (done) simpe pattern matching execution
     - pre-macros with possible break, child-apply, post-macros
         - syntax/semantics
             - matchers
@@ -85,8 +86,8 @@ Data layers
         - pre-child-apply
             - possible break
         - post-child-apply
-    - (done) refactor rst2js/rst2ast
     - syntax: for(;;)
+    - remove compiletime residual literal values from generated code
 - app: replace server.ls with publish.ls
 - todo
     - outerscope global, should have var, - like functions
@@ -98,6 +99,7 @@ Data layers
 
 # Changelog
 
+- 2012-10-11 staged execution: backping'ed code is run at compiletime
 - 2012-10-11 refactor ast2js/ast2rst
 - 2012-10-02 change module-system to be similar to commonjs + code refactoring
 - 2012-10-01 public github repository + travis-ci

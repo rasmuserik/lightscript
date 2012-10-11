@@ -74,7 +74,6 @@ compiletime = undefined;
         var compiletimevals;
         // outer: Array
         var compiletimeasts;
-        //console.log(asts);
         compiletimeasts = [];
         compiletimevals = [];
         visitAsts = function(asts) {
@@ -102,8 +101,6 @@ compiletime = undefined;
         asts = compiletimeasts.map(function(ast) {
             return ast.children[0];
         }).map(deepcopy);
-        1;
-        undefined;
         i = 0;
         while(i < asts.length) {
             ast = asts[i];
@@ -116,6 +113,8 @@ compiletime = undefined;
             code = codegen(ast2js, asts);
             fn = Function("__compiletimevals", code);
             fn(compiletimevals);
+        } else  {
+            throw "unsupported platform";
         };
         i = 0;
         while(i < compiletimeasts.length) {
@@ -124,9 +123,7 @@ compiletime = undefined;
                 // outer: compiletimevals
                 // outer: JSON
                 return JSON.stringify(compiletimevals[i]);
-            }, function() {
-                return "undefined";
-            });
+            }, function() {}) || "undefined";
             ++i;
         };
     };
