@@ -22,7 +22,8 @@ codegen = undefined;
 // compile-time-execution {{{1
 compiletime = undefined;
 (function() {
-    var platform = use("util").platform;
+    var util = use("util");
+    var platform = util.platform;
     compiletime = function(asts) {
         //console.log(asts);
         var compiletimeasts = [];
@@ -45,6 +46,7 @@ compiletime = undefined;
         };
         asts = compiletimeasts.map(deepcopy);
         `(x = 1);
+        `console.log("compiletime", x);
         var i = 0;
         while(i < asts.length) {
             var ast = asts[i];
@@ -54,18 +56,14 @@ compiletime = undefined;
             ++i;
         };
         if(platform === "node" || platform === "web") {
-            console.log("code", asts);
             var code = codegen(ast2js, asts);
-            console.log(code);
-            /*
-            var asts2fn = function(args, body) {
-                args = args.map(function(ast) {
-                    ast.assertEqual(ast.kind, "id");
-                    return ast.val;
-                });
-                args.push(codegen(ast2js, [body]));
-                console.log("Function", args);
-        */
+            var fn = Function("__compiletimevals", code);
+            fn(compiletimevals);
+        };
+        i = 0;
+        while(i < compiletimeasts.length) {
+            //compiletimeasts.val = util.trycatch(function() { return JSON.stringify(compiletimevals[i]); }, function() { return 'undefined'; });
+            ++i;
         };
     };
 })();
