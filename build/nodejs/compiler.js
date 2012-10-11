@@ -5,6 +5,7 @@ codegen = undefined;
     // outer: ast2js
     // outer: prettyprint
     // outer: analyse
+    // outer: compiletime
     // outer: rst2ast
     // outer: tokenise
     // outer: parse
@@ -12,6 +13,7 @@ codegen = undefined;
     // outer: codegen
     var ls2asts;
     ls2asts = function(ls) {
+        // outer: compiletime
         // outer: rst2ast
         var asts;
         // outer: tokenise
@@ -19,6 +21,7 @@ codegen = undefined;
         var rsts;
         rsts = parse(tokenise(ls));
         asts = rsts.map(rst2ast);
+        compiletime(asts);
         return asts;
     };
     codegen = function(astTransform, asts) {
@@ -41,30 +44,31 @@ codegen = undefined;
         return codegen(ast2rst, ls2asts(ls));
     };
 })();
-// ast to function {{{1
-compileTime = undefined;
+// compile-time-execution {{{1
+compiletime = undefined;
 (function() {
     // outer: Function
     // outer: console
     // outer: ast2js
     // outer: codegen
     // outer: Array
-    var compiletime;
+    // outer: compiletime
     // outer: use
     var platform;
     platform = use("util").platform;
     compiletime = function(asts) {
         // outer: Function
-        var asts2fn;
         // outer: console
         // outer: ast2js
         // outer: codegen
-        var code;
+        var asts2fn;
         // outer: platform
+        // outer: use
         var visitAsts;
         var compiletimevals;
         // outer: Array
         var compiletimeasts;
+        //console.log(asts);
         compiletimeasts = [];
         compiletimevals = [];
         visitAsts = function(asts) {
@@ -74,16 +78,19 @@ compileTime = undefined;
                 // outer: visitAsts
                 // outer: compiletimeasts
                 if(ast.kind === "compiletime") {
-                    compiletimeasts.push(ast);
+                    ast.assertEqual(ast.children.length, 1);
+                    compiletimeasts.push(ast.children[0]);
                 } else  {
                     visitAsts(ast.children);
                 };
             });
         };
         visitAsts(asts);
+        asts = use("util").deepcopy(compiletimeasts);
         if(platform === "node" || platform === "web") {
-            code = codegen(ast2js, compiletimeasts);
-            console.log(code);
+            //console.log("code", asts);
+            //var code = codegen(ast2js, asts);
+            //console.log(code);
             asts2fn = function(args, body) {
                 // outer: Function
                 // outer: console

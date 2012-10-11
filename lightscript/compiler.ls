@@ -4,6 +4,7 @@ codegen = undefined;
     var ls2asts = function(ls) {
         var rsts = parse(tokenise(ls));
         var asts = rsts.map(rst2ast);
+        compiletime(asts);
         return asts;
     };
     codegen = function(astTransform, asts) {
@@ -18,26 +19,30 @@ codegen = undefined;
         return codegen(ast2rst, ls2asts(ls));
     };
 })();
-// ast to function {{{1
-compileTime = undefined;
+// compile-time-execution {{{1
+compiletime = undefined;
 (function() {
     var platform = use("util").platform;
-    var compiletime = function(asts) {
+    compiletime = function(asts) {
+        //console.log(asts);
         var compiletimeasts = [];
         var compiletimevals = [];
         var visitAsts = function(asts) {
             asts.forEach(function(ast) {
                 if(ast.kind === "compiletime") {
-                    compiletimeasts.push(ast);
+                    ast.assertEqual(ast.children.length, 1);
+                    compiletimeasts.push(ast.children[0]);
                 } else  {
                     visitAsts(ast.children);
                 };
             });
         };
         visitAsts(asts);
+        asts = use("util").deepcopy(compiletimeasts);
         if(platform === "node" || platform === "web") {
-            var code = codegen(ast2js, compiletimeasts);
-            console.log(code);
+            //console.log("code", asts);
+            //var code = codegen(ast2js, asts);
+            //console.log(code);
             var asts2fn = function(args, body) {
                 args = args.map(function(ast) {
                     ast.assertEqual(ast.kind, "id");
