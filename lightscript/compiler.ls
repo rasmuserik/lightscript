@@ -999,8 +999,20 @@ ast2rst = undefined;
         };
         return true;
     };
+    // Utility functions {{2
+    var unblock = function(node) {
+        if(node.kind === "block") {
+            return node.children;
+        } else  {
+            return [node];
+        };
+    };
+    var fog = function(f, g) {
+        return function(ast) {
+            return f(g(ast) || ast) || ast;
+        };
+    };
     // Macros {{{2
-    var macros = MacroSystem();
     var macroLhsStr2Id = function(ast) {
         // foo.'bar' -> foo.bar
         if(ast.children[1].kind === "str") {
@@ -1015,6 +1027,17 @@ ast2rst = undefined;
             ast.val = "=";
         };
     };
+    macroJsCallMethod = function(ast) {
+        // foo.bar(), foo['x'](bar)
+        if(isValidId(ast.val)) {
+            var lhs = ast.create("id:.", ast.create("id", ast.val));
+        } else  {
+            lhs = ast.create("id:*[]", ast.create("str", ast.val));
+        };
+        lhs.children.unshift(ast.children[0]);
+        ast.children[0] = lhs;
+        ast.val = "*()";
+    }
     var macroNew = function(ast) {
         if(ast.children[0] && ast.children[0].isa("id:Array")) {
             ast.children = ast.children.slice(1);
@@ -1033,38 +1056,7 @@ ast2rst = undefined;
             ast.val = "{";
         };
     };
-    var fog = function(f, g) {
-        return function(ast) {
-            return f(g(ast) || ast) || ast;
-        };
-    };
-    macros.postMacro("call:.", macroLhsStr2Id);
-    macros.postMacro("call:new", macroNew);
-    macros.postMacro("call:[]=", macroPut2Assign("id:*[]"));
-    macros.postMacro("call:.=", fog(macroPut2Assign("id:."), macroLhsStr2Id));
-    jsoperator.forEach(function(operatorName) {
-        //operators - do nothing
-        macros.postMacro("call:" + operatorName, function() {});
-    });
-    macros.postMacro("call", function(ast) {
-        // foo.bar(), foo['x'](bar)
-        if(isValidId(ast.val)) {
-            var lhs = ast.create("id:.", ast.create("id", ast.val));
-        } else  {
-            lhs = ast.create("id:*[]", ast.create("str", ast.val));
-        };
-        lhs.children.unshift(ast.children[0]);
-        ast.children[0] = lhs;
-        ast.val = "*()";
-    });
-    var unblock = function(node) {
-        if(node.kind === "block") {
-            return node.children;
-        } else  {
-            return [node];
-        };
-    };
-    macros.postMacro("branch:cond", function(ast) {
+    var macroCond2IfElse = function(ast) {
         var children = ast.children;
         if(children.length & 1) {
             var rhs = ast.create("id:*{}");
@@ -1082,19 +1074,19 @@ ast2rst = undefined;
             };
         };
         return rhs;
-    });
-    macros.postMacro("branch:while", function(ast) {
+    }
+    var macroJsWhile = function(ast) {
         ast.val = "*{}";
         ast.children[0] = ast.create("id:*()", ast.create("id:while"), ast.children[0]);
         ast.children = ast.children.concat(unblock(ast.children.pop()));
-    });
-    macros.postMacro("branch:?:", function(ast) {
+    }
+    var macroJsInfixIf = function(ast) {
         var rhs = ast.create("id", ":", ast.children[1], ast.children[2]);
         ast.children.pop();
         ast.children[1] = rhs;
         ast.val = "?";
-    });
-    macros.postMacro("fn", function(ast) {
+    }
+    var macroFnDef = function(ast) {
         var len = + ast.val;
         var lhs = ast.create("id:*()", ast.create("id:function"));
         lhs.children = lhs.children.concat(ast.children.slice(0, len));
@@ -1102,8 +1094,8 @@ ast2rst = undefined;
         ast.children.unshift(lhs);
         ast.kind = "id";
         ast.val = "*{}";
-    });
-    macros.postMacro("assign", function(ast) {
+    }
+    var macroLsAssign = function(ast) {
         // =
         var lhs = ast.create("id", ast.val);
         if(ast.doTypeAnnotate) {
@@ -1112,8 +1104,8 @@ ast2rst = undefined;
         };
         ast.children.unshift(lhs);
         ast.val = "=";
-    });
-    macros.postMacro("block", function(ast) {
+    };
+    var macroFlattenBlock = function(ast) {
         if(ast.children.length === 1) {
             return ast.children[0];
         } else  {
@@ -1128,7 +1120,24 @@ ast2rst = undefined;
             extractBlocks(ast);
             ast.children = children;
         };
+    };
+    // ast2rst-macros
+    var macros = MacroSystem();
+    macros.postMacro("call:.", macroLhsStr2Id);
+    macros.postMacro("call:new", macroNew);
+    macros.postMacro("call:[]=", macroPut2Assign("id:*[]"));
+    macros.postMacro("call:.=", fog(macroPut2Assign("id:."), macroLhsStr2Id));
+    jsoperator.forEach(function(operatorName) {
+        //operators - do nothing
+        macros.postMacro("call:" + operatorName, function() {});
     });
+    macros.postMacro("call", macroJsCallMethod)
+    macros.postMacro("branch:cond", macroCond2IfElse);
+    macros.postMacro("branch:while", macroJsWhile);
+    macros.postMacro("branch:?:", macroJsInfixIf);
+    macros.postMacro("fn", macroFnDef);
+    macros.postMacro("assign", macroLsAssign);
+    macros.postMacro("block", macroFlattenBlock);
     /// ast2rst {{{2
     ast2rst = function(ast) {
         return macros.execute(ast);

@@ -1391,13 +1391,20 @@ ast2rst = undefined;
     // outer: false
     // outer: require
     // outer: ast2rst
-    var unblock;
-    var fog;
-    var macroNew;
-    var macroPut2Assign;
-    var macroLhsStr2Id;
     // outer: MacroSystem
     var macros;
+    var macroFlattenBlock;
+    var macroLsAssign;
+    var macroFnDef;
+    var macroJsInfixIf;
+    var macroJsWhile;
+    var macroCond2IfElse;
+    var macroNew;
+    var macroJsCallMethod;
+    var macroPut2Assign;
+    var macroLhsStr2Id;
+    var fog;
+    var unblock;
     var isValidId;
     var reserved;
     var num;
@@ -1435,8 +1442,23 @@ ast2rst = undefined;
         };
         return true;
     };
+    // Utility functions {{2
+    unblock = function(node) {
+        // outer: Array
+        if(node.kind === "block") {
+            return node.children;
+        } else  {
+            return [node];
+        };
+    };
+    fog = function(f, g) {
+        return function(ast) {
+            // outer: g
+            // outer: f
+            return f(g(ast) || ast) || ast;
+        };
+    };
     // Macros {{{2
-    macros = MacroSystem();
     macroLhsStr2Id = function(ast) {
         // foo.'bar' -> foo.bar
         if(ast.children[1].kind === "str") {
@@ -1452,6 +1474,19 @@ ast2rst = undefined;
             ast.children[0] = lhs;
             ast.val = "=";
         };
+    };
+    macroJsCallMethod = function(ast) {
+        var lhs;
+        // outer: isValidId
+        // foo.bar(), foo['x'](bar)
+        if(isValidId(ast.val)) {
+            lhs = ast.create("id:.", ast.create("id", ast.val));
+        } else  {
+            lhs = ast.create("id:*[]", ast.create("str", ast.val));
+        };
+        lhs.children.unshift(ast.children[0]);
+        ast.children[0] = lhs;
+        ast.val = "*()";
     };
     macroNew = function(ast) {
         // outer: isValidId
@@ -1476,44 +1511,7 @@ ast2rst = undefined;
             ast.val = "{";
         };
     };
-    fog = function(f, g) {
-        return function(ast) {
-            // outer: g
-            // outer: f
-            return f(g(ast) || ast) || ast;
-        };
-    };
-    macros.postMacro("call:.", macroLhsStr2Id);
-    macros.postMacro("call:new", macroNew);
-    macros.postMacro("call:[]=", macroPut2Assign("id:*[]"));
-    macros.postMacro("call:.=", fog(macroPut2Assign("id:."), macroLhsStr2Id));
-    jsoperator.forEach(function(operatorName) {
-        // outer: macros
-        //operators - do nothing
-        macros.postMacro("call:" + operatorName, function() {});
-    });
-    macros.postMacro("call", function(ast) {
-        var lhs;
-        // outer: isValidId
-        // foo.bar(), foo['x'](bar)
-        if(isValidId(ast.val)) {
-            lhs = ast.create("id:.", ast.create("id", ast.val));
-        } else  {
-            lhs = ast.create("id:*[]", ast.create("str", ast.val));
-        };
-        lhs.children.unshift(ast.children[0]);
-        ast.children[0] = lhs;
-        ast.val = "*()";
-    });
-    unblock = function(node) {
-        // outer: Array
-        if(node.kind === "block") {
-            return node.children;
-        } else  {
-            return [node];
-        };
-    };
-    macros.postMacro("branch:cond", function(ast) {
+    macroCond2IfElse = function(ast) {
         var lhs;
         // outer: unblock
         var rhs;
@@ -1535,21 +1533,21 @@ ast2rst = undefined;
             };
         };
         return rhs;
-    });
-    macros.postMacro("branch:while", function(ast) {
+    };
+    macroJsWhile = function(ast) {
         // outer: unblock
         ast.val = "*{}";
         ast.children[0] = ast.create("id:*()", ast.create("id:while"), ast.children[0]);
         ast.children = ast.children.concat(unblock(ast.children.pop()));
-    });
-    macros.postMacro("branch:?:", function(ast) {
+    };
+    macroJsInfixIf = function(ast) {
         var rhs;
         rhs = ast.create("id", ":", ast.children[1], ast.children[2]);
         ast.children.pop();
         ast.children[1] = rhs;
         ast.val = "?";
-    });
-    macros.postMacro("fn", function(ast) {
+    };
+    macroFnDef = function(ast) {
         var lhs;
         var len;
         len = + ast.val;
@@ -1559,8 +1557,8 @@ ast2rst = undefined;
         ast.children.unshift(lhs);
         ast.kind = "id";
         ast.val = "*{}";
-    });
-    macros.postMacro("assign", function(ast) {
+    };
+    macroLsAssign = function(ast) {
         var lhs;
         // =
         lhs = ast.create("id", ast.val);
@@ -1570,8 +1568,8 @@ ast2rst = undefined;
         };
         ast.children.unshift(lhs);
         ast.val = "=";
-    });
-    macros.postMacro("block", function(ast) {
+    };
+    macroFlattenBlock = function(ast) {
         var extractBlocks;
         // outer: Array
         var children;
@@ -1591,7 +1589,25 @@ ast2rst = undefined;
             extractBlocks(ast);
             ast.children = children;
         };
+    };
+    // ast2rst-macros
+    macros = MacroSystem();
+    macros.postMacro("call:.", macroLhsStr2Id);
+    macros.postMacro("call:new", macroNew);
+    macros.postMacro("call:[]=", macroPut2Assign("id:*[]"));
+    macros.postMacro("call:.=", fog(macroPut2Assign("id:."), macroLhsStr2Id));
+    jsoperator.forEach(function(operatorName) {
+        // outer: macros
+        //operators - do nothing
+        macros.postMacro("call:" + operatorName, function() {});
     });
+    macros.postMacro("call", macroJsCallMethod);
+    macros.postMacro("branch:cond", macroCond2IfElse);
+    macros.postMacro("branch:while", macroJsWhile);
+    macros.postMacro("branch:?:", macroJsInfixIf);
+    macros.postMacro("fn", macroFnDef);
+    macros.postMacro("assign", macroLsAssign);
+    macros.postMacro("block", macroFlattenBlock);
     /// ast2rst {{{2
     ast2rst = function(ast) {
         // outer: macros
