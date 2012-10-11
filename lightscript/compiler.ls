@@ -1001,22 +1001,29 @@ ast2rst = undefined;
     };
     // Macros {{{2
     var macros = MacroSystem();
-    macros.postMacro("call:.", function(ast) {
+    var macroLhsStr2Id = function(ast) {
+        // foo.'bar' -> foo.bar
         if(ast.children[1].kind === "str") {
-            // foo.'bar' -> foo.bar
             ast.children[1].kind = "id";
         };
-    });
-    macros.postMacro("call:new", function(ast) {
-        var lhs = ast.children[0];
-        if(lhs.isa("id:Array")) {
+    };
+    var macroPut2Assign = function(memberVal) {
+        return function(ast) {
+            var lhs = ast.create(memberVal, ast.children[0], ast.children[1]);
+            ast.children.shift();
+            ast.children[0] = lhs;
+            ast.val = "=";
+        };
+    };
+    var macroNew = function(ast) {
+        if(ast.children[0] && ast.children[0].isa("id:Array")) {
             ast.children = ast.children.slice(1);
             ast.val = "[";
-        } else if(lhs.isa("id:Object")) {
+        } else if(ast.children[0] && ast.children[0].isa("id:Object")) {
             var children = [];
             while(ast.children.length > 1) {
                 var rhs = ast.children.pop();
-                lhs = ast.children.pop();
+                var lhs = ast.children.pop();
                 if(lhs.kind === "str" && isValidId(lhs.val)) {
                     lhs.kind = "id";
                 };
@@ -1024,23 +1031,17 @@ ast2rst = undefined;
             };
             ast.children = children.reverse();
             ast.val = "{";
-        } else  {
-            // do nothing
         };
-    });
-    macros.postMacro("call:[]=", function(ast) {
-        var lhs = ast.create("id:*[]", ast.children[0], ast.children[1]);
-        ast.children.shift();
-        ast.children[0] = lhs;
-        ast.val = "=";
-    });
-    macros.postMacro("call:.=", function(ast) {
-        var lhs = ast.create("id:.", ast.children[0], ast.children[1]);
-        ast.children[1].kind = "id";
-        ast.children.shift();
-        ast.children[0] = lhs;
-        ast.val = "=";
-    });
+    };
+    var fog = function(f, g) {
+        return function(ast) {
+            return f(g(ast) || ast) || ast;
+        };
+    };
+    macros.postMacro("call:.", macroLhsStr2Id);
+    macros.postMacro("call:new", macroNew);
+    macros.postMacro("call:[]=", macroPut2Assign("id:*[]"));
+    macros.postMacro("call:.=", fog(macroPut2Assign("id:."), macroLhsStr2Id));
     jsoperator.forEach(function(operatorName) {
         //operators - do nothing
         macros.postMacro("call:" + operatorName, function() {});
