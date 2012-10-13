@@ -1017,20 +1017,16 @@ ast2rst = undefined;
         ast.val = "=";
     };
     var macroFlattenBlock = function(ast) {
-        if(ast.children.length === 1) {
-            return ast.children[0];
-        } else  {
-            var children = [];
-            var extractBlocks = function(elem) {
-                if(elem.kind === "block") {
-                    elem.children.map(extractBlocks);
-                } else  {
-                    children.push(elem);
-                };
+        var children = [];
+        var extractBlocks = function(elem) {
+            if(elem.kind === "block") {
+                elem.children.map(extractBlocks);
+            } else  {
+                children.push(elem);
             };
-            extractBlocks(ast);
-            ast.children = children;
         };
+        extractBlocks(ast);
+        ast.children = children;
     };
     var macroJsFn = function(ast) {
         var len = + ast.val;

@@ -1523,22 +1523,18 @@ ast2rst = undefined;
         var extractBlocks;
         // outer: Array
         var children;
-        if(ast.children.length === 1) {
-            return ast.children[0];
-        } else  {
-            children = [];
-            extractBlocks = function(elem) {
-                // outer: children
-                // outer: extractBlocks
-                if(elem.kind === "block") {
-                    elem.children.map(extractBlocks);
-                } else  {
-                    children.push(elem);
-                };
+        children = [];
+        extractBlocks = function(elem) {
+            // outer: children
+            // outer: extractBlocks
+            if(elem.kind === "block") {
+                elem.children.map(extractBlocks);
+            } else  {
+                children.push(elem);
             };
-            extractBlocks(ast);
-            ast.children = children;
         };
+        extractBlocks(ast);
+        ast.children = children;
     };
     macroJsFn = function(ast) {
         // outer: Object
