@@ -32,6 +32,7 @@ codegen = undefined;
     ls2compiler = function(src) {
         // outer: this
         // outer: addMacro
+        // outer: applyMacros
         // outer: compiletime
         // outer: rst2ast
         // outer: tokenise
@@ -54,7 +55,7 @@ codegen = undefined;
             },
         };
         compiletime(compiler);
-        //       applyMacros(compiler.forwardMacros, compiler);
+        applyMacros(compiler.forwardMacros, compiler);
         return compiler;
     };
     codegen = function(astTransform, asts) {
@@ -74,10 +75,11 @@ codegen = undefined;
         // outer: ast2rst
         // outer: codegen
         // outer: analyse
+        // outer: applyMacros
         // outer: ls2compiler
         var compiler;
         compiler = ls2compiler(ls);
-        //        applyMacros(compiler.reverseMacros, compiler);
+        applyMacros(compiler.reverseMacros, compiler);
         compiler.asts = analyse(compiler.asts);
         return codegen(ast2rst, compiler.asts);
     };
@@ -86,6 +88,8 @@ codegen = undefined;
 compiletime = undefined;
 (function() {
     // outer: JSON
+    // outer: console
+    // outer: require
     // outer: Function
     // outer: ast2js
     // outer: codegen
@@ -98,6 +102,8 @@ compiletime = undefined;
     platform = util.platform;
     compiletime = function(compiler) {
         // outer: JSON
+        // outer: console
+        // outer: require
         // outer: util
         // outer: Function
         var fn;
@@ -151,8 +157,20 @@ compiletime = undefined;
         };
         if(platform === "node" || platform === "web") {
             code = codegen(ast2js, asts);
-            fn = Function("__compiletimevals", "compiler", code);
-            fn(compiletimevals, compiler);
+            fn = Function("__compiletimevals", "compiler", "require", code);
+            util.trycatch(function() {
+                // outer: require
+                // outer: compiler
+                // outer: compiletimevals
+                // outer: fn
+                fn(compiletimevals, compiler, require);
+            }, function(err) {
+                // outer: console
+                console.log("compile-time error", err);
+                if(err.stack) {
+                    console.log(err.stack);
+                };
+            });
         } else  {
             throw "unsupported platform";
         };

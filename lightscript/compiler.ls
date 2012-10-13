@@ -21,7 +21,7 @@ codegen = undefined;
             },
         };
         compiletime(compiler);
-        //       applyMacros(compiler.forwardMacros, compiler);
+        applyMacros(compiler.forwardMacros, compiler);
         return compiler;
     };
     codegen = function(astTransform, asts) {
@@ -34,7 +34,7 @@ codegen = undefined;
     };
     exports.ls2ls = function(ls) {
         var compiler = ls2compiler(ls);
-        //        applyMacros(compiler.reverseMacros, compiler);
+        applyMacros(compiler.reverseMacros, compiler);
         compiler.asts = analyse(compiler.asts);
         return codegen(ast2rst, compiler.asts);
     };
@@ -77,8 +77,15 @@ compiletime = undefined;
         };
         if(platform === "node" || platform === "web") {
             var code = codegen(ast2js, asts);
-            var fn = Function("__compiletimevals", "compiler", code);
-            fn(compiletimevals, compiler);
+            var fn = Function("__compiletimevals", "compiler", "require", code);
+            util.trycatch(function() {
+                fn(compiletimevals, compiler, require);
+            }, function(err) {
+                console.log("compile-time error", err);
+                if(err.stack) {
+                    console.log(err.stack);
+                };
+            });
         } else  {
             throw "unsupported platform";
         };
