@@ -17,7 +17,8 @@ codegen = undefined;
     var ls2asts = function(ls) {
         var compiler = Compiler(ls);
         compiletime(compiler);
-        return asts;
+        //compiler.asts = analyse(compiler.asts);
+        return compiler.asts;
     };
     codegen = function(astTransform, asts) {
         asts = analyse(asts);

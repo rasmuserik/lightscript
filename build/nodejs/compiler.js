@@ -4,6 +4,7 @@ codegen = undefined;
     // outer: ast2rst
     // outer: ast2js
     // outer: prettyprint
+    // outer: asts
     // outer: analyse
     // outer: compiletime
     // outer: this
@@ -40,14 +41,15 @@ codegen = undefined;
         };
     };
     ls2asts = function(ls) {
+        // outer: asts
+        // outer: analyse
         // outer: compiletime
-        var asts;
         // outer: Compiler
         var compiler;
         compiler = Compiler(ls);
-        asts = compiler.asts;
-        compiletime(asts, compiler);
-        return asts;
+        compiletime(compiler);
+        compiler.asts = analyse(compiler.asts);
+        return compiler.asts;
     };
     codegen = function(astTransform, asts) {
         // outer: prettyprint
@@ -83,7 +85,7 @@ compiletime = undefined;
     var util;
     util = use("util");
     platform = util.platform;
-    compiletime = function(asts) {
+    compiletime = function(compiler) {
         // outer: JSON
         // outer: util
         // outer: Function
@@ -99,6 +101,8 @@ compiletime = undefined;
         var compiletimevals;
         // outer: Array
         var compiletimeasts;
+        var asts;
+        asts = compiler.asts;
         compiletimeasts = [];
         compiletimevals = [];
         visitAsts = function(asts) {
@@ -136,8 +140,8 @@ compiletime = undefined;
         };
         if(platform === "node" || platform === "web") {
             code = codegen(ast2js, asts);
-            fn = Function("__compiletimevals", code);
-            fn(compiletimevals);
+            fn = Function("__compiletimevals", "compiler", code);
+            fn(compiletimevals, compiler);
         } else  {
             throw "unsupported platform";
         };
