@@ -20,8 +20,8 @@ codegen = undefined;
                 addMacro(this.reverseMacros, pattern, fn);
             },
         };
-        applyMacros(compiler.forwardMacros, compiler);
         compiletime(compiler);
+        //       applyMacros(compiler.forwardMacros, compiler);
         return compiler;
     };
     codegen = function(astTransform, asts) {
@@ -34,7 +34,8 @@ codegen = undefined;
     };
     exports.ls2ls = function(ls) {
         var compiler = ls2compiler(ls);
-        applyMacros(compiler.reverseMacros, compiler);
+        //        applyMacros(compiler.reverseMacros, compiler);
+        compiler.asts = analyse(compiler.asts);
         return codegen(ast2rst, compiler.asts);
     };
 })();
@@ -837,7 +838,9 @@ analyse = undefined;
     };
     var localVars = function(ast, parent) {
         if(ast.kind === "compiletime") {
-            return undefined;
+            ast.scope = {};
+            ast.parent = undefined;
+            parent = ast;
         };
         if(ast.kind === "fn") {
             ast.scope = {};

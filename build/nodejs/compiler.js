@@ -33,7 +33,6 @@ codegen = undefined;
         // outer: this
         // outer: addMacro
         // outer: compiletime
-        // outer: applyMacros
         // outer: rst2ast
         // outer: tokenise
         // outer: parse
@@ -54,8 +53,8 @@ codegen = undefined;
                 addMacro(this.reverseMacros, pattern, fn);
             },
         };
-        applyMacros(compiler.forwardMacros, compiler);
         compiletime(compiler);
+        //       applyMacros(compiler.forwardMacros, compiler);
         return compiler;
     };
     codegen = function(astTransform, asts) {
@@ -74,11 +73,12 @@ codegen = undefined;
     exports.ls2ls = function(ls) {
         // outer: ast2rst
         // outer: codegen
-        // outer: applyMacros
+        // outer: analyse
         // outer: ls2compiler
         var compiler;
         compiler = ls2compiler(ls);
-        applyMacros(compiler.reverseMacros, compiler);
+        //        applyMacros(compiler.reverseMacros, compiler);
+        compiler.asts = analyse(compiler.asts);
         return codegen(ast2rst, compiler.asts);
     };
 })();
@@ -1260,10 +1260,12 @@ analyse = undefined;
         // outer: fns
         // outer: Number
         var argc;
-        // outer: Object
         // outer: undefined
+        // outer: Object
         if(ast.kind === "compiletime") {
-            return undefined;
+            ast.scope = {};
+            ast.parent = undefined;
+            parent = ast;
         };
         if(ast.kind === "fn") {
             ast.scope = {};
