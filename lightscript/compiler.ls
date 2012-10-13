@@ -270,7 +270,7 @@ Ast = undefined;
             var result = this.children.map(function(node) {
                 return node.toList();
             });
-            result.unshift(ast.kind + ":" + ast.val);
+            result.unshift(this.kind + ":" + this.val);
             return result;
         },
     };
@@ -280,7 +280,7 @@ Ast = undefined;
     };
 })();
 exports.test = function(test) {
-    ast = Ast("kind1:val1", "arg1");
+    var ast = Ast("kind1:val1", "arg1");
     test.assertEqual(ast.kind, "kind1");
     test.assertEqual(ast.val, "val1");
     test.assertEqual(ast.children[0], "arg1");

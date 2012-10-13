@@ -381,7 +381,6 @@ tokenise = undefined;
 // Ast object {{{1
 Ast = undefined;
 (function() {
-    // outer: ast
     // outer: require
     // outer: this
     // outer: arguments
@@ -438,13 +437,12 @@ Ast = undefined;
             throw require("util").inspect({error : desc, token : this});
         },
         toList : function() {
-            // outer: ast
             // outer: this
             var result;
             result = this.children.map(function(node) {
                 return node.toList();
             });
-            result.unshift(ast.kind + ":" + ast.val);
+            result.unshift(this.kind + ":" + this.val);
             return result;
         },
     };
@@ -461,7 +459,7 @@ exports.test = function(test) {
     // outer: Array
     // outer: Object
     // outer: Ast
-    // outer: ast
+    var ast;
     ast = Ast("kind1:val1", "arg1");
     test.assertEqual(ast.kind, "kind1");
     test.assertEqual(ast.val, "val1");
