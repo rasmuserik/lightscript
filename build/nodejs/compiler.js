@@ -7,52 +7,42 @@ codegen = undefined;
     // outer: runMacro
     // outer: this
     // outer: addMacro
+    // outer: analyse
+    // outer: compiletime
     // outer: rst2ast
     // outer: tokenise
     // outer: parse
     // outer: Object
-    // outer: analyse
-    // outer: compiletime
     // outer: exports
     // outer: codegen
     var ls2compiler;
-    ls2compiler = function(ls) {
+    ls2compiler = function(src) {
         // outer: runMacro
         // outer: this
         // outer: addMacro
+        var applyMacros;
+        // outer: analyse
+        // outer: compiletime
         // outer: rst2ast
         // outer: tokenise
         // outer: parse
         // outer: Object
-        var applyMacros;
-        // outer: analyse
-        // outer: compiletime
         var compiler;
-        var Compiler;
-        Compiler = function(src) {
-            // outer: this
-            // outer: addMacro
-            // outer: rst2ast
-            // outer: tokenise
-            // outer: parse
-            // outer: Object
-            return {
-                asts : parse(tokenise(src)).map(rst2ast),
-                forwardMacros : {},
-                reverseMacros : {},
-                macro : function(pattern, fn) {
-                    // outer: this
-                    // outer: addMacro
-                    addMacro(this.forwardMacros, pattern, fn);
-                },
-                unmacro : function(pattern, fn) {
-                    // outer: this
-                    // outer: addMacro
-                    addMacro(this.reverseMacros, pattern, fn);
-                },
-            };
+        compiler = {
+            asts : parse(tokenise(src)).map(rst2ast),
+            forwardMacros : {},
+            reverseMacros : {},
+            macro : function(pattern, fn) {
+                // outer: this
+                // outer: addMacro
+                addMacro(this.forwardMacros, pattern, fn);
+            },
+            unmacro : function(pattern, fn) {
+                // outer: this
+                // outer: addMacro
+                addMacro(this.reverseMacros, pattern, fn);
+            },
         };
-        compiler = Compiler(ls);
         compiletime(compiler);
         compiler.asts = analyse(compiler.asts);
         applyMacros = function(ast) {
@@ -79,10 +69,12 @@ codegen = undefined;
         return codegen(ast2js, ls2compiler(ls).asts);
     };
     exports.ls2ls = function(ls) {
-        // outer: ls2compiler
         // outer: ast2rst
         // outer: codegen
-        return codegen(ast2rst, ls2compiler(ls).asts);
+        // outer: ls2compiler
+        var compiler;
+        compiler = ls2compiler(ls);
+        return codegen(ast2rst, compiler.asts);
     };
 })();
 // compile-time-execution {{{1

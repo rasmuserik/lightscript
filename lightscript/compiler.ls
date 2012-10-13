@@ -1,21 +1,18 @@
 // Compiler {{{1
 codegen = undefined;
 (function() {
-    var ls2compiler = function(ls) {
-        var Compiler = function(src) {
-            return {
-                asts : parse(tokenise(src)).map(rst2ast),
-                forwardMacros : {},
-                reverseMacros : {},
-                macro : function(pattern, fn) {
-                    addMacro(this.forwardMacros, pattern, fn);
-                },
-                unmacro : function(pattern, fn) {
-                    addMacro(this.reverseMacros, pattern, fn);
-                },
-            };
+    var ls2compiler = function(src) {
+        var compiler = {
+            asts : parse(tokenise(src)).map(rst2ast),
+            forwardMacros : {},
+            reverseMacros : {},
+            macro : function(pattern, fn) {
+                addMacro(this.forwardMacros, pattern, fn);
+            },
+            unmacro : function(pattern, fn) {
+                addMacro(this.reverseMacros, pattern, fn);
+            },
         };
-        var compiler = Compiler(ls);
         compiletime(compiler);
         compiler.asts = analyse(compiler.asts);
         var applyMacros = function(ast) {
@@ -34,7 +31,8 @@ codegen = undefined;
         return codegen(ast2js, ls2compiler(ls).asts);
     };
     exports.ls2ls = function(ls) {
-        return codegen(ast2rst, ls2compiler(ls).asts);
+        var compiler = ls2compiler(ls);
+        return codegen(ast2rst, compiler.asts);
     };
 })();
 // compile-time-execution {{{1
