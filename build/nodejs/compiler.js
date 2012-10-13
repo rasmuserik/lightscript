@@ -6,22 +6,47 @@ codegen = undefined;
     // outer: prettyprint
     // outer: analyse
     // outer: compiletime
+    // outer: this
+    // outer: addMacro
     // outer: rst2ast
     // outer: tokenise
     // outer: parse
+    // outer: Object
     // outer: exports
     // outer: codegen
     var ls2asts;
-    ls2asts = function(ls) {
-        // outer: compiletime
+    var Compiler;
+    Compiler = function(src) {
+        // outer: this
+        // outer: addMacro
         // outer: rst2ast
-        var asts;
         // outer: tokenise
         // outer: parse
-        var rsts;
-        rsts = parse(tokenise(ls));
-        asts = rsts.map(rst2ast);
-        compiletime(asts);
+        // outer: Object
+        return {
+            asts : parse(tokenise(src)).map(rst2ast),
+            forwardMacros : {},
+            reverseMacros : {},
+            macro : function(pattern, fn) {
+                // outer: this
+                // outer: addMacro
+                addMacro(this.forwardMacros, pattern, fn);
+            },
+            unmacro : function(pattern, fn) {
+                // outer: this
+                // outer: addMacro
+                addMacro(this.reverseMacros, pattern, fn);
+            },
+        };
+    };
+    ls2asts = function(ls) {
+        // outer: compiletime
+        var asts;
+        // outer: Compiler
+        var compiler;
+        compiler = Compiler(ls);
+        asts = compiler.asts;
+        compiletime(asts, compiler);
         return asts;
     };
     codegen = function(astTransform, asts) {

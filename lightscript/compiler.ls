@@ -1,10 +1,22 @@
 // Compiler {{{1
 codegen = undefined;
 (function() {
+    var Compiler = function(src) {
+        return {
+            asts : parse(tokenise(src)).map(rst2ast),
+            forwardMacros : {},
+            reverseMacros : {},
+            macro : function(pattern, fn) {
+                addMacro(this.forwardMacros, pattern, fn);
+            },
+            unmacro : function(pattern, fn) {
+                addMacro(this.reverseMacros, pattern, fn);
+            },
+        };
+    };
     var ls2asts = function(ls) {
-        var rsts = parse(tokenise(ls));
-        var asts = rsts.map(rst2ast);
-        compiletime(asts);
+        var compiler = Compiler(ls);
+        compiletime(compiler);
         return asts;
     };
     codegen = function(astTransform, asts) {
@@ -24,7 +36,8 @@ compiletime = undefined;
 (function() {
     var util = use("util");
     var platform = util.platform;
-    compiletime = function(asts) {
+    compiletime = function(compiler) {
+        asts = compiler.asts
         var compiletimeasts = [];
         var compiletimevals = [];
         var visitAsts = function(asts) {
@@ -56,8 +69,8 @@ compiletime = undefined;
         };
         if(platform === "node" || platform === "web") {
             var code = codegen(ast2js, asts);
-            var fn = Function("__compiletimevals", code);
-            fn(compiletimevals);
+            var fn = Function("__compiletimevals", "compiler", code);
+            fn(compiletimevals, compiler);
         } else  {
             throw "unsupported platform";
         };
