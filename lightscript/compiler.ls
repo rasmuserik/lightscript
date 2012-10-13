@@ -1,24 +1,29 @@
 // Compiler {{{1
 codegen = undefined;
 (function() {
-    var Compiler = function(src) {
-        return {
-            asts : parse(tokenise(src)).map(rst2ast),
-            forwardMacros : {},
-            reverseMacros : {},
-            macro : function(pattern, fn) {
-                addMacro(this.forwardMacros, pattern, fn);
-            },
-            unmacro : function(pattern, fn) {
-                addMacro(this.reverseMacros, pattern, fn);
-            },
+    var ls2compiler = function(ls) {
+        var Compiler = function(src) {
+            return {
+                asts : parse(tokenise(src)).map(rst2ast),
+                forwardMacros : {},
+                reverseMacros : {},
+                macro : function(pattern, fn) {
+                    addMacro(this.forwardMacros, pattern, fn);
+                },
+                unmacro : function(pattern, fn) {
+                    addMacro(this.reverseMacros, pattern, fn);
+                },
+            };
         };
-    };
-    var ls2asts = function(ls) {
         var compiler = Compiler(ls);
         compiletime(compiler);
-        //compiler.asts = analyse(compiler.asts);
-        return compiler.asts;
+        compiler.asts = analyse(compiler.asts);
+        var applyMacros = function(ast) {
+            ast.children = ast.children.map(applyMacros);
+            return runMacro(compiler.forwardMacros, ast);
+        };
+        compiler.asts = compiler.asts.map(applyMacros);
+        return compiler;
     };
     codegen = function(astTransform, asts) {
         asts = analyse(asts);
@@ -26,10 +31,10 @@ codegen = undefined;
         return prettyprint(asts).slice(1);
     };
     exports.ls2js = function(ls) {
-        return codegen(ast2js, ls2asts(ls));
+        return codegen(ast2js, ls2compiler(ls).asts);
     };
     exports.ls2ls = function(ls) {
-        return codegen(ast2rst, ls2asts(ls));
+        return codegen(ast2rst, ls2compiler(ls).asts);
     };
 })();
 // compile-time-execution {{{1
@@ -38,7 +43,7 @@ compiletime = undefined;
     var util = use("util");
     var platform = util.platform;
     compiletime = function(compiler) {
-        asts = compiler.asts
+        var asts = compiler.asts;
         var compiletimeasts = [];
         var compiletimevals = [];
         var visitAsts = function(asts) {

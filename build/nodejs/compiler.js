@@ -4,52 +4,66 @@ codegen = undefined;
     // outer: ast2rst
     // outer: ast2js
     // outer: prettyprint
-    // outer: asts
-    // outer: analyse
-    // outer: compiletime
+    // outer: runMacro
     // outer: this
     // outer: addMacro
     // outer: rst2ast
     // outer: tokenise
     // outer: parse
     // outer: Object
+    // outer: analyse
+    // outer: compiletime
     // outer: exports
     // outer: codegen
-    var ls2asts;
-    var Compiler;
-    Compiler = function(src) {
+    var ls2compiler;
+    ls2compiler = function(ls) {
+        // outer: runMacro
         // outer: this
         // outer: addMacro
         // outer: rst2ast
         // outer: tokenise
         // outer: parse
         // outer: Object
-        return {
-            asts : parse(tokenise(src)).map(rst2ast),
-            forwardMacros : {},
-            reverseMacros : {},
-            macro : function(pattern, fn) {
-                // outer: this
-                // outer: addMacro
-                addMacro(this.forwardMacros, pattern, fn);
-            },
-            unmacro : function(pattern, fn) {
-                // outer: this
-                // outer: addMacro
-                addMacro(this.reverseMacros, pattern, fn);
-            },
-        };
-    };
-    ls2asts = function(ls) {
-        // outer: asts
+        var applyMacros;
         // outer: analyse
         // outer: compiletime
-        // outer: Compiler
         var compiler;
+        var Compiler;
+        Compiler = function(src) {
+            // outer: this
+            // outer: addMacro
+            // outer: rst2ast
+            // outer: tokenise
+            // outer: parse
+            // outer: Object
+            return {
+                asts : parse(tokenise(src)).map(rst2ast),
+                forwardMacros : {},
+                reverseMacros : {},
+                macro : function(pattern, fn) {
+                    // outer: this
+                    // outer: addMacro
+                    addMacro(this.forwardMacros, pattern, fn);
+                },
+                unmacro : function(pattern, fn) {
+                    // outer: this
+                    // outer: addMacro
+                    addMacro(this.reverseMacros, pattern, fn);
+                },
+            };
+        };
         compiler = Compiler(ls);
         compiletime(compiler);
         compiler.asts = analyse(compiler.asts);
-        return compiler.asts;
+        applyMacros = function(ast) {
+            // outer: compiler
+            // outer: runMacro
+            // outer: applyMacros
+            ast.children = ast.children.map(applyMacros);
+            return runMacro(compiler.forwardMacros, ast);
+        };
+        compiler.asts = compiler.asts.map(applyMacros);
+        return compiler;
     };
     codegen = function(astTransform, asts) {
         // outer: prettyprint
@@ -59,16 +73,16 @@ codegen = undefined;
         return prettyprint(asts).slice(1);
     };
     exports.ls2js = function(ls) {
-        // outer: ls2asts
+        // outer: ls2compiler
         // outer: ast2js
         // outer: codegen
-        return codegen(ast2js, ls2asts(ls));
+        return codegen(ast2js, ls2compiler(ls).asts);
     };
     exports.ls2ls = function(ls) {
-        // outer: ls2asts
+        // outer: ls2compiler
         // outer: ast2rst
         // outer: codegen
-        return codegen(ast2rst, ls2asts(ls));
+        return codegen(ast2rst, ls2compiler(ls).asts);
     };
 })();
 // compile-time-execution {{{1
