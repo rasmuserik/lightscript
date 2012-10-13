@@ -147,3 +147,13 @@ if(util.platform === "node") {
         localStorage.getItem(key);
     }};
 };
+// runonce {{{1
+util.runonce = function(fn) {
+    var execute = true;
+    return function() {
+        if(execute) {
+            fn.apply(this, Array.prototype.slice.call(arguments, 0));
+            execute = false;
+        };
+    };
+};

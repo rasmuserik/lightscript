@@ -6,10 +6,10 @@
             ast.val = "y";
         });
         `compiler.macro("id:x", function(ast) {
-            ast.val = "y"; 
+            ast.val = "y";
         });
         //`console.log(require('util').inspect(compiler, false, 10));
-        var x = 17;
+        var y = 17;
         console.log("runtime", `t);
         return 1;
     };

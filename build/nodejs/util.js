@@ -231,3 +231,25 @@ if(util.platform === "node") {
         localStorage.getItem(key);
     }};
 };
+// runonce {{{1
+util.runonce = function(fn) {
+    // outer: false
+    // outer: arguments
+    // outer: Array
+    // outer: this
+    // outer: true
+    var execute;
+    execute = true;
+    return function() {
+        // outer: false
+        // outer: arguments
+        // outer: Array
+        // outer: this
+        // outer: fn
+        // outer: execute
+        if(execute) {
+            fn.apply(this, Array.prototype.slice.call(arguments, 0));
+            execute = false;
+        };
+    };
+};

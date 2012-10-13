@@ -1005,6 +1005,12 @@ runMacro = undefined;
         if(valTable) {
             fn = valTable[node.val] || valTable[""];
         };
+        if(!fn) {
+            valTable = table[""];
+            if(valTable) {
+                fn = valTable[node.val] || valTable[""];
+            };
+        };
         if(fn) {
             node = fn(node) || node;
         };
