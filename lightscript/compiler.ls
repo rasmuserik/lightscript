@@ -1,6 +1,13 @@
 // Compiler {{{1
 codegen = undefined;
 (function() {
+    var applyMacros = function(macros, compiler) {
+        var doIt = function(ast) {
+            ast.children = ast.children.map(doIt);
+            return runMacro(macros, ast);
+        };
+        compiler.asts = compiler.asts.map(doIt);
+    };
     var ls2compiler = function(src) {
         var compiler = {
             asts : parse(tokenise(src)).map(rst2ast),
@@ -13,13 +20,8 @@ codegen = undefined;
                 addMacro(this.reverseMacros, pattern, fn);
             },
         };
+        applyMacros(compiler.forwardMacros, compiler);
         compiletime(compiler);
-        compiler.asts = analyse(compiler.asts);
-        var applyMacros = function(ast) {
-            ast.children = ast.children.map(applyMacros);
-            return runMacro(compiler.forwardMacros, ast);
-        };
-        compiler.asts = compiler.asts.map(applyMacros);
         return compiler;
     };
     codegen = function(astTransform, asts) {
@@ -32,6 +34,7 @@ codegen = undefined;
     };
     exports.ls2ls = function(ls) {
         var compiler = ls2compiler(ls);
+        applyMacros(compiler.reverseMacros, compiler);
         return codegen(ast2rst, compiler.asts);
     };
 })();

@@ -4,25 +4,36 @@ codegen = undefined;
     // outer: ast2rst
     // outer: ast2js
     // outer: prettyprint
-    // outer: runMacro
+    // outer: analyse
     // outer: this
     // outer: addMacro
-    // outer: analyse
     // outer: compiletime
     // outer: rst2ast
     // outer: tokenise
     // outer: parse
     // outer: Object
+    // outer: runMacro
     // outer: exports
     // outer: codegen
     var ls2compiler;
-    ls2compiler = function(src) {
+    var applyMacros;
+    applyMacros = function(macros, compiler) {
         // outer: runMacro
+        var doIt;
+        doIt = function(ast) {
+            // outer: macros
+            // outer: runMacro
+            // outer: doIt
+            ast.children = ast.children.map(doIt);
+            return runMacro(macros, ast);
+        };
+        compiler.asts = compiler.asts.map(doIt);
+    };
+    ls2compiler = function(src) {
         // outer: this
         // outer: addMacro
-        var applyMacros;
-        // outer: analyse
         // outer: compiletime
+        // outer: applyMacros
         // outer: rst2ast
         // outer: tokenise
         // outer: parse
@@ -43,16 +54,8 @@ codegen = undefined;
                 addMacro(this.reverseMacros, pattern, fn);
             },
         };
+        applyMacros(compiler.forwardMacros, compiler);
         compiletime(compiler);
-        compiler.asts = analyse(compiler.asts);
-        applyMacros = function(ast) {
-            // outer: compiler
-            // outer: runMacro
-            // outer: applyMacros
-            ast.children = ast.children.map(applyMacros);
-            return runMacro(compiler.forwardMacros, ast);
-        };
-        compiler.asts = compiler.asts.map(applyMacros);
         return compiler;
     };
     codegen = function(astTransform, asts) {
@@ -71,9 +74,11 @@ codegen = undefined;
     exports.ls2ls = function(ls) {
         // outer: ast2rst
         // outer: codegen
+        // outer: applyMacros
         // outer: ls2compiler
         var compiler;
         compiler = ls2compiler(ls);
+        applyMacros(compiler.reverseMacros, compiler);
         return codegen(ast2rst, compiler.asts);
     };
 })();
