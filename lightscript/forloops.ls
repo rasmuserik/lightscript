@@ -5,7 +5,7 @@
         if(forpart.children[0].isa("id:for")) {
             forpart.assertEqual(forpart.children.length, 6);
             var branch = ast.create("branch:while", forpart.children[3]);
-            block = ast.create('block', '');
+            var block = ast.create("block", "");
             block.children = ast.children.slice(1);
             block.children.push(forpart.children[5]);
             branch.children.push(block);
@@ -52,10 +52,11 @@
 })();
 //`console.log(compiler.asts);
 while(1) {
-    console.log('arvh');
+    console.log("arvh");
 };
 (function() {
-    for(i=0;i<100;++i) {
+    var i = 0  while(i < 100) {
         console.log(i);
-    }
+        ++i;
+    };
 })();
