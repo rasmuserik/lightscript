@@ -4,6 +4,7 @@ exports.nodemain = function() {
     // outer: Array
     // outer: true
     var dir;
+    var savehtml;
     var cp;
     var rstat;
     var mkdir;
@@ -84,11 +85,18 @@ exports.nodemain = function() {
         // outer: require
         require("util").pump(fs.createReadStream(src), fs.createWriteStream(dst), callback);
     };
-    (function() {
+    savehtml = function(filename, html) {
         // outer: RegExp
+        // outer: fs
+        fs.writeFile(filename, html.replace(RegExp("=\"http(s?):/(/[^\"]*\")", "g"), function(_, s, url) {
+            return "=\"/redirect" + (s && "/s") + url;
+        }));
+    };
+    (function() {
+        // outer: console
+        // outer: savehtml
         // outer: cp
         // outer: fs
-        // outer: console
         // outer: src
         // outer: Array
         // outer: dst
@@ -99,10 +107,9 @@ exports.nodemain = function() {
         var files;
         files = rstat(process.env.HOME + "/solsort/sites");
         files.map(function(file) {
-            // outer: RegExp
+            // outer: savehtml
             // outer: cp
             // outer: fs
-            // outer: console
             // outer: src
             // outer: Array
             // outer: require
@@ -115,18 +122,13 @@ exports.nodemain = function() {
                     src + file.name,
                     dst + file.name,
                 ]);
-                //fs.symlinkSync(src + file.name, dst + file.dir + '/' + fs.readlinkSync(src + file.name));
             } else  {
                 if(file.type === "html") {
-                    console.log("HTML:", file.name);
                     fs.readFile(src + file.name, "utf8", function(err, html) {
-                        // outer: RegExp
                         // outer: file
                         // outer: dst
-                        // outer: fs
-                        fs.writeFile(dst + file.name, html.replace(RegExp("=\"http(s?):/(/[^\"]*\")", "g"), function(_, s, url) {
-                            return "=\"/redirect" + (s && "/s") + url;
-                        }));
+                        // outer: savehtml
+                        savehtml(dst + file.name, html);
                     });
                 } else  {
                     cp(src + file.name, dst + file.name, function(err) {
