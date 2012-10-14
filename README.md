@@ -11,6 +11,7 @@ Intended Features:
 - C-family syntax, generalised
 - Easy to transform Abstract Syntax Tree
 - Reversable macros 
+- staged programming
 - Mapping from AST back to source code
 - Stong static typing, including a var/Any type (dynamic a la JavaScript values)
 - Highly portable, with different backends / packaging

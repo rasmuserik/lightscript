@@ -13,20 +13,42 @@ codegen = undefined;
     // outer: parse
     // outer: Object
     // outer: runMacro
+    // outer: undefined
     // outer: exports
     // outer: codegen
     var ls2compiler;
     var applyMacros;
     applyMacros = function(macros, compiler) {
         // outer: runMacro
+        // outer: undefined
         var doIt;
+        var relations;
+        relations = function(ast) {
+            // outer: undefined
+            var prev;
+            prev = undefined;
+            ast.children.forEach(function(child) {
+                // outer: ast
+                // outer: prev
+                if(prev) {
+                    child.prev = prev;
+                    prev.next = child;
+                };
+                child.parent = ast;
+                prev = child;
+            });
+        };
         doIt = function(ast) {
             // outer: macros
             // outer: runMacro
             // outer: doIt
+            if(ast.kind === "compiletime") {
+                return ast;
+            };
             ast.children = ast.children.map(doIt);
             return runMacro(macros, ast);
         };
+        compiler.asts.forEach(relations);
         compiler.asts = compiler.asts.map(doIt);
     };
     ls2compiler = function(src) {

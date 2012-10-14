@@ -2,10 +2,25 @@
 codegen = undefined;
 (function() {
     var applyMacros = function(macros, compiler) {
+        var relations = function(ast) {
+            var prev = undefined;
+            ast.children.forEach(function(child) {
+                if(prev) {
+                    child.prev = prev;
+                    prev.next = child;
+                };
+                child.parent = ast;
+                prev = child;
+            });
+        };
         var doIt = function(ast) {
+            if(ast.kind === "compiletime") {
+                return ast;
+            };
             ast.children = ast.children.map(doIt);
             return runMacro(macros, ast);
         };
+        compiler.asts.forEach(relations);
         compiler.asts = compiler.asts.map(doIt);
     };
     var ls2compiler = function(src) {
