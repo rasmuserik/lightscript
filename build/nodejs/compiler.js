@@ -24,12 +24,15 @@ codegen = undefined;
         var doIt;
         var relations;
         relations = function(ast) {
+            // outer: relations
             // outer: undefined
             var prev;
             prev = undefined;
             ast.children.forEach(function(child) {
                 // outer: ast
                 // outer: prev
+                // outer: relations
+                relations(child);
                 if(prev) {
                     child.prev = prev;
                     prev.next = child;

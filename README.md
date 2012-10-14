@@ -75,24 +75,13 @@ Data layers
 
 # Roadmap
 
-- macro system
-    - (done)compiletime code
-    - (done) refactor rst2js/rst2ast
-    - (done) simpe pattern matching execution
-    - pre-macros with possible break, child-apply, post-macros
-        - syntax/semantics
-            - matchers
-                - "kind:"
-                - "kind:value"
-        - pre-child-apply
-            - possible break
-        - post-child-apply
-    - syntax: for(;;)
-    - remove compiletime residual literal values from generated code
 - app: replace server.ls with publish.ls
-- todo
-    - outerscope global, should have var, - like functions
+- refactor, document and cleanup
+- outerscope global should have var, - like functions
+- js-codegen: make everything expression-like
+- simplify AST - less branch-nodes, always with return value, ie: `(branch:|| a b)` to `(branch:cond (assign:_tmpN a) a b)` etc.
 - Java backend
+- macro system
 - more tests and docs
 - Static type system / type inference - rework type inference (including boxing) (fix bug {var x{ { { x=...}}}})
 - sourcemaps

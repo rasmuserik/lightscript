@@ -5,6 +5,7 @@ codegen = undefined;
         var relations = function(ast) {
             var prev = undefined;
             ast.children.forEach(function(child) {
+                relations(child);
                 if(prev) {
                     child.prev = prev;
                     prev.next = child;
