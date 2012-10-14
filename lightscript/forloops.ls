@@ -27,7 +27,7 @@
         };
     };
     var incrs = "++ -- += -= /= *=".split(" ");
-    compiler.unmacro("branch:while", function(ast) {
+    /*compiler.unmacro("branch:while", function(ast) {
         console.log(1);
         if(ast.prev && ast.prev.kind === "assign") {
             var id = ast.prev.val;
@@ -48,6 +48,7 @@
             };
         };
     });
+    */
 })();
 //`console.log(compiler.asts);
 while(1) {
