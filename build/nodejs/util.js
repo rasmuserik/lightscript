@@ -253,3 +253,35 @@ util.runonce = function(fn) {
         };
     };
 };
+// flatteArray {{{1
+util.flattenArray = function(arr) {
+    var flatten;
+    // outer: Array
+    var acc;
+    acc = [];
+    flatten = function(arr) {
+        // outer: acc
+        // outer: flatten
+        // outer: Array
+        if(Array.isArray(arr)) {
+            arr.forEach(flatten);
+        } else  {
+            acc.push(arr);
+        };
+    };
+    flatten(arr);
+    return acc;
+};
+// valmap {{{1
+util.valmap = function(obj, fn) {
+    // outer: Object
+    var result;
+    result = {};
+    Object.keys(obj).forEach(function(key) {
+        // outer: obj
+        // outer: fn
+        // outer: result
+        result[key] = fn(obj[key]);
+    });
+    return result;
+};

@@ -157,3 +157,24 @@ util.runonce = function(fn) {
         };
     };
 };
+// flatteArray {{{1
+util.flattenArray = function(arr) {
+    var acc = [];
+    var flatten = function(arr) {
+        if(Array.isArray(arr)) {
+            arr.forEach(flatten);
+        } else  {
+            acc.push(arr);
+        };
+    };
+    flatten(arr);
+    return acc;
+};
+// valmap {{{1
+util.valmap = function(obj, fn) {
+    var result = {};
+    Object.keys(obj).forEach(function(key) {
+        result[key] = fn(obj[key]);
+    });
+    return result;
+};
