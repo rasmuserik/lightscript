@@ -51,11 +51,9 @@
     */
 })();
 //`console.log(compiler.asts);
-while(1) {
-    console.log("arvh");
-};
 (function() {
-    var i = 0  while(i < 100) {
+    var i = 0;
+    while(i < 100) {
         console.log(i);
         ++i;
     };
