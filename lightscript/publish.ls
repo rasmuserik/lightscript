@@ -54,8 +54,7 @@ exports.nodemain = function() {
                     console.log('HTML:', file.name);
                     fs.readFile(src + file.name, 'utf8', function(err, html) {
                         fs.writeFile(dst + file.name, html.replace(RegExp('="http(s?):/(/[^"]*")', "g"), function(_, s, url) {
-                            console.log('="/redirect' + s + url);
-                            return '="/redirect' + s + url;
+                            return '="/redirect' + (s && '/s') + url;
                         }));
                     });
                 } else {

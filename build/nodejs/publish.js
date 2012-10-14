@@ -120,15 +120,12 @@ exports.nodemain = function() {
                 if(file.type === "html") {
                     console.log("HTML:", file.name);
                     fs.readFile(src + file.name, "utf8", function(err, html) {
-                        // outer: console
                         // outer: RegExp
                         // outer: file
                         // outer: dst
                         // outer: fs
                         fs.writeFile(dst + file.name, html.replace(RegExp("=\"http(s?):/(/[^\"]*\")", "g"), function(_, s, url) {
-                            // outer: console
-                            console.log("=\"/redirect" + s + url);
-                            return "=\"/redirect" + s + url;
+                            return "=\"/redirect" + (s && "/s") + url;
                         }));
                     });
                 } else  {
