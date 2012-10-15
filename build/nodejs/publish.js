@@ -1,9 +1,10 @@
 exports.nodemain = function() {
+    // outer: undefined
     // outer: process
     // outer: RegExp
     // outer: Array
     // outer: true
-    var dir;
+    // outer: dir
     var savehtml;
     var cp;
     var rstat;
@@ -44,25 +45,21 @@ exports.nodemain = function() {
         // outer: Object
         // outer: fs
         var recurse;
-        // outer: dir
         // outer: Array
         var acc;
         acc = acc || [];
-        dir = "";
         recurse = function(path) {
             // outer: acc
             // outer: true
             // outer: RegExp
+            // outer: root
             // outer: Object
             var fobj;
             // outer: recurse
-            // outer: root
-            // outer: dir
             // outer: fs
             var stat;
             stat = fs.lstatSync(path);
             if(stat.isDirectory()) {
-                dir = path.replace(root, "");
                 fs.readdirSync(path).map(function(name) {
                     // outer: path
                     return path + "/" + name;
@@ -70,7 +67,6 @@ exports.nodemain = function() {
             } else  {
                 fobj = {name : path.replace(root, "")};
                 fobj.type = path.replace(RegExp("^[^.]*\\."), "");
-                fobj.dir = dir;
                 if(stat.isSymbolicLink()) {
                     fobj.symlink = true;
                 };
@@ -94,6 +90,8 @@ exports.nodemain = function() {
     };
     (function() {
         // outer: console
+        // outer: Object
+        // outer: undefined
         // outer: savehtml
         // outer: cp
         // outer: fs
@@ -107,6 +105,9 @@ exports.nodemain = function() {
         var files;
         files = rstat(process.env.HOME + "/solsort/sites");
         files.map(function(file) {
+            // outer: console
+            // outer: Object
+            // outer: undefined
             // outer: savehtml
             // outer: cp
             // outer: fs
@@ -115,7 +116,7 @@ exports.nodemain = function() {
             // outer: require
             // outer: dst
             // outer: mkdir
-            mkdir(dst + file.dir);
+            mkdir(dst + file.name.split("/").slice(0, - 1).join("/"));
             if(file.symlink) {
                 require("child_process").spawn("cp", [
                     "-a",
@@ -129,6 +130,47 @@ exports.nodemain = function() {
                         // outer: dst
                         // outer: savehtml
                         savehtml(dst + file.name, html);
+                    });
+                } else if(file.type === "md") {
+                    fs.readFile(src + file.name, "utf8", function(err, markdown) {
+                        // outer: console
+                        // outer: fs
+                        // outer: src
+                        var templatename;
+                        // outer: require
+                        // outer: Object
+                        var doc;
+                        // outer: undefined
+                        // outer: file
+                        if(file.name.split("/").slice(- 1)[0] === "README.md") {
+                            return undefined;
+                        };
+                        doc = {title : file.name.split("/").slice(- 1)[0].slice(0, - 3)};
+                        markdown = markdown.split("\n");
+                        if(markdown[0][0] === "%") {
+                            doc.title = markdown[0].slice(1).trim();
+                            markdown.shift();
+                            if(markdown[0][0] === "%") {
+                                doc.author = markdown[0].slice(1).trim();
+                                markdown.shift();
+                                if(markdown[0][0] === "%") {
+                                    doc.date = markdown[0].slice(1).trim();
+                                    markdown.shift();
+                                };
+                            };
+                        };
+                        doc.content = require("markdown").markdown.toHTML(markdown.join("\n"));
+                        templatename = src + file.name.split("/").slice(0, - 1).join("/") + "/markdown.template.html";
+                        fs.readFile(templatename, function(err, html) {
+                            // outer: templatename
+                            // outer: file
+                            // outer: console
+                            if(err) {
+                                console.log(file.name);
+                                return console.log("could not access:", templatename);
+                            };
+                        });
+                        //console.log(src + file.name, doc, file.dir);
                     });
                 } else  {
                     cp(src + file.name, dst + file.name, function(err) {
