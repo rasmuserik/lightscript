@@ -39,7 +39,18 @@ exports.nodemain = function() {
     var cp = function(src, dst, callback) {
         require("util").pump(fs.createReadStream(src), fs.createWriteStream(dst), callback);
     };
+    var sitemaps = {};
     var savehtml = function(filename, html) {
+        var site = filename.split("/")[1];
+        var path = filename.split("/").slice(2).join("/");
+        var sitemap = sitemaps[site] = sitemaps[site] || {};
+        sitemap[path] = {};
+        console.log(sitemaps);
+        html.replace(RegExp("<title>([\\s\\S]*)</title>"), function(_, title) {
+            console.log("here");
+            sitemap[path].title = title;
+        });
+        filename = dst + filename;
         fs.writeFile(filename, html.replace(RegExp("=\"http(s?):/(/[^\"]*\")", "g"), function(_, s, url) {
             return "=\"/redirect" + (s && "/s") + url;
         }));
@@ -63,7 +74,7 @@ exports.nodemain = function() {
             } else  {
                 if(file.type === "html") {
                     fs.readFile(src + file.name, "utf8", function(err, html) {
-                        savehtml(dst + file.name, html);
+                        savehtml(file.name, html);
                     });
                 } else if(file.type === "md") {
                     fs.readFile(src + file.name, "utf8", function(err, markdown) {
@@ -92,7 +103,7 @@ exports.nodemain = function() {
                                 return console.log("could not access:", templatename);
                             };
                             html = require("mustache").to_html(html, mustacheInclude(doc));
-                            savehtml(dst + file.name.slice(0, - 2) + "html", html);
+                            savehtml(file.name.slice(0, - 2) + "html", html);
                         });
                         //console.log(src + file.name, doc, file.dir);
                     });
