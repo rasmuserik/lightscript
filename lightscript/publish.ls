@@ -42,13 +42,13 @@ exports.nodemain = function() {
     var sitemaps = {};
     var includeFiles = {};
     var replacer = function(str, obj) {
-        return str.replace(RegExp('\\{\\{([^{}]*)\\}\\}', "g"), function(_, s) {
-            s = s.split(' ');
+        return str.replace(RegExp("\\{\\{([^{}]*)\\}\\}", "g"), function(_, s) {
+            s = s.split(" ");
             if(obj[s[0]]) {
                 return obj[s[0]];
-            }
+            };
         });
-    }
+    };
     var savehtml = function(filename, html, replace) {
         replace = replace || {};
         html.replace(RegExp("<title>([\\s\\S]*)</title>"), function(_, title) {
@@ -100,7 +100,8 @@ exports.nodemain = function() {
                                 };
                             };
                         };
-                        doc.content = require("markdown").markdown.toHTML(markdown.join("\n"));
+                        markdown = markdown.join("\n").replace(RegExp("<!--.*?-->", "g"), "");
+                        doc.content = require("markdown").markdown.toHTML(markdown);
                         var templatename = src + file.name.split("/").slice(0, - 1).join("/") + "/markdown.template.html";
                         fs.readFile(templatename, "utf8", function(err, html) {
                             if(err) {

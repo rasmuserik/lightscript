@@ -123,6 +123,7 @@ exports.nodemain = function() {
     };
     (function() {
         // outer: console
+        // outer: RegExp
         // outer: Object
         // outer: undefined
         // outer: savehtml
@@ -139,6 +140,7 @@ exports.nodemain = function() {
         files = rstat(process.env.HOME + "/solsort/sites");
         files.map(function(file) {
             // outer: console
+            // outer: RegExp
             // outer: Object
             // outer: undefined
             // outer: savehtml
@@ -171,6 +173,7 @@ exports.nodemain = function() {
                         // outer: src
                         var templatename;
                         // outer: require
+                        // outer: RegExp
                         // outer: Object
                         var doc;
                         // outer: undefined
@@ -192,7 +195,8 @@ exports.nodemain = function() {
                                 };
                             };
                         };
-                        doc.content = require("markdown").markdown.toHTML(markdown.join("\n"));
+                        markdown = markdown.join("\n").replace(RegExp("<!--.*?-->", "g"), "");
+                        doc.content = require("markdown").markdown.toHTML(markdown);
                         templatename = src + file.name.split("/").slice(0, - 1).join("/") + "/markdown.template.html";
                         fs.readFile(templatename, "utf8", function(err, html) {
                             // outer: doc
