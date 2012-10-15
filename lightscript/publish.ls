@@ -13,7 +13,7 @@ exports.nodemain = function() {
             };
             mkdir(path.slice(0, - 1).join("/"));
             fs.mkdirSync(path.join("/"));
-            dir[path] = true;
+            dirs[path] = true;
         };
     };
     var rstat = function(root) {
@@ -40,26 +40,31 @@ exports.nodemain = function() {
         require("util").pump(fs.createReadStream(src), fs.createWriteStream(dst), callback);
     };
     var sitemaps = {};
-    var savehtml = function(filename, html) {
+    var includeFiles = {};
+    var replacer = function(str, obj) {
+        return str.replace(RegExp('\\{\\{([^{}]*)\\}\\}', "g"), function(_, s) {
+            s = s.split(' ');
+            if(obj[s[0]]) {
+                return obj[s[0]];
+            }
+        });
+    }
+    var savehtml = function(filename, html, replace) {
+        replace = replace || {};
+        html.replace(RegExp("<title>([\\s\\S]*)</title>"), function(_, title) {
+            replace.title = replace.title || title;
+        });
+        html = replacer(html, replace);
         var site = filename.split("/")[1];
         var path = filename.split("/").slice(2).join("/");
         var sitemap = sitemaps[site] = sitemaps[site] || {};
         sitemap[path] = {};
-        console.log(sitemaps);
-        html.replace(RegExp("<title>([\\s\\S]*)</title>"), function(_, title) {
-            console.log("here");
-            sitemap[path].title = title;
-        });
+        sitemap[path].title = replace.title;
+        //console.log(sitemaps);
         filename = dst + filename;
         fs.writeFile(filename, html.replace(RegExp("=\"http(s?):/(/[^\"]*\")", "g"), function(_, s, url) {
             return "=\"/redirect" + (s && "/s") + url;
         }));
-    };
-    var mustacheInclude = function(obj) {
-        obj.include = function(arg) {
-            console.log(arg);
-        };
-        return obj;
     };
     (function() {
         var files = rstat(process.env.HOME + "/solsort/sites");
@@ -102,10 +107,8 @@ exports.nodemain = function() {
                                 console.log(file.name);
                                 return console.log("could not access:", templatename);
                             };
-                            html = require("mustache").to_html(html, mustacheInclude(doc));
-                            savehtml(file.name.slice(0, - 2) + "html", html);
+                            savehtml(file.name.slice(0, - 2) + "html", html, doc);
                         });
-                        //console.log(src + file.name, doc, file.dir);
                     });
                 } else  {
                     cp(src + file.name, dst + file.name, function(err) {

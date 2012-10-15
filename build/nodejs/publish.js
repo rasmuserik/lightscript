@@ -4,9 +4,9 @@ exports.nodemain = function() {
     // outer: RegExp
     // outer: Array
     // outer: true
-    // outer: dir
-    var mustacheInclude;
     var savehtml;
+    var replacer;
+    var includeFiles;
     var sitemaps;
     var cp;
     var rstat;
@@ -27,7 +27,6 @@ exports.nodemain = function() {
     dirs = {};
     mkdir = function(path) {
         // outer: true
-        // outer: dir
         // outer: mkdir
         // outer: fs
         // outer: dirs
@@ -38,7 +37,7 @@ exports.nodemain = function() {
             };
             mkdir(path.slice(0, - 1).join("/"));
             fs.mkdirSync(path.join("/"));
-            dir[path] = true;
+            dirs[path] = true;
         };
     };
     rstat = function(root) {
@@ -84,43 +83,45 @@ exports.nodemain = function() {
         require("util").pump(fs.createReadStream(src), fs.createWriteStream(dst), callback);
     };
     sitemaps = {};
-    savehtml = function(filename, html) {
+    includeFiles = {};
+    replacer = function(str, obj) {
+        // outer: RegExp
+        return str.replace(RegExp("\\{\\{([^{}]*)\\}\\}", "g"), function(_, s) {
+            // outer: obj
+            s = s.split(" ");
+            if(obj[s[0]]) {
+                return obj[s[0]];
+            };
+        });
+    };
+    savehtml = function(filename, html, replace) {
         // outer: fs
         // outer: dst
-        // outer: RegExp
-        // outer: console
-        // outer: Object
         // outer: sitemaps
         var sitemap;
         var path;
         var site;
+        // outer: replacer
+        // outer: RegExp
+        // outer: Object
+        replace = replace || {};
+        html.replace(RegExp("<title>([\\s\\S]*)</title>"), function(_, title) {
+            // outer: replace
+            replace.title = replace.title || title;
+        });
+        html = replacer(html, replace);
         site = filename.split("/")[1];
         path = filename.split("/").slice(2).join("/");
         sitemap = sitemaps[site] = sitemaps[site] || {};
         sitemap[path] = {};
-        console.log(sitemaps);
-        html.replace(RegExp("<title>([\\s\\S]*)</title>"), function(_, title) {
-            // outer: path
-            // outer: sitemap
-            // outer: console
-            console.log("here");
-            sitemap[path].title = title;
-        });
+        sitemap[path].title = replace.title;
+        //console.log(sitemaps);
         filename = dst + filename;
         fs.writeFile(filename, html.replace(RegExp("=\"http(s?):/(/[^\"]*\")", "g"), function(_, s, url) {
             return "=\"/redirect" + (s && "/s") + url;
         }));
     };
-    mustacheInclude = function(obj) {
-        // outer: console
-        obj.include = function(arg) {
-            // outer: console
-            console.log(arg);
-        };
-        return obj;
-    };
     (function() {
-        // outer: mustacheInclude
         // outer: console
         // outer: Object
         // outer: undefined
@@ -137,7 +138,6 @@ exports.nodemain = function() {
         var files;
         files = rstat(process.env.HOME + "/solsort/sites");
         files.map(function(file) {
-            // outer: mustacheInclude
             // outer: console
             // outer: Object
             // outer: undefined
@@ -166,7 +166,6 @@ exports.nodemain = function() {
                 } else if(file.type === "md") {
                     fs.readFile(src + file.name, "utf8", function(err, markdown) {
                         // outer: savehtml
-                        // outer: mustacheInclude
                         // outer: console
                         // outer: fs
                         // outer: src
@@ -196,10 +195,8 @@ exports.nodemain = function() {
                         doc.content = require("markdown").markdown.toHTML(markdown.join("\n"));
                         templatename = src + file.name.split("/").slice(0, - 1).join("/") + "/markdown.template.html";
                         fs.readFile(templatename, "utf8", function(err, html) {
-                            // outer: savehtml
                             // outer: doc
-                            // outer: mustacheInclude
-                            // outer: require
+                            // outer: savehtml
                             // outer: templatename
                             // outer: file
                             // outer: console
@@ -207,10 +204,8 @@ exports.nodemain = function() {
                                 console.log(file.name);
                                 return console.log("could not access:", templatename);
                             };
-                            html = require("mustache").to_html(html, mustacheInclude(doc));
-                            savehtml(file.name.slice(0, - 2) + "html", html);
+                            savehtml(file.name.slice(0, - 2) + "html", html, doc);
                         });
-                        //console.log(src + file.name, doc, file.dir);
                     });
                 } else  {
                     cp(src + file.name, dst + file.name, function(err) {
