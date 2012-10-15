@@ -56,6 +56,8 @@ if(require("./util").platform === "node") {
                 if(result[title]) {
                     throw "duplicate title in \"" + filename + "\": " + title;
                 };
+                //console.log(name2url(title) + '.md');
+                //               fs.writeFile('/home/rasmuserik/' + name2url(title).replace("__", "_") + '.md', '%title\n%\n%\n\n' + '# ' + elem);
                 result[title] = {
                     title : title,
                     url : name2url(title),

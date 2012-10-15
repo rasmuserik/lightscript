@@ -44,10 +44,16 @@ exports.nodemain = function() {
             return "=\"/redirect" + (s && "/s") + url;
         }));
     };
+    var mustacheInclude = function(obj) {
+        obj.include = function(arg) {
+            console.log(arg);
+        };
+        return obj;
+    };
     (function() {
         var files = rstat(process.env.HOME + "/solsort/sites");
         files.map(function(file) {
-            mkdir(dst + file.name.split('/').slice(0,-1).join('/'));
+            mkdir(dst + file.name.split("/").slice(0, - 1).join("/"));
             if(file.symlink) {
                 require("child_process").spawn("cp", [
                     "-a",
@@ -61,10 +67,10 @@ exports.nodemain = function() {
                     });
                 } else if(file.type === "md") {
                     fs.readFile(src + file.name, "utf8", function(err, markdown) {
-                        if(file.name.split('/').slice(-1)[0] === 'README.md') {
+                        if(file.name.split("/").slice(- 1)[0] === "README.md") {
                             return undefined;
-                        }
-                        var doc = {title: file.name.split('/').slice(-1)[0].slice(0, -3)};
+                        };
+                        var doc = {title : file.name.split("/").slice(- 1)[0].slice(0, - 3)};
                         markdown = markdown.split("\n");
                         if(markdown[0][0] === "%") {
                             doc.title = markdown[0].slice(1).trim();
@@ -78,13 +84,15 @@ exports.nodemain = function() {
                                 };
                             };
                         };
-                        doc.content = require("markdown").markdown.toHTML(markdown.join('\n'));
-                        templatename = src + file.name.split('/').slice(0, -1).join('/') + '/markdown.template.html';
-                        fs.readFile(templatename, function(err, html) {
+                        doc.content = require("markdown").markdown.toHTML(markdown.join("\n"));
+                        var templatename = src + file.name.split("/").slice(0, - 1).join("/") + "/markdown.template.html";
+                        fs.readFile(templatename, "utf8", function(err, html) {
                             if(err) {
                                 console.log(file.name);
-                                return console.log('could not access:', templatename);
-                            }
+                                return console.log("could not access:", templatename);
+                            };
+                            html = require("mustache").to_html(html, mustacheInclude(doc));
+                            savehtml(dst + file.name.slice(0, - 2) + "html", html);
                         });
                         //console.log(src + file.name, doc, file.dir);
                     });

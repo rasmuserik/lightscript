@@ -5,6 +5,7 @@ exports.nodemain = function() {
     // outer: Array
     // outer: true
     // outer: dir
+    var mustacheInclude;
     var savehtml;
     var cp;
     var rstat;
@@ -88,7 +89,16 @@ exports.nodemain = function() {
             return "=\"/redirect" + (s && "/s") + url;
         }));
     };
+    mustacheInclude = function(obj) {
+        // outer: console
+        obj.include = function(arg) {
+            // outer: console
+            console.log(arg);
+        };
+        return obj;
+    };
     (function() {
+        // outer: mustacheInclude
         // outer: console
         // outer: Object
         // outer: undefined
@@ -105,6 +115,7 @@ exports.nodemain = function() {
         var files;
         files = rstat(process.env.HOME + "/solsort/sites");
         files.map(function(file) {
+            // outer: mustacheInclude
             // outer: console
             // outer: Object
             // outer: undefined
@@ -133,6 +144,9 @@ exports.nodemain = function() {
                     });
                 } else if(file.type === "md") {
                     fs.readFile(src + file.name, "utf8", function(err, markdown) {
+                        // outer: dst
+                        // outer: savehtml
+                        // outer: mustacheInclude
                         // outer: console
                         // outer: fs
                         // outer: src
@@ -161,7 +175,12 @@ exports.nodemain = function() {
                         };
                         doc.content = require("markdown").markdown.toHTML(markdown.join("\n"));
                         templatename = src + file.name.split("/").slice(0, - 1).join("/") + "/markdown.template.html";
-                        fs.readFile(templatename, function(err, html) {
+                        fs.readFile(templatename, "utf8", function(err, html) {
+                            // outer: dst
+                            // outer: savehtml
+                            // outer: doc
+                            // outer: mustacheInclude
+                            // outer: require
                             // outer: templatename
                             // outer: file
                             // outer: console
@@ -169,6 +188,8 @@ exports.nodemain = function() {
                                 console.log(file.name);
                                 return console.log("could not access:", templatename);
                             };
+                            html = require("mustache").to_html(html, mustacheInclude(doc));
+                            savehtml(dst + file.name.slice(0, - 2) + "html", html);
                         });
                         //console.log(src + file.name, doc, file.dir);
                     });
