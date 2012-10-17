@@ -1,5 +1,5 @@
 (function() {
-    var V2d = module.require("./V2d");
+    var V2d = require("./v2d").V2d;
     // webcanvas, exports.run
     var started = false;
     var enemies = [];
@@ -64,13 +64,14 @@
         count = count + 1;
         if(enemies["length"] < count / 100) {
             enemies.push({
-                size : size * Math.random()["+."](5),
-                pos : v2d.create(w + size * 2, Math.random() * (h - size)),
-                v : v2d.create((Math.random() * size)["*-"](0.9), 0),
+                size : size * Math.random() + .5,
+                pos : new V2d(w + size * 2, Math.random() * (h - size)),
+                v : new V2d((Math.random() * size) * -(0.9), 0),
             });
         };
         enemies = animate.call(null, enemies, "#f00");
         if(newBullet) {
+            console.log('newbullet');
             bullets.push({
                 size : bulletSize,
                 pos : bulletSource,
@@ -94,15 +95,18 @@
         });
         window.setTimeout(blobMain, Math.max(0, 50 - (Date.now() - startTime)));
     };
-    exports["run"] = function() {
-        running = true;
-        ctx;
-        canvas;
-        h;
-        w;
-        webcanvas.init({update : function(ctx_, w_, h_, canvas_) {
+    running = true;
+    canvas = document.getElementById('canvas');
+    canvas.onmousedown = function() {
+        console.log('blahblah');
+    }
+    ctx = canvas.getContext('2d');
+    h = ctx.height = canvas.height = canvas.offsetHeight;
+    w = ctx.width = canvas.width = canvas.offsetWidth;
+    exports.run = function() {
+            running = true;
             var size = h / 30;
-            var bulletSource = v2d.create(0, h / 2);
+            var bulletSource = new V2d(0, h / 2);
             var wallcount = 30;
             var i = 0;
             var enemies = [];
@@ -111,19 +115,20 @@
             var count = 0;
             while(i <= wallcount) {
                 bullets.push({
-                    pos : v2d.create(Math.random() * size, i * h / wallcount),
-                    v : v2d.create(0, 0),
+                    pos : new V2d(Math.random() * size, i * h / wallcount),
+                    v : new V2d(0, 0),
                     size : h / wallcount,
                 });
                 i = i + 1;
             };
+            newBullet;
             canvas["onmousedown"] = function(e) {
-                var newBullet = v2d.create(e["clientX"], e["clientY"]);
+                newBullet = new V2d(e["clientX"], e["clientY"]);
                 var E = e;
+                console.log('here!!!');
             };
             if(!started) {
                 blobMain.call();
             };
-        }});
-    };
+        };
 })();
