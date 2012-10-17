@@ -285,6 +285,11 @@ Ast = undefined;
     Ast.prototype.error = function(desc) {
         throw require("util").inspect({error : desc, token : this});
     };
+    Ast.assert = function(ok, desc) {
+        if(!ok) {
+            this.error(desc);
+        };
+    };
     Ast.prototype.toList = function() {
         var result = this.children.map(function(node) {
             return node.toList();
@@ -329,11 +334,6 @@ prettyprint = undefined;
         dbp : 0,
         space : " ",
         children : [],
-        assert : function(ok, desc) {
-            if(!ok) {
-                this.error(desc);
-            };
-        },
     });
     // parser {{{2
     var token = undefined;

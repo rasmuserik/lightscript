@@ -467,6 +467,12 @@ Ast = undefined;
         // outer: require
         throw require("util").inspect({error : desc, token : this});
     };
+    Ast.assert = function(ok, desc) {
+        // outer: this
+        if(!ok) {
+            this.error(desc);
+        };
+    };
     Ast.prototype.toList = function() {
         // outer: this
         var result;
@@ -559,12 +565,6 @@ prettyprint = undefined;
         dbp : 0,
         space : " ",
         children : [],
-        assert : function(ok, desc) {
-            // outer: this
-            if(!ok) {
-                this.error(desc);
-            };
-        },
     });
     // parser {{{2
     token = undefined;
