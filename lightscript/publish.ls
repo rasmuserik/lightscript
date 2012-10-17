@@ -68,18 +68,18 @@ exports.nodemain = function() {
     };
     (function() {
         var files = rstat(process.env.HOME + "/solsort/sites");
-        sites = {};
+        var sites = {};
         files.map(function(file) {
             mkdir(dst + file.name.split("/").slice(0, - 1).join("/"));
-            sitename = file.name.split('/')[1];
+            var sitename = file.name.split("/")[1];
             if(!sites[sitename]) {
                 sites[sitename] = {};
-                cp('./build/webjs/solsort.js', dst + '/' + sitename + '/solsort.js', function(err) {
-                    if(err){
-                        console.log('Error:', err, file);
-                    }
-                 });
-            }
+                cp("./build/webjs/solsort.js", dst + "/" + sitename + "/solsort.js", function(err) {
+                    if(err) {
+                        console.log("Error:", err, file);
+                    };
+                });
+            };
             if(file.symlink) {
                 require("child_process").spawn("cp", [
                     "-a",
