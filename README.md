@@ -76,6 +76,12 @@ Data layers
 # Roadmap
 
 - app: replace server.ls with publish.ls
+- app-framework
+- port old apps
+    - timelogger
+    - notescore
+    - dkcities / europe version
+    - `tsar_tnoc` + cute-graphics
 - refactor, document and cleanup
 - outerscope global should have var, - like functions
 - js-codegen: make everything expression-like

@@ -1,4 +1,5 @@
 (function() {
+    // outer: document
     // outer: console
     // outer: null
     // outer: Object
@@ -6,7 +7,6 @@
     // outer: Math
     // outer: window
     // outer: exports
-    // outer: document
     var blobMain;
     var animate;
     var gameOver;
@@ -189,20 +189,11 @@
         });
         window.setTimeout(blobMain, Math.max(0, 50 - (Date.now() - startTime)));
     };
-    running = true;
-    canvas = document.getElementById("canvas");
-    canvas.onmousedown = function() {
-        // outer: console
-        console.log("blahblah");
-    };
-    ctx = canvas.getContext("2d");
-    h = ctx.height = canvas.height = canvas.offsetHeight;
-    w = ctx.width = canvas.width = canvas.offsetWidth;
+    canvas = ctx = w = h = undefined;
     exports.run = function() {
         // outer: console
         // outer: blobMain
         // outer: started
-        // outer: canvas
         // outer: newBullet
         // outer: Math
         // outer: Object
@@ -215,8 +206,23 @@
         var wallcount;
         // outer: V2d
         // outer: bulletSource
-        // outer: h
         // outer: size
+        // outer: true
+        // outer: running
+        // outer: w
+        // outer: h
+        // outer: ctx
+        // outer: document
+        // outer: canvas
+        canvas = document.getElementById("canvas");
+        canvas.onmousedown = function() {
+            // outer: console
+            console.log("blahblah");
+        };
+        ctx = canvas.getContext("2d");
+        h = ctx.height = canvas.height = canvas.offsetHeight;
+        w = ctx.width = canvas.width = canvas.offsetWidth;
+        running = true;
         size = h / 30;
         bulletSource = new V2d(0, h / 2);
         wallcount = 30;

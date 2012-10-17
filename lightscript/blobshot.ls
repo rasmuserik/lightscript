@@ -95,7 +95,8 @@
         });
         window.setTimeout(blobMain, Math.max(0, 50 - (Date.now() - startTime)));
     };
-    running = true;
+    canvas = ctx = w = h = undefined;
+    exports.run = function() {
     canvas = document.getElementById('canvas');
     canvas.onmousedown = function() {
         console.log('blahblah');
@@ -103,7 +104,6 @@
     ctx = canvas.getContext('2d');
     h = ctx.height = canvas.height = canvas.offsetHeight;
     w = ctx.width = canvas.width = canvas.offsetWidth;
-    exports.run = function() {
             running = true;
             var size = h / 30;
             var bulletSource = new V2d(0, h / 2);
