@@ -1,5 +1,6 @@
 exports.nodemain = function() {
     // outer: undefined
+    // outer: file
     // outer: process
     // outer: RegExp
     // outer: Array
@@ -123,50 +124,44 @@ exports.nodemain = function() {
     };
     (function() {
         // outer: RegExp
+        // outer: Object
         // outer: undefined
         // outer: savehtml
-        // outer: console
         // outer: fs
         // outer: src
         // outer: Array
+        // outer: file
+        // outer: console
+        // outer: require
         // outer: cp
         // outer: dst
         // outer: mkdir
-        // outer: require
-        // outer: Object
-        var sites;
         // outer: process
         // outer: rstat
         var files;
         files = rstat(process.env.HOME + "/solsort/sites");
-        sites = {};
+        mkdir(dst + "/common/js/");
+        cp("./build/webjs/solsort.js", dst + "/common/js/solsort.js", function(err) {
+            // outer: file
+            // outer: console
+            if(err) {
+                console.log("Error:", err, file);
+            };
+        });
         files.map(function(file) {
+            // outer: console
             // outer: RegExp
+            // outer: Object
             // outer: undefined
             // outer: savehtml
-            // outer: console
+            // outer: cp
             // outer: fs
             // outer: src
             // outer: Array
             // outer: require
-            // outer: cp
-            // outer: Object
-            // outer: sites
-            var sitename;
             // outer: dst
             // outer: mkdir
             mkdir(dst + file.name.split("/").slice(0, - 1).join("/"));
-            sitename = file.name.split("/")[1];
-            if(!sites[sitename]) {
-                sites[sitename] = {};
-                cp("./build/webjs/solsort.js", dst + "/" + sitename + "/solsort.js", function(err) {
-                    // outer: file
-                    // outer: console
-                    if(err) {
-                        console.log("Error:", err, file);
-                    };
-                });
-            };
             if(file.symlink) {
                 require("child_process").spawn("cp", [
                     "-a",

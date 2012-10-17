@@ -1,4 +1,4 @@
-//(function() {
+(function() {
 // ## Dependencies
 /*global localStorage: true*/
 //var webutil = require('webutil');
@@ -6,7 +6,6 @@
 //
 //
 // ## Game state
-difficulty = undefined;
 prevtime = undefined;
 giveup = undefined;
 selected = {};
@@ -30,20 +29,13 @@ visibleStyle = undefined;
 selectedStyle = undefined;
 unselectedStyle = undefined;
 cardPositions = undefined;
-//
 // ## Layout
 doLayout = function() {
     var $content = $("#content");
     $content.css("background", "white");
     var w = $content.width();
     var h = $content.height();
-    topPad;
-    leftPad;
     var landscape = true;
-    i;
-    x;
-    y;
-    size;
     cardPositions = [];
     var size = Math.min(Math.max(w, h) / 4, Math.min(w, h) / 3);
     //*0.85;
@@ -136,9 +128,11 @@ click = (function() {
 reshuffle = function(shuffleFn) {
     // shuffle until we have a valid combination. (score=0 => no valid set)
     var score = 0;
-    while(!score) {
+    var i = 0;
+    while(!score && i < 1000) {
         shuffleFn();
         score = okDeck();
+        ++i;
     };
 };
 // ## Keep track of score
@@ -161,13 +155,13 @@ showScore = function() {
     fullbrows.start({hideButtons : true, update : function() {
         var $t = $("<div>");
         var log = _(logData).filter(function(elem) {
-            return !elem.hint && elem.difficulty === difficulty;
+            return !elem.hint;
         }).sort(function(a, b) {
             return a.time - b.time;
         });
-        $t.append($("<h3>Timingsxa0" + difficulty + "</h3>"));
+        $t.append($("<h3>Timings\xa0</h3>"));
         if(log.length === 0) {
-            $t.append("<p>No score available for this difficulty, please play the game before looking at the timings.</p>");
+            $t.append("<p>No score available, please play the game before looking at the timings.</p>");
         };
         partialScore($t, "Today", log);
         partialScore($t, "Last five minutes", log.filter(function(elem) {
@@ -209,7 +203,6 @@ testSelected = function() {
             cards : cards.slice(0),
             choosen : list,
             now : now,
-            difficulty : difficulty,
         });
         giveup = false;
         prevtime = now;
@@ -332,6 +325,7 @@ okDeck = function() {
 // ## Initialisation function
 startGame = function() {
     giveup = false;
+    $('body').append('<div id="content"></div>');
     var $content = $("#content");
     $content.html("");
     prevtime = Date.now();
@@ -344,7 +338,7 @@ startGame = function() {
             while(k < 3) {
                 var l = 0;
                 while(l < 3) {
-                    $content.append($("<img class=\"card\" src=\"dist/combigame" + i + j + k + l + ".png\" id=\"card" + i + j + k + l + "\">"));
+                    $content.append($("<img class=\"card\" src=\"imgs/combigame" + i + j + k + l + ".png\" id=\"card" + i + j + k + l + "\">"));
                     ++l;
                 };
                 ++k;
@@ -359,61 +353,9 @@ startGame = function() {
         e.preventDefault();
         return true;
     });
-    difficulty = difficulty || localStorage.getItem("combigameDifficulty") || "normal";
-    fullbrows.addButton({imagePath : "img/help.png", callback : showHelp});
-    //fullbrows.addButton({imagePath: "img/difficulty.png", callback: showDifficulty});
-    fullbrows.addButton({imagePath : "img/give-up.png", callback : hint});
-    fullbrows.addButton({imagePath : "img/score.png", callback : showScore});
-    fullbrows.addButton({text : "" + difficulty, callback : showDifficulty});
-    var showHelp = function() {
-        fullbrows.start({hideButtons : true, update : function() {
-            var html = require("jsxml").toXml([
-                "div",
-                ["h2", "CombiGame"],
-                "Game objectives: click on combinations of three figures where color, count, shape, and fill, are either the same or all different.",
-                ["br"],
-                [
-                    "p",
-                    ["img", {style : "height: 1.5em; width: 1.5em;", src : "img/give-up.png"}],
-                    " shows a valid combination among the figures.",
-                    ["br"],
-                    ["img", {style : "height: 1.5em; width: 1.5em;", src : "img/difficulty.png"}],
-                    " sets difficulty •xa0easy    : ca. 6 valid combinations •xa0hard: 1 valid combination •xa0normal: random number of valid combinations.",
-                    ["br"],
-                    ["img", {style : "height: 1.5em; width: 1.5em;", src : "img/score.png"}],
-                    " shows latest timing for the current difficulty.",
-                    ["br"],
-                ],
-                "Click to close.",
-            ]);
-            var $t = $("<div>");
-            $t.html(html);
-            $("#content").html("").append($t);
-            $t.css({width : "90%", height : "90%"});
-            webutil.scaleText($t);
-            $t.css({margin : "2% 5% 8% 5%", overflow : "visible"});
-            $t.bind("mousedown touchstart", fullbrows.startFn(exports.app));
-        }});
-    };
-    var showDifficulty = function() {
-        menu({
-            easy : function() {
-                var difficulty = "easy";
-                fullbrows.start(exports.app);
-            },
-            normal : function() {
-                var difficulty = "normal";
-                fullbrows.start(exports.app);
-            },
-            hard : function() {
-                var difficulty = "hard";
-                fullbrows.start(exports.app);
-            },
-        });
-    };
-    localStorage.setItem("combigameDifficulty", difficulty);
+    cards;
     reshuffle(function() {
-        var cards = [];
+        cards = [];
         i = 0;
         while(i < 12) {
             cards.push(randomCard());
@@ -448,4 +390,4 @@ menu = function(items) {
 };
 // ## App definition
 exports.app = {start : startGame, update : doLayout};
-//})();
+})();
