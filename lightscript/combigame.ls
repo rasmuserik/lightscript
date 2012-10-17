@@ -4,8 +4,6 @@
 //var webutil = require('webutil');
 //var fullbrows = require('fullbrows');
 //
-// ## App definition
-exports.app = {start : startGame, update : doLayout};
 //
 // ## Game state
 difficulty = undefined;
@@ -144,8 +142,8 @@ reshuffle = function(shuffleFn) {
     };
 };
 // ## Keep track of score
-logData;
-curDate;
+logData = undefined;
+curDate = undefined;
 log = function(obj) {
     setTimeout(function() {
         var objDate = obj.now / 24 / 60 / 60 / 1000 | 0;
@@ -448,4 +446,6 @@ menu = function(items) {
         $menu.css("width", "100%");
     }});
 };
+// ## App definition
+exports.app = {start : startGame, update : doLayout};
 //})();
