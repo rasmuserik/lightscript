@@ -68,12 +68,12 @@ exports.nodemain = function() {
     };
     (function() {
         var files = rstat(process.env.HOME + "/solsort/sites");
-        mkdir(dst + '/common/js/');
-                cp("./build/webjs/solsort.js", dst + "/common/js/solsort.js", function(err) {
-                    if(err) {
-                        console.log("Error:", err, file);
-                    };
-                });
+        mkdir(dst + "/common/js/");
+        cp("./build/webjs/solsort.js", dst + "/common/js/solsort.js", function(err) {
+            if(err) {
+                console.log("Error:", err, file);
+            };
+        });
         files.map(function(file) {
             mkdir(dst + file.name.split("/").slice(0, - 1).join("/"));
             if(file.symlink) {
