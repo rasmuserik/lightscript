@@ -122,36 +122,51 @@ exports.nodemain = function() {
         }));
     };
     (function() {
-        // outer: console
         // outer: RegExp
-        // outer: Object
         // outer: undefined
         // outer: savehtml
-        // outer: cp
+        // outer: console
         // outer: fs
         // outer: src
         // outer: Array
+        // outer: cp
         // outer: dst
         // outer: mkdir
         // outer: require
+        // outer: Object
+        var sites;
         // outer: process
         // outer: rstat
         var files;
         files = rstat(process.env.HOME + "/solsort/sites");
+        sites = {};
         files.map(function(file) {
-            // outer: console
             // outer: RegExp
-            // outer: Object
             // outer: undefined
             // outer: savehtml
-            // outer: cp
+            // outer: console
             // outer: fs
             // outer: src
             // outer: Array
             // outer: require
+            // outer: cp
+            // outer: Object
+            // outer: sites
+            var sitename;
             // outer: dst
             // outer: mkdir
             mkdir(dst + file.name.split("/").slice(0, - 1).join("/"));
+            sitename = file.name.split("/")[1];
+            if(!sites[sitename]) {
+                sites[sitename] = {};
+                cp("./build/webjs/solsort.js", dst + "/" + sitename + "/solsort.js", function(err) {
+                    // outer: file
+                    // outer: console
+                    if(err) {
+                        console.log("Error:", err, file);
+                    };
+                });
+            };
             if(file.symlink) {
                 require("child_process").spawn("cp", [
                     "-a",
