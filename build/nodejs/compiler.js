@@ -408,76 +408,73 @@ Ast = undefined;
 (function() {
     // outer: require
     // outer: this
+    // outer: Object
     // outer: arguments
     // outer: Array
     // outer: Ast
-    // outer: Object
-    var defaultAst;
-    defaultAst = {
-        create : function(arg) {
-            var splitpos;
-            // outer: require
-            // outer: this
-            // outer: defaultAst
-            // outer: Object
-            var self;
-            // outer: arguments
-            // outer: Array
-            var args;
-            args = Array.prototype.slice.call(arguments, 0);
-            self = Object.create(defaultAst);
-            self.pos = this.pos;
-            if(typeof arg === "object") {
-                self = require("./util").extend(self, arg);
-            } else if(typeof arg === "string") {
-                splitpos = arg.indexOf(":");
-                if(splitpos === - 1) {
-                    self.kind = args.shift();
-                    self.val = args.shift();
-                } else  {
-                    args.shift();
-                    self.kind = arg.slice(0, splitpos);
-                    self.val = arg.slice(splitpos + 1);
-                };
-                self.children = args;
-            };
-            return self;
-        },
-        isa : function(kindval) {
-            // outer: this
-            kindval = kindval.split(":");
-            this.assertEqual(kindval.length, 2);
-            return this.kind === kindval[0] && this.val === kindval[1];
-        },
-        assertEqual : function(a, b) {
-            // outer: this
-            if(a !== b) {
-                this.error("assert error: " + a + " !== " + b);
-            };
-        },
-        error : function(desc) {
-            // outer: this
-            // outer: Object
-            // outer: require
-            throw require("util").inspect({error : desc, token : this});
-        },
-        toList : function() {
-            // outer: this
-            var result;
-            result = this.children.map(function(node) {
-                return node.toList();
-            });
-            result.unshift(this.kind + ":" + this.val);
-            return result;
-        },
-    };
-    Ast = function(arg) {
-        // outer: defaultAst
+    Ast = function() {
+        // outer: Ast
         // outer: arguments
         // outer: Array
         var args;
         args = Array.prototype.slice.call(arguments, 0);
-        return defaultAst.create.apply(defaultAst, args);
+        return Ast.prototype.create.apply(Ast.prototype, args);
+    };
+    Ast.prototype.create = function(arg) {
+        var splitpos;
+        // outer: require
+        // outer: this
+        // outer: Ast
+        // outer: Object
+        var self;
+        // outer: arguments
+        // outer: Array
+        var args;
+        args = Array.prototype.slice.call(arguments, 0);
+        self = Object.create(Ast.prototype);
+        self.pos = this.pos;
+        if(typeof arg === "object") {
+            self = require("./util").extend(self, arg);
+        } else if(typeof arg === "string") {
+            splitpos = arg.indexOf(":");
+            if(splitpos === - 1) {
+                self.kind = args.shift();
+                self.val = args.shift();
+            } else  {
+                args.shift();
+                self.kind = arg.slice(0, splitpos);
+                self.val = arg.slice(splitpos + 1);
+            };
+            self.children = args;
+        };
+        return self;
+    };
+    Ast.prototype.isa = function(kindval) {
+        // outer: this
+        kindval = kindval.split(":");
+        this.assertEqual(kindval.length, 2);
+        return this.kind === kindval[0] && this.val === kindval[1];
+    };
+    Ast.prototype.assertEqual = function(a, b) {
+        // outer: this
+        if(a !== b) {
+            this.error("assert error: " + a + " !== " + b);
+        };
+    };
+    Ast.prototype.error = function(desc) {
+        // outer: this
+        // outer: Object
+        // outer: require
+        throw require("util").inspect({error : desc, token : this});
+    };
+    Ast.prototype.toList = function() {
+        // outer: this
+        var result;
+        result = this.children.map(function(node) {
+            return node.toList();
+        });
+        result.unshift(this.kind + ":" + this.val);
+        return result;
     };
 })();
 exports.test = function(test) {

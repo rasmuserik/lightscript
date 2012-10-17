@@ -248,51 +248,49 @@ tokenise = undefined;
 // Ast object {{{1
 Ast = undefined;
 (function() {
-    var defaultAst = {
-        create : function(arg) {
-            var args = Array.prototype.slice.call(arguments, 0);
-            var self = Object.create(defaultAst);
-            self.pos = this.pos;
-            if(typeof arg === "object") {
-                self = require("./util").extend(self, arg);
-            } else if(typeof arg === "string") {
-                var splitpos = arg.indexOf(":");
-                if(splitpos === - 1) {
-                    self.kind = args.shift();
-                    self.val = args.shift();
-                } else  {
-                    args.shift();
-                    self.kind = arg.slice(0, splitpos);
-                    self.val = arg.slice(splitpos + 1);
-                };
-                self.children = args;
-            };
-            return self;
-        },
-        isa : function(kindval) {
-            kindval = kindval.split(":");
-            this.assertEqual(kindval.length, 2);
-            return this.kind === kindval[0] && this.val === kindval[1];
-        },
-        assertEqual : function(a, b) {
-            if(a !== b) {
-                this.error("assert error: " + a + " !== " + b);
-            };
-        },
-        error : function(desc) {
-            throw require("util").inspect({error : desc, token : this});
-        },
-        toList : function() {
-            var result = this.children.map(function(node) {
-                return node.toList();
-            });
-            result.unshift(this.kind + ":" + this.val);
-            return result;
-        },
-    };
-    Ast = function(arg) {
+    Ast = function() {
         var args = Array.prototype.slice.call(arguments, 0);
-        return defaultAst.create.apply(defaultAst, args);
+        return Ast.prototype.create.apply(Ast.prototype, args);
+    };
+    Ast.prototype.create = function(arg) {
+        var args = Array.prototype.slice.call(arguments, 0);
+        var self = Object.create(Ast.prototype);
+        self.pos = this.pos;
+        if(typeof arg === "object") {
+            self = require("./util").extend(self, arg);
+        } else if(typeof arg === "string") {
+            var splitpos = arg.indexOf(":");
+            if(splitpos === - 1) {
+                self.kind = args.shift();
+                self.val = args.shift();
+            } else  {
+                args.shift();
+                self.kind = arg.slice(0, splitpos);
+                self.val = arg.slice(splitpos + 1);
+            };
+            self.children = args;
+        };
+        return self;
+    };
+    Ast.prototype.isa = function(kindval) {
+        kindval = kindval.split(":");
+        this.assertEqual(kindval.length, 2);
+        return this.kind === kindval[0] && this.val === kindval[1];
+    };
+    Ast.prototype.assertEqual = function(a, b) {
+        if(a !== b) {
+            this.error("assert error: " + a + " !== " + b);
+        };
+    };
+    Ast.prototype.error = function(desc) {
+        throw require("util").inspect({error : desc, token : this});
+    };
+    Ast.prototype.toList = function() {
+        var result = this.children.map(function(node) {
+            return node.toList();
+        });
+        result.unshift(this.kind + ":" + this.val);
+        return result;
     };
 })();
 exports.test = function(test) {
