@@ -193,10 +193,10 @@
             mouse = new V2d(e.clientX - x0, mousey = e.clientY - y0);
         };
     };
-    canvas.ontouchdown = function(e) {
+    canvas.addEventListener("touchstart", function(e) {
         alert('here!');
         mouse = new V2d(e.touches[0].clientX - x0, mousey = e.touches[0].clientY - y0);
-    }
+    }, false);
         ctx = canvas.getContext("2d");
         h = ctx.height = canvas.height = canvas.offsetHeight;
         w = ctx.width = canvas.width = canvas.offsetWidth;
