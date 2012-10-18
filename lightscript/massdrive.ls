@@ -26,6 +26,7 @@
     var collisiontest = function() {
         particles.forEach(function(particle) {
             if(map(particle.p.x, particle.p.y).filled) {
+                particle.life = 0;
             }
             if(player.p.x - psize < particle.p.x && particle.p.x < player.p.x + psize ) {
                 if(player.p.y - psize < particle.p.y && particle.p.y < player.p.y + psize ) {
@@ -44,7 +45,7 @@
         if(tiles[0].filled||tiles[1].filled ||tiles[2].filled || tiles[3].filled) {
             player.p = player.p.sub(player.v);
             player.v = new V2d(0, 0);
-                    ctx.fillStyle = "#fff";
+                    ctx.fillStyle = "rgba(255,255,255,0.1)";
                     ctx.fillRect(0,0,w,h);
         }
     }
