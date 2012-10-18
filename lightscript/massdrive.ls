@@ -194,8 +194,13 @@
         };
     };
     canvas.addEventListener("touchstart", function(e) {
-        alert('here!');
         mouse = new V2d(e.touches[0].clientX - x0, mousey = e.touches[0].clientY - y0);
+    }, false);
+    canvas.addEventListener("touchmove", function(e) {
+        mouse = new V2d(e.touches[0].clientX - x0, mousey = e.touches[0].clientY - y0);
+    }, false);
+    canvas.addEventListener("touchend", function(e) {
+        mouse = undefined;
     }, false);
         ctx = canvas.getContext("2d");
         h = ctx.height = canvas.height = canvas.offsetHeight;
