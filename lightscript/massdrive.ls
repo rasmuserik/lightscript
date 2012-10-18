@@ -2,7 +2,7 @@
     var V2d = require("./v2d").V2d;
     var canvas = var ctx = var w = var h = undefined;
     var particles = [];
-    var player = {p : new V2d(0, 0), v: new V2d(0,0), a: new V2d(0,0)};
+    var player = {p : new V2d(32, 32), v: new V2d(0,0), a: new V2d(0,0)};
     var tiles = {};
     var newParticle = function(p, v) {
         particles.push({
@@ -11,15 +11,21 @@
             life : 100,
         });
     };
-    map = {};
+    mapData = {};
+    map = function(x,y) {
+        data = map[(x & ~63) + ',' + (y & ~63)];
+        if(!data) {
+            map[(x & ~63) + ',' + (y & ~63)] = data = { filled: Math.random() < .1?true:false };
+        };
+        return data;
+    }
     var lastTime = Date.now();
     var x0 = var y0 = 0;
     var psize = 10;
 
     var collisiontest = function() {
         particles.forEach(function(particle) {
-            if(map[((particle.p.x + psize)& ~63) + ',' + ((particle.p.y + psize)& ~63)].filled) {
-                particle.life = 0;
+            if(map(particle.p.x, particle.p.y).filled) {
             }
             if(player.p.x - psize < particle.p.x && particle.p.x < player.p.x + psize ) {
                 if(player.p.y - psize < particle.p.y && particle.p.y < player.p.y + psize ) {
@@ -31,10 +37,10 @@
             }
         });
         tiles = [];
-        tiles.push(map[((player.p.x + psize)& ~63) + ',' + ((player.p.y + psize)& ~63)]);
-        tiles.push(map[((player.p.x + psize)& ~63) + ',' + ((player.p.y - psize)& ~63)]);
-        tiles.push(map[((player.p.x - psize)& ~63) + ',' + ((player.p.y + psize)& ~63)]);
-        tiles.push(map[((player.p.x - psize)& ~63) + ',' + ((player.p.y - psize)& ~63)]);
+        tiles.push(map(player.p.x + psize, player.p.y + psize));
+        tiles.push(map(player.p.x + psize, player.p.y - psize));
+        tiles.push(map(player.p.x - psize, player.p.y + psize));
+        tiles.push(map(player.p.x - psize, player.p.y - psize));
         if(tiles[0].filled||tiles[1].filled ||tiles[2].filled || tiles[3].filled) {
             player.p = player.p.sub(player.v);
             player.v = new V2d(0, 0);
