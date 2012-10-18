@@ -179,20 +179,21 @@
     var prevTime = Date.now();
     var mouse = undefined;
     exports.run = function() {
-        mouse;
+        mouse = undefined;
         canvas = document.getElementById("canvas");
-    canvas.mousedown = function(e) {
+    canvas.onmousedown = function(e) {
+        console.log('here');
         mouse = new V2d(e.clientX - x0, mousey = e.clientY - y0);
     };
-    canvas.mouseup = function(e) {
+    canvas.onmouseup = function(e) {
         mouse = undefined;
     };
-    canvas.mousemove = function(e) {
+    canvas.onmousemove = function(e) {
         if(mouse) {
             mouse = new V2d(e.clientX - x0, mousey = e.clientY - y0);
         };
     };
-    canvas.touchdown = function(e) {
+    canvas.ontouchdown = function(e) {
         mouse = new V2d(e.touches[0].clientX - x0, mousey = e.touches[0].clientY - y0);
     }
         ctx = canvas.getContext("2d");

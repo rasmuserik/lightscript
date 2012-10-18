@@ -334,33 +334,36 @@
     prevTime = Date.now();
     mouse = undefined;
     exports.run = function() {
-        // outer: undefined
         // outer: y0
         // outer: x0
         // outer: V2d
+        // outer: console
         // outer: gameloop
         // outer: w
         // outer: h
         // outer: ctx
         // outer: document
         // outer: canvas
+        // outer: undefined
         // outer: mouse
-        mouse;
+        mouse = undefined;
         canvas = document.getElementById("canvas");
-        canvas.mousedown = function(e) {
+        canvas.onmousedown = function(e) {
             // outer: y0
             var mousey;
             // outer: x0
             // outer: V2d
             // outer: mouse
+            // outer: console
+            console.log("here");
             mouse = new V2d(e.clientX - x0, mousey = e.clientY - y0);
         };
-        canvas.mouseup = function(e) {
+        canvas.onmouseup = function(e) {
             // outer: undefined
             // outer: mouse
             mouse = undefined;
         };
-        canvas.mousemove = function(e) {
+        canvas.onmousemove = function(e) {
             // outer: y0
             var mousey;
             // outer: x0
@@ -370,7 +373,7 @@
                 mouse = new V2d(e.clientX - x0, mousey = e.clientY - y0);
             };
         };
-        canvas.touchdown = function(e) {
+        canvas.ontouchdown = function(e) {
             // outer: y0
             var mousey;
             // outer: x0
