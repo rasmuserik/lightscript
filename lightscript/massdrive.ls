@@ -2,7 +2,7 @@
     var V2d = require("./v2d").V2d;
     var canvas = var ctx = var w = var h = undefined;
     var particles = [];
-    var player = {p : new V2d(100, 100)};
+    var player = {p : new V2d(0, 0), v: new V2d(0,0), a: new V2d(0,0)};
     var tiles = {};
     var newParticle = function(p, v) {
         particles.push({
@@ -11,54 +11,130 @@
             life : 100,
         });
     };
+    map = {};
     var lastTime = Date.now();
     var x0 = var y0 = 0;
-    var psize = 5;
+    var psize = 10;
+
+    var collisiontest = function() {
+        particles.forEach(function(particle) {
+            if(map[((particle.p.x + psize)& ~63) + ',' + ((particle.p.y + psize)& ~63)].filled) {
+                particle.life = 0;
+            }
+            if(player.p.x - psize < particle.p.x && particle.p.x < player.p.x + psize ) {
+                if(player.p.y - psize < particle.p.y && particle.p.y < player.p.y + psize ) {
+                    console.log('particle collision');
+                    ctx.fillStyle = "rgba(255,0,0," + particle.life * .005 + ")";
+                    ctx.fillRect(0,0,w,h);
+                    particle.life = 0;
+                }
+            }
+        });
+        tiles = [];
+        tiles.push(map[((player.p.x + psize)& ~63) + ',' + ((player.p.y + psize)& ~63)]);
+        tiles.push(map[((player.p.x + psize)& ~63) + ',' + ((player.p.y - psize)& ~63)]);
+        tiles.push(map[((player.p.x - psize)& ~63) + ',' + ((player.p.y + psize)& ~63)]);
+        tiles.push(map[((player.p.x - psize)& ~63) + ',' + ((player.p.y - psize)& ~63)]);
+        if(tiles[0].filled||tiles[1].filled ||tiles[2].filled || tiles[3].filled) {
+            player.p = player.p.sub(player.v);
+            player.v = new V2d(0, 0);
+                    ctx.fillStyle = "#fff";
+                    ctx.fillRect(0,0,w,h);
+        }
+    }
     var gameloop = function() {
         //
         // world update
         // 
         var shoot = function(x, y, vx, vy) {
-            particles.push({
-                p : new V2d(x, y),
-                v : new V2d(vx, vy),
-                life : 100,
-            });
+            newParticle = { p : new V2d(x, y), v : new V2d(vx, vy), life : Math.random() * 100, }
+            particles.push( newParticle);
+            player.a = player.a.sub(newParticle.v.scale(newParticle.life * 0.001));
+            newParticle.v = newParticle.v.add( player.v);
         };
         var shootup = function() {
-            shoot(player.p.x + psize, player.p.y, Math.random() * 2 - 1, - (Math.random() + Math.random()) * 8);
+            shoot(player.p.x , player.p.y - psize, Math.random() * 2 - 1, - (Math.random() + Math.random()) * 8);
         };
         var shootdown = function() {
-            shoot(player.p.x + psize, player.p.y + 2 * psize, Math.random() * 2 - 1, (Math.random() + Math.random()) * 8);
+            shoot(player.p.x , player.p.y + psize, Math.random() * 2 - 1, (Math.random() + Math.random()) * 8);
         };
         var shootleft = function() {
-            shoot(player.p.x, player.p.y + psize, - (Math.random() + Math.random()) * 8, Math.random() * 2 - 1);
+            shoot(player.p.x - psize, player.p.y, - (Math.random() + Math.random()) * 8, Math.random() * 2 - 1);
         };
         var shootright = function() {
-            shoot(player.p.x + 2 * psize, player.p.y + psize, (Math.random() + Math.random()) * 8, Math.random() * 2 - 1);
+            shoot(player.p.x + psize, player.p.y, (Math.random() + Math.random()) * 8, Math.random() * 2 - 1);
         };
-        shootup();
-        shootdown();
-        shootleft();
-        shootright();
+        // handle player interaction
+        if(mouse) {
+            i = 4;
+            while(--i){
+                if(Math.random() * Math.abs(mouse.x - player.p.x) > Math.random() * Math.abs(mouse.y - player.p.y)) {
+            if(mouse.x < player.p.x) {
+                shootleft();
+            } else {
+                shootright();
+            }
+
+                } else {
+            if(mouse.y < player.p.y) {
+                shootup();
+            } else {
+                shootdown();
+            }
+                }
+            }
+        }
         // update life and position of particles
         var i = particles.length;
         while(var particle = particles[--i]) {
             if(particle.life < 0) {
                 particles[i] = particles.pop();
             } else  {
-                particle.life -= 5;
+                particle.life -= 1;
                 particle.p = particle.p.add(particle.v);
+                particle.v = particle.v.scale(0.95);
             };
         };
+        // update player
+        player.v = player.v.add(player.a);
+        player.v = player.v.scale(0.95);
+        player.p = player.p.add(player.v);
+        player.a = new V2d(0,0);
         //
         // Draw loop
         // 
         // clear world
         ctx.fillStyle = "#000";
+        ctx.fillStyle = "rgba(0,0,0,0.9)";
         ctx.fillRect(0, 0, w, h);
         x0 = w / 2 - player.p.x - psize;
         y0 = h / 2 - player.p.y - psize;
+        // draw grid
+        ctx.fillStyle = "#888";
+        xs = [];
+        ys = [];
+        x = -63; while(x < w) { if(!((x - x0) & 63)) {
+            xs.push((x - x0) | 0);
+       //     ctx.fillRect(x,0,1,h); 
+        }; ++x };
+        y = -63; while(y < h) { if(!((y - y0) & 63)) { 
+            ys.push((y - y0) |0);
+       //     ctx.fillRect(0,y,w,1); 
+        }; ++y };
+        ctx.shadowBlur = 0;
+
+        ctx.fillStyle = "#ccc";
+        xs.forEach(function(x) {
+            ys.forEach(function(y) {
+                tile = map[x + ',' + y];
+                if(!tile) {
+                    map[x+','+y]  = tile = {filled: (Math.random() < .2)?true:false};
+                }
+                if(tile.filled) {
+                    ctx.fillRect(x0+x+1|0, y0+y+1|0, 63, 63);
+                }
+            });
+        });
         // draw particles
         var particleLifeList = {};
         particles.forEach(function(particle) {
@@ -82,32 +158,28 @@
         ctx.fillStyle = "#66f";
         ctx.shadowOffsetX = 0;
         ctx.shadowOffsetY = 0;
-        ctx.shadowBlur = 2 * psize;
+        ctx.shadowBlur = 2 ;
         ctx.shadowColor = "#fff";
-        ctx.fillRect(x0 + player.p.x, y0 + player.p.y, 2 * psize, 2 * psize);
+        ctx.fillRect(x0 + player.p.x - psize, y0 + player.p.y - psize, 2 * psize+1, 2 * psize+1);
         ctx.shadowBlur = 0;
+        // collision handling
+        collisiontest();
         // timing
-        console.log(Date.now() - prevTime, mousex, mousey);
+        //console.log(Date.now() - prevTime, mousex, mousey);
         prevTime = Date.now();
-        setTimeout(gameloop, 50);
+        setTimeout(gameloop, 40);
     };
     var prevTime = Date.now();
-    var mousex = undefined;
-    var mousey = undefined;
-    var mouse = false;
+    var mouse = undefined;
     var mousedown = function(e) {
-        mouse = true;
-        mousex = e.clientX - x0;
-        mousey = e.clientY - y0;
+        mouse = new V2d(e.clientX - x0, mousey = e.clientY - y0);
     };
     var mouseup = function(e) {
-        mouse = false;
-        mousex = mousey = undefined;
+        mouse = undefined;
     };
     var mousemove = function(e) {
         if(mouse) {
-            mousex = e.clientX - x0;
-            mousey = e.clientY - y0;
+            mouse = new V2d(e.clientX - x0, mousey = e.clientY - y0);
         };
     };
     exports.run = function() {
