@@ -66,12 +66,12 @@
             enemies.push({
                 size : size * Math.random() + .5,
                 pos : new V2d(w + size * 2, Math.random() * (h - size)),
-                v : new V2d((Math.random() * size) * -(0.9), 0),
+                v : new V2d(Math.random() * size * (- 0.9), 0),
             });
         };
         enemies = animate.call(null, enemies, "#f00");
         if(newBullet) {
-            console.log('newbullet');
+            console.log("newbullet");
             bullets.push({
                 size : bulletSize,
                 pos : bulletSource,
@@ -89,7 +89,7 @@
                 if(bullet["pos"].sub(enemy["pos"]).length() < bullet["size"] + enemy["size"]) {
                     bullet["dead"] = true;
                     enemy["dead"] = true;
-                    var score = 20 + score;
+                    score = 20 + score;
                 };
             });
         });
@@ -97,38 +97,38 @@
     };
     canvas = ctx = w = h = undefined;
     exports.run = function() {
-    canvas = document.getElementById('canvas');
-    canvas.onmousedown = function() {
-        console.log('blahblah');
-    }
-    ctx = canvas.getContext('2d');
-    h = ctx.height = canvas.height = canvas.offsetHeight;
-    w = ctx.width = canvas.width = canvas.offsetWidth;
-            running = true;
-            var size = h / 30;
-            var bulletSource = new V2d(0, h / 2);
-            var wallcount = 30;
-            var i = 0;
-            var enemies = [];
-            var bullets = [];
-            var score = 0;
-            var count = 0;
-            while(i <= wallcount) {
-                bullets.push({
-                    pos : new V2d(Math.random() * size, i * h / wallcount),
-                    v : new V2d(0, 0),
-                    size : h / wallcount,
-                });
-                i = i + 1;
-            };
-            newBullet;
-            canvas["onmousedown"] = function(e) {
-                newBullet = new V2d(e["clientX"], e["clientY"]);
-                var E = e;
-                console.log('here!!!');
-            };
-            if(!started) {
-                blobMain.call();
-            };
+        canvas = document.getElementById("canvas");
+        canvas.onmousedown = function() {
+            console.log("blahblah");
         };
+        ctx = canvas.getContext("2d");
+        h = ctx.height = canvas.height = canvas.offsetHeight;
+        w = ctx.width = canvas.width = canvas.offsetWidth;
+        running = true;
+        size = h / 30;
+        bulletSource = new V2d(0, h / 2);
+        var wallcount = 30;
+        var i = 0;
+        enemies = [];
+        bullets = [];
+        score = 0;
+        count = 0;
+        while(i <= wallcount) {
+            bullets.push({
+                pos : new V2d(Math.random() * size, i * h / wallcount),
+                v : new V2d(0, 0),
+                size : h / wallcount,
+            });
+            i = i + 1;
+        };
+        newBullet;
+        canvas["onmousedown"] = function(e) {
+            newBullet = new V2d(e["clientX"], e["clientY"]);
+            var E = e;
+            console.log("here!!!");
+        };
+        if(!started) {
+            blobMain.call();
+        };
+    };
 })();
