@@ -178,22 +178,23 @@
     };
     var prevTime = Date.now();
     var mouse = undefined;
-    var mousedown = function(e) {
+    exports.run = function() {
+        mouse;
+        canvas = document.getElementById("canvas");
+    canvas.mousedown = function(e) {
         mouse = new V2d(e.clientX - x0, mousey = e.clientY - y0);
     };
-    var mouseup = function(e) {
+    canvas.mouseup = function(e) {
         mouse = undefined;
     };
-    var mousemove = function(e) {
+    canvas.mousemove = function(e) {
         if(mouse) {
             mouse = new V2d(e.clientX - x0, mousey = e.clientY - y0);
         };
     };
-    exports.run = function() {
-        canvas = document.getElementById("canvas");
-        canvas.onmousedown = mousedown;
-        canvas.onmouseup = mouseup;
-        canvas.onmousemove = mousemove;
+    canvas.touchdown = function(e) {
+        mouse = new V2d(e.touches[0].clientX - x0, mousey = e.touches[0].clientY - y0);
+    }
         ctx = canvas.getContext("2d");
         h = ctx.height = canvas.height = canvas.offsetHeight;
         w = ctx.width = canvas.width = canvas.offsetWidth;

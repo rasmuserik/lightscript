@@ -6,9 +6,6 @@
     // outer: true
     // outer: Math
     // outer: exports
-    var mousemove;
-    var mouseup;
-    var mousedown;
     var mouse;
     var prevTime;
     var gameloop;
@@ -336,43 +333,51 @@
     };
     prevTime = Date.now();
     mouse = undefined;
-    mousedown = function(e) {
-        // outer: y0
-        var mousey;
-        // outer: x0
-        // outer: V2d
-        // outer: mouse
-        mouse = new V2d(e.clientX - x0, mousey = e.clientY - y0);
-    };
-    mouseup = function(e) {
-        // outer: undefined
-        // outer: mouse
-        mouse = undefined;
-    };
-    mousemove = function(e) {
-        // outer: y0
-        var mousey;
-        // outer: x0
-        // outer: V2d
-        // outer: mouse
-        if(mouse) {
-            mouse = new V2d(e.clientX - x0, mousey = e.clientY - y0);
-        };
-    };
     exports.run = function() {
+        // outer: undefined
+        // outer: y0
+        // outer: x0
+        // outer: V2d
         // outer: gameloop
         // outer: w
         // outer: h
         // outer: ctx
-        // outer: mousemove
-        // outer: mouseup
-        // outer: mousedown
         // outer: document
         // outer: canvas
+        // outer: mouse
+        mouse;
         canvas = document.getElementById("canvas");
-        canvas.onmousedown = mousedown;
-        canvas.onmouseup = mouseup;
-        canvas.onmousemove = mousemove;
+        canvas.mousedown = function(e) {
+            // outer: y0
+            var mousey;
+            // outer: x0
+            // outer: V2d
+            // outer: mouse
+            mouse = new V2d(e.clientX - x0, mousey = e.clientY - y0);
+        };
+        canvas.mouseup = function(e) {
+            // outer: undefined
+            // outer: mouse
+            mouse = undefined;
+        };
+        canvas.mousemove = function(e) {
+            // outer: y0
+            var mousey;
+            // outer: x0
+            // outer: V2d
+            // outer: mouse
+            if(mouse) {
+                mouse = new V2d(e.clientX - x0, mousey = e.clientY - y0);
+            };
+        };
+        canvas.touchdown = function(e) {
+            // outer: y0
+            var mousey;
+            // outer: x0
+            // outer: V2d
+            // outer: mouse
+            mouse = new V2d(e.touches[0].clientX - x0, mousey = e.touches[0].clientY - y0);
+        };
         ctx = canvas.getContext("2d");
         h = ctx.height = canvas.height = canvas.offsetHeight;
         w = ctx.width = canvas.width = canvas.offsetWidth;
