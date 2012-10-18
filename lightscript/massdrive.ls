@@ -194,6 +194,7 @@
         };
     };
     canvas.ontouchdown = function(e) {
+        alert('here!');
         mouse = new V2d(e.touches[0].clientX - x0, mousey = e.touches[0].clientY - y0);
     }
         ctx = canvas.getContext("2d");
