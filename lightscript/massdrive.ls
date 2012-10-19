@@ -211,7 +211,6 @@
     exports.run = function() {
         mouse = undefined;
         canvas = document.getElementById("canvas");
-        if(canvas.
     canvas.onmousedown = function(e) {
         mousedown(e.clientX, e.clientY);
     };
@@ -226,7 +225,6 @@
         mouseup();
     };
     canvas.addEventListener("touchstart", function(e) {
-        canvas.onmouseup = canvas.onmousedown = canvas.onmouseout = canvas.mousemove = undefined;
         mousedown(e.touches[0].clientX, e.touches[0].clientY);
     }, false);
     canvas.addEventListener("touchmove", function(e) {

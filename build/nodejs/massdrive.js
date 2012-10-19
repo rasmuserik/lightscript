@@ -378,7 +378,7 @@
             console.log(mousemoves[0].x, cursor.x, mouse.x);
         };
     };
-    mouseup = function(x, y) {
+    mouseup = function() {
         // outer: undefined
         // outer: mouse
         // outer: Array
@@ -407,15 +407,17 @@
         };
         canvas.onmouseup = function(e) {
             // outer: mouseup
-            mouseup(e.clientX, e.clientY);
+            mouseup();
         };
         canvas.onmouseout = function(e) {
             // outer: mouseup
-            mouseup(e.clientX, e.clientY);
+            mouseup();
         };
         canvas.onmousemove = function(e) {
+            // outer: mouseup
             // outer: mousemove
             mousemove(e.clientX, e.clientY);
+            mouseup();
         };
         canvas.addEventListener("touchstart", function(e) {
             // outer: mousedown
@@ -427,7 +429,7 @@
         }, false);
         canvas.addEventListener("touchend", function(e) {
             // outer: mouseup
-            mouseup(e.touches[0].clientX, e.touches[0].clientY);
+            mouseup();
         }, false);
         ctx = canvas.getContext("2d");
         h = ctx.height = canvas.height = canvas.offsetHeight;
