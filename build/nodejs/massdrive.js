@@ -163,7 +163,7 @@
                 life : Math.random() * 100,
             };
             particles.push(newParticle);
-            player.a = player.a.sub(newParticle.v.scale(newParticle.life * 0.0002));
+            player.a = player.a.sub(newParticle.v.scale(newParticle.life * 0.002));
             newParticle.v = newParticle.v.add(player.v);
         };
         shootpower = function() {
@@ -208,7 +208,7 @@
         };
         // handle player interaction
         if(mouse) {
-            i = mouse.length() | 0 || 1;
+            i = mouse.length() / 10 | 0 || 1;
             console.log(i);
             while(--i) {
                 if(Math.random() * Math.abs(mouse.x) > Math.random() * Math.abs(mouse.y)) {
