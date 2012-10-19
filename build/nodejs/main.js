@@ -3,7 +3,6 @@ use = function(name) {
     // outer: require
     return require("./" + name);
 };
-console.log("here", use("util").platform);
 util.nextTick(function() {
     // outer: undefined
     // outer: use

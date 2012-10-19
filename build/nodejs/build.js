@@ -47,27 +47,33 @@ exports.nodemain = function(arg) {
             });
         });
     };
-    compileToJS = function(ls, js, done) {
-        // outer: require
+    compileToJS = function(fn) {
         // outer: fs
         // outer: true
         // outer: compiled
         // outer: console
-        var shortname;
-        shortname = ls.split("/").slice(- 1)[0];
-        console.log("compiling:", shortname);
-        compiled[shortname] = true;
-        fs.readFile(ls, "utf8", function(err, src) {
-            // outer: done
-            // outer: js
+        return function(ls, js, done) {
+            // outer: fn
             // outer: fs
-            // outer: require
-            src = require("./compiler").ls2js(src);
-            fs.writeFile(js, src, function() {
+            // outer: true
+            // outer: compiled
+            // outer: console
+            var shortname;
+            shortname = ls.split("/").slice(- 1)[0];
+            console.log("compiling:", shortname);
+            compiled[shortname] = true;
+            fs.readFile(ls, "utf8", function(err, src) {
                 // outer: done
-                done();
+                // outer: js
+                // outer: fs
+                // outer: fn
+                src = fn(src);
+                fs.writeFile(js, src, function() {
+                    // outer: done
+                    done();
+                });
             });
-        });
+        };
     };
     if(arg === "pretty") {
         sourcefiles.forEach(function(filename) {
@@ -106,13 +112,14 @@ exports.nodemain = function(arg) {
         fs.writeFile(buildpath + "webjs/solsort.js", result);
     };
     require("async").forEach(sourcefiles, function(filename, done) {
+        // outer: require
         // outer: compileToJS
         // outer: sourcepath
         // outer: optionalCompile
         // outer: buildpath
         var nodefile;
         nodefile = buildpath + "nodejs/" + filename.replace(".ls", ".js");
-        optionalCompile(sourcepath + filename, nodefile, compileToJS, done);
+        optionalCompile(sourcepath + filename, nodefile, compileToJS(require("./compiler").ls2nodejs), done);
     }, function() {
         // outer: sourcepath
         // outer: compileToJS
@@ -125,11 +132,12 @@ exports.nodemain = function(arg) {
         if(compiled["compiler.ls"] || compiled["build.ls"] || arg === "web") {
             require("async").forEach(sourcefiles, function(filename, done) {
                 // outer: sourcepath
+                // outer: require
                 // outer: compileToJS
                 // outer: buildpath
                 var destfile;
                 destfile = buildpath + "nodejs/" + filename.replace(".ls", ".js");
-                compileToJS(sourcepath + filename, destfile, done);
+                compileToJS(require("./compiler").ls2nodejs)(sourcepath + filename, destfile, done);
             }, createSolsortJS);
         } else  {
             createSolsortJS();

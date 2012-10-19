@@ -54,7 +54,7 @@ codegen = undefined;
         compiler.asts.forEach(relations);
         compiler.asts = compiler.asts.map(doIt);
     };
-    ls2compiler = function(src) {
+    ls2compiler = function(src, target) {
         // outer: this
         // outer: addMacro
         // outer: applyMacros
@@ -78,6 +78,7 @@ codegen = undefined;
                 // outer: addMacro
                 addMacro(this.reverseMacros, pattern, fn);
             },
+            target : target,
         };
         compiletime(compiler);
         applyMacros(compiler.forwardMacros, compiler);
@@ -90,11 +91,23 @@ codegen = undefined;
         asts = asts.map(astTransform);
         return prettyprint(asts).slice(1);
     };
-    exports.ls2js = function(ls) {
+    exports.ls2mozjs = function(ls) {
         // outer: ls2compiler
         // outer: ast2js
         // outer: codegen
-        return codegen(ast2js, ls2compiler(ls).asts);
+        return codegen(ast2js, ls2compiler(ls, "mozjs").asts);
+    };
+    exports.ls2webjs = function(ls) {
+        // outer: ls2compiler
+        // outer: ast2js
+        // outer: codegen
+        return codegen(ast2js, ls2compiler(ls, "webjs").asts);
+    };
+    exports.ls2nodejs = function(ls) {
+        // outer: ls2compiler
+        // outer: ast2js
+        // outer: codegen
+        return codegen(ast2js, ls2compiler(ls, "nodejs").asts);
     };
     exports.ls2ls = function(ls) {
         // outer: ast2rst
@@ -103,7 +116,7 @@ codegen = undefined;
         // outer: applyMacros
         // outer: ls2compiler
         var compiler;
-        compiler = ls2compiler(ls);
+        compiler = ls2compiler(ls, "lightscript");
         applyMacros(compiler.reverseMacros, compiler);
         compiler.asts = analyse(compiler.asts);
         return codegen(ast2rst, compiler.asts);

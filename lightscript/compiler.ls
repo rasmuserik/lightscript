@@ -24,7 +24,7 @@ codegen = undefined;
         compiler.asts.forEach(relations);
         compiler.asts = compiler.asts.map(doIt);
     };
-    var ls2compiler = function(src) {
+    var ls2compiler = function(src, target) {
         var compiler = {
             asts : parse(tokenise(src)).map(rst2ast),
             forwardMacros : {},
@@ -35,6 +35,7 @@ codegen = undefined;
             unmacro : function(pattern, fn) {
                 addMacro(this.reverseMacros, pattern, fn);
             },
+            target : target,
         };
         compiletime(compiler);
         applyMacros(compiler.forwardMacros, compiler);
@@ -45,11 +46,17 @@ codegen = undefined;
         asts = asts.map(astTransform);
         return prettyprint(asts).slice(1);
     };
-    exports.ls2js = function(ls) {
-        return codegen(ast2js, ls2compiler(ls).asts);
+    exports.ls2mozjs = function(ls) {
+        return codegen(ast2js, ls2compiler(ls, "mozjs").asts);
+    };
+    exports.ls2webjs = function(ls) {
+        return codegen(ast2js, ls2compiler(ls, "webjs").asts);
+    };
+    exports.ls2nodejs = function(ls) {
+        return codegen(ast2js, ls2compiler(ls, "nodejs").asts);
     };
     exports.ls2ls = function(ls) {
-        var compiler = ls2compiler(ls);
+        var compiler = ls2compiler(ls, "lightscript");
         applyMacros(compiler.reverseMacros, compiler);
         compiler.asts = analyse(compiler.asts);
         return codegen(ast2rst, compiler.asts);

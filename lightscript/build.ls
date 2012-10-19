@@ -20,16 +20,18 @@ exports.nodemain = function(arg) {
             });
         });
     };
-    var compileToJS = function(ls, js, done) {
-        var shortname = ls.split("/").slice(- 1)[0];
-        console.log("compiling:", shortname);
-        compiled[shortname] = true;
-        fs.readFile(ls, "utf8", function(err, src) {
-            src = require("./compiler").ls2js(src);
-            fs.writeFile(js, src, function() {
-                done();
+    var compileToJS = function(fn) {
+        return function(ls, js, done) {
+            var shortname = ls.split("/").slice(- 1)[0];
+            console.log("compiling:", shortname);
+            compiled[shortname] = true;
+            fs.readFile(ls, "utf8", function(err, src) {
+                src = fn(src);
+                fs.writeFile(js, src, function() {
+                    done();
+                });
             });
-        });
+        };
     };
     if(arg === "pretty") {
         sourcefiles.forEach(function(filename) {
@@ -57,12 +59,12 @@ exports.nodemain = function(arg) {
     };
     require("async").forEach(sourcefiles, function(filename, done) {
         var nodefile = buildpath + "nodejs/" + filename.replace(".ls", ".js");
-        optionalCompile(sourcepath + filename, nodefile, compileToJS, done);
+        optionalCompile(sourcepath + filename, nodefile, compileToJS(require("./compiler").ls2nodejs), done);
     }, function() {
         if(compiled["compiler.ls"] || compiled["build.ls"] || arg === "web") {
             require("async").forEach(sourcefiles, function(filename, done) {
                 var destfile = buildpath + "nodejs/" + filename.replace(".ls", ".js");
-                compileToJS(sourcepath + filename, destfile, done);
+                compileToJS(require("./compiler").ls2nodejs)(sourcepath + filename, destfile, done);
             }, createSolsortJS);
         } else  {
             createSolsortJS();
