@@ -30,7 +30,6 @@
             }
             if(player.p.x - psize < particle.p.x && particle.p.x < player.p.x + psize ) {
                 if(player.p.y - psize < particle.p.y && particle.p.y < player.p.y + psize ) {
-                    console.log('particle collision');
                     ctx.fillStyle = "rgba(255,0,0," + particle.life * .005 + ")";
                     ctx.fillRect(0,0,w,h);
                     particle.life = 0;
@@ -56,24 +55,31 @@
         var shoot = function(x, y, vx, vy) {
             newParticle = { p : new V2d(x, y), v : new V2d(vx, vy), life : Math.random() * 100, }
             particles.push( newParticle);
-            player.a = player.a.sub(newParticle.v.scale(newParticle.life * 0.001));
+            player.a = player.a.sub(newParticle.v.scale(newParticle.life * 0.0002));
             newParticle.v = newParticle.v.add( player.v);
         };
+        var shootpower = function() {
+            return 10 + Math.random() * 20;
+        }
+        var shootblur = function() {
+            return Math.random() * 8 - 4;
+        }
         var shootup = function() {
-            shoot(player.p.x , player.p.y - psize, Math.random() * 2 - 1, - (Math.random() + Math.random()) * 8);
+            shoot(player.p.x , player.p.y - psize, shootblur(), - shootpower());
         };
         var shootdown = function() {
-            shoot(player.p.x , player.p.y + psize, Math.random() * 2 - 1, (Math.random() + Math.random()) * 8);
+            shoot(player.p.x , player.p.y + psize, shootblur(), shootpower());
         };
         var shootleft = function() {
-            shoot(player.p.x - psize, player.p.y, - (Math.random() + Math.random()) * 8, Math.random() * 2 - 1);
+            shoot(player.p.x - psize, player.p.y, - shootpower(), shootblur());
         };
         var shootright = function() {
-            shoot(player.p.x + psize, player.p.y, (Math.random() + Math.random()) * 8, Math.random() * 2 - 1);
+            shoot(player.p.x + psize, player.p.y, shootpower(), shootblur());
         };
         // handle player interaction
         if(mouse) {
-            i = 4;
+            i = (mouse.length() | 0) ||1;
+            console.log(i);
             while(--i){
                 if(Math.random() * Math.abs(mouse.x ) > Math.random() * Math.abs(mouse.y )) {
             if(mouse.x > 0) {
@@ -189,19 +195,17 @@
         if(mousemoves.length) {
             i = 0;
             now = Date.now();
-            while(mousemoves[i] && mousemoves[i].time < now - 500) {
+            while(mousemoves[i] && mousemoves[i].time < now - 200) {
                 ++i;
             };
             i -= 2;
             if(i) {
                 mousemoves = mousemoves.slice(i);
             };
-            console.log(x,y);
             cursor = new V2d(x,y);
             cursor.time = now;
             mousemoves.push(cursor);
             mouse = (new V2d(x, y)).sub(mousemoves[0]);
-            console.log(mousemoves[0].x, cursor.x, mouse.x);
         } 
     }
     var mouseup = function() {
@@ -215,6 +219,7 @@
         mousedown(e.clientX, e.clientY);
     };
     canvas.onmouseup = function(e) {
+        mousemove(e.clientX, e.clientY);
         mouseup();
     };
     canvas.onmouseout = function(e) {
@@ -222,7 +227,6 @@
     };
     canvas.onmousemove = function(e) {
         mousemove(e.clientX, e.clientY);
-        mouseup();
     };
     canvas.addEventListener("touchstart", function(e) {
         mousedown(e.touches[0].clientX, e.touches[0].clientY);

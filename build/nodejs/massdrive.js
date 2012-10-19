@@ -70,7 +70,6 @@
     x0 = y0 = 0;
     psize = 10;
     collisiontest = function() {
-        // outer: console
         // outer: h
         // outer: w
         // outer: ctx
@@ -85,7 +84,6 @@
             // outer: h
             // outer: w
             // outer: ctx
-            // outer: console
             // outer: psize
             // outer: player
             // outer: map
@@ -94,7 +92,6 @@
             };
             if(player.p.x - psize < particle.p.x && particle.p.x < player.p.x + psize) {
                 if(player.p.y - psize < particle.p.y && particle.p.y < player.p.y + psize) {
-                    console.log("particle collision");
                     ctx.fillStyle = "rgba(255,0,0," + particle.life * .005 + ")";
                     ctx.fillRect(0, 0, w, h);
                     particle.life = 0;
@@ -140,12 +137,15 @@
         var particle;
         // outer: particles
         // outer: Math
+        // outer: console
         var i;
         // outer: mouse
         var shootright;
         var shootleft;
         var shootdown;
         var shootup;
+        var shootblur;
+        var shootpower;
         var shoot;
         //
         // world update
@@ -163,40 +163,53 @@
                 life : Math.random() * 100,
             };
             particles.push(newParticle);
-            player.a = player.a.sub(newParticle.v.scale(newParticle.life * 0.001));
+            player.a = player.a.sub(newParticle.v.scale(newParticle.life * 0.0002));
             newParticle.v = newParticle.v.add(player.v);
         };
-        shootup = function() {
+        shootpower = function() {
             // outer: Math
+            return 10 + Math.random() * 20;
+        };
+        shootblur = function() {
+            // outer: Math
+            return Math.random() * 8 - 4;
+        };
+        shootup = function() {
+            // outer: shootpower
+            // outer: shootblur
             // outer: psize
             // outer: player
             // outer: shoot
-            shoot(player.p.x, player.p.y - psize, Math.random() * 2 - 1, - (Math.random() + Math.random()) * 8);
+            shoot(player.p.x, player.p.y - psize, shootblur(), - shootpower());
         };
         shootdown = function() {
-            // outer: Math
+            // outer: shootpower
+            // outer: shootblur
             // outer: psize
             // outer: player
             // outer: shoot
-            shoot(player.p.x, player.p.y + psize, Math.random() * 2 - 1, (Math.random() + Math.random()) * 8);
+            shoot(player.p.x, player.p.y + psize, shootblur(), shootpower());
         };
         shootleft = function() {
-            // outer: Math
+            // outer: shootblur
+            // outer: shootpower
             // outer: psize
             // outer: player
             // outer: shoot
-            shoot(player.p.x - psize, player.p.y, - (Math.random() + Math.random()) * 8, Math.random() * 2 - 1);
+            shoot(player.p.x - psize, player.p.y, - shootpower(), shootblur());
         };
         shootright = function() {
-            // outer: Math
+            // outer: shootblur
+            // outer: shootpower
             // outer: psize
             // outer: player
             // outer: shoot
-            shoot(player.p.x + psize, player.p.y, (Math.random() + Math.random()) * 8, Math.random() * 2 - 1);
+            shoot(player.p.x + psize, player.p.y, shootpower(), shootblur());
         };
         // handle player interaction
         if(mouse) {
-            i = 4;
+            i = mouse.length() | 0 || 1;
+            console.log(i);
             while(--i) {
                 if(Math.random() * Math.abs(mouse.x) > Math.random() * Math.abs(mouse.y)) {
                     if(mouse.x > 0) {
@@ -355,7 +368,6 @@
         // outer: mouse
         // outer: V2d
         var cursor;
-        // outer: console
         // outer: Date
         var now;
         var i;
@@ -363,19 +375,17 @@
         if(mousemoves.length) {
             i = 0;
             now = Date.now();
-            while(mousemoves[i] && mousemoves[i].time < now - 500) {
+            while(mousemoves[i] && mousemoves[i].time < now - 200) {
                 ++i;
             };
             i -= 2;
             if(i) {
                 mousemoves = mousemoves.slice(i);
             };
-            console.log(x, y);
             cursor = new V2d(x, y);
             cursor.time = now;
             mousemoves.push(cursor);
             mouse = new V2d(x, y).sub(mousemoves[0]);
-            console.log(mousemoves[0].x, cursor.x, mouse.x);
         };
     };
     mouseup = function() {
@@ -387,8 +397,8 @@
         mouse = undefined;
     };
     exports.run = function() {
-        // outer: mousemove
         // outer: mouseup
+        // outer: mousemove
         // outer: mousedown
         // outer: gameloop
         // outer: w
@@ -407,6 +417,8 @@
         };
         canvas.onmouseup = function(e) {
             // outer: mouseup
+            // outer: mousemove
+            mousemove(e.clientX, e.clientY);
             mouseup();
         };
         canvas.onmouseout = function(e) {
@@ -414,10 +426,8 @@
             mouseup();
         };
         canvas.onmousemove = function(e) {
-            // outer: mouseup
             // outer: mousemove
             mousemove(e.clientX, e.clientY);
-            mouseup();
         };
         canvas.addEventListener("touchstart", function(e) {
             // outer: mousedown
