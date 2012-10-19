@@ -1,0 +1,9 @@
+{
+    "name": "solsort",
+    "description": "solsort addon",
+    "keywords": [],
+    "author": "Rasmus Erik",
+    "contributors": [],
+    "license": "private",
+    "id": "solsort-addon@solsort.com"
+}

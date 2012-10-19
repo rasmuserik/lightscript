@@ -2,6 +2,7 @@ util = require("./util");
 use = function(name) {
     return require("./" + name);
 };
+console.log('here', use('util').platform);
 util.nextTick(function() {
     var platform = util.platform;
     var args = [];
