@@ -75,6 +75,10 @@ Data layers
 
 # Roadmap
 
+- platform-specific code
+    - remove if, if already resolved to true/false/undefined;
+    - compile-time dest-platform information
+    - `if(``compiler.toNodejs) { ... }`
 - app: replace server.ls with publish.ls
 - app-framework
 - port old apps

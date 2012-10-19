@@ -56,8 +56,8 @@ exports.nodemain = function(arg) {
         fs.writeFile(buildpath + "webjs/solsort.js", result);
     };
     require("async").forEach(sourcefiles, function(filename, done) {
-        var destfile = buildpath + "nodejs/" + filename.replace(".ls", ".js");
-        optionalCompile(sourcepath + filename, destfile, compileToJS, done);
+        var nodefile = buildpath + "nodejs/" + filename.replace(".ls", ".js");
+        optionalCompile(sourcepath + filename, nodefile, compileToJS, done);
     }, function() {
         if(compiled["compiler.ls"] || compiled["build.ls"] || arg === "web") {
             require("async").forEach(sourcefiles, function(filename, done) {

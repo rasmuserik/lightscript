@@ -110,9 +110,9 @@ exports.nodemain = function(arg) {
         // outer: sourcepath
         // outer: optionalCompile
         // outer: buildpath
-        var destfile;
-        destfile = buildpath + "nodejs/" + filename.replace(".ls", ".js");
-        optionalCompile(sourcepath + filename, destfile, compileToJS, done);
+        var nodefile;
+        nodefile = buildpath + "nodejs/" + filename.replace(".ls", ".js");
+        optionalCompile(sourcepath + filename, nodefile, compileToJS, done);
     }, function() {
         // outer: sourcepath
         // outer: compileToJS
