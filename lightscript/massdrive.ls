@@ -75,15 +75,15 @@
         if(mouse) {
             i = 4;
             while(--i){
-                if(Math.random() * Math.abs(mouse.x - player.p.x) > Math.random() * Math.abs(mouse.y - player.p.y)) {
-            if(mouse.x < player.p.x) {
+                if(Math.random() * Math.abs(mouse.x ) > Math.random() * Math.abs(mouse.y )) {
+            if(mouse.x > 0) {
                 shootleft();
             } else {
                 shootright();
             }
 
                 } else {
-            if(mouse.y < player.p.y) {
+            if(mouse.y > 0) {
                 shootup();
             } else {
                 shootdown();
@@ -178,29 +178,59 @@
     };
     var prevTime = Date.now();
     var mouse = undefined;
+    mousemoves = [];
+    var mousedown = function(x,y) {
+        mousemoves = [new V2d(x, y)];
+        mousemoves[0].time = Date.now();
+        mousetime = Date.now();
+        mouse = undefined;
+    }
+    var mousemove = function(x,y) {
+        if(mousemoves.length) {
+            i = 0;
+            now = Date.now();
+            while(mousemoves[i] && mousemoves[i].time < now - 500) {
+                ++i;
+            };
+            i -= 2;
+            if(i) {
+                mousemoves = mousemoves.slice(i);
+            };
+            console.log(x,y);
+            cursor = new V2d(x,y);
+            cursor.time = now;
+            mousemoves.push(cursor);
+            mouse = (new V2d(x, y)).sub(mousemoves[0]);
+            console.log(mousemoves[0].x, cursor.x, mouse.x);
+        } 
+    }
+    var mouseup = function(x,y) {
+        mousemoves = [];
+        mouse = undefined
+    }
     exports.run = function() {
         mouse = undefined;
         canvas = document.getElementById("canvas");
     canvas.onmousedown = function(e) {
-        console.log('here');
-        mouse = new V2d(e.clientX - x0, mousey = e.clientY - y0);
+        mousedown(e.clientX, e.clientY);
     };
     canvas.onmouseup = function(e) {
-        mouse = undefined;
+        mouseup(e.clientX, e.clientY);
+    };
+    canvas.onmouseout = function(e) {
+        mouseup(e.clientX, e.clientY);
     };
     canvas.onmousemove = function(e) {
-        if(mouse) {
-            mouse = new V2d(e.clientX - x0, mousey = e.clientY - y0);
-        };
+        mousemove(e.clientX, e.clientY);
     };
     canvas.addEventListener("touchstart", function(e) {
-        mouse = new V2d(e.touches[0].clientX - x0, mousey = e.touches[0].clientY - y0);
+        mousedown(e.touches[0].clientX, e.touches[0].clientY);
     }, false);
     canvas.addEventListener("touchmove", function(e) {
-        mouse = new V2d(e.touches[0].clientX - x0, mousey = e.touches[0].clientY - y0);
+        mousemove(e.touches[0].clientX, e.touches[0].clientY);
     }, false);
     canvas.addEventListener("touchend", function(e) {
-        mouse = undefined;
+        mouseup(e.touches[0].clientX, e.touches[0].clientY);
     }, false);
         ctx = canvas.getContext("2d");
         h = ctx.height = canvas.height = canvas.offsetHeight;
