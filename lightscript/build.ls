@@ -58,13 +58,27 @@ exports.nodemain = function(arg) {
         fs.writeFile(buildpath + "webjs/solsort.js", result);
     };
     require("async").forEach(sourcefiles, function(filename, done) {
+        done;
         var nodefile = buildpath + "nodejs/" + filename.replace(".ls", ".js");
-        optionalCompile(sourcepath + filename, nodefile, compileToJS(require("./compiler").ls2nodejs), done);
+        optionalCompile(sourcepath + filename, nodefile, compileToJS(require("./compiler").ls2nodejs), function() {
+            var mozfile = buildpath + "mozjs/lib/" + filename.replace(".ls", ".js");
+            optionalCompile(sourcepath + filename, mozfile, compileToJS(require("./compiler").ls2mozjs), function() {
+                var webfile = buildpath + "webjs/" + filename.replace(".ls", ".js");
+                optionalCompile(sourcepath + filename, webfile, compileToJS(require("./compiler").ls2webjs), done);
+            });
+        });
     }, function() {
         if(compiled["compiler.ls"] || compiled["build.ls"] || arg === "web") {
             require("async").forEach(sourcefiles, function(filename, done) {
-                var destfile = buildpath + "nodejs/" + filename.replace(".ls", ".js");
-                compileToJS(require("./compiler").ls2nodejs)(sourcepath + filename, destfile, done);
+                done;
+                var nodefile = buildpath + "nodejs/" + filename.replace(".ls", ".js");
+                optionalCompile(sourcepath + filename, nodefile, compileToJS(require("./compiler").ls2nodejs), function() {
+                    var mozfile = buildpath + "mozjs/lib/" + filename.replace(".ls", ".js");
+                    optionalCompile(sourcepath + filename, mozfile, compileToJS(require("./compiler").ls2mozjs), function() {
+                        var webfile = buildpath + "webjs/" + filename.replace(".ls", ".js");
+                        optionalCompile(sourcepath + filename, webfile, compileToJS(require("./compiler").ls2webjs), done);
+                    });
+                });
             }, createSolsortJS);
         } else  {
             createSolsortJS();
