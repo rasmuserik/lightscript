@@ -8,6 +8,7 @@ codegen = undefined;
     // outer: this
     // outer: addMacro
     // outer: compiletime
+    // outer: true
     // outer: rst2ast
     // outer: tokenise
     // outer: parse
@@ -59,6 +60,7 @@ codegen = undefined;
         // outer: addMacro
         // outer: applyMacros
         // outer: compiletime
+        // outer: true
         // outer: rst2ast
         // outer: tokenise
         // outer: parse
@@ -80,6 +82,7 @@ codegen = undefined;
             },
             target : target,
         };
+        compiler[target] = true;
         compiletime(compiler);
         applyMacros(compiler.forwardMacros, compiler);
         return compiler;
@@ -1382,6 +1385,7 @@ ast2rst = undefined;
     var macroJsInfixIf;
     var macroJsWhile;
     var macroCond2IfElse;
+    var macroJsCond2IfElse;
     var macroNew;
     var macroJsCallMethod;
     var macroPut2Assign;
@@ -1494,6 +1498,37 @@ ast2rst = undefined;
             ast.val = "{";
         };
     };
+    macroJsCond2IfElse = function(ast) {
+        // outer: Array
+        var truthvalue;
+        var lhs;
+        // outer: unblock
+        var rhs;
+        var children;
+        children = ast.children;
+        if(children.length & 1) {
+            rhs = ast.create("id:*{}");
+            rhs.children = unblock(children.pop());
+            rhs.children.unshift(ast.create("id:"));
+        };
+        while(children.length) {
+            lhs = ast.create("id:*{}");
+            truthvalue = children[0];
+            if(truthvalue.isa("compiletime:undefined") || truthvalue.isa("compiletime:false")) {
+                children.pop();
+                lhs.children = [];
+            } else  {
+                lhs.children = unblock(children.pop());
+            };
+            lhs.children.unshift(ast.create("id:*()", ast.create("id:if"), children.pop()));
+            if(rhs) {
+                rhs = ast.create("id:else", lhs, rhs);
+            } else  {
+                rhs = lhs;
+            };
+        };
+        return rhs;
+    };
     macroCond2IfElse = function(ast) {
         var lhs;
         // outer: unblock
@@ -1602,7 +1637,6 @@ ast2rst = undefined;
         // outer: macroFlattenBlock
         // outer: macroJsInfixIf
         // outer: macroJsWhile
-        // outer: macroCond2IfElse
         // outer: macroJsCallMethod
         // outer: jsoperator
         // outer: fog
@@ -1624,7 +1658,6 @@ ast2rst = undefined;
             addMacro(macros, "call:" + operatorName, function() {});
         });
         addMacro(macros, "call", macroJsCallMethod);
-        addMacro(macros, "branch:cond", macroCond2IfElse);
         addMacro(macros, "branch:while", macroJsWhile);
         addMacro(macros, "branch:?:", macroJsInfixIf);
         addMacro(macros, "block", macroFlattenBlock);
@@ -1632,6 +1665,7 @@ ast2rst = undefined;
     };
     // ast2js {{{2
     jsMacros = jsrstMacros();
+    addMacro(jsMacros, "branch:cond", macroJsCond2IfElse);
     addMacro(jsMacros, "fn", macroJsFn);
     addMacro(jsMacros, "assign", macroJsAssign);
     addMacro(jsMacros, "compiletime", function(ast) {
@@ -1647,6 +1681,7 @@ ast2rst = undefined;
     };
     // ast2rst {{{2
     rstMacros = jsrstMacros();
+    addMacro(rstMacros, "branch:cond", macroCond2IfElse);
     addMacro(rstMacros, "fn", macroFnDef);
     addMacro(rstMacros, "assign", macroLsAssign);
     addMacro(rstMacros, "compiletime", function(ast) {
