@@ -204,33 +204,36 @@
             console.log(mousemoves[0].x, cursor.x, mouse.x);
         } 
     }
-    var mouseup = function(x,y) {
+    var mouseup = function() {
         mousemoves = [];
         mouse = undefined
     }
     exports.run = function() {
         mouse = undefined;
         canvas = document.getElementById("canvas");
+        if(canvas.
     canvas.onmousedown = function(e) {
         mousedown(e.clientX, e.clientY);
     };
     canvas.onmouseup = function(e) {
-        mouseup(e.clientX, e.clientY);
+        mouseup();
     };
     canvas.onmouseout = function(e) {
-        mouseup(e.clientX, e.clientY);
+        mouseup();
     };
     canvas.onmousemove = function(e) {
         mousemove(e.clientX, e.clientY);
+        mouseup();
     };
     canvas.addEventListener("touchstart", function(e) {
+        canvas.onmouseup = canvas.onmousedown = canvas.onmouseout = canvas.mousemove = undefined;
         mousedown(e.touches[0].clientX, e.touches[0].clientY);
     }, false);
     canvas.addEventListener("touchmove", function(e) {
         mousemove(e.touches[0].clientX, e.touches[0].clientY);
     }, false);
     canvas.addEventListener("touchend", function(e) {
-        mouseup(e.touches[0].clientX, e.touches[0].clientY);
+        mouseup();
     }, false);
         ctx = canvas.getContext("2d");
         h = ctx.height = canvas.height = canvas.offsetHeight;
