@@ -230,12 +230,15 @@
     };
     canvas.addEventListener("touchstart", function(e) {
         mousedown(e.touches[0].clientX, e.touches[0].clientY);
+        e.preventDefault();
     }, false);
     canvas.addEventListener("touchmove", function(e) {
         mousemove(e.touches[0].clientX, e.touches[0].clientY);
+        e.preventDefault();
     }, false);
     canvas.addEventListener("touchend", function(e) {
         mouseup();
+        e.preventDefault();
     }, false);
         ctx = canvas.getContext("2d");
         h = ctx.height = canvas.height = canvas.offsetHeight;

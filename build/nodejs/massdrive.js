@@ -432,14 +432,17 @@
         canvas.addEventListener("touchstart", function(e) {
             // outer: mousedown
             mousedown(e.touches[0].clientX, e.touches[0].clientY);
+            e.preventDefault();
         }, false);
         canvas.addEventListener("touchmove", function(e) {
             // outer: mousemove
             mousemove(e.touches[0].clientX, e.touches[0].clientY);
+            e.preventDefault();
         }, false);
         canvas.addEventListener("touchend", function(e) {
             // outer: mouseup
             mouseup();
+            e.preventDefault();
         }, false);
         ctx = canvas.getContext("2d");
         h = ctx.height = canvas.height = canvas.offsetHeight;
