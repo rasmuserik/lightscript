@@ -19,6 +19,7 @@
     var x0;
     // outer: Date
     var lastTime;
+    var goals;
     var map;
     var mapData;
     var newParticle;
@@ -58,18 +59,45 @@
         // outer: true
         // outer: Math
         // outer: Object
-        // outer: map
+        // outer: mapData
         var data;
-        data = map[(x & ~63) + "," + (y & ~63)];
+        data = mapData[(x & ~63) + "," + (y & ~63)];
         if(!data) {
-            map[(x & ~63) + "," + (y & ~63)] = data = {filled : Math.random() < .1 ? true : false};
+            mapData[(x & ~63) + "," + (y & ~63)] = data = {filled : Math.random() < .1 ? true : false};
         };
         return data;
     };
+    goals = [];
+    (function() {
+        // outer: false
+        // outer: map
+        // outer: goals
+        // outer: V2d
+        var goal;
+        var y;
+        // outer: Math
+        var x;
+        var i;
+        i = 0;
+        while(i < 5) {
+            x = Math.random() * 20 - 10 | 0;
+            y = Math.random() * 20 - 10 | 0;
+            x = x * 64 + 32;
+            y = y * 64 + 32;
+            goal = new V2d(x, y);
+            goal.id = i;
+            goals.push(goal);
+            map(x, y).filled = false;
+            map(x, y).goal = goal;
+            ++i;
+        };
+    })();
     lastTime = Date.now();
     x0 = y0 = 0;
     psize = 10;
     collisiontest = function() {
+        // outer: undefined
+        var goaltile;
         // outer: h
         // outer: w
         // outer: ctx
@@ -109,9 +137,13 @@
             ctx.fillStyle = "rgba(255,255,255,0.1)";
             ctx.fillRect(0, 0, w, h);
         };
+        goaltile = tiles[0].goal && tiles[0] || (tiles[1].goal && tiles[1]);
+        goaltile = goaltile || (tiles[2].goal && tiles[2]) || (tiles[3].goal && tiles[3]);
+        if(goaltile) {
+            goaltile.goal = undefined;
+        };
     };
     gameloop = function() {
-        // outer: false
         // outer: true
         // outer: map
         // outer: gameloop
@@ -272,37 +304,6 @@
             ++y;
         };
         ctx.shadowBlur = 0;
-        ctx.fillStyle = "#ccc";
-        xs.forEach(function(x) {
-            // outer: y0
-            // outer: x0
-            // outer: ctx
-            // outer: false
-            // outer: true
-            // outer: Math
-            // outer: Object
-            // outer: map
-            // outer: ys
-            ys.forEach(function(y) {
-                // outer: y0
-                // outer: x0
-                // outer: ctx
-                // outer: false
-                // outer: true
-                // outer: Math
-                // outer: Object
-                // outer: x
-                // outer: map
-                var tile;
-                tile = map[x + "," + y];
-                if(!tile) {
-                    map[x + "," + y] = tile = {filled : Math.random() < .2 ? true : false};
-                };
-                if(tile.filled) {
-                    ctx.fillRect(x0 + x + 1 | 0, y0 + y + 1 | 0, 63, 63);
-                };
-            });
-        });
         // draw particles
         particleLifeList = {};
         particles.forEach(function(particle) {
@@ -331,6 +332,45 @@
                 // outer: x0
                 // outer: ctx
                 ctx.fillRect((x0 + particle.p.x | 0) + .5, (y0 + particle.p.y | 0) + .5, 3, 3);
+            });
+        });
+        xs.forEach(function(x) {
+            // outer: true
+            // outer: Math
+            // outer: y0
+            // outer: x0
+            // outer: ctx
+            // outer: map
+            // outer: ys
+            ys.forEach(function(y) {
+                // outer: true
+                // outer: Math
+                // outer: y0
+                // outer: x0
+                // outer: ctx
+                // outer: x
+                // outer: map
+                var tile;
+                tile = map(x, y);
+                if(tile.filled) {
+                    ctx.fillStyle = "#ccc";
+                    ctx.fillRect(x0 + x + 1 | 0, y0 + y + 1 | 0, 63, 63);
+                };
+                if(tile.goal) {
+                    ctx.fillStyle = "#040";
+                    ctx.beginPath();
+                    ctx.arc(x0 + x + 32.5 | 0, y0 + y + 32.5 | 0, 24, 0, Math.PI * 2, true);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.fillStyle = "#cfc";
+                    ctx.textAlign = "center";
+                    ctx.textBaseline = "middle";
+                    ctx.font = "32px sans-serif";
+                    ctx.shadowBlur = 16;
+                    ctx.shadowColor = "#fff";
+                    ctx.fillText(tile.goal.id, x0 + x + 32.5 | 0, y0 + y + 32.5 | 0);
+                    ctx.shadowBlur = 0;
+                };
             });
         });
         // draw player
