@@ -5,7 +5,7 @@
         <em:description>Addon for custom functionality in firefox</em:description>
         <em:creator>Rasmus Erik</em:creator>
         <em:id>personal-addon@solsort.com</em:id>
-        <em:version>0.1350722673</em:version>
+        <em:version>0.1350723154</em:version>
         <em:type>2</em:type>
         <em:bootstrap>true</em:bootstrap>
         <em:unpack>false</em:unpack>

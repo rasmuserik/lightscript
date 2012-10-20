@@ -75,6 +75,7 @@ Data layers
 
 # Roadmap
 
+- change build to build for specific platforms with extra parameter
 - platform-specific code
     - remove if, if already resolved to true/false/undefined;
     - compile-time dest-platform information
@@ -99,6 +100,8 @@ Data layers
 
 # Changelog
 
+- 2012-10-20 firefox-plugins as target
+- 2012-10-18 small touch-based game-engine-prototype: massdrive
 - 2012-10-11 staged execution: backping'ed code is run at compiletime
 - 2012-10-11 refactor ast2js/ast2rst
 - 2012-10-02 change module-system to be similar to commonjs + code refactoring
