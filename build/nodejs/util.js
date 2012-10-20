@@ -17,12 +17,7 @@ exports.extend = function(a, b) {
 // nextTick
 if(true) {
     exports.nextTick = process.nextTick;
-} else  {
-    exports.nextTick = function(f) {
-        // outer: setTimeout
-        setTimeout(f, 0);
-    };
-};
+} else if(undefined) {} else if(undefined) {};
 // throttle function {{{1
 // ## Throttle a function {{{2
 exports.throttledFn = function(fn, delay) {

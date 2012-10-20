@@ -1506,7 +1506,7 @@ ast2rst = undefined;
         };
         while(children.length) {
             lhs = ast.create("id:*{}");
-            truthvalue = children[0];
+            truthvalue = children.slice(- 2)[0];
             if(truthvalue.isa("compiletime:undefined") || truthvalue.isa("compiletime:false")) {
                 children.pop();
                 lhs.children = [];

@@ -52,11 +52,7 @@ Object.keys(apis).forEach(function(name) {
             xhr.open("POST", "/api/" + name, true);
             xhr.send(JSON.stringify(args));
         };
-    } else if(undefined) {
-        exports.api[name] = function(args, callback) {
-            throw "not implemented yet";
-        };
-    };
+    } else if(undefined) {};
 });
 RestObject = function(req, res, next) {
     // outer: Object

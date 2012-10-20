@@ -10,7 +10,11 @@ Object.keys(apis).forEach(function(name) {
     // outer: console
     // outer: exports
     // create api functions
-    if(undefined) {} else if(true) {};
+    if(undefined) {} else if(true) {
+        exports.api[name] = function(args, callback) {
+            throw "not implemented yet";
+        };
+    };
 });
 RestObject = function(req, res, next) {
     // outer: Object

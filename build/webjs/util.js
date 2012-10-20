@@ -15,12 +15,12 @@ exports.extend = function(a, b) {
     return a;
 };
 // nextTick
-if(undefined) {} else  {
+if(undefined) {} else if(true) {
     exports.nextTick = function(f) {
         // outer: setTimeout
         setTimeout(f, 0);
     };
-};
+} else if(undefined) {};
 // throttle function {{{1
 // ## Throttle a function {{{2
 exports.throttledFn = function(fn, delay) {
@@ -172,7 +172,15 @@ exports.name2url = function(name) {
     });
 };
 // local storage {{{1
-if(undefined) {} else if(typeof localStorage !== "undefined") {};
+if(undefined) {} else if(typeof localStorage !== "undefined") {
+    exports.local = {set : function(key, val) {
+        // outer: localStorage
+        localStorage.setItem(key, val);
+    }, get : function(key) {
+        // outer: localStorage
+        localStorage.getItem(key);
+    }};
+};
 // runonce {{{1
 util.runonce = function(fn) {
     // outer: false

@@ -993,7 +993,7 @@ ast2rst = undefined;
         };
         while(children.length) {
             var lhs = ast.create("id:*{}");
-            var truthvalue = children[0];
+            var truthvalue = children.slice(- 2)[0];
             if(truthvalue.isa("compiletime:undefined") || truthvalue.isa("compiletime:false")) {
                 children.pop();
                 lhs.children = [];

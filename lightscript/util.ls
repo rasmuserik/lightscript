@@ -14,9 +14,13 @@ exports.extend = function(a, b) {
 // nextTick
 if(`compiler.nodejs) {
     exports.nextTick = process.nextTick;
-} else  {
+} else if(`compiler.webjs) {
     exports.nextTick = function(f) {
         setTimeout(f, 0);
+    };
+} else if(`compiler.mozjs) {
+    exports.nextTick = function(f) {
+        require("timers").setTimeout(f, 0);
     };
 };
 // throttle function {{{1
