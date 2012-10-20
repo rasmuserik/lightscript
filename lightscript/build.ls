@@ -54,8 +54,9 @@ exports.nodemain = function(arg) {
         require("./module").list().forEach(function(name) {
             result += fs.readFileSync(buildpath + "webjs/" + name + ".js");
         });
-        result += "solsort_require(\"./main\")";
+        result += "solsort_require(\"./main\");";
         fs.writeFile(buildpath + "webjs/solsort.js", result);
+        fs.writeFile(buildpath + "mozjs/data/solsort.js", result + "solsort_require(\"./addon\").main();");
     };
     var webjs = function(name) {
         //return require("./compiler").ls2webjs;

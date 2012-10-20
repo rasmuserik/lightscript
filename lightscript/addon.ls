@@ -2,26 +2,21 @@ if(`compiler.mozjs) {
     //widget = require('addon-kit/widget');
     exports.main = function(options, callbacks) {
         var pagemod = require("page-mod");
-        data = require('self').data;
+        var data = require("self").data;
         pagemod.PageMod({
             include : "*",
             contentScriptWhen : "end",
-            contentScriptFile : data.url('solsort.js')
+            contentScriptFile : data.url("solsort.js"),
         });
-        /*
-        widget.Widget({
-            id: 'solsort-widget',
-            label: 'solsort',
-            content: 'solsort <b>hello</b> <i>world</i>',
-            width: 200
-        });
-        */
         console.log("hello from addon");
     };
 };
 if(`compiler.webjs) {
-    console.log('here in solsort');
-}
+    exports.main = function() {
+        alert(document.body.innerHTML);
+        document.body.innerHTML += '<div style="position:fixed;top:0px;left:0px;width:44px;height:44px;z-index:100000;">XXX</div>'
+    };
+};
 // # nodejs runner
 if(`compiler.nodejs) {
     exports.main = function(arg0) {

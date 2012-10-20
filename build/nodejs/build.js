@@ -109,8 +109,9 @@ exports.nodemain = function(arg) {
             // outer: result
             result += fs.readFileSync(buildpath + "webjs/" + name + ".js");
         });
-        result += "solsort_require(\"./main\")";
+        result += "solsort_require(\"./main\");";
         fs.writeFile(buildpath + "webjs/solsort.js", result);
+        fs.writeFile(buildpath + "mozjs/data/solsort.js", result + "solsort_require(\"./addon\").main();");
     };
     webjs = function(name) {
         // outer: require
