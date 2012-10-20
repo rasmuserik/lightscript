@@ -1,4 +1,4 @@
-(function() {
+solsort_define("massdrive",function(exports, require){(function() {
     // outer: document
     // outer: setTimeout
     // outer: console
@@ -490,3 +490,4 @@
         gameloop();
     };
 })();
+});

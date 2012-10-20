@@ -1,4 +1,4 @@
-test = {};
+solsort_define("test",function(exports, require){test = {};
 test.name = "";
 test.error = function(description) {
     // outer: console
@@ -76,3 +76,4 @@ exports.main = function() {
         runTest(moduleName);
     });
 };
+});

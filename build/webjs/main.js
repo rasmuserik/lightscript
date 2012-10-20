@@ -1,4 +1,4 @@
-util = require("./util");
+solsort_define("main",function(exports, require){util = require("./util");
 use = function(name) {
     // outer: require
     return require("./" + name);
@@ -29,4 +29,5 @@ util.nextTick(function() {
     } else if(use(platform) && use(platform).main) {
         use(platform).main.apply(undefined, args);
     };
+});
 });

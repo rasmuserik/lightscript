@@ -52,12 +52,19 @@ exports.nodemain = function(arg) {
         result += "  return t;};";
         result += "solsort_define = function(name,fn){solsort_modules[name]=fn};";
         require("./module").list().forEach(function(name) {
-            result += "solsort_define(\"" + name + "\",function(exports, require){";
-            result += fs.readFileSync(buildpath + "nodejs/" + name + ".js");
-            result += "});";
+            result += fs.readFileSync(buildpath + "webjs/" + name + ".js");
         });
         result += "solsort_require(\"./main\")";
         fs.writeFile(buildpath + "webjs/solsort.js", result);
+    };
+    var webjs = function(name) {
+        //return require("./compiler").ls2webjs;
+        return function(ls) {
+            var result = "solsort_define(\"" + name + "\",function(exports, require){";
+            result += require("./compiler").ls2webjs(ls);
+            result += "});";
+            return result;
+        };
     };
     require("async").forEach(sourcefiles, function(filename, done) {
         done;
@@ -66,7 +73,7 @@ exports.nodemain = function(arg) {
             var mozfile = buildpath + "mozjs/lib/" + filename.replace(".ls", ".js");
             optionalCompile(sourcepath + filename, mozfile, compileToJS(require("./compiler").ls2mozjs), function() {
                 var webfile = buildpath + "webjs/" + filename.replace(".ls", ".js");
-                optionalCompile(sourcepath + filename, webfile, compileToJS(require("./compiler").ls2webjs), done);
+                optionalCompile(sourcepath + filename, webfile, compileToJS(webjs(filename.replace(".ls", ""))), done);
             });
         });
     }, function() {
@@ -78,7 +85,7 @@ exports.nodemain = function(arg) {
                     var mozfile = buildpath + "mozjs/lib/" + filename.replace(".ls", ".js");
                     optionalCompile(sourcepath + filename, mozfile, compileToJS(require("./compiler").ls2mozjs), function() {
                         var webfile = buildpath + "webjs/" + filename.replace(".ls", ".js");
-                        optionalCompile(sourcepath + filename, webfile, compileToJS(require("./compiler").ls2webjs), done);
+                        optionalCompile(sourcepath + filename, webfile, compileToJS(webjs(filename.replace(".ls", ""))), done);
                     });
                 });
             }, createSolsortJS);

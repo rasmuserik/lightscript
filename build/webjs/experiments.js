@@ -1,4 +1,4 @@
-(function() {
+solsort_define("experiments",function(exports, require){(function() {
     // outer: console
     // outer: exports
     exports.main = function() {
@@ -21,3 +21,4 @@
         return 1;
     };
 })();
+});

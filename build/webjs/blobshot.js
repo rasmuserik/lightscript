@@ -1,4 +1,4 @@
-(function() {
+solsort_define("blobshot",function(exports, require){(function() {
     // outer: document
     // outer: console
     // outer: null
@@ -254,3 +254,4 @@
         };
     };
 })();
+});

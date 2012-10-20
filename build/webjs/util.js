@@ -1,4 +1,4 @@
-util = exports;
+solsort_define("util",function(exports, require){util = exports;
 // Basic platform/language {{{1
 // try-catch
 exports.trycatch = Function("return function trycatch(fn,handle){try{return fn();}catch(e){return handle(e);}}")();
@@ -235,3 +235,4 @@ util.valmap = function(obj, fn) {
     });
     return result;
 };
+});

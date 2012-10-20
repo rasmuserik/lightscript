@@ -1,4 +1,4 @@
-// Compiler {{{1
+solsort_define("compiler",function(exports, require){// Compiler {{{1
 codegen = undefined;
 (function() {
     // outer: ast2rst
@@ -1688,3 +1688,4 @@ ast2rst = undefined;
         return runMacro(rstMacros, ast);
     };
 })();
+});

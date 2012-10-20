@@ -2,12 +2,12 @@ if(`compiler.mozjs) {
     //widget = require('addon-kit/widget');
     exports.main = function(options, callbacks) {
         var pagemod = require("page-mod");
+        data = require('self').data;
         pagemod.PageMod({
             include : "*",
             contentScriptWhen : "end",
-            contentScript : "document.body.innerHTML += \"hello from solsort\"",
+            contentScriptFile : data.url('solsort.js')
         });
-        //    contentScript: 'document.body.innerHTML += "<h1>Here I am</h1>";'
         /*
         widget.Widget({
             id: 'solsort-widget',
@@ -19,6 +19,9 @@ if(`compiler.mozjs) {
         console.log("hello from addon");
     };
 };
+if(`compiler.webjs) {
+    console.log('here in solsort');
+}
 // # nodejs runner
 if(`compiler.nodejs) {
     exports.main = function(arg0) {

@@ -1,4 +1,5 @@
 if(undefined) {};
+if(undefined) {};
 // # nodejs runner
 if(true) {
     exports.main = function(arg0) {

@@ -1,4 +1,4 @@
-exports.api = {};
+solsort_define("rest",function(exports, require){exports.api = {};
 apis = {store : require("./storage").restapi};
 util = require("./util");
 Object.keys(apis).forEach(function(name) {
@@ -154,3 +154,4 @@ exports.nodemain = function() {
     // start the server
     server.listen(8002);
 };
+});

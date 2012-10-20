@@ -1,4 +1,4 @@
-exports.V2d = V2d = function(x, y) {
+solsort_define("v2d",function(exports, require){exports.V2d = V2d = function(x, y) {
     // outer: this
     this.x = x;
     this.y = y;
@@ -33,3 +33,4 @@ V2d.prototype.norm = function() {
     len = this.length();
     return this.scale(len ? 1 / len : 0);
 };
+});

@@ -1,4 +1,4 @@
-util = require("./util");
+solsort_define("storage",function(exports, require){util = require("./util");
 // sync api
 storeProto = {
     sync : util.throttledFn(function(done) {
@@ -187,3 +187,4 @@ exports.create = function(owner, storename, mergeFn) {
 };
 // storage server-database/rest-api;
 if(undefined) {};
+});

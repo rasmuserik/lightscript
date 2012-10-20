@@ -1,4 +1,4 @@
-(function() {
+solsort_define("combigame",function(exports, require){(function() {
     // outer: parseInt
     // outer: item
     // outer: webutil
@@ -641,3 +641,4 @@
     // ## App definition
     exports.app = {start : startGame, update : doLayout};
 })();
+});

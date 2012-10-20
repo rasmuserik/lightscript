@@ -1,4 +1,4 @@
-// web {{{1
+solsort_define("web",function(exports, require){// web {{{1
 exports.main = function() {
     // outer: arguments
     // outer: Array
@@ -344,5 +344,6 @@ exports.main = function() {
     };
     // # Various initialisation on page
     loginUI();
-    exports.loadJS("http://solsort.com/store.js");
+    //exports.loadJS("http://solsort.com/store.js");
 };
+});

@@ -1,4 +1,4 @@
-exports.nodemain = function() {
+solsort_define("publish",function(exports, require){exports.nodemain = function() {
     // outer: undefined
     // outer: file
     // outer: process
@@ -237,3 +237,4 @@ exports.nodemain = function() {
         });
     })();
 };
+});

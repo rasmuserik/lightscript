@@ -214,5 +214,5 @@ exports.main = function() {
     };
     // # Various initialisation on page
     loginUI();
-    exports.loadJS("http://solsort.com/store.js");
+    //exports.loadJS("http://solsort.com/store.js");
 };
