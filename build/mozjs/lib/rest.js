@@ -3,60 +3,14 @@ apis = {store : require("./storage").restapi};
 util = require("./util");
 Object.keys(apis).forEach(function(name) {
     // outer: Object
+    // outer: util
     // outer: JSON
     // outer: true
     // outer: XMLHttpRequest
     // outer: console
     // outer: exports
-    // outer: util
     // create api functions
-    if(util.platform === "web") {
-        exports.api[name] = function(args, callback) {
-            // outer: Object
-            // outer: util
-            // outer: JSON
-            // outer: true
-            // outer: XMLHttpRequest
-            var xhr;
-            // outer: name
-            // outer: console
-            console.log("rest:", name, args);
-            xhr = new XMLHttpRequest();
-            xhr.onreadystatechange = function() {
-                // outer: JSON
-                // outer: Object
-                // outer: util
-                // outer: callback
-                // outer: xhr
-                if(xhr.readyState === 4) {
-                    if(xhr.status === 200) {
-                        callback(util.trycatch(function() {
-                            // outer: xhr
-                            // outer: JSON
-                            return JSON.parse(xhr.responseText);
-                        }, function() {
-                            // outer: xhr
-                            // outer: Object
-                            return {err : "cannot parse: " + xhr.responseText};
-                        }));
-                    } else  {
-                        callback({
-                            err : "HTTP-status !== 200",
-                            status : xhr.status,
-                            statusText : xhr.statusText,
-                            content : xhr.responseText,
-                        });
-                    };
-                };
-            };
-            xhr.open("POST", "/api/" + name, true);
-            xhr.send(JSON.stringify(args));
-        };
-    } else if(util.platform === "node") {
-        exports.api[name] = function(args, callback) {
-            throw "not implemented yet";
-        };
-    };
+    if(undefined) {} else if(undefined) {};
 });
 RestObject = function(req, res, next) {
     // outer: Object

@@ -67,7 +67,6 @@ codegen = undefined;
 compiletime = undefined;
 (function() {
     var util = use("util");
-    var platform = util.platform;
     compiletime = function(compiler) {
         var asts = compiler.asts;
         var compiletimeasts = [];
@@ -99,20 +98,16 @@ compiletime = undefined;
             };
             ++i;
         };
-        if(platform === "node" || platform === "web") {
-            var code = codegen(ast2js, asts);
-            var fn = Function("__compiletimevals", "compiler", "require", code);
-            util.trycatch(function() {
-                fn(compiletimevals, compiler, require);
-            }, function(err) {
-                console.log("compile-time error", err);
-                if(err.stack) {
-                    console.log(err.stack);
-                };
-            });
-        } else  {
-            throw "unsupported platform";
-        };
+        var code = codegen(ast2js, asts);
+        var fn = Function("__compiletimevals", "compiler", "require", code);
+        util.trycatch(function() {
+            fn(compiletimevals, compiler, require);
+        }, function(err) {
+            console.log("compile-time error", err);
+            if(err.stack) {
+                console.log(err.stack);
+            };
+        });
         i = 0;
         while(i < compiletimeasts.length) {
             compiletimeasts[i].val = util.trycatch(function() {

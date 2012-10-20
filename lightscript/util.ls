@@ -11,16 +11,8 @@ exports.extend = function(a, b) {
     });
     return a;
 };
-// platform
-exports.platform = undefined;
-if(typeof navigator !== "undefined" && navigator.userAgent) {
-    exports.platform = "web";
-};
-if(typeof process !== "undefined" && process.versions && process.versions.node) {
-    exports.platform = "node";
-};
 // nextTick
-if(util.platform === "node") {
+if(`compiler.nodejs) {
     exports.nextTick = process.nextTick;
 } else  {
     exports.nextTick = function(f) {
@@ -122,7 +114,7 @@ exports.name2url = function(name) {
     });
 };
 // local storage {{{1
-if(util.platform === "node") {
+if(`compiler.nodejs) {
     !(function() {
         var db = util.trycatch(function() {
             return JSON.parse(require("fs").readFileSync(process.env.HOME + "/data/local.sqlite3"));

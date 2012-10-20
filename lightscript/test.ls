@@ -1,4 +1,3 @@
-platform = require("./util").platform;
 test = {};
 test.name = "";
 test.error = function(description) {
@@ -45,13 +44,6 @@ runTest = function(moduleName) {
     };
     if(module.test) {
         module.test(test.create(moduleName));
-    };
-    if(module[platform + test]) {
-        module.test(test.create(moduleName + "-" + platform));
-    };
-    var pname = "test" + require("./util").platform;
-    if(module[pname]) {
-        module[pname](test.create(require("./util".platform) + ":" + moduleName));
     };
 };
 exports.main = function() {

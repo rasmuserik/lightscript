@@ -23,21 +23,21 @@
         };
         return data;
     };
-    goals = [];
-    (function(){
-        i = 0;
-        while(i<5) {
-            x = (Math.random() * 20 - 10) |0;
-            y = (Math.random() * 20 - 10) |0; 
+    var goals = [];
+    (function() {
+        var i = 0;
+        while(i < 5) {
+            var x = Math.random() * 20 - 10 | 0;
+            var y = Math.random() * 20 - 10 | 0;
             x = x * 64 + 32;
             y = y * 64 + 32;
-            goal = new V2d(x,y);
+            var goal = new V2d(x, y);
             goal.id = i;
             goals.push(goal);
-            map(x,y).filled = false;
-            map(x,y).goal = goal;
+            map(x, y).filled = false;
+            map(x, y).goal = goal;
             ++i;
-        }
+        };
     })();
     var lastTime = Date.now();
     var x0 = var y0 = 0;
@@ -66,12 +66,11 @@
             ctx.fillStyle = "rgba(255,255,255,0.1)";
             ctx.fillRect(0, 0, w, h);
         };
-        goaltile = (tiles[0].goal && tiles[0]) || (tiles[1].goal && tiles[1]);
+        var goaltile = tiles[0].goal && tiles[0] || (tiles[1].goal && tiles[1]);
         goaltile = goaltile || (tiles[2].goal && tiles[2]) || (tiles[3].goal && tiles[3]);
         if(goaltile) {
             goaltile.goal = undefined;
-        }
-
+        };
     };
     var gameloop = function() {
         //
@@ -200,7 +199,7 @@
                 if(tile.goal) {
                     ctx.fillStyle = "#040";
                     ctx.beginPath();
-                    ctx.arc(x0+x+32.5|0, y0+y+32.5 |0, 24, 0, Math.PI*2, true); 
+                    ctx.arc(x0 + x + 32.5 | 0, y0 + y + 32.5 | 0, 24, 0, Math.PI * 2, true);
                     ctx.closePath();
                     ctx.fill();
                     ctx.fillStyle = "#cfc";
@@ -209,9 +208,9 @@
                     ctx.font = "32px sans-serif";
                     ctx.shadowBlur = 16;
                     ctx.shadowColor = "#fff";
-                    ctx.fillText(tile.goal.id, x0+x+32.5|0, y0+y+32.5 |0); 
+                    ctx.fillText(tile.goal.id, x0 + x + 32.5 | 0, y0 + y + 32.5 | 0);
                     ctx.shadowBlur = 0;
-                }
+                };
             });
         });
         // draw player

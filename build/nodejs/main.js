@@ -7,21 +7,18 @@ util.nextTick(function() {
     // outer: undefined
     // outer: use
     // outer: window
+    var platform;
     // outer: process
     var commandName;
     // outer: Array
     var args;
-    // outer: util
-    var platform;
-    platform = util.platform;
     args = [];
-    if(platform === "node") {
+    if(true) {
         commandName = process.argv[2];
         args = process.argv.slice(3);
+        platform = "node";
     };
-    if(platform === "web") {
-        commandName = window.location.hash.slice(1);
-    };
+    if(undefined) {};
     if(use(commandName) && use(commandName)[platform + "main"]) {
         use(commandName)[platform + "main"].apply(undefined, args);
     } else if(use(commandName) && use(commandName).main) {

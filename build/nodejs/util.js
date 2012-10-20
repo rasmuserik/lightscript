@@ -14,16 +14,8 @@ exports.extend = function(a, b) {
     });
     return a;
 };
-// platform
-exports.platform = undefined;
-if(typeof navigator !== "undefined" && navigator.userAgent) {
-    exports.platform = "web";
-};
-if(typeof process !== "undefined" && process.versions && process.versions.node) {
-    exports.platform = "node";
-};
 // nextTick
-if(util.platform === "node") {
+if(true) {
     exports.nextTick = process.nextTick;
 } else  {
     exports.nextTick = function(f) {
@@ -182,7 +174,7 @@ exports.name2url = function(name) {
     });
 };
 // local storage {{{1
-if(util.platform === "node") {
+if(true) {
     !(function() {
         // outer: null
         // outer: process

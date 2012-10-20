@@ -3,14 +3,15 @@ use = function(name) {
     return require("./" + name);
 };
 util.nextTick(function() {
-    var platform = util.platform;
     var args = [];
-    if(platform === "node") {
+    if(`compiler.nodejs) {
         var commandName = process.argv[2];
         args = process.argv.slice(3);
+        var platform = "node";
     };
-    if(platform === "web") {
+    if(`compiler.webjs) {
         commandName = window.location.hash.slice(1);
+        platform = "web";
     };
     if(use(commandName) && use(commandName)[platform + "main"]) {
         use(commandName)[platform + "main"].apply(undefined, args);

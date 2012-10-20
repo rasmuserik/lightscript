@@ -3,7 +3,7 @@ apis = {store : require("./storage").restapi};
 util = require("./util");
 Object.keys(apis).forEach(function(name) {
     // create api functions
-    if(util.platform === "web") {
+    if(`compiler.webjs) {
         exports.api[name] = function(args, callback) {
             console.log("rest:", name, args);
             var xhr = new XMLHttpRequest();
@@ -28,7 +28,7 @@ Object.keys(apis).forEach(function(name) {
             xhr.open("POST", "/api/" + name, true);
             xhr.send(JSON.stringify(args));
         };
-    } else if(util.platform === "node") {
+    } else if(`compiler.nodejs) {
         exports.api[name] = function(args, callback) {
             throw "not implemented yet";
         };

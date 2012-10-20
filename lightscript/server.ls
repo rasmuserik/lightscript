@@ -1,4 +1,4 @@
-if(require("./util").platform === "node") {
+if(`compiler.nodejs) {
     rootdir = __dirname + "/../../../solsort/";
     exports.nodemain = function() {
         // # includes and initialisation {{{1

@@ -3,14 +3,14 @@ apis = {store : require("./storage").restapi};
 util = require("./util");
 Object.keys(apis).forEach(function(name) {
     // outer: Object
+    // outer: util
     // outer: JSON
     // outer: true
     // outer: XMLHttpRequest
     // outer: console
     // outer: exports
-    // outer: util
     // create api functions
-    if(util.platform === "web") {
+    if(true) {
         exports.api[name] = function(args, callback) {
             // outer: Object
             // outer: util
@@ -52,7 +52,7 @@ Object.keys(apis).forEach(function(name) {
             xhr.open("POST", "/api/" + name, true);
             xhr.send(JSON.stringify(args));
         };
-    } else if(util.platform === "node") {
+    } else if(undefined) {
         exports.api[name] = function(args, callback) {
             throw "not implemented yet";
         };

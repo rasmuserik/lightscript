@@ -14,18 +14,8 @@ exports.extend = function(a, b) {
     });
     return a;
 };
-// platform
-exports.platform = undefined;
-if(typeof navigator !== "undefined" && navigator.userAgent) {
-    exports.platform = "web";
-};
-if(typeof process !== "undefined" && process.versions && process.versions.node) {
-    exports.platform = "node";
-};
 // nextTick
-if(util.platform === "node") {
-    exports.nextTick = process.nextTick;
-} else  {
+if(undefined) {} else  {
     exports.nextTick = function(f) {
         // outer: setTimeout
         setTimeout(f, 0);
@@ -182,55 +172,7 @@ exports.name2url = function(name) {
     });
 };
 // local storage {{{1
-if(util.platform === "node") {
-    !(function() {
-        // outer: null
-        // outer: process
-        // outer: require
-        // outer: JSON
-        // outer: Object
-        // outer: exports
-        var lastSync;
-        var syncLocalStorage;
-        // outer: util
-        var db;
-        db = util.trycatch(function() {
-            // outer: process
-            // outer: require
-            // outer: JSON
-            return JSON.parse(require("fs").readFileSync(process.env.HOME + "/data/local.sqlite3"));
-        }, function() {
-            // outer: Object
-            return {};
-        });
-        syncLocalStorage = util.throttledFn(function() {
-            // outer: null
-            // outer: db
-            // outer: JSON
-            // outer: process
-            // outer: require
-            require("fs").writeFile(process.env.HOME + "/data/local.sqlite3", JSON.stringify(db, null, "  "));
-        });
-        lastSync = 0;
-        exports.local = {set : function(key, val) {
-            // outer: syncLocalStorage
-            // outer: db
-            db[key] = val;
-            syncLocalStorage();
-        }, get : function(key) {
-            // outer: db
-            return db[key];
-        }};
-    })();
-} else if(typeof localStorage !== "undefined") {
-    exports.local = {set : function(key, val) {
-        // outer: localStorage
-        localStorage.setItem(key, val);
-    }, get : function(key) {
-        // outer: localStorage
-        localStorage.getItem(key);
-    }};
-};
+if(undefined) {} else if(typeof localStorage !== "undefined") {};
 // runonce {{{1
 util.runonce = function(fn) {
     // outer: false

@@ -136,11 +136,9 @@ compiletime = undefined;
     // outer: codegen
     // outer: Array
     // outer: compiletime
-    var platform;
     // outer: use
     var util;
     util = use("util");
-    platform = util.platform;
     compiletime = function(compiler) {
         // outer: JSON
         // outer: console
@@ -151,7 +149,6 @@ compiletime = undefined;
         // outer: ast2js
         // outer: codegen
         var code;
-        // outer: platform
         var ast;
         var i;
         var deepcopy;
@@ -196,25 +193,21 @@ compiletime = undefined;
             };
             ++i;
         };
-        if(platform === "node" || platform === "web") {
-            code = codegen(ast2js, asts);
-            fn = Function("__compiletimevals", "compiler", "require", code);
-            util.trycatch(function() {
-                // outer: require
-                // outer: compiler
-                // outer: compiletimevals
-                // outer: fn
-                fn(compiletimevals, compiler, require);
-            }, function(err) {
-                // outer: console
-                console.log("compile-time error", err);
-                if(err.stack) {
-                    console.log(err.stack);
-                };
-            });
-        } else  {
-            throw "unsupported platform";
-        };
+        code = codegen(ast2js, asts);
+        fn = Function("__compiletimevals", "compiler", "require", code);
+        util.trycatch(function() {
+            // outer: require
+            // outer: compiler
+            // outer: compiletimevals
+            // outer: fn
+            fn(compiletimevals, compiler, require);
+        }, function(err) {
+            // outer: console
+            console.log("compile-time error", err);
+            if(err.stack) {
+                console.log(err.stack);
+            };
+        });
         i = 0;
         while(i < compiletimeasts.length) {
             compiletimeasts[i].val = util.trycatch(function() {

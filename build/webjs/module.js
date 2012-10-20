@@ -3,14 +3,8 @@ exports.list = function() {
     // outer: Object
     // outer: __dirname
     // outer: require
-    if(require("./util").platform === "node") {
-        return require("fs").readdirSync(__dirname).filter(function(name) {
-            return name.slice(- 3) === ".js";
-        }).map(function(name) {
-            return name.slice(0, - 3);
-        });
-    };
-    if(require("./util").platform === "web") {
+    if(undefined) {};
+    if(true) {
         return Object.keys(window.modules);
     };
 };

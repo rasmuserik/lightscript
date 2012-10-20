@@ -186,7 +186,7 @@ exports.create = function(owner, storename, mergeFn) {
     return store;
 };
 // storage server-database/rest-api;
-if(util.platform === "node") {
+if(true) {
     db = undefined;
     exports.restapi = function(args, rest) {
         // outer: console

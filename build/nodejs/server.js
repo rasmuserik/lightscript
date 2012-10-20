@@ -1,4 +1,4 @@
-if(require("./util").platform === "node") {
+if(true) {
     rootdir = __dirname + "/../../../solsort/";
     exports.nodemain = function() {
         // outer: Date

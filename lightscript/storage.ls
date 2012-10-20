@@ -108,7 +108,7 @@ exports.create = function(owner, storename, mergeFn) {
     return store;
 };
 // storage server-database/rest-api;
-if(util.platform === "node") {
+if(`compiler.nodejs) {
     db = undefined;
     exports.restapi = function(args, rest) {
         var sqlite3 = require("sqlite3");
