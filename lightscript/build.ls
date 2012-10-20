@@ -42,19 +42,21 @@ exports.nodemain = function(arg) {
         });
     };
     var createSolsortJS = function() {
-        var result = "modules={};";
-        result += "require = function(name){";
+        var result = "solsort_modules={};";
+        result += "solsort_require = function(name){";
         result += "  name = name.slice(2);";
-        result += "  var t = modules[name];";
-        result += "  if(typeof t === \"function\") { t(modules[name]={}); return modules[name]}";
+        result += "  var t = solsort_modules[name];";
+        result += "  if(typeof t === \"function\") {";
+        result += "     t(solsort_modules[name]={},solsort_require);";
+        result += "     return solsort_modules[name]}";
         result += "  return t;};";
-        result += "define = function(name,fn){modules[name]=fn};";
+        result += "solsort_define = function(name,fn){solsort_modules[name]=fn};";
         require("./module").list().forEach(function(name) {
-            result += "define(\"" + name + "\",function(exports){";
+            result += "solsort_define(\"" + name + "\",function(exports, require){";
             result += fs.readFileSync(buildpath + "nodejs/" + name + ".js");
             result += "});";
         });
-        result += "require(\"./main\")";
+        result += "solsort_require(\"./main\")";
         fs.writeFile(buildpath + "webjs/solsort.js", result);
     };
     require("async").forEach(sourcefiles, function(filename, done) {

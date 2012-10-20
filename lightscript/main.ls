@@ -14,9 +14,9 @@ util.nextTick(function() {
         platform = "web";
     };
     if(`compiler.mozjs) {
-        commandName = 'addon';
-        return require('./addon').main.apply(this, Array.prototype.slice.call(arguments, 0));
-    }
+        commandName = "addon";
+        return require("./addon").main.apply(this, Array.prototype.slice.call(arguments, 0));
+    };
     if(use(commandName) && use(commandName)[platform + "main"]) {
         use(commandName)[platform + "main"].apply(undefined, args);
     } else if(use(commandName) && use(commandName).main) {
