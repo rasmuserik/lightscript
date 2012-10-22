@@ -29,7 +29,7 @@ exports.main = function() {
                 module.name = name;
                 module.ast = compiler.parsels(source);
                 module.timestamp = mTime(lsname);
-                module.depends = [];
+                module.depends = module.depends || {};
                 console.log("< " + name);
                 callback();
             });
@@ -66,7 +66,7 @@ exports.main = function() {
             callback(compiler.ppls(ast));
         },
     };
-    var getDest = function(name, platform) {
+    var updateDest = function(name, platform) {
         var dest = modules[name][platform];
         if(!dest) {
             modules[name][platform] = dest = {};
@@ -107,16 +107,25 @@ exports.main = function() {
                 name : name,
                 platform : platform,
             });
-            var dest = getDest(name, platform);
+            var dest = updateDest(name, platform);
             dest.exports = findExports(ast);
-            dest.requires= findRequires(ast);
-            console.log(name, dest.exports, dest.requires);
+            dest.requires = findRequires(ast);
+            dest.requires.forEach(function(reqname) {
+                modules[reqname].depends[name] = true;
+            });
+                console.log("> " + platform + "/" + name);
             compileFns[platform](modules[name], ast, function(result) {
                 dest.data = result;
-                console.log("> " + platform + "/" + name);
                 fs.writeFile(dest.filename, dest.data, callback);
             });
-        }, callback);
+        }, function() {
+            if(!modules[name].haveRun) {
+                modules[name].haveRun = true;
+                callback();
+            } else {
+                async.forEach(Object.keys(modules[name].depends), buildFiles, callback);
+            }
+        });
     };
     var compileModuleObjects = function(callback) {
         async.forEach(Object.keys(modules), buildFiles, callback);
