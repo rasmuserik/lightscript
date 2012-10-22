@@ -51,19 +51,19 @@ exports.main = function() {
             result += "\",function(exports, require){\n";
             result += compiler.ppjs(ast);
             result += "});";
-            callback(result);
+            fs.writeFile(dest.filename, result.data, callback);
         },
         nodejs : function(module, ast, callback) {
-            callback(compiler.ppjs(ast));
+            fs.writeFile(dest.filename, compiler.ppjs(ast), callback);
         },
-        lightscript : function(module, ast, callback) {
+        lightscript : function(opts) {
             ast = compiler.applyMacros({
-                ast : ast,
-                name : module.name,
+                ast : opts.ast,
+                name : opts.module.name,
                 platform : "lightscript",
                 reverse : true,
             });
-            callback(compiler.ppls(ast));
+            fs.writeFile(dest.filename, compiler.ppls(ast), callback);
         },
     };
     var updateDest = function(name, platform) {
@@ -114,10 +114,11 @@ exports.main = function() {
                 modules[reqname].depends[name] = true;
             });
                 console.log("> " + platform + "/" + name);
-            compileFns[platform](modules[name], ast, function(result) {
-                dest.data = result;
-                fs.writeFile(dest.filename, dest.data, callback);
-            });
+            compileFns[platform](
+                {module: modules[name], 
+                    ast: ast, 
+                dest: dest,
+                callback: callback});
         }, function() {
             if(!modules[name].haveRun) {
                 modules[name].haveRun = true;
