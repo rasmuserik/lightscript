@@ -68,9 +68,8 @@ codegen = undefined;
         return rst2ast(parse(tokenise("(function(){" + src + "})()"))[0]);
     };
     exports.applyMacros = function(opt) {
-            //asts : [opt.ast.copy()],
+        //asts : [opt.ast.copy()],
         //console.log(require('util').inspect(opt.ast, true, null));
-
         //console.log(require('util').inspect(opt.ast.copy(), true, null));
         var compiler = {
             asts : [opt.ast.copy()],
@@ -339,9 +338,11 @@ Ast = undefined;
     Ast.prototype.copy = function() {
         var result = Object.create(Ast.prototype);
         result.kind = this.kind;
-        result.val= this.val;
-        result.pos= this.pos;
-        result.children= this.children.map(function(child) { return child.copy(); });
+        result.val = this.val;
+        result.pos = this.pos;
+        result.children = this.children.map(function(child) {
+            return child.copy();
+        });
         return result;
     };
 })();
