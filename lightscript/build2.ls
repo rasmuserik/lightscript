@@ -5,7 +5,7 @@ exports.main = function() {
     var compiler = require("./compiler");
     // # constants
     var sourcepath = __dirname + "/../../lightscript/";
-    var buildpath = sourcepath + "../build/";
+    var buildpath = sourcepath + "../build2/";
     // # functions
     var parseFile = function(filename, done) {};
     var modules = {};
@@ -21,6 +21,7 @@ exports.main = function() {
                 var name = lsname.slice(0, - 3);
                 modules[name] = {};
                 modules[name].ast = compiler.parsels(source);
+                console.log('parsed: ' + name);
                 callback();
             });
         }, callback);
@@ -30,15 +31,33 @@ exports.main = function() {
     async.series([
         makeModulesObject,
         function(callback) {
-            modules = {experiments: modules['experiments']};
+            platforms = ['lightscript', 'nodejs', 'webjs']
+            //modules = {"experiments": modules["experiments"]};
             async.forEach(Object.keys(modules), function(name, callback) {
-                var js = compiler.ppjs(compiler.applyMacros({
-                    ast : modules[name].ast,
-                    name : name,
-                    platform : "nodejs",
-                    reverse : false,
-                }));
-                fs.writeFile(buildpath + name + ".js", js, callback);
+                async.forEach(platforms, function(platform, callback) {
+                    ast = compiler.applyMacros({
+                        ast : modules[name].ast,
+                        name : name,
+                        platform : platform,
+                    });
+                    if(platform.slice(-2) === 'js') {
+                        type = 'js';
+                        result = compiler.ppjs(ast);
+                    } else if(platform === 'lightscript') {
+                        type = 'ls';
+                    ast = compiler.applyMacros({
+                        ast : ast,
+                        name : name,
+                        platform : platform,
+                        reverse: true,
+                    });
+                        result = compiler.ppls(ast);
+                    } else {
+                        throw 'unsupported platform:' + type;
+                    }
+                    console.log('generatede ' + platform + '-code for ' + name);
+                    fs.writeFile(buildpath + platform + '/' + name + "." + type, result, callback);
+                }, callback);
             }, callback);
         },
         function() {

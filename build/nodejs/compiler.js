@@ -1,7 +1,6 @@
 // Compiler {{{1
 codegen = undefined;
 (function() {
-    // outer: ast2ls
     // outer: tokenLookup
     // outer: Array
     // outer: ast2rst
@@ -144,6 +143,9 @@ codegen = undefined;
         // outer: Array
         // outer: Object
         var compiler;
+        //asts : [opt.ast.copy()],
+        //console.log(require('util').inspect(opt.ast, true, null));
+        //console.log(require('util').inspect(opt.ast.copy(), true, null));
         compiler = {
             asts : [opt.ast.copy()],
             forwardMacros : {},
@@ -178,9 +180,9 @@ codegen = undefined;
     exports.ppls = function(ast) {
         // outer: Array
         // outer: analyse
-        // outer: ast2ls
+        // outer: ast2rst
         // outer: tokenLookup
-        return tokenLookup(ast2ls(analyse([ast])[0])).pp().split("\n").slice(1, - 1).join("\n");
+        return tokenLookup(ast2rst(analyse([ast])[0])).pp().split("\n").slice(1, - 1).join("\n");
     };
 })();
 // compile-time-execution {{{1
@@ -551,8 +553,13 @@ Ast = undefined;
     };
     Ast.prototype.copy = function() {
         // outer: this
+        // outer: Ast
+        // outer: Object
         var result;
-        result = this.create(this);
+        result = Object.create(Ast.prototype);
+        result.kind = this.kind;
+        result.val = this.val;
+        result.pos = this.pos;
         result.children = this.children.map(function(child) {
             return child.copy();
         });
@@ -627,14 +634,16 @@ tokenLookup = undefined;
     var extend;
     // setup, token lookup, default token {{{2
     extend = require("./util").extend;
-    tokenLookup = function(orig) {
+    tokenLookup = function(ast) {
         // outer: Object
         // outer: extend
         // outer: defaultToken
         // outer: symb
         var proto;
-        proto = symb[orig.kind + ":"] || symb[orig.val] || (orig.val && symb[orig.val[orig.val.length - 1]]) || defaultToken;
-        return extend(Object.create(proto), orig);
+        proto = symb[ast.kind + ":"] || symb[ast.val] || (ast.val && symb[ast.val[ast.val.length - 1]]) || defaultToken;
+        ast = extend(Object.create(proto), ast);
+        //console.log(ast.kind, ast.val, ast.bp, proto.bp, ast.pp === proto.pp);
+        return ast;
     };
     defaultToken = Ast({
         nud : function() {},
@@ -703,6 +712,7 @@ tokenLookup = undefined;
         var result;
         // outer: ppPrio
         // outer: this
+        //console.log('pp', this.kind, this.val, this.bp, this.children.map(function(child) { return [child.kind, child.val, child.bp]; }));
         if(this.children.length === 0) {
             return this.val;
         } else if(this.children.length === 1) {
@@ -727,13 +737,14 @@ tokenLookup = undefined;
         return pplistlines(stmts, ";");
     };
     ppPrio = function(node, prio) {
-        // outer: pp
         var result;
+        // outer: tokenLookup
+        node = tokenLookup(node);
         result = "";
         if(node.bp && node.bp < prio) {
             result += "(";
         };
-        result += pp(node);
+        result += node.pp();
         if(node.bp && node.bp < prio) {
             result += ")";
         };

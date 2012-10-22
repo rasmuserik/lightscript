@@ -68,6 +68,10 @@ codegen = undefined;
         return rst2ast(parse(tokenise("(function(){" + src + "})()"))[0]);
     };
     exports.applyMacros = function(opt) {
+            //asts : [opt.ast.copy()],
+        //console.log(require('util').inspect(opt.ast, true, null));
+
+        //console.log(require('util').inspect(opt.ast.copy(), true, null));
         var compiler = {
             asts : [opt.ast.copy()],
             forwardMacros : {},
@@ -92,7 +96,7 @@ codegen = undefined;
         return tokenLookup(ast2js(analyse([ast])[0])).pp().split("\n").slice(1, - 1).join("\n");
     };
     exports.ppls = function(ast) {
-        return tokenLookup(ast2ls(analyse([ast])[0])).pp().split("\n").slice(1, - 1).join("\n");
+        return tokenLookup(ast2rst(analyse([ast])[0])).pp().split("\n").slice(1, - 1).join("\n");
     };
 })();
 // compile-time-execution {{{1
@@ -333,10 +337,11 @@ Ast = undefined;
         return result;
     };
     Ast.prototype.copy = function() {
-        var result = this.create(this);
-        result.children = this.children.map(function(child) {
-            return child.copy();
-        });
+        var result = Object.create(Ast.prototype);
+        result.kind = this.kind;
+        result.val= this.val;
+        result.pos= this.pos;
+        result.children= this.children.map(function(child) { return child.copy(); });
         return result;
     };
 })();
@@ -367,9 +372,11 @@ tokenLookup = undefined;
 (function() {
     // setup, token lookup, default token {{{2
     var extend = require("./util").extend;
-    tokenLookup = function(orig) {
-        var proto = symb[orig.kind + ":"] || symb[orig.val] || (orig.val && symb[orig.val[orig.val.length - 1]]) || defaultToken;
-        return extend(Object.create(proto), orig);
+    tokenLookup = function(ast) {
+        var proto = symb[ast.kind + ":"] || symb[ast.val] || (ast.val && symb[ast.val[ast.val.length - 1]]) || defaultToken;
+        ast = extend(Object.create(proto), ast);
+        //console.log(ast.kind, ast.val, ast.bp, proto.bp, ast.pp === proto.pp);
+        return ast;
     };
     var defaultToken = Ast({
         nud : function() {},
@@ -415,6 +422,7 @@ tokenLookup = undefined;
     // prettyprinter {{{2
     var indent = - 4;
     defaultToken.pp = function() {
+        //console.log('pp', this.kind, this.val, this.bp, this.children.map(function(child) { return [child.kind, child.val, child.bp]; }));
         if(this.children.length === 0) {
             return this.val;
         } else if(this.children.length === 1) {
@@ -437,11 +445,12 @@ tokenLookup = undefined;
         return pplistlines(stmts, ";");
     };
     var ppPrio = function(node, prio) {
+        node = tokenLookup(node);
         var result = "";
         if(node.bp && node.bp < prio) {
             result += "(";
         };
-        result += pp(node);
+        result += node.pp();
         if(node.bp && node.bp < prio) {
             result += ")";
         };
