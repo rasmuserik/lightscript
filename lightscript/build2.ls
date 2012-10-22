@@ -1,6 +1,7 @@
 exports.main = function() {
     // # requirements
     var fs = require("fs");
+    var util = require("./util");
     var async = require("async");
     var compiler = require("./compiler");
     // # constants
@@ -9,7 +10,14 @@ exports.main = function() {
     // # functions
     var parseFile = function(filename, done) {};
     var modules = {};
-    var makeModulesObject = function(callback) {
+    var mTime = function(filename) {
+                        return util.trycatch(function() {
+                            return fs.statSync(filename).mtime.getTime();
+                        }, function() {
+                            return 0;
+                        });
+    };
+    var makeModuleObjects = function(callback) {
         async.forEach(fs.readdirSync(sourcepath).filter(function(name) {
             return name.slice(- 3) === ".ls";
         }), function(lsname, callback) {
@@ -20,23 +28,39 @@ exports.main = function() {
                 };
                 var name = lsname.slice(0, - 3);
                 modules[name] = {};
+                modules[name].filename = lsname;
+                modules[name].name = name;
                 modules[name].ast = compiler.parsels(source);
+                modules[name].timestamp = mTime(lsname);
                 console.log("parsed: " + name);
                 callback();
             });
         }, callback);
     };
-    // # main
-    console.log("here");
-    async.series([
-        makeModulesObject,
-        function(callback) {
-            var platforms = [
-                "lightscript",
-                "nodejs",
-                "webjs",
-            ];
-            //modules = {"experiments": modules["experiments"]};
+    var platforms = [ "lightscript", "nodejs", "webjs", ];
+    var compileFns = {
+        webjs: function(module, ast, callback) {
+            result = "solsort_define(\"";
+            result += module.name;
+            result += "\",function(exports, require){\n" ;
+            result += compiler.ppjs(ast);
+            result +=    "});";
+            callback(result);
+        },
+        nodejs: function(module, ast, callback) {
+            callback(compiler.ppjs(ast));
+        },
+        lightscript: function(module, ast, callback) {
+                        ast = compiler.applyMacros({
+                            ast : ast,
+                            name : module.name,
+                            platform : 'lightscript',
+                            reverse : true,
+                        });
+                        callback(compiler.ppls(ast));
+        },
+    }
+    var compileModuleObjects = function(callback) {
             async.forEach(Object.keys(modules), function(name, callback) {
                 async.forEach(platforms, function(platform, callback) {
                     var ast = compiler.applyMacros({
@@ -46,27 +70,28 @@ exports.main = function() {
                     });
                     if(platform.slice(- 2) === "js") {
                         var type = "js";
-                        var result = compiler.ppjs(ast);
                     } else if(platform === "lightscript") {
                         type = "ls";
-                        ast = compiler.applyMacros({
-                            ast : ast,
-                            name : name,
-                            platform : platform,
-                            reverse : true,
-                        });
-                        result = compiler.ppls(ast);
-                    } else  {
-                        throw "unsupported platform:" + type;
-                    };
-                    if(platform === "webjs") {
-                        result = "solsort_define(\"" + name + "\",function(exports, require){\n" + result + "});";
-                    };
-                    console.log("generatede " + platform + "-code for " + name);
-                    fs.writeFile(buildpath + platform + "/" + name + "." + type, result, callback);
+                    }
+                    dest = modules[name][platform];
+                    if(!dest) {
+                        modules[name][platform] = dest = { };
+                        dest.type = (platform.slice(- 2) === "js" ? "js" : "ls");
+                        dest.filename = buildpath + platform + "/" + name + "." + type;
+                        dest.lastModified = mTime(dest.filename);
+                    }
+                    compileFns[platform](modules[name], ast, function(result) {
+                    dest.data = result;
+                    console.log("generated " + platform + "-code for " + name);
+                    fs.writeFile(dest.filename, dest.data, callback);
+                    });
                 }, callback);
             }, callback);
-        },
+    };
+    // # main
+    async.series([
+        makeModuleObjects,
+        compileModuleObjects,
         function() {
             console.log("done");
         },
