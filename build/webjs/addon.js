@@ -1,4 +1,14 @@
-solsort_define("addon",function(exports, require){if(undefined) {};
+define("addon",function(exports, require){
+// outer: arguments
+// outer: Array
+// outer: process
+// outer: document
+// outer: alert
+// outer: console
+// outer: Object
+// outer: require
+// outer: exports
+if(undefined) {};
 if(true) {
     exports.main = function() {
         // outer: document

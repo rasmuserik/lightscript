@@ -1,4 +1,15 @@
-solsort_define("publish",function(exports, require){exports.nodemain = function() {
+define("publish",function(exports, require){
+// outer: undefined
+// outer: file
+// outer: process
+// outer: true
+// outer: RegExp
+// outer: Array
+// outer: Object
+// outer: require
+// outer: console
+// outer: exports
+exports.nodemain = function() {
     // outer: undefined
     // outer: file
     // outer: process

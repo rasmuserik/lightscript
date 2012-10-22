@@ -1,3 +1,19 @@
+// outer: String
+// outer: Date
+// outer: process
+// outer: console
+// outer: true
+// outer: false
+// outer: ;
+// outer: setTimeout
+// outer: this
+// outer: undefined
+var db;
+// outer: exports
+// outer: Object
+var storeProto;
+// outer: require
+var util;
 util = require("./util");
 // sync api
 storeProto = {

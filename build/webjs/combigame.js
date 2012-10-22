@@ -1,4 +1,23 @@
-solsort_define("combigame",function(exports, require){(function() {
+define("combigame",function(exports, require){
+// outer: parseInt
+// outer: item
+// outer: webutil
+// outer: _
+// outer: fullbrows
+// outer: localStorage
+// outer: JSON
+// outer: delete
+// outer: Date
+// outer: setTimeout
+// outer: false
+// outer: Math
+// outer: true
+// outer: $
+// outer: exports
+// outer: Array
+// outer: Object
+// outer: undefined
+(function() {
     // outer: parseInt
     // outer: item
     // outer: webutil

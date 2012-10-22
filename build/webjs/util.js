@@ -1,4 +1,26 @@
-solsort_define("util",function(exports, require){util = exports;
+define("util",function(exports, require){
+// outer: arguments
+// outer: null
+// outer: JSON
+// outer: RegExp
+// outer: Date
+// outer: Math
+// outer: true
+// outer: this
+// outer: ;
+// outer: Array
+// outer: false
+// outer: setTimeout
+var dirs;
+// outer: require
+var fs;
+// outer: Object
+// outer: localStorage
+// outer: process
+// outer: Function
+// outer: exports
+var util;
+util = exports;
 // Basic platform/language {{{1
 // try-catch
 exports.trycatch = Function("return function trycatch(fn,handle){try{return fn();}catch(e){return handle(e);}}")();

@@ -1,3 +1,12 @@
+// outer: undefined
+// outer: arguments
+// outer: this
+// outer: window
+// outer: process
+// outer: Array
+var use;
+// outer: require
+var util;
 util = require("./util");
 use = function(name) {
     // outer: require

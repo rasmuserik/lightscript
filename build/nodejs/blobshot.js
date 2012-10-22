@@ -1,3 +1,16 @@
+// outer: document
+// outer: console
+// outer: null
+// outer: Object
+// outer: Date
+// outer: Math
+// outer: window
+// outer: exports
+// outer: undefined
+// outer: true
+// outer: Array
+// outer: false
+// outer: require
 (function() {
     // outer: document
     // outer: console

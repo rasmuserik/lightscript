@@ -1,3 +1,5 @@
-solsort_define("experiments",function(exports, require){require("./build2");
+define("experiments",function(exports, require){
+// outer: require
+require("./build2");
 1 - (2 - 3);
 });

@@ -1,4 +1,18 @@
-solsort_define("rest",function(exports, require){exports.api = {};
+define("rest",function(exports, require){
+// outer: String
+// outer: Array
+// outer: __dirname
+// outer: JSON
+// outer: true
+// outer: XMLHttpRequest
+// outer: console
+var RestObject;
+var util;
+// outer: require
+var apis;
+// outer: Object
+// outer: exports
+exports.api = {};
 apis = {store : require("./storage").restapi};
 util = require("./util");
 Object.keys(apis).forEach(function(name) {

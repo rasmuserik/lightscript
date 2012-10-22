@@ -101,7 +101,7 @@ codegen = undefined;
 // compile-time-execution {{{1
 compiletime = undefined;
 (function() {
-    var util = use("util");
+    var util = require("./util");
     compiletime = function(compiler) {
         var asts = compiler.asts;
         var compiletimeasts = [];

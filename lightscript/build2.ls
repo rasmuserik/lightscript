@@ -6,7 +6,7 @@ exports.main = function() {
     var compiler = require("./compiler");
     // # constants
     var sourcepath = __dirname + "/../../lightscript/";
-    var buildpath = sourcepath + "../build2/";
+    var buildpath = sourcepath + "../build/";
     var templatepath = sourcepath + "../template/";
     // # functions
     var parseFile = function(filename, done) {};
@@ -57,7 +57,6 @@ exports.main = function() {
                 console.log("> " + 'apps/' + opts.module.name);
                 apppath = buildpath + 'apps/' + opts.module.name;
                 util.mkdir(apppath);
-                    console.log(opts.dest.requires);
                 util.cp(templatepath + 'canvasapp.html', apppath + '/index.html', 
                 function() {
                     canvasapp = "(function(){var modules={};";
@@ -66,7 +65,6 @@ exports.main = function() {
                     canvasapp+= 't(modules[name]={},require);return modules[name];}return t;};';
                     canvasapp += 'var define=function(name,fn){modules[name]=fn};';
                     async.forEach([opts.module.name].concat(Object.keys(opts.dest.requires)), function(name, callback) {
-                        console.log('xxxx', name);
                         fs.readFile(modules[name].webjs.filename, 'utf8', function(err, data) {
                             if(err) {
                                 throw err;

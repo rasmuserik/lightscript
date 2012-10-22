@@ -1,4 +1,17 @@
-solsort_define("massdrive",function(exports, require){(function() {
+define("massdrive",function(exports, require){
+// outer: document
+// outer: setTimeout
+// outer: console
+// outer: false
+// outer: true
+// outer: Math
+// outer: Date
+// outer: Object
+// outer: Array
+// outer: undefined
+// outer: exports
+// outer: require
+(function() {
     // outer: document
     // outer: setTimeout
     // outer: console

@@ -1,4 +1,9 @@
-solsort_define("v2d",function(exports, require){exports.V2d = V2d = function(x, y) {
+define("v2d",function(exports, require){
+// outer: Math
+// outer: this
+var V2d;
+// outer: exports
+exports.V2d = V2d = function(x, y) {
     // outer: this
     this.x = x;
     this.y = y;

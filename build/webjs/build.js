@@ -1,4 +1,12 @@
-solsort_define("build",function(exports, require){exports.nodemain = function(arg) {
+define("build",function(exports, require){
+// outer: true
+// outer: console
+// outer: ;
+// outer: Object
+// outer: __dirname
+// outer: require
+// outer: exports
+exports.nodemain = function(arg) {
     // outer: true
     // outer: console
     // outer: ;

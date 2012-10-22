@@ -1,4 +1,10 @@
-solsort_define("module",function(exports, require){exports.list = function() {
+define("module",function(exports, require){
+// outer: window
+// outer: Object
+// outer: __dirname
+// outer: require
+// outer: exports
+exports.list = function() {
     // outer: window
     // outer: Object
     // outer: __dirname

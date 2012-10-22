@@ -1,3 +1,16 @@
+// outer: String
+// outer: Array
+// outer: __dirname
+// outer: JSON
+// outer: true
+// outer: XMLHttpRequest
+// outer: console
+var RestObject;
+var util;
+// outer: require
+var apis;
+// outer: Object
+// outer: exports
 exports.api = {};
 apis = {store : require("./storage").restapi};
 util = require("./util");

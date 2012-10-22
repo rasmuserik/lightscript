@@ -1,4 +1,14 @@
-solsort_define("main",function(exports, require){util = require("./util");
+define("main",function(exports, require){
+// outer: undefined
+// outer: arguments
+// outer: this
+// outer: window
+// outer: process
+// outer: Array
+var use;
+// outer: require
+var util;
+util = require("./util");
 use = function(name) {
     // outer: require
     return require("./" + name);

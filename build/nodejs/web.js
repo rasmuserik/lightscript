@@ -1,3 +1,22 @@
+// outer: arguments
+// outer: Array
+// outer: JSON
+// outer: alert
+// outer: String
+// outer: window
+// outer: Date
+// outer: Math
+// outer: setTimeout
+// outer: true
+// outer: ;
+// outer: false
+// outer: document
+// outer: RegExp
+// outer: location
+// outer: localStorage
+// outer: Object
+// outer: console
+// outer: exports
 // web {{{1
 exports.main = function() {
     // outer: arguments

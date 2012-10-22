@@ -1,3 +1,29 @@
+// outer: Number
+// outer: false
+// outer: arguments
+// outer: JSON
+// outer: console
+// outer: Function
+// outer: require
+// outer: Array
+// outer: this
+// outer: true
+// outer: Object
+var ast2rst;
+var ast2js;
+var analyse;
+var rst2ast;
+var runMacro;
+var addMacro;
+var tokenLookup;
+var prettyprint;
+var parse;
+// outer: exports
+var Ast;
+var tokenise;
+var compiletime;
+// outer: undefined
+var codegen;
 // Compiler {{{1
 codegen = undefined;
 (function() {
@@ -190,15 +216,14 @@ compiletime = undefined;
 (function() {
     // outer: JSON
     // outer: console
-    // outer: require
     // outer: Function
     // outer: ast2js
     // outer: codegen
     // outer: Array
     // outer: compiletime
-    // outer: use
+    // outer: require
     var util;
-    util = use("util");
+    util = require("./util");
     compiletime = function(compiler) {
         // outer: JSON
         // outer: console

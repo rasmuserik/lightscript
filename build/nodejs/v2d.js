@@ -1,3 +1,7 @@
+// outer: Math
+// outer: this
+var V2d;
+// outer: exports
 exports.V2d = V2d = function(x, y) {
     // outer: this
     this.x = x;

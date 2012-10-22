@@ -1,3 +1,13 @@
+// outer: undefined
+// outer: file
+// outer: process
+// outer: true
+// outer: RegExp
+// outer: Array
+// outer: Object
+// outer: require
+// outer: console
+// outer: exports
 exports.nodemain = function() {
     // outer: undefined
     // outer: file

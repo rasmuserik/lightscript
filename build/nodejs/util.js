@@ -1,3 +1,24 @@
+// outer: arguments
+// outer: null
+// outer: JSON
+// outer: RegExp
+// outer: Date
+// outer: Math
+// outer: true
+// outer: this
+// outer: ;
+// outer: Array
+// outer: false
+// outer: setTimeout
+var dirs;
+// outer: require
+var fs;
+// outer: Object
+// outer: localStorage
+// outer: process
+// outer: Function
+// outer: exports
+var util;
 util = exports;
 // Basic platform/language {{{1
 // try-catch

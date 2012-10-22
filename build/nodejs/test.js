@@ -1,3 +1,15 @@
+// outer: require
+// outer: ;
+// outer: use
+// outer: setTimeout
+// outer: clearTimeout
+// outer: true
+// outer: console
+// outer: this
+// outer: exports
+var runTest;
+// outer: Object
+var test;
 test = {};
 test.name = "";
 test.error = function(description) {

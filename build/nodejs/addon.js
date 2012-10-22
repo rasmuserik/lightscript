@@ -1,3 +1,12 @@
+// outer: arguments
+// outer: Array
+// outer: process
+// outer: document
+// outer: alert
+// outer: console
+// outer: Object
+// outer: require
+// outer: exports
 if(undefined) {};
 if(undefined) {};
 // # nodejs runner
