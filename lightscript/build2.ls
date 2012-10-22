@@ -60,8 +60,8 @@ exports.main = function() {
                         throw "unsupported platform:" + type;
                     };
                     if(platform === "webjs") {
-                        result = 'solsort_define("' + name + '",function(exports, require){\n' + result + '});';
-                    }
+                        result = "solsort_define(\"" + name + "\",function(exports, require){\n" + result + "});";
+                    };
                     console.log("generatede " + platform + "-code for " + name);
                     fs.writeFile(buildpath + platform + "/" + name + "." + type, result, callback);
                 }, callback);

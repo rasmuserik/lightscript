@@ -92,10 +92,10 @@ codegen = undefined;
         return ast;
     };
     exports.ppjs = function(ast) {
-        return tokenLookup(ast2js(analyse([ast])[0])).pp().split("\n").slice(1, - 1).join("\n") + '\n';
+        return tokenLookup(ast2js(analyse([ast])[0])).pp().split("\n").slice(1, - 1).join("\n") + "\n";
     };
     exports.ppls = function(ast) {
-        return tokenLookup(ast2rst(analyse([ast])[0])).pp().split("\n").slice(1, - 1).join("\n") + '\n';
+        return tokenLookup(ast2rst(analyse([ast])[0])).pp().split("\n").slice(1, - 1).join("\n") + "\n";
     };
 })();
 // compile-time-execution {{{1
