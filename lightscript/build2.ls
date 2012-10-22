@@ -17,26 +17,27 @@ exports.main = function() {
             return 0;
         });
     };
-    var makeModuleObjects = function(callback) {
-        async.forEach(fs.readdirSync(sourcepath).filter(function(name) {
-            return name.slice(- 3) === ".ls";
-        }), function(lsname, callback) {
+    var readModule = function(lsname, callback) {
             fs.readFile(sourcepath + lsname, "utf8", function(err, source) {
                 if(err) {
-                    console.log("could not read \"" + lsname + "\"");
+                    console.log(err, "could not read \"" + sourcepath + lsname + "\"");
                     return undefined;
                 };
                 var name = lsname.slice(0, - 3);
-                var module = modules[name] = {};
+                var module = modules[name] || ( modules[name] = {});
                 module.filename = lsname;
                 module.name = name;
                 module.ast = compiler.parsels(source);
                 module.timestamp = mTime(lsname);
                 module.depends = [];
-                console.log("parsed: " + name);
+                console.log("< " + name);
                 callback();
             });
-        }, callback);
+    };
+    var makeModuleObjects = function(callback) {
+        async.forEach(fs.readdirSync(sourcepath).filter(function(name) {
+            return name.slice(- 3) === ".ls";
+        }), readModule, callback);
     };
     var platforms = [
         "lightscript",
@@ -75,6 +76,30 @@ exports.main = function() {
         };
         return dest;
     };
+    var findExports = function(ast) {
+        acc = {};
+        doIt = function(ast) {
+        if(ast.isa('call:.=') && ast.children[0].isa('id:exports')) {
+            acc[ast.children[1].val] = true;
+        }
+        ast.children.forEach(doIt);
+        }
+        doIt(ast);
+        return Object.keys(acc);
+    }
+    var findRequires = function(ast) {
+        acc = {};
+        doIt = function(ast) {
+        if(ast.isa('call:*()') && ast.children[0].isa('id:require') ) {
+            if (ast.children[1].kind === "str" && ast.children[1].val.slice(0,2) === './') {
+            acc[ast.children[1].val.slice(2)] = true;
+            }
+        }
+        ast.children.forEach(doIt);
+        }
+        doIt(ast);
+        return Object.keys(acc);
+    }
     var buildFiles = function(name, callback) {
         async.forEach(platforms, function(platform, callback) {
             var ast = compiler.applyMacros({
@@ -83,9 +108,12 @@ exports.main = function() {
                 platform : platform,
             });
             var dest = getDest(name, platform);
+            dest.exports = findExports(ast);
+            dest.requires= findRequires(ast);
+            console.log(name, dest.exports, dest.requires);
             compileFns[platform](modules[name], ast, function(result) {
                 dest.data = result;
-                console.log("generated " + platform + "-code for " + name);
+                console.log("> " + platform + "/" + name);
                 fs.writeFile(dest.filename, dest.data, callback);
             });
         }, callback);
@@ -93,13 +121,31 @@ exports.main = function() {
     var compileModuleObjects = function(callback) {
         async.forEach(Object.keys(modules), buildFiles, callback);
     };
+    var watch = function(callback) {
+        Object.keys(modules).forEach(function(name) {
+            var watchFn = function() {
+                modules[name].watcher.close();
+                setTimeout(function() {
+                readModule(modules[name].filename, function() {
+                modules[name].watcher = fs.watch(filename, watchFn);
+
+                buildFiles(name, function() { });
+                }) 
+                }, 100);
+             };
+            filename = sourcepath + modules[name].filename;
+            modules[name].watcher = fs.watch(filename, watchFn);
+        });
+    };
     // # main
     async.series([
         makeModuleObjects,
         compileModuleObjects,
-        function() {
-            console.log("done");
+        function(callback) {
+            console.log("initial build done");
+            callback();
         },
+        watch,
         function() {},
     ]);
 };
