@@ -1,4 +1,5 @@
-solsort_define("experiments",function(exports, require){(function() {
+solsort_define("experiments",function(exports, require){1 - 2 - 3 * 4 - 5;
+(function() {
     // outer: console
     // outer: exports
     exports.main = function() {

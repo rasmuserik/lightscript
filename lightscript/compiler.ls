@@ -24,6 +24,7 @@ codegen = undefined;
         compiler.asts.forEach(relations);
         compiler.asts = compiler.asts.map(doIt);
     };
+    // orig build {{{2
     var ls2compiler = function(src, target) {
         var compiler = {
             asts : parse(tokenise(src)).map(rst2ast),
@@ -61,6 +62,37 @@ codegen = undefined;
         applyMacros(compiler.reverseMacros, compiler);
         compiler.asts = analyse(compiler.asts);
         return codegen(ast2rst, compiler.asts);
+    };
+    // for build2 {{{2
+    exports.parsels = function(src) {
+        return rst2ast(parse(tokenise("(function(){" + src + "})()"))[0]);
+    };
+    exports.applyMacros = function(opt) {
+        var compiler = {
+            asts : [opt.ast.copy()],
+            forwardMacros : {},
+            reverseMacros : {},
+            macro : function(pattern, fn) {
+                addMacro(this.forwardMacros, pattern, fn);
+            },
+            unmacro : function(pattern, fn) {
+                addMacro(this.reverseMacros, pattern, fn);
+            },
+            target : opt.platform,
+        };
+        compiler[opt.platform] = true;
+        compiletime(compiler);
+        applyMacros(opt.reverse ? compiler.forwardMacros : compiler.reverseMacros, compiler);
+        return compiler.asts[0];
+    };
+    exports.optimise = function(ast) {
+        return ast;
+    };
+    exports.ppjs = function(ast) {
+        return tokenLookup(ast2js(analyse([ast])[0])).pp().split("\n").slice(1, - 1).join("\n");
+    };
+    exports.ppls = function(ast) {
+        return tokenLookup(ast2ls(analyse([ast])[0])).pp().split("\n").slice(1, - 1).join("\n");
     };
 })();
 // compile-time-execution {{{1
@@ -300,6 +332,13 @@ Ast = undefined;
         result.unshift(this.kind + ":" + this.val);
         return result;
     };
+    Ast.prototype.copy = function() {
+        var result = this.create(this);
+        result.children = this.children.map(function(child) {
+            return child.copy();
+        });
+        return result;
+    };
 })();
 exports.test = function(test) {
     var ast = Ast("kind1:val1", "arg1");
@@ -324,10 +363,11 @@ exports.test = function(test) {
 // Syntax {{{1
 parse = undefined;
 prettyprint = undefined;
+tokenLookup = undefined;
 (function() {
     // setup, token lookup, default token {{{2
     var extend = require("./util").extend;
-    var tokenLookup = function(orig) {
+    tokenLookup = function(orig) {
         var proto = symb[orig.kind + ":"] || symb[orig.val] || (orig.val && symb[orig.val[orig.val.length - 1]]) || defaultToken;
         return extend(Object.create(proto), orig);
     };

@@ -14,7 +14,7 @@ if(`compiler.mozjs) {
 if(`compiler.webjs) {
     exports.main = function() {
         alert(document.body.innerHTML);
-        document.body.innerHTML += '<div style="position:fixed;top:0px;left:0px;width:44px;height:44px;z-index:100000;">XXX</div>'
+        document.body.innerHTML += "<div style=\"position:fixed;top:0px;left:0px;width:44px;height:44px;z-index:100000;\">XXX</div>";
     };
 };
 // # nodejs runner

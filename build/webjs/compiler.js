@@ -1,6 +1,9 @@
 solsort_define("compiler",function(exports, require){// Compiler {{{1
 codegen = undefined;
 (function() {
+    // outer: ast2ls
+    // outer: tokenLookup
+    // outer: Array
     // outer: ast2rst
     // outer: ast2js
     // outer: prettyprint
@@ -55,6 +58,7 @@ codegen = undefined;
         compiler.asts.forEach(relations);
         compiler.asts = compiler.asts.map(doIt);
     };
+    // orig build {{{2
     ls2compiler = function(src, target) {
         // outer: this
         // outer: addMacro
@@ -123,6 +127,60 @@ codegen = undefined;
         applyMacros(compiler.reverseMacros, compiler);
         compiler.asts = analyse(compiler.asts);
         return codegen(ast2rst, compiler.asts);
+    };
+    // for build2 {{{2
+    exports.parsels = function(src) {
+        // outer: tokenise
+        // outer: parse
+        // outer: rst2ast
+        return rst2ast(parse(tokenise("(function(){" + src + "})()"))[0]);
+    };
+    exports.applyMacros = function(opt) {
+        // outer: this
+        // outer: addMacro
+        // outer: applyMacros
+        // outer: compiletime
+        // outer: true
+        // outer: Array
+        // outer: Object
+        var compiler;
+        compiler = {
+            asts : [opt.ast.copy()],
+            forwardMacros : {},
+            reverseMacros : {},
+            macro : function(pattern, fn) {
+                // outer: this
+                // outer: addMacro
+                addMacro(this.forwardMacros, pattern, fn);
+            },
+            unmacro : function(pattern, fn) {
+                // outer: this
+                // outer: addMacro
+                addMacro(this.reverseMacros, pattern, fn);
+            },
+            target : opt.platform,
+        };
+        compiler[opt.platform] = true;
+        compiletime(compiler);
+        applyMacros(opt.reverse ? compiler.forwardMacros : compiler.reverseMacros, compiler);
+        return compiler.asts[0];
+    };
+    exports.optimise = function(ast) {
+        return ast;
+    };
+    exports.ppjs = function(ast) {
+        // outer: Array
+        // outer: analyse
+        // outer: ast2js
+        // outer: tokenLookup
+        return tokenLookup(ast2js(analyse([ast])[0])).pp().split("\n").slice(1, - 1).join("\n");
+    };
+    exports.ppls = function(ast) {
+        // outer: Array
+        // outer: analyse
+        // outer: ast2ls
+        // outer: tokenLookup
+        return tokenLookup(ast2ls(analyse([ast])[0])).pp().split("\n").slice(1, - 1).join("\n");
     };
 })();
 // compile-time-execution {{{1
@@ -491,6 +549,15 @@ Ast = undefined;
         result.unshift(this.kind + ":" + this.val);
         return result;
     };
+    Ast.prototype.copy = function() {
+        // outer: this
+        var result;
+        result = this.create(this);
+        result.children = this.children.map(function(child) {
+            return child.copy();
+        });
+        return result;
+    };
 })();
 exports.test = function(test) {
     // outer: Array
@@ -519,6 +586,7 @@ exports.test = function(test) {
 // Syntax {{{1
 parse = undefined;
 prettyprint = undefined;
+tokenLookup = undefined;
 (function() {
     // outer: JSON
     // outer: this
@@ -554,7 +622,7 @@ prettyprint = undefined;
     // outer: Object
     // outer: Ast
     var defaultToken;
-    var tokenLookup;
+    // outer: tokenLookup
     // outer: require
     var extend;
     // setup, token lookup, default token {{{2
