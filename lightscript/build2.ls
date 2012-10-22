@@ -45,16 +45,16 @@ exports.main = function() {
         "webjs",
     ];
     var compileFns = {
-        webjs : function(module, ast, callback) {
+        webjs : function(opts) {
             var result = "solsort_define(\"";
-            result += module.name;
+            result += opts.module.name;
             result += "\",function(exports, require){\n";
-            result += compiler.ppjs(ast);
+            result += compiler.ppjs(opts.ast);
             result += "});";
-            fs.writeFile(dest.filename, result.data, callback);
+            fs.writeFile(dest.filename, result.data, opts.callback);
         },
-        nodejs : function(module, ast, callback) {
-            fs.writeFile(dest.filename, compiler.ppjs(ast), callback);
+        nodejs : function(opts) {
+            fs.writeFile(dest.filename, compiler.ppjs(opts.ast), opts.callback);
         },
         lightscript : function(opts) {
             ast = compiler.applyMacros({
@@ -63,7 +63,7 @@ exports.main = function() {
                 platform : "lightscript",
                 reverse : true,
             });
-            fs.writeFile(dest.filename, compiler.ppls(ast), callback);
+            fs.writeFile(dest.filename, compiler.ppls(ast), opts.callback);
         },
     };
     var updateDest = function(name, platform) {
