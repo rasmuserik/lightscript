@@ -1,4 +1,8 @@
 (function() {
+    require('./canvasapp');
+    exports.init = function() {
+        exports.run();
+    };
     var V2d = require("./v2d").V2d;
     var canvas = var ctx = var w = var h = undefined;
     var particles = [];

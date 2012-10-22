@@ -272,3 +272,28 @@ util.valmap = function(obj, fn) {
     });
     return result;
 };
+// mkdir,cp {{{1
+if(true) {
+    fs = require("fs");
+    dirs = {};
+    exports.mkdir = function(path) {
+        // outer: true
+        // outer: exports
+        // outer: fs
+        // outer: dirs
+        if(!dirs[path] && !fs.existsSync(path)) {
+            path = path.split("/");
+            while(!path[path.length - 1]) {
+                path.pop();
+            };
+            exports.mkdir(path.slice(0, - 1).join("/"));
+            fs.mkdirSync(path.join("/"));
+            dirs[path] = true;
+        };
+    };
+    exports.cp = function(src, dst, callback) {
+        // outer: fs
+        // outer: require
+        require("util").pump(fs.createReadStream(src), fs.createWriteStream(dst), callback);
+    };
+};

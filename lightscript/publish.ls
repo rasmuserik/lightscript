@@ -4,18 +4,6 @@ exports.nodemain = function() {
     console.log("copying sites to " + dst);
     var fs = require("fs");
     var util = require("./util");
-    var dirs = {};
-    var mkdir = function(path) {
-        if(!dirs[path] && !fs.existsSync(path)) {
-            path = path.split("/");
-            while(!path[path.length - 1]) {
-                path.pop();
-            };
-            mkdir(path.slice(0, - 1).join("/"));
-            fs.mkdirSync(path.join("/"));
-            dirs[path] = true;
-        };
-    };
     var rstat = function(root) {
         var acc = acc || [];
         var recurse = function(path) {
@@ -35,9 +23,6 @@ exports.nodemain = function() {
         };
         recurse(root);
         return acc;
-    };
-    var cp = function(src, dst, callback) {
-        require("util").pump(fs.createReadStream(src), fs.createWriteStream(dst), callback);
     };
     var sitemaps = {};
     var includeFiles = {};
@@ -68,14 +53,14 @@ exports.nodemain = function() {
     };
     (function() {
         var files = rstat(process.env.HOME + "/solsort/sites");
-        mkdir(dst + "/common/js/");
-        cp("./build/webjs/solsort.js", dst + "/common/js/solsort.js", function(err) {
+        util.mkdir(dst + "/common/js/");
+        util.cp("./build/webjs/solsort.js", dst + "/common/js/solsort.js", function(err) {
             if(err) {
                 console.log("Error:", err, file);
             };
         });
         files.map(function(file) {
-            mkdir(dst + file.name.split("/").slice(0, - 1).join("/"));
+            util.mkdir(dst + file.name.split("/").slice(0, - 1).join("/"));
             if(file.symlink) {
                 require("child_process").spawn("cp", [
                     "-a",
@@ -118,7 +103,7 @@ exports.nodemain = function() {
                         });
                     });
                 } else  {
-                    cp(src + file.name, dst + file.name, function(err) {
+                    util.cp(src + file.name, dst + file.name, function(err) {
                         //console.log('Error:', err, file);
                     });
                 };

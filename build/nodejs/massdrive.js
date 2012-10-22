@@ -5,7 +5,6 @@
     // outer: false
     // outer: true
     // outer: Math
-    // outer: exports
     var mouseup;
     var mousemove;
     var mousedown;
@@ -33,8 +32,14 @@
     var w;
     var ctx;
     var canvas;
-    // outer: require
     var V2d;
+    // outer: exports
+    // outer: require
+    require("./canvasapp");
+    exports.init = function() {
+        // outer: exports
+        exports.run();
+    };
     V2d = require("./v2d").V2d;
     canvas = ctx = w = h = undefined;
     particles = [];

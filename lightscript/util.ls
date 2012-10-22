@@ -174,3 +174,24 @@ util.valmap = function(obj, fn) {
     });
     return result;
 };
+// mkdir,cp {{{1
+if(`compiler.nodejs) {
+    fs = require('fs');
+    dirs = {};
+    exports.mkdir = function(path) {
+        if(!dirs[path] && !fs.existsSync(path)) {
+            path = path.split("/");
+            while(!path[path.length - 1]) {
+                path.pop();
+            };
+            exports.mkdir(path.slice(0, - 1).join("/"));
+            fs.mkdirSync(path.join("/"));
+            dirs[path] = true;
+        };
+    };
+    exports.cp = function(src, dst, callback) {
+        require("util").pump(fs.createReadStream(src), fs.createWriteStream(dst), callback);
+    };
+
+}
+

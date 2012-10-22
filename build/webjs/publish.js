@@ -2,18 +2,15 @@ solsort_define("publish",function(exports, require){exports.nodemain = function(
     // outer: undefined
     // outer: file
     // outer: process
+    // outer: true
     // outer: RegExp
     // outer: Array
-    // outer: true
     var savehtml;
     var replacer;
     var includeFiles;
-    var sitemaps;
-    var cp;
-    var rstat;
-    var mkdir;
     // outer: Object
-    var dirs;
+    var sitemaps;
+    var rstat;
     var util;
     // outer: require
     var fs;
@@ -25,22 +22,6 @@ solsort_define("publish",function(exports, require){exports.nodemain = function(
     console.log("copying sites to " + dst);
     fs = require("fs");
     util = require("./util");
-    dirs = {};
-    mkdir = function(path) {
-        // outer: true
-        // outer: mkdir
-        // outer: fs
-        // outer: dirs
-        if(!dirs[path] && !fs.existsSync(path)) {
-            path = path.split("/");
-            while(!path[path.length - 1]) {
-                path.pop();
-            };
-            mkdir(path.slice(0, - 1).join("/"));
-            fs.mkdirSync(path.join("/"));
-            dirs[path] = true;
-        };
-    };
     rstat = function(root) {
         // outer: true
         // outer: RegExp
@@ -77,11 +58,6 @@ solsort_define("publish",function(exports, require){exports.nodemain = function(
         };
         recurse(root);
         return acc;
-    };
-    cp = function(src, dst, callback) {
-        // outer: fs
-        // outer: require
-        require("util").pump(fs.createReadStream(src), fs.createWriteStream(dst), callback);
     };
     sitemaps = {};
     includeFiles = {};
@@ -133,15 +109,14 @@ solsort_define("publish",function(exports, require){exports.nodemain = function(
         // outer: file
         // outer: console
         // outer: require
-        // outer: cp
         // outer: dst
-        // outer: mkdir
+        // outer: util
         // outer: process
         // outer: rstat
         var files;
         files = rstat(process.env.HOME + "/solsort/sites");
-        mkdir(dst + "/common/js/");
-        cp("./build/webjs/solsort.js", dst + "/common/js/solsort.js", function(err) {
+        util.mkdir(dst + "/common/js/");
+        util.cp("./build/webjs/solsort.js", dst + "/common/js/solsort.js", function(err) {
             // outer: file
             // outer: console
             if(err) {
@@ -154,14 +129,13 @@ solsort_define("publish",function(exports, require){exports.nodemain = function(
             // outer: Object
             // outer: undefined
             // outer: savehtml
-            // outer: cp
             // outer: fs
             // outer: src
             // outer: Array
             // outer: require
             // outer: dst
-            // outer: mkdir
-            mkdir(dst + file.name.split("/").slice(0, - 1).join("/"));
+            // outer: util
+            util.mkdir(dst + file.name.split("/").slice(0, - 1).join("/"));
             if(file.symlink) {
                 require("child_process").spawn("cp", [
                     "-a",
@@ -222,7 +196,7 @@ solsort_define("publish",function(exports, require){exports.nodemain = function(
                         });
                     });
                 } else  {
-                    cp(src + file.name, dst + file.name, function(err) {
+                    util.cp(src + file.name, dst + file.name, function(err) {
                         //console.log('Error:', err, file);
                     });
                 };

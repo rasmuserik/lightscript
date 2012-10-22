@@ -7,6 +7,7 @@ exports.main = function() {
     // # constants
     var sourcepath = __dirname + "/../../lightscript/";
     var buildpath = sourcepath + "../build2/";
+    var templatepath = sourcepath + "../template/";
     // # functions
     var parseFile = function(filename, done) {};
     var modules = {};
@@ -46,12 +47,45 @@ exports.main = function() {
     ];
     var compileFns = {
         webjs : function(opts) {
-            var result = "solsort_define(\"";
+            var result = "define(\"";
             result += opts.module.name;
             result += "\",function(exports, require){\n";
             result += compiler.ppjs(opts.ast);
             result += "});";
-            fs.writeFile(dest.filename, result.data, opts.callback);
+            fs.writeFile(dest.filename, result, function() {
+            if(opts.dest.requires.canvasapp) {
+                console.log("> " + 'apps/' + opts.module.name);
+                apppath = buildpath + 'apps/' + opts.module.name;
+                util.mkdir(apppath);
+                    console.log(opts.dest.requires);
+                util.cp(templatepath + 'canvasapp.html', apppath + '/index.html', 
+                function() {
+                    canvasapp = "(function(){var modules={};";
+                    canvasapp += 'var require=function(name){name=name.slice(2);';
+                    canvasapp += 'var t=modules[name];if(typeof t==="function"){';
+                    canvasapp+= 't(modules[name]={},require);return modules[name];}return t;};';
+                    canvasapp += 'var define=function(name,fn){modules[name]=fn};';
+                    async.forEach([opts.module.name].concat(Object.keys(opts.dest.requires)), function(name, callback) {
+                        console.log('xxxx', name);
+                        fs.readFile(modules[name].webjs.filename, 'utf8', function(err, data) {
+                            if(err) {
+                                throw err;
+                            }
+                            canvasapp += data;
+                            callback();
+                        });
+                    }, function() {
+
+                    canvasapp += 'require("./canvasapp").run("' + opts.module.name + '");';
+                    canvasapp += '})();'
+                    fs.writeFile(apppath + '/canvasapp.js', canvasapp, opts.callback);
+                    });
+                })
+            } else {
+                opts.callback();
+            }
+
+            });
         },
         nodejs : function(opts) {
             fs.writeFile(dest.filename, compiler.ppjs(opts.ast), opts.callback);
@@ -72,6 +106,7 @@ exports.main = function() {
             modules[name][platform] = dest = {};
             dest.type = platform.slice(- 2) === "js" ? "js" : "ls";
             dest.filename = buildpath + platform + "/" + name + "." + dest.type;
+            util.mkdir(buildpath + platform);
             dest.lastModified = mTime(dest.filename);
         };
         return dest;
@@ -85,7 +120,7 @@ exports.main = function() {
         ast.children.forEach(doIt);
         }
         doIt(ast);
-        return Object.keys(acc);
+        return acc;
     }
     var findRequires = function(ast) {
         acc = {};
@@ -98,7 +133,7 @@ exports.main = function() {
         ast.children.forEach(doIt);
         }
         doIt(ast);
-        return Object.keys(acc);
+        return acc;
     }
     var buildFiles = function(name, callback) {
         async.forEach(platforms, function(platform, callback) {
@@ -110,7 +145,7 @@ exports.main = function() {
             var dest = updateDest(name, platform);
             dest.exports = findExports(ast);
             dest.requires = findRequires(ast);
-            dest.requires.forEach(function(reqname) {
+            Object.keys(dest.requires).forEach(function(reqname) {
                 modules[reqname].depends[name] = true;
             });
                 console.log("> " + platform + "/" + name);
