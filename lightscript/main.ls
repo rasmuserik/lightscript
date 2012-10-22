@@ -1,5 +1,5 @@
-util = require("./util");
-use = function(name) {
+var util = require("./util");
+var use = function(name) {
     return require("./" + name);
 };
 util.nextTick(function() {

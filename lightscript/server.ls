@@ -1,5 +1,5 @@
 if(`compiler.nodejs) {
-    rootdir = __dirname + "/../../../solsort/";
+    var rootdir = __dirname + "/../../../solsort/";
     exports.nodemain = function() {
         // # includes and initialisation {{{1
         var express = require("express");

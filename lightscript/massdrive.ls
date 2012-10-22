@@ -1,5 +1,5 @@
 (function() {
-    require('./canvasapp');
+    require("./canvasapp");
     exports.init = function() {
         exports.run();
     };

@@ -1,6 +1,6 @@
-util = require("./util");
+var util = require("./util");
 // sync api
-storeProto = {
+var storeProto = {
     sync : util.throttledFn(function(done) {
         if(!this.lastSync) {
             // TODO: this should be gotten/stored in localstorage
@@ -109,7 +109,7 @@ exports.create = function(owner, storename, mergeFn) {
 };
 // storage server-database/rest-api;
 if(`compiler.nodejs) {
-    db = undefined;
+    var db = undefined;
     exports.restapi = function(args, rest) {
         var sqlite3 = require("sqlite3");
         if(!db) {

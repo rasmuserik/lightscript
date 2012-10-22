@@ -1,4 +1,4 @@
-util = exports;
+var util = exports;
 // Basic platform/language {{{1
 // try-catch
 exports.trycatch = Function("return function trycatch(fn,handle){try{return fn();}catch(e){return handle(e);}}")();
@@ -176,8 +176,8 @@ util.valmap = function(obj, fn) {
 };
 // mkdir,cp {{{1
 if(`compiler.nodejs) {
-    fs = require('fs');
-    dirs = {};
+    var fs = require("fs");
+    var dirs = {};
     exports.mkdir = function(path) {
         if(!dirs[path] && !fs.existsSync(path)) {
             path = path.split("/");
@@ -192,6 +192,4 @@ if(`compiler.nodejs) {
     exports.cp = function(src, dst, callback) {
         require("util").pump(fs.createReadStream(src), fs.createWriteStream(dst), callback);
     };
-
-}
-
+};

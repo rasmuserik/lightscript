@@ -1,4 +1,4 @@
-exports.V2d = V2d = function(x, y) {
+exports.V2d = var V2d = function(x, y) {
     this.x = x;
     this.y = y;
 };

@@ -1,4 +1,4 @@
-test = {};
+var test = {};
 test.name = "";
 test.error = function(description) {
     ++this.error;
@@ -37,7 +37,7 @@ test.create = function(name, timeout) {
     }, timeout);
     return self;
 };
-runTest = function(moduleName) {
+var runTest = function(moduleName) {
     var module = use(moduleName);
     if(!module) {
         return ;

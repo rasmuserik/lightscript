@@ -1,6 +1,6 @@
 exports.api = {};
-apis = {store : require("./storage").restapi};
-util = require("./util");
+var apis = {store : require("./storage").restapi};
+var util = require("./util");
 Object.keys(apis).forEach(function(name) {
     // create api functions
     if(`compiler.webjs) {
@@ -34,7 +34,7 @@ Object.keys(apis).forEach(function(name) {
         };
     };
 });
-RestObject = function(req, res, next) {
+var RestObject = function(req, res, next) {
     var self = {};
     self.done = function(data) {
         res.header("Content-Type", "application/json");

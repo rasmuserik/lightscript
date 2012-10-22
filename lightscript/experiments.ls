@@ -1,2 +1,2 @@
-require('./build2');
+require("./build2");
 1 - (2 - 3);

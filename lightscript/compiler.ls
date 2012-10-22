@@ -1,5 +1,5 @@
 // Compiler {{{1
-codegen = undefined;
+var codegen = undefined;
 (function() {
     var applyMacros = function(macros, compiler) {
         var relations = function(ast) {
@@ -99,7 +99,7 @@ codegen = undefined;
     };
 })();
 // compile-time-execution {{{1
-compiletime = undefined;
+var compiletime = undefined;
 (function() {
     var util = require("./util");
     compiletime = function(compiler) {
@@ -153,7 +153,7 @@ compiletime = undefined;
     };
 })();
 // Tokeniser {{{1
-tokenise = undefined;
+var tokenise = undefined;
 (function() {
     "use strict";
     var createToken = function(kind, val, pos) {
@@ -284,7 +284,7 @@ tokenise = undefined;
     };
 })();
 // Ast object {{{1
-Ast = undefined;
+var Ast = undefined;
 (function() {
     Ast = function() {
         var args = Array.prototype.slice.call(arguments, 0);
@@ -367,9 +367,9 @@ exports.test = function(test) {
     test.done();
 };
 // Syntax {{{1
-parse = undefined;
-prettyprint = undefined;
-tokenLookup = undefined;
+var parse = undefined;
+var prettyprint = undefined;
+var tokenLookup = undefined;
 (function() {
     // setup, token lookup, default token {{{2
     var extend = require("./util").extend;
@@ -676,8 +676,8 @@ tokenLookup = undefined;
     };
 })();
 // macro system {{{1
-addMacro = undefined;
-runMacro = undefined;
+var addMacro = undefined;
+var runMacro = undefined;
 (function() {
     var kindPart = function(pattern) {
         return pattern.split(":")[0];
@@ -715,7 +715,7 @@ runMacro = undefined;
     };
 })();
 // rst2ast {{{1
-rst2ast = undefined;
+var rst2ast = undefined;
 (function() {
     var postMacros = {};
     "call:return call:throw call:&& call:||".split(" ").forEach(function(pattern) {
@@ -874,7 +874,7 @@ rst2ast = undefined;
     };
 })();
 // code analysis {{{1
-analyse = undefined;
+var analyse = undefined;
 (function() {
     // functions in post-order traversal
     var fns = [];
@@ -950,8 +950,8 @@ analyse = undefined;
     };
 })();
 // ast2rst, ast2js {{{1
-ast2js = undefined;
-ast2rst = undefined;
+var ast2js = undefined;
+var ast2rst = undefined;
 (function() {
     // Utility / definitions {{{2
     var str2obj = function(str) {
