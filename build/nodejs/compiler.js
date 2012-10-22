@@ -175,14 +175,14 @@ codegen = undefined;
         // outer: analyse
         // outer: ast2js
         // outer: tokenLookup
-        return tokenLookup(ast2js(analyse([ast])[0])).pp().split("\n").slice(1, - 1).join("\n");
+        return tokenLookup(ast2js(analyse([ast])[0])).pp().split("\n").slice(1, - 1).join("\n") + "\n";
     };
     exports.ppls = function(ast) {
         // outer: Array
         // outer: analyse
         // outer: ast2rst
         // outer: tokenLookup
-        return tokenLookup(ast2rst(analyse([ast])[0])).pp().split("\n").slice(1, - 1).join("\n");
+        return tokenLookup(ast2rst(analyse([ast])[0])).pp().split("\n").slice(1, - 1).join("\n") + "\n";
     };
 })();
 // compile-time-execution {{{1
