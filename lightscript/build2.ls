@@ -46,30 +46,30 @@ exports.main = function() {
         "webjs",
     ];
     var webapp = function(opts, kind) {
-                    console.log("> " + "apps/" + opts.module.name);
-                    var apppath = buildpath + "apps/" + opts.module.name;
-                    util.mkdir(apppath);
-                    util.cp(templatepath + kind + ".html", apppath + "/index.html", function() {
-                        var canvasapp = "(function(){var modules={};";
-                        canvasapp += "var require=function(name){name=name.slice(2);";
-                        canvasapp += "var t=modules[name];if(typeof t===\"function\"){";
-                        canvasapp += "t(modules[name]={},require);return modules[name];}return t;};";
-                        canvasapp += "var define=function(name,fn){modules[name]=fn};";
-                        async.forEach([opts.module.name].concat(Object.keys(opts.dest.requires)), function(name, callback) {
-                            fs.readFile(modules[name].webjs.filename, "utf8", function(err, data) {
-                                if(err) {
-                                    throw err;
-                                };
-                                canvasapp += data;
-                                callback();
-                            });
-                        }, function() {
-                            canvasapp += "require(\"./" + kind + "\").run(\"" + opts.module.name + "\");";
-                            canvasapp += "})();";
-                            fs.writeFile(apppath + "/" + kind + ".js", canvasapp, opts.callback);
-                        });
-                    });
-    }
+        console.log("> " + "apps/" + opts.module.name);
+        var apppath = buildpath + "apps/" + opts.module.name;
+        util.mkdir(apppath);
+        util.cp(templatepath + kind + ".html", apppath + "/index.html", function() {
+            var canvasapp = "(function(){var modules={};";
+            canvasapp += "var require=function(name){name=name.slice(2);";
+            canvasapp += "var t=modules[name];if(typeof t===\"function\"){";
+            canvasapp += "t(modules[name]={},require);return modules[name];}return t;};";
+            canvasapp += "var define=function(name,fn){modules[name]=fn};";
+            async.forEach([opts.module.name].concat(Object.keys(opts.dest.requires)), function(name, callback) {
+                fs.readFile(modules[name].webjs.filename, "utf8", function(err, data) {
+                    if(err) {
+                        throw err;
+                    };
+                    canvasapp += data;
+                    callback();
+                });
+            }, function() {
+                canvasapp += "require(\"./" + kind + "\").run(\"" + opts.module.name + "\");";
+                canvasapp += "})();";
+                fs.writeFile(apppath + "/" + kind + ".js", canvasapp, opts.callback);
+            });
+        });
+    };
     var compileFns = {
         webjs : function(opts) {
             var result = "define(\"";
@@ -79,9 +79,9 @@ exports.main = function() {
             result += "});";
             fs.writeFile(dest.filename, result, function() {
                 if(opts.dest.requires.canvasapp) {
-                    webapp(opts, 'canvasapp');
+                    webapp(opts, "canvasapp");
                 } else if(opts.dest.requires.jqueryapp) {
-                    webapp(opts, 'jqueryapp');
+                    webapp(opts, "jqueryapp");
                 } else  {
                     opts.callback();
                 };
