@@ -12,6 +12,7 @@
     "sqlite3": "*",
     "markdown": "*",
     "express": "*",
+    "socket.io": "*",
     "express-logger": "*"
   },
   "scripts": {
