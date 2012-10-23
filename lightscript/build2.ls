@@ -45,19 +45,11 @@ exports.main = function() {
         "nodejs",
         "webjs",
     ];
-    var compileFns = {
-        webjs : function(opts) {
-            var result = "define(\"";
-            result += opts.module.name;
-            result += "\",function(exports, require){\n";
-            result += compiler.ppjs(opts.ast);
-            result += "});";
-            fs.writeFile(dest.filename, result, function() {
-                if(opts.dest.requires.canvasapp) {
+    var webapp = function(opts, kind) {
                     console.log("> " + "apps/" + opts.module.name);
                     var apppath = buildpath + "apps/" + opts.module.name;
                     util.mkdir(apppath);
-                    util.cp(templatepath + "canvasapp.html", apppath + "/index.html", function() {
+                    util.cp(templatepath + kind + ".html", apppath + "/index.html", function() {
                         var canvasapp = "(function(){var modules={};";
                         canvasapp += "var require=function(name){name=name.slice(2);";
                         canvasapp += "var t=modules[name];if(typeof t===\"function\"){";
@@ -72,11 +64,24 @@ exports.main = function() {
                                 callback();
                             });
                         }, function() {
-                            canvasapp += "require(\"./canvasapp\").run(\"" + opts.module.name + "\");";
+                            canvasapp += "require(\"./" + kind + "\").run(\"" + opts.module.name + "\");";
                             canvasapp += "})();";
-                            fs.writeFile(apppath + "/canvasapp.js", canvasapp, opts.callback);
+                            fs.writeFile(apppath + "/" + kind + ".js", canvasapp, opts.callback);
                         });
                     });
+    }
+    var compileFns = {
+        webjs : function(opts) {
+            var result = "define(\"";
+            result += opts.module.name;
+            result += "\",function(exports, require){\n";
+            result += compiler.ppjs(opts.ast);
+            result += "});";
+            fs.writeFile(dest.filename, result, function() {
+                if(opts.dest.requires.canvasapp) {
+                    webapp(opts, 'canvasapp');
+                } else if(opts.dest.requires.jqueryapp) {
+                    webapp(opts, 'jqueryapp');
                 } else  {
                     opts.callback();
                 };

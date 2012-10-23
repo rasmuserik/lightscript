@@ -20,6 +20,7 @@ exports.main = function() {
     var findExports;
     var updateDest;
     var compileFns;
+    var webapp;
     // outer: Array
     var platforms;
     var makeModuleObjects;
@@ -110,16 +111,63 @@ exports.main = function() {
         "nodejs",
         "webjs",
     ];
-    compileFns = {
-        webjs : function(opts) {
+    webapp = function(opts, kind) {
+        // outer: modules
+        // outer: fs
+        // outer: Object
+        // outer: Array
+        // outer: async
+        // outer: templatepath
+        // outer: util
+        // outer: buildpath
+        var apppath;
+        // outer: console
+        console.log("> " + "apps/" + opts.module.name);
+        apppath = buildpath + "apps/" + opts.module.name;
+        util.mkdir(apppath);
+        util.cp(templatepath + kind + ".html", apppath + "/index.html", function() {
+            // outer: apppath
+            // outer: kind
             // outer: modules
+            // outer: fs
             // outer: Object
+            // outer: opts
             // outer: Array
             // outer: async
-            // outer: templatepath
-            // outer: util
-            // outer: buildpath
-            // outer: console
+            var canvasapp;
+            canvasapp = "(function(){var modules={};";
+            canvasapp += "var require=function(name){name=name.slice(2);";
+            canvasapp += "var t=modules[name];if(typeof t===\"function\"){";
+            canvasapp += "t(modules[name]={},require);return modules[name];}return t;};";
+            canvasapp += "var define=function(name,fn){modules[name]=fn};";
+            async.forEach([opts.module.name].concat(Object.keys(opts.dest.requires)), function(name, callback) {
+                // outer: canvasapp
+                // outer: modules
+                // outer: fs
+                fs.readFile(modules[name].webjs.filename, "utf8", function(err, data) {
+                    // outer: callback
+                    // outer: canvasapp
+                    if(err) {
+                        throw err;
+                    };
+                    canvasapp += data;
+                    callback();
+                });
+            }, function() {
+                // outer: apppath
+                // outer: fs
+                // outer: opts
+                // outer: kind
+                // outer: canvasapp
+                canvasapp += "require(\"./" + kind + "\").run(\"" + opts.module.name + "\");";
+                canvasapp += "})();";
+                fs.writeFile(apppath + "/" + kind + ".js", canvasapp, opts.callback);
+            });
+        });
+    };
+    compileFns = {
+        webjs : function(opts) {
+            // outer: webapp
             // outer: dest
             // outer: fs
             // outer: compiler
@@ -130,58 +178,12 @@ exports.main = function() {
             result += compiler.ppjs(opts.ast);
             result += "});";
             fs.writeFile(dest.filename, result, function() {
-                // outer: modules
-                // outer: fs
-                // outer: Object
-                // outer: Array
-                // outer: async
-                // outer: templatepath
-                // outer: util
-                // outer: buildpath
-                var apppath;
-                // outer: console
+                // outer: webapp
                 // outer: opts
                 if(opts.dest.requires.canvasapp) {
-                    console.log("> " + "apps/" + opts.module.name);
-                    apppath = buildpath + "apps/" + opts.module.name;
-                    util.mkdir(apppath);
-                    util.cp(templatepath + "canvasapp.html", apppath + "/index.html", function() {
-                        // outer: apppath
-                        // outer: modules
-                        // outer: fs
-                        // outer: Object
-                        // outer: opts
-                        // outer: Array
-                        // outer: async
-                        var canvasapp;
-                        canvasapp = "(function(){var modules={};";
-                        canvasapp += "var require=function(name){name=name.slice(2);";
-                        canvasapp += "var t=modules[name];if(typeof t===\"function\"){";
-                        canvasapp += "t(modules[name]={},require);return modules[name];}return t;};";
-                        canvasapp += "var define=function(name,fn){modules[name]=fn};";
-                        async.forEach([opts.module.name].concat(Object.keys(opts.dest.requires)), function(name, callback) {
-                            // outer: canvasapp
-                            // outer: modules
-                            // outer: fs
-                            fs.readFile(modules[name].webjs.filename, "utf8", function(err, data) {
-                                // outer: callback
-                                // outer: canvasapp
-                                if(err) {
-                                    throw err;
-                                };
-                                canvasapp += data;
-                                callback();
-                            });
-                        }, function() {
-                            // outer: apppath
-                            // outer: fs
-                            // outer: opts
-                            // outer: canvasapp
-                            canvasapp += "require(\"./canvasapp\").run(\"" + opts.module.name + "\");";
-                            canvasapp += "})();";
-                            fs.writeFile(apppath + "/canvasapp.js", canvasapp, opts.callback);
-                        });
-                    });
+                    webapp(opts, "canvasapp");
+                } else if(opts.dest.requires.jqueryapp) {
+                    webapp(opts, "jqueryapp");
                 } else  {
                     opts.callback();
                 };
