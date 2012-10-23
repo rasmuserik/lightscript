@@ -1,21 +1,30 @@
 // outer: __dirname
-// outer: Array
+// outer: express
 // outer: console
 // outer: JSON
-// outer: Object
 // outer: window
+// outer: Object
+// outer: Array
 // outer: $
 // outer: exports
+var jsonml;
 // outer: require
 require("./webapp");
+jsonml = require("./jsonml");
 exports.webmain = function() {
     // outer: console
     // outer: JSON
-    // outer: Object
     // outer: window
     var socket;
+    // outer: Object
+    // outer: Array
+    // outer: jsonml
     // outer: $
-    $("body").append("hello");
+    $("body").append(jsonml.toXml([
+        "div",
+        {style : "background-color: red;"},
+        "hello world",
+    ]));
     socket = window.io.connect("http://localhost:8080");
     socket.emit("my other event", {my : "data"});
     socket.on("news", function(data) {
@@ -32,6 +41,7 @@ exports.webmain = function() {
 exports.nodemain = function() {
     // outer: __dirname
     // outer: Array
+    // outer: express
     var io;
     var server;
     var app;
@@ -86,6 +96,7 @@ exports.nodemain = function() {
             res.send(data);
         });
     });
+    app.use("/", express["static"]("/home/rasmuserik/private/image/DCIM"));
     io.sockets.on("connection", function(socket) {
         // outer: console
         // outer: imgs

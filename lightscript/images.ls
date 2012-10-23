@@ -1,6 +1,9 @@
 require("./webapp");
+jsonml = require('./jsonml');
 exports.webmain = function() {
-    $("body").append("hello");
+    $("body").append(
+            jsonml.toXml(["div", {style: 'background-color: red;'}, 'hello world'])
+            );
     var socket = window.io.connect("http://localhost:8080");
     socket.emit("my other event", {my : "data"});
     socket.on("news", function(data) {
@@ -40,6 +43,8 @@ exports.nodemain = function() {
             res.send(data);
         });
     });
+    app.use("/", express.static('/home/rasmuserik/private/image/DCIM'));
+
     io.sockets.on("connection", function(socket) {
         socket.emit("news", {hello : "world"});
         socket.emit("news", imgs);
