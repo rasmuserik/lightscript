@@ -80,8 +80,8 @@ exports.main = function() {
             fs.writeFile(dest.filename, result, function() {
                 if(opts.dest.requires.canvasapp) {
                     webapp(opts, "canvasapp");
-                } else if(opts.dest.requires.jqueryapp) {
-                    webapp(opts, "jqueryapp");
+                } else if(opts.dest.requires.webapp) {
+                    webapp(opts, "webapp");
                 } else  {
                     opts.callback();
                 };

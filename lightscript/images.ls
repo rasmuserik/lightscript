@@ -1,4 +1,4 @@
-require("./jqueryapp");
+require("./webapp");
 exports.webmain = function() {
     $("body").append("hello");
 };

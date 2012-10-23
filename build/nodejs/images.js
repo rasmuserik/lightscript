@@ -5,7 +5,7 @@
 // outer: $
 // outer: exports
 // outer: require
-require("./jqueryapp");
+require("./webapp");
 exports.webmain = function() {
     // outer: $
     $("body").append("hello");

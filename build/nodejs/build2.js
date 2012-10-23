@@ -182,8 +182,8 @@ exports.main = function() {
                 // outer: opts
                 if(opts.dest.requires.canvasapp) {
                     webapp(opts, "canvasapp");
-                } else if(opts.dest.requires.jqueryapp) {
-                    webapp(opts, "jqueryapp");
+                } else if(opts.dest.requires.webapp) {
+                    webapp(opts, "webapp");
                 } else  {
                     opts.callback();
                 };
