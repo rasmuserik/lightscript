@@ -1,14 +1,33 @@
 // outer: __dirname
 // outer: Array
 // outer: console
+// outer: JSON
 // outer: Object
+// outer: window
 // outer: $
 // outer: exports
 // outer: require
 require("./webapp");
 exports.webmain = function() {
+    // outer: console
+    // outer: JSON
+    // outer: Object
+    // outer: window
+    var socket;
     // outer: $
     $("body").append("hello");
+    socket = window.io.connect("http://localhost:8080");
+    socket.emit("my other event", {my : "data"});
+    socket.on("news", function(data) {
+        // outer: Object
+        // outer: socket
+        // outer: console
+        // outer: JSON
+        // outer: $
+        $("body").append(JSON.stringify(data));
+        console.log(data);
+        socket.emit("my other event", {my : "data"});
+    });
 };
 exports.nodemain = function() {
     // outer: __dirname
@@ -53,16 +72,26 @@ exports.nodemain = function() {
     server.listen(8080);
     app.get("/", function(req, res) {
         // outer: __dirname
-        res.sendfile(__dirname + "../apps/images/index.html");
+        // outer: require
+        require("fs").readFile(__dirname + "/../apps/images/index.html", "utf8", function(err, data) {
+            // outer: res
+            res.send(data);
+        });
     });
-    app.get("/jqueryapp.js", function(req, res) {
+    app.get("/webapp.js", function(req, res) {
         // outer: __dirname
-        res.sendfile(__dirname + "../apps/images/jqueryapp.js");
+        // outer: require
+        require("fs").readFile(__dirname + "/../apps/images/webapp.js", "utf8", function(err, data) {
+            // outer: res
+            res.send(data);
+        });
     });
     io.sockets.on("connection", function(socket) {
         // outer: console
+        // outer: imgs
         // outer: Object
         socket.emit("news", {hello : "world"});
+        socket.emit("news", imgs);
         socket.on("my other event", function(data) {
             // outer: console
             console.log(data);

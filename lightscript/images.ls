@@ -1,6 +1,13 @@
 require("./webapp");
 exports.webmain = function() {
     $("body").append("hello");
+    var socket = window.io.connect("http://localhost:8080");
+    socket.emit("my other event", {my : "data"});
+    socket.on("news", function(data) {
+        $("body").append(JSON.stringify(data));
+        console.log(data);
+        socket.emit("my other event", {my : "data"});
+    });
 };
 exports.nodemain = function() {
     var files = require("fs").readdirSync("/home/rasmuserik/private/image/DCIM/");
@@ -24,13 +31,18 @@ exports.nodemain = function() {
     var io = require("socket.io").listen(server);
     server.listen(8080);
     app.get("/", function(req, res) {
-        res.sendfile(__dirname + "../apps/images/index.html");
+        require("fs").readFile(__dirname + "/../apps/images/index.html", "utf8", function(err, data) {
+            res.send(data);
+        });
     });
-    app.get("/jqueryapp.js", function(req, res) {
-        res.sendfile(__dirname + "../apps/images/jqueryapp.js");
+    app.get("/webapp.js", function(req, res) {
+        require("fs").readFile(__dirname + "/../apps/images/webapp.js", "utf8", function(err, data) {
+            res.send(data);
+        });
     });
     io.sockets.on("connection", function(socket) {
         socket.emit("news", {hello : "world"});
+        socket.emit("news", imgs);
         socket.on("my other event", function(data) {
             console.log(data);
         });
