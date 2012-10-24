@@ -1,9 +1,10 @@
-exports.main = function() {
+exports.nodemain = function() {
     // # requirements
     var fs = require("fs");
     var util = require("./util");
     var async = require("async");
     var compiler = require("./compiler");
+    child_process = require('child_process');
     // # constants
     var sourcepath = __dirname + "/../../lightscript/";
     var buildpath = sourcepath + "../build/";
@@ -88,7 +89,14 @@ exports.main = function() {
             });
         },
         nodejs : function(opts) {
-            fs.writeFile(dest.filename, compiler.ppjs(opts.ast), opts.callback);
+            fs.writeFile(dest.filename, compiler.ppjs(opts.ast), function() {
+                if(opts.module.name === 'api' || dest.exports.apimain) {
+                    restartServer(opts.callback);
+                } else {
+                    opts.callback();
+                }
+            });
+
         },
         lightscript : function(opts) {
             var ast = compiler.applyMacros({
@@ -167,6 +175,46 @@ exports.main = function() {
     var compileModuleObjects = function(callback) {
         async.forEach(Object.keys(modules), buildFiles, callback);
     };
+    server = undefined;
+    killServer = function(callback) {
+        if(!server) {
+            callback();
+            return undefined;
+        }
+        killed = false;
+        server.on('exit', function() {
+            killed = true;
+            server = undefined;
+            callback();
+        });
+        server.kill();
+        setTimeout(function() {
+            if(!killed) {
+                server.kill(9);
+            }
+        }, 3000);
+
+    };
+    startServer = function(callback) {
+        apimodules = [];
+        Object.keys(modules).forEach(function(name) {
+            if(modules[name].nodejs.exports.apimain) {
+                apimodules.push(name);
+            }
+        });
+        js = "require('./api').nodemain();";
+        js += apimodules.map(function(name) {
+            return "require('./" + name + "').apimain();";
+        }).join("");
+        server = child_process.spawn('node', ['-e', js], {cwd: buildpath + 'nodejs', stdio: 'inherit'});
+        callback();
+    };
+    var restartServer = function(callback) {
+        killServer(function() {
+            startServer(callback);
+        });
+    };
+    process.on("exit", killServer);
     var watch = function(callback) {
         Object.keys(modules).forEach(function(name) {
             var watchFn = function() {
@@ -190,6 +238,7 @@ exports.main = function() {
             console.log("initial build done");
             callback();
         },
+        restartServer,
         watch,
         function() {},
     ]);

@@ -1,4 +1,5 @@
 (function() {
+    require('./api').socket.emit('log', 'in massdrive');
     require("./canvasapp");
     exports.init = function() {
         exports.run();

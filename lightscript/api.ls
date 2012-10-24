@@ -27,8 +27,8 @@ if(`compiler.nodejs) {
         app.listen(8888);
         io.configure(function (){
             io.set('authorization', function (handshake, callback) {
-                console.log(handshake);
                 handshake.cid = cookieId(handshake.headers.cookie || "") || newId();
+                console.log('auth...', handshake.cid);
                 callback(null, true); // error first callback style 
             });
         });
@@ -49,7 +49,7 @@ if(`compiler.nodejs) {
     } else {
         exports.socket = window.io.connect("http://api.solsort.com");
     }
-    exports.sockets.on("solsortapi_clientid", function(id) {
+    exports.socket.on("solsortapi_clientid", function(id) {
         exports.clientid = id;
         document.cookie = cookieIdStr(id);
     });

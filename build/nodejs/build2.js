@@ -1,19 +1,27 @@
 // outer: setTimeout
+// outer: false
 // outer: true
-// outer: undefined
 // outer: console
+// outer: process
+// outer: undefined
 // outer: Array
 // outer: Object
 // outer: __dirname
 // outer: require
 // outer: exports
-exports.main = function() {
+exports.nodemain = function() {
     // outer: setTimeout
+    // outer: false
     // outer: true
     var dest;
-    // outer: undefined
     // outer: console
     var watch;
+    // outer: process
+    var restartServer;
+    var startServer;
+    var killServer;
+    // outer: undefined
+    var server;
     var compileModuleObjects;
     var buildFiles;
     var findRequires;
@@ -33,6 +41,7 @@ exports.main = function() {
     var buildpath;
     // outer: __dirname
     var sourcepath;
+    var child_process;
     var compiler;
     var async;
     var util;
@@ -43,6 +52,7 @@ exports.main = function() {
     util = require("./util");
     async = require("async");
     compiler = require("./compiler");
+    child_process = require("child_process");
     // # constants
     sourcepath = __dirname + "/../../lightscript/";
     buildpath = sourcepath + "../build/";
@@ -190,10 +200,20 @@ exports.main = function() {
             });
         },
         nodejs : function(opts) {
+            // outer: restartServer
             // outer: compiler
             // outer: dest
             // outer: fs
-            fs.writeFile(dest.filename, compiler.ppjs(opts.ast), opts.callback);
+            fs.writeFile(dest.filename, compiler.ppjs(opts.ast), function() {
+                // outer: restartServer
+                // outer: dest
+                // outer: opts
+                if(opts.module.name === "api" || dest.exports.apimain) {
+                    restartServer(opts.callback);
+                } else  {
+                    opts.callback();
+                };
+            });
         },
         lightscript : function(opts) {
             // outer: dest
@@ -336,6 +356,72 @@ exports.main = function() {
         // outer: async
         async.forEach(Object.keys(modules), buildFiles, callback);
     };
+    server = undefined;
+    killServer = function(callback) {
+        // outer: true
+        // outer: setTimeout
+        // outer: false
+        var killed;
+        // outer: undefined
+        // outer: server
+        if(!server) {
+            callback();
+            return undefined;
+        };
+        killed = false;
+        server.on("exit", function() {
+            // outer: callback
+            // outer: undefined
+            // outer: server
+            // outer: true
+            // outer: killed
+            killed = true;
+            server = undefined;
+            callback();
+        });
+        server.kill();
+        setTimeout(function() {
+            // outer: server
+            // outer: killed
+            if(!killed) {
+                server.kill(9);
+            };
+        }, 3000);
+    };
+    startServer = function(callback) {
+        // outer: buildpath
+        // outer: child_process
+        // outer: server
+        var js;
+        // outer: modules
+        // outer: Object
+        // outer: Array
+        var apimodules;
+        apimodules = [];
+        Object.keys(modules).forEach(function(name) {
+            // outer: apimodules
+            // outer: modules
+            if(modules[name].nodejs.exports.apimain) {
+                apimodules.push(name);
+            };
+        });
+        js = "require('./api').nodemain();";
+        js += apimodules.map(function(name) {
+            return "require('./" + name + "').apimain();";
+        }).join("");
+        server = child_process.spawn("node", ["-e", js], {cwd : buildpath + "nodejs", stdio : "inherit"});
+        callback();
+    };
+    restartServer = function(callback) {
+        // outer: startServer
+        // outer: killServer
+        killServer(function() {
+            // outer: callback
+            // outer: startServer
+            startServer(callback);
+        });
+    };
+    process.on("exit", killServer);
     watch = function(callback) {
         // outer: buildFiles
         // outer: readModule
@@ -396,6 +482,7 @@ exports.main = function() {
             console.log("initial build done");
             callback();
         },
+        restartServer,
         watch,
         function() {},
     ]);

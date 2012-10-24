@@ -47,6 +47,7 @@
     var V2d;
     // outer: exports
     // outer: require
+    require("./api").socket.emit("log", "in massdrive");
     require("./canvasapp");
     exports.init = function() {
         // outer: exports

@@ -212,6 +212,7 @@ exports.nodemain = function() {
                 };
             };
         });
+        require("child_process").exec("cp -a ~/lightscript/build/apps/* /usr/share/nginx/www/solsort/apps/");
         require("child_process").exec("cp -a ~/solsort/sites/* /usr/share/nginx/www/", function(err, stdout, stderr) {
             // outer: console
             console.log("done");
