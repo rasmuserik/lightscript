@@ -1,3 +1,7 @@
+// outer: Object
+// outer: require
+// outer: document
+// outer: exports
 exports.run = function(name) {
     // outer: Object
     // outer: require
