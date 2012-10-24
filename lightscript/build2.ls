@@ -48,7 +48,7 @@ exports.nodemain = function() {
     ];
     var webapp = function(opts, kind) {
         console.log("> " + "apps/" + opts.module.name);
-        var apppath = buildpath + "apps/" + opts.module.name;
+        var apppath = "/usr/share/nginx/www/solsort/apps/" + opts.module.name;
         util.mkdir(apppath);
         util.cp(templatepath + kind + ".html", apppath + "/index.html", function() {
             var canvasapp = "(function(){var modules={};";

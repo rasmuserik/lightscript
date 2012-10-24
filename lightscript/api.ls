@@ -28,7 +28,6 @@ if(`compiler.nodejs) {
         io.configure(function (){
             io.set('authorization', function (handshake, callback) {
                 handshake.cid = cookieId(handshake.headers.cookie || "") || newId();
-                console.log('auth...', handshake.cid);
                 callback(null, true); // error first callback style 
             });
         });

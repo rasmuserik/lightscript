@@ -5,11 +5,11 @@
 // outer: Date
 // outer: Math
 // outer: window
-// outer: exports
 // outer: undefined
 // outer: true
 // outer: Array
 // outer: false
+// outer: exports
 // outer: require
 (function() {
     // outer: document
@@ -19,7 +19,6 @@
     // outer: Date
     // outer: Math
     // outer: window
-    // outer: exports
     var blobMain;
     var animate;
     var gameOver;
@@ -41,8 +40,14 @@
     var enemies;
     // outer: false
     var started;
-    // outer: require
     var V2d;
+    // outer: exports
+    // outer: require
+    require("./canvasapp");
+    exports.init = function() {
+        // outer: exports
+        exports.run();
+    };
     V2d = require("./v2d").V2d;
     // webcanvas, exports.run
     started = false;

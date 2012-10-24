@@ -1,4 +1,6 @@
 (function() {
+    require('./canvasapp');
+    exports.init = function() { exports.run(); };
     var V2d = require("./v2d").V2d;
     // webcanvas, exports.run
     var started = false;

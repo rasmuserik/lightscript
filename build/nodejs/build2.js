@@ -129,11 +129,10 @@ exports.nodemain = function() {
         // outer: async
         // outer: templatepath
         // outer: util
-        // outer: buildpath
         var apppath;
         // outer: console
         console.log("> " + "apps/" + opts.module.name);
-        apppath = buildpath + "apps/" + opts.module.name;
+        apppath = "/usr/share/nginx/www/solsort/apps/" + opts.module.name;
         util.mkdir(apppath);
         util.cp(templatepath + kind + ".html", apppath + "/index.html", function() {
             // outer: apppath
