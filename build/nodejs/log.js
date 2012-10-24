@@ -127,17 +127,19 @@ if(true) {
 };
 logfn = function(level) {
     // outer: api
+    // outer: console
     // outer: arguments
     // outer: Array
     return function() {
-        // outer: api
         // outer: level
+        // outer: api
+        // outer: console
         // outer: arguments
         // outer: Array
         var args;
         args = Array.prototype.slice.call(arguments, 0);
-        args.unshift(level);
-        api.socket.emit.apply(api.socket, args);
+        console.log("log", "level", args);
+        api.socket.emit(level, args);
     };
 };
 exports.info = logfn("info");
