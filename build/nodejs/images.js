@@ -1,8 +1,8 @@
-// outer: Math
 // outer: null
 // outer: __dirname
 // outer: JSON
 // outer: console
+// outer: Math
 // outer: next
 // outer: undefined
 // outer: Object
@@ -17,6 +17,7 @@ require("./webapp");
 jsonml = require("./jsonml");
 exports.webmain = function() {
     // outer: console
+    // outer: Math
     // outer: next
     // outer: jsonml
     // outer: undefined
@@ -31,15 +32,17 @@ exports.webmain = function() {
     // outer: Array
     var buttons;
     // outer: $
-    $("body").append("<div id=\"menu\" style=\"position:fixed; right: 0; width: 110pt;\"></div>");
+    $("body").append("<div id=\"menu\" style=\"position:fixed; right: 0; width: 100pt;\"></div>");
     buttons = [
-        "publish",
-        "_publish",
-        "keep",
-        "_delete",
+        "foto_pub",
+        "foto_ok",
+        "foto_bad",
+        "ppl_pub",
+        "ppl_ok",
+        "ppl_bad",
         "delete",
-        "bug",
         "private",
+        "bug",
     ];
     buttons.forEach(function(name) {
         // outer: socket
@@ -51,7 +54,7 @@ exports.webmain = function() {
         // outer: $
         $("#menu").append(jsonml.toXml([
             "span",
-            {id : name, style : "font: 20pt sans-serif; margin: 6pt 6pt 6pt 6pt; padding: 6pt 6pt 6pt 6pt; display: inline-block; border: 1px solid #ccc; border-radius: 6pt; box-shadow: 2pt 2pt 4pt 0pt #999; width: 90pt; text-align: center;"},
+            {id : name, style : "font: 16pt sans-serif; margin: 6pt 6pt 6pt 6pt; padding: 6pt 6pt 6pt 6pt; display: inline-block; border: 1px solid #ccc; border-radius: 6pt; box-shadow: 2pt 2pt 4pt 0pt #999; width: 80pt; text-align: center;"},
             name,
         ]));
         $("#menu").append("<br>");
@@ -85,6 +88,7 @@ exports.webmain = function() {
         // outer: imgs
         var img;
         // outer: window
+        // outer: Math
         var wh;
         var h;
         // outer: nextImg
@@ -96,7 +100,7 @@ exports.webmain = function() {
         $cur.attr("id", "current");
         current = nextImg;
         h = $cur.height();
-        wh = $(window).height();
+        wh = Math.min($(window).height(), 500);
         $cur.attr("width", $cur.width() * wh / h);
         $cur.attr("height", wh);
         $cur.css("display", "inline");

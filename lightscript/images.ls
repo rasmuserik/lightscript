@@ -1,10 +1,10 @@
 require("./webapp");
 var jsonml = require("./jsonml");
 exports.webmain = function() {
-    $('body').append('<div id="menu" style="position:fixed; right: 0; width: 110pt;"></div>');
-    buttons = ['publish', '_publish', 'keep', '_delete', 'delete', 'bug', 'private'];
+    $('body').append('<div id="menu" style="position:fixed; right: 0; width: 100pt;"></div>');
+    buttons = ['foto_pub', 'foto_ok', 'foto_bad', 'ppl_pub', 'ppl_ok', 'ppl_bad', 'delete', 'private', 'bug'];
     buttons.forEach(function(name) {
-        $("#menu").append(jsonml.toXml(["span", {id: name, style: "font: 20pt sans-serif; margin: 6pt 6pt 6pt 6pt; padding: 6pt 6pt 6pt 6pt; display: inline-block; border: 1px solid #ccc; border-radius: 6pt; box-shadow: 2pt 2pt 4pt 0pt #999; width: 90pt; text-align: center;"}, name]));
+        $("#menu").append(jsonml.toXml(["span", {id: name, style: "font: 16pt sans-serif; margin: 6pt 6pt 6pt 6pt; padding: 6pt 6pt 6pt 6pt; display: inline-block; border: 1px solid #ccc; border-radius: 6pt; box-shadow: 2pt 2pt 4pt 0pt #999; width: 80pt; text-align: center;"}, name]));
         $('#menu').append('<br>');
         $("#" + name).live('click', function() {
             next();
@@ -28,7 +28,7 @@ exports.webmain = function() {
         $cur.attr('id', 'current');
         current = nextImg;
         h = $cur.height();
-        wh = $(window).height();
+        wh = Math.min($(window).height(), 500);
         $cur.attr('width', $cur.width() * wh/h);
         $cur.attr('height', wh);
         $cur.css('display', 'inline');
