@@ -1,0 +1,419 @@
+// outer: null
+// outer: parseInt
+// outer: String
+// outer: undefined
+// outer: Array
+var isArray;
+var JsonML_Error;
+var addprop;
+var toObjectInner;
+var childReduce;
+var xmlEscape;
+var reventities;
+// outer: Object
+var entities;
+var toXmlAcc;
+// outer: exports
+// # JsonML
+//
+// Various functions for handling
+// jsonml in array form.
+// For more info on jsonml,
+// see [jsonml.org](http://jsonml.org/)
+// or [wikipedia](http://en.wikipedia.org/wiki/JsonML)
+//
+// Implemented to be as portable as possible.
+// Not depending on any libraries, and also
+// avoid regular expressions to be possible to
+// run on javascript-subsets on j2me devices.
+//
+// ## XML parser
+//
+// Parse an XML-string.
+// Actually this is not a full implementation, but just
+// the basic parts to get it up running.
+// Nonetheless it is Good Enough(tm) for most uses.
+//
+// Known deficiencies: CDATA is not supported, will accept even
+// non-well-formed documents, <?... > <!... > are not really handled, ...
+exports.fromXml = function(xml) {
+    // outer: entities
+    // outer: parseInt
+    // outer: String
+    // outer: undefined
+    // outer: isArray
+    var parent_tag;
+    var value_terminator;
+    var attr;
+    var has_attributes;
+    // outer: Object
+    var attributes;
+    var newtag;
+    var read_until;
+    var is_a;
+    var next_char;
+    var tag;
+    // outer: Array
+    var stack;
+    var pos;
+    var c;
+    var whitespace;
+    // outer: JsonML_Error
+    if(typeof xml !== "string") {
+        JsonML_Error("Error: jsonml.parseXML didn't receive a string as parameter");
+    };
+    // white space definition
+    whitespace = " \n\r\t";
+    // the current char in the string that is being parsed
+    c = xml[0];
+    // the position in the string
+    pos = 0;
+    // stack for handling nested tags
+    stack = [];
+    // current tag being parsed
+    tag = [];
+    // read the next char from the string
+    next_char = function() {
+        // outer: undefined
+        // outer: xml
+        // outer: pos
+        // outer: c
+        c = ++pos < xml.length ? xml[pos] : undefined;
+    };
+    // check if the current char is one of those in the string parameter
+    is_a = function(str) {
+        // outer: c
+        return str.indexOf(c) !== - 1;
+    };
+    // return the string from the current position to right before the first
+    // occurence of any of symb. Translate escaped xml entities to their value
+    // on the fly.
+    read_until = function(symb) {
+        // outer: JsonML_Error
+        // outer: entities
+        // outer: parseInt
+        // outer: String
+        // outer: read_until
+        var entity;
+        // outer: next_char
+        // outer: is_a
+        // outer: c
+        // outer: Array
+        var buffer;
+        buffer = [];
+        while(c && !is_a(symb)) {
+            if(c === "&") {
+                next_char();
+                entity = read_until(";");
+                if(entity[0] === "#") {
+                    if(entity[1] === "x") {
+                        c = String.fromCharCode(parseInt(entity.slice(2), 16));
+                    } else  {
+                        c = String.fromCharCode(parseInt(entity.slice(1), 10));
+                    };
+                } else  {
+                    c = entities[entity];
+                    if(!c) {
+                        JsonML_Error("error: unrecognisable xml entity: " + entity);
+                    };
+                };
+            };
+            buffer.push(c);
+            next_char();
+        };
+        return buffer.join("");
+    };
+    // The actual parsing
+    while(is_a(whitespace)) {
+        next_char();
+    };
+    while(c) {
+        if(is_a("<")) {
+            next_char();
+            // `<?xml ... >`, `<!-- -->` or similar - skip these
+            if(is_a("?!")) {
+                if(xml.slice(pos, pos + 3) === "!--") {
+                    pos += 3;
+                    while(xml.slice(pos, pos + 2) !== "--") {
+                        ++pos;
+                    };
+                };
+                read_until(">");
+                next_char();
+                // `<sometag ...>` - handle begin tag
+            } else if(!is_a("/")) {
+                // read tag name
+                newtag = [read_until(whitespace + ">/")];
+                // read attributes
+                attributes = {};
+                has_attributes = 0;
+                while(c && is_a(whitespace)) {
+                    next_char();
+                };
+                while(c && !is_a(">/")) {
+                    has_attributes = 1;
+                    attr = read_until(whitespace + "=>");
+                    if(c === "=") {
+                        next_char();
+                        value_terminator = whitespace + ">/";
+                        if(is_a("\"'")) {
+                            value_terminator = c;
+                            next_char();
+                        };
+                        attributes[attr] = read_until(value_terminator);
+                        if(is_a("\"'")) {
+                            next_char();
+                        };
+                    } else  {
+                        JsonML_Error("something not attribute in tag");
+                    };
+                    while(c && is_a(whitespace)) {
+                        next_char();
+                    };
+                };
+                if(has_attributes) {
+                    newtag.push(attributes);
+                };
+                // end of tag, is it `<.../>` or `<...>`
+                if(is_a("/")) {
+                    next_char();
+                    if(!is_a(">")) {
+                        JsonML_Error("expected \">\" after \"/\" within tag");
+                    };
+                    tag.push(newtag);
+                } else  {
+                    stack.push(tag);
+                    tag = newtag;
+                };
+                next_char();
+                // `</something>` - handle end tag
+            } else  {
+                next_char();
+                if(read_until(">") !== tag[0]) {
+                    JsonML_Error("end tag not matching: " + tag[0]);
+                };
+                next_char();
+                parent_tag = stack.pop();
+                if(tag.length <= 2 && !isArray(tag[1]) && typeof tag[1] !== "string") {
+                    tag.push("");
+                };
+                parent_tag.push(tag);
+                tag = parent_tag;
+            };
+            // actual content / data between tags
+        } else  {
+            tag.push(read_until("<"));
+        };
+    };
+    return tag;
+};
+// ## XML generation
+// Convert jsonml in array form to xml.
+exports.toXml = function(jsonml) {
+    // outer: toXmlAcc
+    // outer: Array
+    var acc;
+    acc = [];
+    toXmlAcc(jsonml, acc);
+    return acc.join("");
+};
+/*
+
+// The actual implementation. As the XML-string is built by appending to the
+// `acc`umulator.
+*/
+toXmlAcc = function(jsonml, acc) {
+    // outer: String
+    // outer: xmlEscape
+    // outer: toXmlAcc
+    // outer: Object
+    var attributes;
+    var pos;
+    // outer: isArray
+    if(isArray(jsonml)) {
+        acc.push("<");
+        acc.push(jsonml[0]);
+        pos = 1;
+        attributes = jsonml[1];
+        if(attributes && !isArray(attributes) && typeof attributes !== "string") {
+            Object.keys(attributes).forEach(function(key) {
+                // outer: attributes
+                // outer: xmlEscape
+                // outer: acc
+                acc.push(" ");
+                acc.push(key);
+                acc.push("=\"");
+                xmlEscape(attributes[key], acc);
+                acc.push("\"");
+            });
+            ++pos;
+        };
+        if(pos < jsonml.length) {
+            acc.push(">");
+            while(pos < jsonml.length) {
+                toXmlAcc(jsonml[pos], acc);
+                ++pos;
+            };
+            acc.push("</");
+            acc.push(jsonml[0]);
+            acc.push(">");
+        } else  {
+            acc.push(" />");
+        };
+    } else  {
+        xmlEscape(String(jsonml), acc);
+    };
+};
+// XML escaped entity table
+entities = {
+    quot : "\"",
+    amp : "&",
+    apos : "'",
+    lt : "<",
+    gt : ">",
+};
+// Generate a reverse xml entity table.
+reventities = (function() {
+    // outer: entities
+    // outer: Object
+    var result;
+    result = {};
+    Object.keys(entities).forEach(function(key) {
+        // outer: entities
+        // outer: result
+        result[entities[key]] = key;
+    });
+    return result;
+})();
+// Append the characters of `str`, or the xml-entity they map to, to the `acc`umulator array.
+xmlEscape = function(str, acc) {
+    // outer: reventities
+    var s;
+    var code;
+    var c;
+    var i;
+    i = 0;
+    while(i < str.length) {
+        c = str[i];
+        code = c.charCodeAt(0);
+        s = reventities[c];
+        if(s) {
+            acc.push("&" + s + ";");
+        } else if(code >= 128) {
+            //code < 32 ||
+            acc.push("&#" + code + ";");
+        } else  {
+            acc.push(c);
+        };
+        ++i;
+    };
+};
+// ## Utility functions
+// Apply a function to all the child elements of a given jsonml array.
+childReduce = exports.childReduce = function(jsonml, fn, acc) {
+    var pos;
+    // outer: isArray
+    var first;
+    first = jsonml[1];
+    if(typeof first !== "object" || isArray(first)) {
+        acc = fn(acc, first);
+    };
+    pos = 2;
+    while(pos < jsonml.length) {
+        acc = fn(acc, jsonml[pos]);
+        ++pos;
+    };
+    return acc;
+};
+// - `jsonml.ensureAttributeObject(jsonml_array)` changes an jsonml array such that it has a (possibly empty) attribute object at position 1
+exports.ensureAttributeObject = function(jsonml) {
+    // outer: Object
+    // outer: Array
+    if(typeof jsonml[1] !== "object" || jsonml[1].constructor === Array) {
+        jsonml.unshift(jsonml[0]);
+        jsonml[1] = {};
+    };
+};
+exports.getAttr = function(jsonml, attribute) {
+    // outer: undefined
+    // outer: Array
+    if(typeof jsonml[1] !== "object" || jsonml[1].constructor === Array) {
+        return undefined;
+    } else  {
+        return jsonml[1][attribute];
+    };
+};
+// Convert jsonml into an easier subscriptable json structure, not preserving
+// the order of the elements
+exports.toObject = function(jsonml) {
+    // outer: toObjectInner
+    // outer: Object
+    var result;
+    result = {};
+    result[jsonml[0]] = toObjectInner(jsonml);
+    return result;
+};
+// Internal function called by toObject. Return an object corresponding to
+// the child nodes of the `jsonml`-parameter
+toObjectInner = function(jsonml) {
+    // outer: toObjectInner
+    // outer: addprop
+    var current;
+    // outer: isArray
+    var pos;
+    var attr;
+    // outer: Object
+    var result;
+    result = {};
+    attr = jsonml[1];
+    pos;
+    if(typeof attr === "object" && !isArray(attr)) {
+        Object.keys(attr).forEach(function(key) {
+            // outer: attr
+            // outer: result
+            result["@" + key] = attr[key];
+        });
+        pos = 2;
+    } else  {
+        pos = 1;
+        if(jsonml.length === 2 && !isArray(attr)) {
+            return attr;
+        };
+    };
+    while(pos < jsonml.length) {
+        current = jsonml[pos];
+        if(isArray(current)) {
+            addprop(result, current[0], toObjectInner(current));
+        } else  {
+            addprop(result, "_", current);
+        };
+        ++pos;
+    };
+    return result;
+};
+// Add a property to the object. If the property is already there, append
+// the `val`ue to an array at the key instead, possibly putting existing
+// object in front of such array, if that is not an array yet.
+addprop = function(obj, key, val) {
+    // outer: Array
+    // outer: isArray
+    if(obj[key]) {
+        if(isArray(obj[key])) {
+            obj[key].push(val);
+        } else  {
+            obj[key] = [obj[key], val];
+        };
+    } else  {
+        obj[key] = val;
+    };
+};
+// Error handler
+JsonML_Error = function(desc) {
+    throw desc;
+};
+// Array check, implemented here to avoid depending on any library
+isArray = function(a) {
+    // outer: Array
+    // outer: null
+    return a !== null && typeof a === "object" && a.constructor === Array;
+};
