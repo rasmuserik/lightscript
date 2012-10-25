@@ -24,6 +24,7 @@ exports.nodemain = function() {
     var server;
     var compileModuleObjects;
     var buildFiles;
+    var recurseRequires;
     var findRequires;
     var findExports;
     var updateDest;
@@ -128,12 +129,14 @@ exports.nodemain = function() {
         // outer: Array
         // outer: async
         // outer: templatepath
+        // outer: recurseRequires
         // outer: util
         var apppath;
         // outer: console
         console.log("> " + "apps/" + opts.module.name);
         apppath = "/usr/share/nginx/www/solsort/apps/" + opts.module.name;
         util.mkdir(apppath);
+        opts.dest.requires = recurseRequires(opts.dest.requires, "webjs");
         util.cp(templatepath + kind + ".html", apppath + "/index.html", function() {
             // outer: apppath
             // outer: kind
@@ -285,12 +288,38 @@ exports.nodemain = function() {
         doIt(ast);
         return acc;
     };
+    recurseRequires = function(reqs, platform) {
+        // outer: true
+        // outer: modules
+        // outer: Object
+        var count;
+        count = 0;
+        while(count !== Object.keys(reqs).length) {
+            count = Object.keys(reqs).length;
+            Object.keys(reqs).forEach(function(name) {
+                // outer: true
+                // outer: reqs
+                // outer: Object
+                // outer: platform
+                // outer: modules
+                if(modules[name] && modules[name][platform] && modules[name][platform].requires) {
+                    Object.keys(modules[name][platform].requires).forEach(function(dep) {
+                        // outer: true
+                        // outer: reqs
+                        reqs[dep] = true;
+                    });
+                };
+            });
+        };
+        return reqs;
+    };
     buildFiles = function(name, callback) {
         // outer: buildFiles
         // outer: true
         // outer: compileFns
         // outer: console
         // outer: findRequires
+        // outer: recurseRequires
         // outer: findExports
         // outer: updateDest
         // outer: modules
@@ -303,6 +332,7 @@ exports.nodemain = function() {
             // outer: compileFns
             // outer: console
             // outer: findRequires
+            // outer: recurseRequires
             // outer: findExports
             // outer: updateDest
             var dest;
@@ -318,7 +348,7 @@ exports.nodemain = function() {
             });
             dest = updateDest(name, platform);
             dest.exports = findExports(ast);
-            dest.requires = findRequires(ast);
+            dest.requires = recurseRequires(findRequires(ast), platform);
             Object.keys(dest.requires).forEach(function(reqname) {
                 // outer: true
                 // outer: name

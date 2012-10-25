@@ -1,6 +1,7 @@
 (function() {
-    require("./api").socket.emit("log", "in massdrive");
+    //require("./api").socket.emit("log", "in massdrive");
     require("./log").info("in massdrive");
+    require("./log").warn("...warning...");
     require("./canvasapp");
     exports.init = function() {
         exports.run();

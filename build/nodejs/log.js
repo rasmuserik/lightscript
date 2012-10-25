@@ -126,20 +126,21 @@ if(true) {
     };
 };
 logfn = function(level) {
-    // outer: api
     // outer: console
     // outer: arguments
     // outer: Array
+    // outer: api
+    api;
     return function() {
-        // outer: level
         // outer: api
+        // outer: level
         // outer: console
         // outer: arguments
         // outer: Array
         var args;
         args = Array.prototype.slice.call(arguments, 0);
-        console.log("log", "level", args);
-        api.socket.emit(level, args);
+        console.log("log", level, args);
+        api.socket.emit("log", level, args);
     };
 };
 exports.info = logfn("info");

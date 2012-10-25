@@ -1,4 +1,4 @@
-var api = require("./api");
+api = require("./api");
 if(`compiler.nodejs) {
     var logname = process.env.HOME + "/data/log/" + require("os").hostname() + "-";
     var util = require("./util");
@@ -56,10 +56,11 @@ if(`compiler.nodejs) {
     };
 };
 var logfn = function(level) {
+    api;
     return function() {
         var args = Array.prototype.slice.call(arguments, 0);
-        console.log("log", "level", args);
-        api.socket.emit(level, args);
+        console.log("log", level, args);
+        api.socket.emit("log", level, args);
     };
 };
 exports.info = logfn("info");
