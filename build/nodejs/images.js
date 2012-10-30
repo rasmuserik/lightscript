@@ -1,5 +1,4 @@
 // outer: null
-// outer: __dirname
 // outer: JSON
 // outer: console
 // outer: Math
@@ -119,7 +118,6 @@ exports.nodemain = function() {
     // outer: Math
     // outer: Object
     // outer: null
-    // outer: __dirname
     var writeJSON;
     var io;
     var server;
@@ -156,17 +154,15 @@ exports.nodemain = function() {
     io = require("socket.io").listen(server);
     server.listen(8080);
     app.get("/", function(req, res) {
-        // outer: __dirname
         // outer: require
-        require("fs").readFile(__dirname + "/../apps/images/index.html", "utf8", function(err, data) {
+        require("fs").readFile("/usr/share/nginx/www/solsort/apps/images/index.html", "utf8", function(err, data) {
             // outer: res
             res.send(data);
         });
     });
     app.get("/webapp.js", function(req, res) {
-        // outer: __dirname
         // outer: require
-        require("fs").readFile(__dirname + "/../apps/images/webapp.js", "utf8", function(err, data) {
+        require("fs").readFile("/usr/share/nginx/www/solsort/apps/images/webapp.js", "utf8", function(err, data) {
             // outer: res
             res.send(data);
         });

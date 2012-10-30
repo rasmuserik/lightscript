@@ -3,7 +3,6 @@ if(`compiler.nodejs) {
     var logname = process.env.HOME + "/data/log/" + require("os").hostname() + "-";
     var util = require("./util");
     var fs = require("fs");
-    var logfile = undefined;
     var logdata = [];
     var logdate = undefined;
     var logstream = undefined;
@@ -19,6 +18,7 @@ if(`compiler.nodejs) {
             };
         };
         if(!logstream) {
+            util.mkdir(logname.split("/").slice(0, - 1).join("/"));
             logdate = today;
             var fname = logname + logdate + ".log";
             logstream = fs.createWriteStream(fname, {flags : "a"});
@@ -35,9 +35,6 @@ if(`compiler.nodejs) {
         logdata.push(data);
         syncLog();
         console.log(data);
-        if(!logfile) {
-            util.mkdir(logname.split("/").slice(0, - 1).join("/"));
-        };
     };
     exports.apimain = function() {
         api.io.sockets.on("connection", function(socket) {

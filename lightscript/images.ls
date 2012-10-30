@@ -84,12 +84,12 @@ exports.nodemain = function() {
     var io = require("socket.io").listen(server);
     server.listen(8080);
     app.get("/", function(req, res) {
-        require("fs").readFile(__dirname + "/../apps/images/index.html", "utf8", function(err, data) {
+        require("fs").readFile("/usr/share/nginx/www/solsort/apps/images/index.html", "utf8", function(err, data) {
             res.send(data);
         });
     });
     app.get("/webapp.js", function(req, res) {
-        require("fs").readFile(__dirname + "/../apps/images/webapp.js", "utf8", function(err, data) {
+        require("fs").readFile("/usr/share/nginx/www/solsort/apps/images/webapp.js", "utf8", function(err, data) {
             res.send(data);
         });
     });

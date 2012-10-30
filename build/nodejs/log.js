@@ -8,11 +8,10 @@ var logfn;
 var log;
 var syncLog;
 var logstream;
+// outer: undefined
 var logdate;
 // outer: Array
 var logdata;
-// outer: undefined
-var logfile;
 var fs;
 var util;
 // outer: process
@@ -24,7 +23,6 @@ if(true) {
     logname = process.env.HOME + "/data/log/" + require("os").hostname() + "-";
     util = require("./util");
     fs = require("fs");
-    logfile = undefined;
     logdata = [];
     logdate = undefined;
     logstream = undefined;
@@ -33,8 +31,9 @@ if(true) {
         // outer: logdata
         // outer: Object
         // outer: fs
-        // outer: logname
         var fname;
+        // outer: logname
+        // outer: util
         // outer: undefined
         // outer: logstream
         // outer: logdate
@@ -52,6 +51,7 @@ if(true) {
             };
         };
         if(!logstream) {
+            util.mkdir(logname.split("/").slice(0, - 1).join("/"));
             logdate = today;
             fname = logname + logdate + ".log";
             logstream = fs.createWriteStream(fname, {flags : "a"});
@@ -68,18 +68,12 @@ if(true) {
         });
     });
     log = function(data) {
-        // outer: logname
-        // outer: util
-        // outer: logfile
         // outer: console
         // outer: syncLog
         // outer: logdata
         logdata.push(data);
         syncLog();
         console.log(data);
-        if(!logfile) {
-            util.mkdir(logname.split("/").slice(0, - 1).join("/"));
-        };
     };
     exports.apimain = function() {
         // outer: syncLog

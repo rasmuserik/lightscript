@@ -318,3 +318,24 @@ if(true) {
         require("util").pump(fs.createReadStream(src), fs.createWriteStream(dst), callback);
     };
 };
+// shuffle array {{{1
+exports.shuffleArray = function(arr) {
+    var t;
+    // outer: Math
+    var r;
+    var i;
+    i = arr.length;
+    while(i) {
+        --i;
+        r = Math.random() * arr.length | 0;
+        t = arr[i];
+        arr[i] = arr[r];
+        arr[r] = t;
+    };
+    return arr;
+};
+// pick a random array element {{{1
+exports.arrayPick = function(arr) {
+    // outer: Math
+    return arr[Math.random() * arr.length | 0];
+};
