@@ -21,3 +21,10 @@ V2d.prototype.norm = function() {
     var len = this.length();
     return this.scale(len ? 1 / len : 0);
 };
+V2d.prototype.dist = function(v) {
+    d = this.sub(v);
+    return Math.sqrt(d.dot(d));
+}
+V2d.prototype.neg = function(v) {
+    return new V2d(-this.x, -this.y);
+};

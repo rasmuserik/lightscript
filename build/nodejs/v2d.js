@@ -37,3 +37,15 @@ V2d.prototype.norm = function() {
     len = this.length();
     return this.scale(len ? 1 / len : 0);
 };
+V2d.prototype.dist = function(v) {
+    // outer: Math
+    // outer: this
+    var d;
+    d = this.sub(v);
+    return Math.sqrt(d.dot(d));
+};
+V2d.prototype.neg = function(v) {
+    // outer: this
+    // outer: V2d
+    return new V2d(- this.x, - this.y);
+};
