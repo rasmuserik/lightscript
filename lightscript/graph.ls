@@ -35,9 +35,10 @@ exports.init = function(app) {
         });
         graph.push(basegraph[id]);
     });
-    var spring = .01;
-    var repuls = .3;
-    var dampening = 0.95;
+    var spring = .1;
+    var repuls = 1;
+    var dampening = 0.90;
+    var maxspeed = 0.01;
     var run = function() {
         // ### Calculate force
         graph.forEach(function(elem) {
@@ -52,6 +53,7 @@ exports.init = function(app) {
                     b.force = b.force.add(force.neg());
             });
         });
+        // #### Collisions
         graph.forEach(function(a) {
             graph.forEach(function(b) {
                 if(a.id !== b.id) {
@@ -68,6 +70,9 @@ exports.init = function(app) {
         graph.forEach(function(elem) {
             elem.velocity = elem.velocity.add( elem.force);
             elem.velocity = elem.velocity.scale(dampening);
+            if(elem.velocity.length() > maxspeed) {
+                elem.velocity.scale(maxspeed-elem.velocity.length());
+            }
         });
         // ### Calculate position
         graph.forEach(function(elem) {
