@@ -1,15 +1,3 @@
-// outer: require
-// outer: ;
-// outer: use
-// outer: setTimeout
-// outer: clearTimeout
-// outer: true
-// outer: console
-// outer: this
-// outer: exports
-var runTest;
-// outer: Object
-var test;
 test = {};
 test.name = "";
 test.error = function(description) {
@@ -67,9 +55,9 @@ test.create = function(name, timeout) {
 runTest = function(moduleName) {
     // outer: test
     // outer: ;
-    // outer: use
+    // outer: require
     var module;
-    module = use(moduleName);
+    module = require("./" + moduleName);
     if(!module) {
         return ;
     };
