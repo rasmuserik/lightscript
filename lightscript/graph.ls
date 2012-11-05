@@ -4,9 +4,7 @@ var V2d = require("./v2d").V2d;
 var util = require("./util");
 // # Spring-based graph layout
 // This is experimental code, not really intended for reading yet.
-running;
 exports.init = function(app) {
-    var running = true;
     var canvas = app.canvas;
     canvas.width = app.w;
     canvas.height = app.h;
