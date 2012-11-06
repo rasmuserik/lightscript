@@ -1,4 +1,3 @@
-// outer: dest
 // outer: true
 // outer: undefined
 // outer: console
@@ -34,21 +33,22 @@ var fs;
 // 
 // # Definitions, paths etc {{{1
 //
-// ## modules
+// ## modules {{{2
 //
 fs = require("fs");
 async = require("async");
 util = require("./util");
 compiler = require("./compiler");
 //
-// ## paths
+// ## paths{{{2
 //
 path = {};
 path.source = __dirname + "/../../lightscript/";
 path.build = path.source + "../build/";
 path.cache = path.build + "cache/";
-path.nodejs = path.build + "node/";
-path.webjs = path.build + "web/";
+path.nodejs = path.build + "nodejs/";
+path.pretty = path.build + "lightscript/";
+path.webjs = path.build + "webjs/";
 // ### Make sure paths exists
 Object.keys(path).forEach(function(name) {
     // outer: path
@@ -86,6 +86,7 @@ updatefiles = function(callback) {
         return name.slice(- 3) === ".ls";
     }), updatefile, callback);
 };
+// updatefile {{{2
 updatefile = function(filename, callback) {
     // outer: buildfile
     // outer: undefined
@@ -131,6 +132,7 @@ updatefile = function(filename, callback) {
     };
     callback();
 };
+// buildfile {{{2
 buildfile = function(obj, platform) {
     // outer: undefined
     // outer: compileFns
@@ -152,7 +154,7 @@ buildfile = function(obj, platform) {
     compileFns[platform](obj, dest);
     dest.ast = undefined;
 };
-// {{{2
+// compileFns {{{2
 compileFns = {
     webjs : function(obj, dest) {
         // outer: path
@@ -174,20 +176,22 @@ compileFns = {
         src = compiler.ppjs(dest.ast);
         fs.writeFileSync(path.nodejs + obj.name + ".js", src);
     },
-    lightscript : function(opts) {
-        // outer: dest
+    pretty : function(obj, dest) {
+        // outer: path
         // outer: fs
+        var src;
         // outer: true
         // outer: Object
         // outer: compiler
         var ast;
         ast = compiler.applyMacros({
-            ast : opts.ast,
-            name : opts.module.name,
+            ast : dest.ast,
+            name : obj.name,
             platform : "lightscript",
             reverse : true,
         });
-        fs.writeFile(dest.filename, compiler.ppls(ast), opts.callback);
+        src = compiler.ppls(dest.ast);
+        fs.writeFileSync(path.pretty + obj.name + ".ls", src);
     },
 };
 //

@@ -10,21 +10,22 @@
 // 
 // # Definitions, paths etc {{{1
 //
-// ## modules
+// ## modules {{{2
 //
 var fs = require("fs");
 var async = require("async");
 var util = require("./util");
 var compiler = require("./compiler");
 //
-// ## paths
+// ## paths{{{2
 //
-path = {};
+var path = {};
 path.source = __dirname + "/../../lightscript/";
 path.build = path.source + "../build/";
 path.cache = path.build + "cache/";
-path.nodejs = path.build + 'node/';
-path.webjs = path.build + 'web/';
+path.nodejs = path.build + "nodejs/";
+path.pretty = path.build + "lightscript/";
+path.webjs = path.build + "webjs/";
 // ### Make sure paths exists
 Object.keys(path).forEach(function(name) {
     util.mkdir(path[name]);
@@ -33,7 +34,7 @@ Object.keys(path).forEach(function(name) {
 // ## global variables
 //
 var sourcefiles = {};
-platforms = ['nodejs', 'webjs'];
+var platforms = ["nodejs", "webjs"];
 //
 // # Utility functions
 //
@@ -52,6 +53,7 @@ var updatefiles = function(callback) {
         return name.slice(- 3) === ".ls";
     }), updatefile, callback);
 };
+// updatefile {{{2
 var updatefile = function(filename, callback) {
     var name = filename.slice(0, - 3);
     sourcefiles[name] = var obj = sourcefiles[name] || {};
@@ -79,6 +81,7 @@ var updatefile = function(filename, callback) {
     };
     callback();
 };
+// buildfile {{{2
 var buildfile = function(obj, platform) {
     var ast = compiler.applyMacros({
         ast : obj.ast,
@@ -91,32 +94,35 @@ var buildfile = function(obj, platform) {
     dest.requires = findRequires(ast);
     compileFns[platform](obj, dest);
     dest.ast = undefined;
-}; // {{{2
-    var compileFns = { 
-        webjs : function(obj, dest) {
-            var src = "define(\"";
-            src += obj.name;
-            src += "\",function(exports, require){\n";
-            src += compiler.ppjs(dest.ast);
-            src += "});";
-            fs.writeFileSync(path.webjs + obj.name + '.js', src);
-        },
-        nodejs : function(obj, dest) {
-            src = compiler.ppjs(dest.ast);
-            fs.writeFileSync(path.nodejs + obj.name + '.js', src);
-        },
-        lightscript : function(opts) {
-            var ast = compiler.applyMacros({
-                ast : opts.ast,
-                name : opts.module.name,
-                platform : "lightscript",
-                reverse : true,
-            });
-            fs.writeFile(dest.filename, compiler.ppls(ast), opts.callback);
-        },
-    };
+};
+// compileFns {{{2
+var compileFns = {
+    webjs : function(obj, dest) {
+        var src = "define(\"";
+        src += obj.name;
+        src += "\",function(exports, require){\n";
+        src += compiler.ppjs(dest.ast);
+        src += "});";
+        fs.writeFileSync(path.webjs + obj.name + ".js", src);
+    },
+    nodejs : function(obj, dest) {
+        var src = compiler.ppjs(dest.ast);
+        fs.writeFileSync(path.nodejs + obj.name + ".js", src);
+    },
+    pretty: function(obj, dest) {
+        var ast = compiler.applyMacros({
+            ast : dest.ast,
+            name : obj.name,
+            platform : "lightscript",
+            reverse : true,
+        });
+        var src = compiler.ppls(dest.ast);
+        fs.writeFileSync(path.pretty + obj.name + ".ls", src);
+    },
+};
 //
-var findExports = function(ast) { //{{{2
+var findExports = function(ast) {
+    //{{{2
     var acc = {};
     var doIt = function(ast) {
         if(ast.isa("call:.=") && ast.children[0].isa("id:exports")) {
@@ -127,7 +133,8 @@ var findExports = function(ast) { //{{{2
     doIt(ast);
     return acc;
 };
-var findRequires = function(ast) {//{{{2
+var findRequires = function(ast) {
+    //{{{2
     var acc = {};
     var doIt = function(ast) {
         if(ast.isa("call:*()") && ast.children[0].isa("id:require")) {
