@@ -22,10 +22,12 @@ var parse;
 var Ast;
 var tokenise;
 var compiletime;
+var ls2compiler;
 // outer: undefined
 var codegen;
 // Compiler {{{1
 codegen = undefined;
+ls2compiler = undefined;
 (function() {
     // outer: tokenLookup
     // outer: Array
@@ -45,7 +47,7 @@ codegen = undefined;
     // outer: undefined
     // outer: exports
     // outer: codegen
-    var ls2compiler;
+    // outer: ls2compiler
     var applyMacros;
     applyMacros = function(macros, compiler) {
         // outer: runMacro
@@ -1792,3 +1794,16 @@ ast2rst = undefined;
         return runMacro(rstMacros, ast);
     };
 })();
+// ast2java {{{1
+// main {{{1
+exports.nodemain = function() {
+    // outer: ls2compiler
+    var ast;
+    // outer: console
+    // outer: require
+    var src;
+    src = require("fs").readFileSync("./lightscript/experiments.ls", "utf8");
+    console.log(src);
+    ast = ls2compiler(src, "java").asts[0];
+    console.log(ast.toList());
+};

@@ -1,5 +1,6 @@
 // Compiler {{{1
 var codegen = undefined;
+ls2compiler = undefined;
 (function() {
     var applyMacros = function(macros, compiler) {
         var relations = function(ast) {
@@ -1185,3 +1186,11 @@ var ast2rst = undefined;
         return runMacro(rstMacros, ast);
     };
 })();
+// ast2java {{{1
+// main {{{1
+exports.nodemain = function() {
+    src = require('fs').readFileSync('./lightscript/experiments.ls', 'utf8');
+    console.log(src);
+    ast = ls2compiler(src, "java").asts[0];
+    console.log(ast.toList());
+}
