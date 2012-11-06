@@ -1,6 +1,14 @@
-// outer: JSON
+// outer: true
+// outer: recurseRequires
+// outer: name
+// outer: modules
+// outer: platforms
 // outer: console
+// outer: JSON
 // outer: exports
+var findRequires;
+var findExports;
+var buildfile;
 var updatefile;
 var updatefiles;
 var mtime;
@@ -79,11 +87,13 @@ updatefiles = function(callback) {
     }), updatefile, callback);
 };
 updatefile = function(filename, callback) {
+    // outer: buildfile
+    // outer: platforms
     // outer: compiler
     var source;
+    // outer: console
     // outer: fs
     // outer: JSON
-    // outer: console
     // outer: cachepath
     var cachefile;
     // outer: mtime
@@ -101,8 +111,8 @@ updatefile = function(filename, callback) {
     // read compilercache if possible
     cachefile = cachepath + name;
     if(timestamp <= mtime(cachefile)) {
-        console.log("cached " + name);
         sourcefiles[name] = JSON.parse(fs.readFileSync(cachefile, "utf8"));
+        console.log("cached " + name);
         return callback();
     };
     // actually generate compiled file/data
@@ -110,17 +120,83 @@ updatefile = function(filename, callback) {
         source = fs.readFileSync(obj.filename, "utf8");
         obj.ast = compiler.parsels(source);
         obj.timestamp = timestamp;
+        platforms.forEach(function(platform) {
+            // outer: obj
+            // outer: buildfile
+            buildfile(obj, platform);
+        });
         fs.writeFile(cachefile, JSON.stringify(obj));
         console.log("compiling " + name);
-        callback();
     };
+    callback();
+};
+buildfile = function(obj, platform) {
+    // outer: findRequires
+    // outer: recurseRequires
+    // outer: findExports
+    var dest;
+    // outer: name
+    // outer: modules
+    // outer: Object
+    // outer: compiler
+    var ast;
+    ast = compiler.applyMacros({
+        ast : modules[name].ast,
+        name : name,
+        platform : platform,
+    });
+    obj[platform] = dest = {};
+    dest.exports = findExports(ast);
+    dest.requires = recurseRequires(findRequires(ast), platform);
+};
+findExports = function(ast) {
+    // outer: true
+    var doIt;
+    // outer: Object
+    var acc;
+    acc = {};
+    doIt = function(ast) {
+        // outer: doIt
+        // outer: true
+        // outer: acc
+        if(ast.isa("call:.=") && ast.children[0].isa("id:exports")) {
+            acc[ast.children[1].val] = true;
+        };
+        ast.children.forEach(doIt);
+    };
+    doIt(ast);
+    return acc;
+};
+findRequires = function(ast) {
+    // outer: true
+    var doIt;
+    // outer: Object
+    var acc;
+    acc = {};
+    doIt = function(ast) {
+        // outer: doIt
+        // outer: true
+        // outer: acc
+        if(ast.isa("call:*()") && ast.children[0].isa("id:require")) {
+            if(ast.children[1].kind === "str" && ast.children[1].val.slice(0, 2) === "./") {
+                acc[ast.children[1].val.slice(2)] = true;
+            };
+        };
+        ast.children.forEach(doIt);
+    };
+    doIt(ast);
+    return acc;
 };
 //
 // # Main {{{1
 exports.nodemain = function(arg) {
+    // outer: sourcefiles
+    // outer: console
     // outer: updatefiles
     updatefiles(function() {
-        //console.log(sourcefiles);
+        // outer: sourcefiles
+        // outer: console
+        console.log(sourcefiles["build"]);
     });
 };
 //

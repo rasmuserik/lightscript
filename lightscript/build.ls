@@ -12,10 +12,10 @@
 //
 // ## modules
 //
-var fs = require('fs');
-var async = require('async');
-var util= require('./util');
-    var compiler = require("./compiler");
+var fs = require("fs");
+var async = require("async");
+var util = require("./util");
+var compiler = require("./compiler");
 //
 // ## paths
 //
@@ -24,101 +24,100 @@ var buildpath = sourcepath + "../build/";
 var cachepath = buildpath + "cache/";
 var nodepath = buildpath + "node/";
 // ### Make sure paths exists
-[buildpath, cachepath, nodepath].forEach(util.mkdir);
+[
+    buildpath,
+    cachepath,
+    nodepath,
+].forEach(util.mkdir);
 //
 // ## global variables
 //
-sourcefiles = {};
+var sourcefiles = {};
 //
 // # Utility functions
 //
-    var mtime = function(filename) {
-        return util.trycatch(function() {
-            return fs.statSync(filename).mtime.getTime();
-        }, function() {
-            return 0;
-        });
-    };
+var mtime = function(filename) {
+    return util.trycatch(function() {
+        return fs.statSync(filename).mtime.getTime();
+    }, function() {
+        return 0;
+    });
+};
 //
 // # Find/update list of filenames {{{1
 //
-updatefiles = function(callback) {
+var updatefiles = function(callback) {
     async.forEach(fs.readdirSync(sourcepath).filter(function(name) {
         return name.slice(- 3) === ".ls";
     }), updatefile, callback);
-}
-updatefile = function(filename, callback) {
-        name = filename.slice(0, -3);
-        sourcefiles = obj = sourcefiles[name] || {};
-        obj.name = name;
-        obj.filename = sourcepath + filename;
-        timestamp = mtime(obj.filename);
-        // read compilercache if possible
-        cachefile = cachepath + name;
-        if(timestamp <= mtime(cachefile)) {
-            sourcefiles[name] = JSON.parse(fs.readFileSync(cachefile, 'utf8'));
-            console.log("cached " + name);
-            return callback();
-        }
-        // actually generate compiled file/data
-        if(!obj.timestamp || obj.timestamp < timestamp) {
-            source = fs.readFileSync (obj.filename, "utf8");
-                obj.ast = compiler.parsels(source);
-                obj.timestamp = timestamp;
-                platforms.forEach(function(platform) {
-                    buildfile(obj, platform);
-                });
-                fs.writeFile(cachefile, JSON.stringify(obj));
-                console.log("compiling " + name);
-        }
-        callback();
-}
-buildfile = function(obj, platform) {
-            var ast = compiler.applyMacros({
-                ast : modules[name].ast,
-                name : name,
-                platform : platform,
-            });
-            obj[platform] = dest = {};
-            dest.exports = findExports(ast);
-            dest.requires = recurseRequires(findRequires(ast), platform);
 };
-
-    var findExports = function(ast) {
-        var acc = {};
-        var doIt = function(ast) {
-            if(ast.isa("call:.=") && ast.children[0].isa("id:exports")) {
-                acc[ast.children[1].val] = true;
-            };
-            ast.children.forEach(doIt);
-        };
-        doIt(ast);
-        return acc;
+var updatefile = function(filename, callback) {
+    var name = filename.slice(0, - 3);
+    sourcefiles = var obj = sourcefiles[name] || {};
+    obj.name = name;
+    obj.filename = sourcepath + filename;
+    var timestamp = mtime(obj.filename);
+    // read compilercache if possible
+    var cachefile = cachepath + name;
+    if(timestamp <= mtime(cachefile)) {
+        sourcefiles[name] = JSON.parse(fs.readFileSync(cachefile, "utf8"));
+        console.log("cached " + name);
+        return callback();
     };
-    var findRequires = function(ast) {
-        var acc = {};
-        var doIt = function(ast) {
-            if(ast.isa("call:*()") && ast.children[0].isa("id:require")) {
-                if(ast.children[1].kind === "str" && ast.children[1].val.slice(0, 2) === "./") {
-                    acc[ast.children[1].val.slice(2)] = true;
-                };
-            };
-            ast.children.forEach(doIt);
-        };
-        doIt(ast);
-        return acc;
+    // actually generate compiled file/data
+    if(!obj.timestamp || obj.timestamp < timestamp) {
+        var source = fs.readFileSync(obj.filename, "utf8");
+        obj.ast = compiler.parsels(source);
+        obj.timestamp = timestamp;
+        platforms.forEach(function(platform) {
+            buildfile(obj, platform);
+        });
+        fs.writeFile(cachefile, JSON.stringify(obj));
+        console.log("compiling " + name);
     };
-
-
+    callback();
+};
+var buildfile = function(obj, platform) {
+    var ast = compiler.applyMacros({
+        ast : modules[name].ast,
+        name : name,
+        platform : platform,
+    });
+    obj[platform] = var dest = {};
+    dest.exports = findExports(ast);
+    dest.requires = recurseRequires(findRequires(ast), platform);
+};
+var findExports = function(ast) {
+    var acc = {};
+    var doIt = function(ast) {
+        if(ast.isa("call:.=") && ast.children[0].isa("id:exports")) {
+            acc[ast.children[1].val] = true;
+        };
+        ast.children.forEach(doIt);
+    };
+    doIt(ast);
+    return acc;
+};
+var findRequires = function(ast) {
+    var acc = {};
+    var doIt = function(ast) {
+        if(ast.isa("call:*()") && ast.children[0].isa("id:require")) {
+            if(ast.children[1].kind === "str" && ast.children[1].val.slice(0, 2) === "./") {
+                acc[ast.children[1].val.slice(2)] = true;
+            };
+        };
+        ast.children.forEach(doIt);
+    };
+    doIt(ast);
+    return acc;
+};
 //
 // # Main {{{1
-
 exports.nodemain = function(arg) {
     updatefiles(function() {
-        console.log(sourcefiles['build']);
+        console.log(sourcefiles["build"]);
     });
-}
-
+};
 //
 // # Old code {{{1
 /*
