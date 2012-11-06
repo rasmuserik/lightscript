@@ -31,10 +31,11 @@ Object.keys(path).forEach(function(name) {
     util.mkdir(path[name]);
 });
 //
-// ## global variables
+// ## global variables {{{2
 //
 var sourcefiles = {};
 var platforms = ["nodejs", "webjs"];
+var deps = {};
 //
 // # Utility functions
 //
@@ -57,18 +58,33 @@ var updatefiles = function(callback) {
 var updatefile = function(filename, callback) {
     var name = filename.slice(0, - 3);
     sourcefiles[name] = var obj = sourcefiles[name] || {};
+    //
+    // Create dependency object
+    //
+    if(!obj.deps) {
+        obj.deps = {};
+        platforms.forEach(function(platform) {
+            obj.deps[platform] = {};
+        });
+    }
+    deps = obj.deps;
+    // 
+    // Initialise simple values
+    //
     obj.name = name;
     obj.filename = path.source + filename;
     var timestamp = mtime(obj.filename);
     //
     // read compilercache if possible
+    //
     var cachefile = path.cache + name;
     if(timestamp <= mtime(cachefile)) {
         sourcefiles[name] = JSON.parse(fs.readFileSync(cachefile, "utf8"));
         console.log("cached " + name);
     } else if(!obj.timestamp || obj.timestamp < timestamp) {
         //
-        // actually generate compiled file/data
+        // othervise actually generate compiled file/data if needed
+        //
         var source = fs.readFileSync(obj.filename, "utf8");
         obj.ast = compiler.parsels(source);
         obj.timestamp = timestamp;
@@ -79,8 +95,13 @@ var updatefile = function(filename, callback) {
         fs.writeFile(cachefile, JSON.stringify(obj));
         console.log("compiling " + name);
     };
+    //
+    // update dependencies
+    // 
     callback();
 };
+
+}
 // buildfile {{{2
 var buildfile = function(obj, platform) {
     var ast = compiler.applyMacros({
