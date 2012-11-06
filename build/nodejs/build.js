@@ -1,25 +1,22 @@
+// outer: dest
 // outer: true
-// outer: recurseRequires
-// outer: name
-// outer: modules
-// outer: platforms
+// outer: undefined
 // outer: console
 // outer: JSON
 // outer: exports
 var findRequires;
 var findExports;
+var compileFns;
 var buildfile;
 var updatefile;
 var updatefiles;
 var mtime;
-// outer: Object
-var sourcefiles;
 // outer: Array
-var nodepath;
-var cachepath;
-var buildpath;
+var platforms;
+var sourcefiles;
 // outer: __dirname
-var sourcepath;
+// outer: Object
+var path;
 var compiler;
 var util;
 var async;
@@ -46,20 +43,23 @@ compiler = require("./compiler");
 //
 // ## paths
 //
-sourcepath = __dirname + "/../../lightscript/";
-buildpath = sourcepath + "../build/";
-cachepath = buildpath + "cache/";
-nodepath = buildpath + "node/";
+path = {};
+path.source = __dirname + "/../../lightscript/";
+path.build = path.source + "../build/";
+path.cache = path.build + "cache/";
+path.nodejs = path.build + "node/";
+path.webjs = path.build + "web/";
 // ### Make sure paths exists
-[
-    buildpath,
-    cachepath,
-    nodepath,
-].forEach(util.mkdir);
+Object.keys(path).forEach(function(name) {
+    // outer: path
+    // outer: util
+    util.mkdir(path[name]);
+});
 //
 // ## global variables
 //
 sourcefiles = {};
+platforms = ["nodejs", "webjs"];
 //
 // # Utility functions
 //
@@ -79,44 +79,44 @@ mtime = function(filename) {
 //
 updatefiles = function(callback) {
     // outer: updatefile
-    // outer: sourcepath
+    // outer: path
     // outer: fs
     // outer: async
-    async.forEach(fs.readdirSync(sourcepath).filter(function(name) {
+    async.forEach(fs.readdirSync(path.source).filter(function(name) {
         return name.slice(- 3) === ".ls";
     }), updatefile, callback);
 };
 updatefile = function(filename, callback) {
     // outer: buildfile
+    // outer: undefined
     // outer: platforms
     // outer: compiler
     var source;
     // outer: console
     // outer: fs
     // outer: JSON
-    // outer: cachepath
     var cachefile;
     // outer: mtime
     var timestamp;
-    // outer: sourcepath
+    // outer: path
     // outer: Object
     var obj;
     // outer: sourcefiles
     var name;
     name = filename.slice(0, - 3);
-    sourcefiles = obj = sourcefiles[name] || {};
+    sourcefiles[name] = obj = sourcefiles[name] || {};
     obj.name = name;
-    obj.filename = sourcepath + filename;
+    obj.filename = path.source + filename;
     timestamp = mtime(obj.filename);
+    //
     // read compilercache if possible
-    cachefile = cachepath + name;
+    cachefile = path.cache + name;
     if(timestamp <= mtime(cachefile)) {
         sourcefiles[name] = JSON.parse(fs.readFileSync(cachefile, "utf8"));
         console.log("cached " + name);
-        return callback();
-    };
-    // actually generate compiled file/data
-    if(!obj.timestamp || obj.timestamp < timestamp) {
+    } else if(!obj.timestamp || obj.timestamp < timestamp) {
+        //
+        // actually generate compiled file/data
         source = fs.readFileSync(obj.filename, "utf8");
         obj.ast = compiler.parsels(source);
         obj.timestamp = timestamp;
@@ -125,35 +125,78 @@ updatefile = function(filename, callback) {
             // outer: buildfile
             buildfile(obj, platform);
         });
+        obj.ast = undefined;
         fs.writeFile(cachefile, JSON.stringify(obj));
         console.log("compiling " + name);
     };
     callback();
 };
 buildfile = function(obj, platform) {
+    // outer: undefined
+    // outer: compileFns
     // outer: findRequires
-    // outer: recurseRequires
     // outer: findExports
     var dest;
-    // outer: name
-    // outer: modules
     // outer: Object
     // outer: compiler
     var ast;
     ast = compiler.applyMacros({
-        ast : modules[name].ast,
-        name : name,
+        ast : obj.ast,
+        name : obj.name,
         platform : platform,
     });
     obj[platform] = dest = {};
+    dest.ast = ast;
     dest.exports = findExports(ast);
-    dest.requires = recurseRequires(findRequires(ast), platform);
+    dest.requires = findRequires(ast);
+    compileFns[platform](obj, dest);
+    dest.ast = undefined;
 };
+// {{{2
+compileFns = {
+    webjs : function(obj, dest) {
+        // outer: path
+        // outer: fs
+        // outer: compiler
+        var src;
+        src = "define(\"";
+        src += obj.name;
+        src += "\",function(exports, require){\n";
+        src += compiler.ppjs(dest.ast);
+        src += "});";
+        fs.writeFileSync(path.webjs + obj.name + ".js", src);
+    },
+    nodejs : function(obj, dest) {
+        // outer: path
+        // outer: fs
+        // outer: compiler
+        var src;
+        src = compiler.ppjs(dest.ast);
+        fs.writeFileSync(path.nodejs + obj.name + ".js", src);
+    },
+    lightscript : function(opts) {
+        // outer: dest
+        // outer: fs
+        // outer: true
+        // outer: Object
+        // outer: compiler
+        var ast;
+        ast = compiler.applyMacros({
+            ast : opts.ast,
+            name : opts.module.name,
+            platform : "lightscript",
+            reverse : true,
+        });
+        fs.writeFile(dest.filename, compiler.ppls(ast), opts.callback);
+    },
+};
+//
 findExports = function(ast) {
     // outer: true
     var doIt;
     // outer: Object
     var acc;
+    //{{{2
     acc = {};
     doIt = function(ast) {
         // outer: doIt
@@ -172,6 +215,7 @@ findRequires = function(ast) {
     var doIt;
     // outer: Object
     var acc;
+    //{{{2
     acc = {};
     doIt = function(ast) {
         // outer: doIt
@@ -187,7 +231,6 @@ findRequires = function(ast) {
     doIt(ast);
     return acc;
 };
-//
 // # Main {{{1
 exports.nodemain = function(arg) {
     // outer: sourcefiles
@@ -302,6 +345,7 @@ exports.nodemain = function(arg) {
 };
 // build2 {{{2
 exports.nodemain = function() {
+    // defs {{{2
     // # requirements
     var fs = require("fs");
     var util = require("./util");
@@ -322,7 +366,7 @@ exports.nodemain = function() {
             return 0;
         });
     };
-    var readModule = function(lsname, callback) {
+    var readModule = function(lsname, callback) { //{{{2
         fs.readFile(sourcepath + lsname, "utf8", function(err, source) {
             if(err) {
                 console.log(err, "could not read \"" + sourcepath + lsname + "\"");
@@ -339,7 +383,7 @@ exports.nodemain = function() {
             callback();
         });
     };
-    var makeModuleObjects = function(callback) {
+    var makeModuleObjects = function(callback) { //{{{2
         async.forEach(fs.readdirSync(sourcepath).filter(function(name) {
             return name.slice(- 3) === ".ls";
         }), readModule, callback);
@@ -349,7 +393,7 @@ exports.nodemain = function() {
         "nodejs",
         "webjs",
     ];
-    var webapp = function(opts, kind) {
+    var webapp = function(opts, kind) { //{{{2
         console.log("> " + "apps/" + opts.module.name);
         var apppath = "/usr/share/nginx/www/solsort/apps/" + opts.module.name;
         util.mkdir(apppath);
@@ -375,7 +419,7 @@ exports.nodemain = function() {
             });
         });
     };
-    var compileFns = {
+    var compileFns = { // {{{2
         webjs : function(opts) {
             var result = "define(\"";
             result += opts.module.name;
@@ -411,7 +455,7 @@ exports.nodemain = function() {
             fs.writeFile(dest.filename, compiler.ppls(ast), opts.callback);
         },
     };
-    var updateDest = function(name, platform) {
+    var updateDest = function(name, platform) { //{{{2
         var dest = modules[name][platform];
         if(!dest) {
             modules[name][platform] = dest = {};
@@ -422,7 +466,7 @@ exports.nodemain = function() {
         };
         return dest;
     };
-    var findExports = function(ast) {
+    var findExports = function(ast) { //{{{2
         var acc = {};
         var doIt = function(ast) {
             if(ast.isa("call:.=") && ast.children[0].isa("id:exports")) {
@@ -433,7 +477,7 @@ exports.nodemain = function() {
         doIt(ast);
         return acc;
     };
-    var findRequires = function(ast) {
+    var findRequires = function(ast) { //{{{2
         var acc = {};
         var doIt = function(ast) {
             if(ast.isa("call:*()") && ast.children[0].isa("id:require")) {
@@ -446,7 +490,7 @@ exports.nodemain = function() {
         doIt(ast);
         return acc;
     };
-    recurseRequires = function(reqs, platform) {
+    recurseRequires = function(reqs, platform) { //{{{2
         count = 0;
         while(count !== Object.keys(reqs).length) {
             count = Object.keys(reqs).length;
@@ -460,7 +504,7 @@ exports.nodemain = function() {
         };
         return reqs;
     };
-    var buildFiles = function(name, callback) {
+    var buildFiles = function(name, callback) { //{{{2
         async.forEach(platforms, function(platform, callback) {
             var ast = compiler.applyMacros({
                 ast : modules[name].ast,
@@ -489,11 +533,11 @@ exports.nodemain = function() {
             };
         });
     };
-    var compileModuleObjects = function(callback) {
+    var compileModuleObjects = function(callback) { //{{{2
         async.forEach(Object.keys(modules), buildFiles, callback);
     };
     var server = undefined;
-    var killServer = function(callback) {
+    var killServer = function(callback) { //{{{2
         if(!server) {
             callback();
             return undefined;
@@ -511,7 +555,7 @@ exports.nodemain = function() {
             };
         }, 3000);
     };
-    var startServer = function(callback) {
+    var startServer = function(callback) { //{{{2
         var apimodules = [];
         Object.keys(modules).forEach(function(name) {
             if(modules[name].nodejs.exports.apimain) {
@@ -525,13 +569,13 @@ exports.nodemain = function() {
         server = child_process.spawn("node", ["-e", js], {cwd : buildpath + "nodejs", stdio : "inherit"});
         callback();
     };
-    var restartServer = function(callback) {
+    var restartServer = function(callback) { //{{{2
         killServer(function() {
             startServer(callback);
         });
     };
     process.on("exit", killServer);
-    var watch = function(callback) {
+    var watch = function(callback) { //{{{2
         Object.keys(modules).forEach(function(name) {
             var watchFn = function() {
                 modules[name].watcher.close();
@@ -546,7 +590,7 @@ exports.nodemain = function() {
             modules[name].watcher = fs.watch(filename, watchFn);
         });
     };
-    // # main
+    // # main //{{{2
     async.series([
         makeModuleObjects,
         compileModuleObjects,
