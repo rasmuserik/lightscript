@@ -9,10 +9,10 @@
 // outer: window
 // outer: Array
 // outer: $
-// outer: exports
 var jsonml;
 // outer: require
-require("./webapp");
+// outer: exports
+exports.webapp = require("./webapp").webapp(exports);
 jsonml = require("./jsonml");
 exports.webmain = function() {
     // outer: console

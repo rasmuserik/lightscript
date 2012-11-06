@@ -2,7 +2,7 @@
     //require("./api").socket.emit("log", "in massdrive");
     require("./log").info("in massdrive");
     require("./log").warn("...warning...");
-    require("./canvasapp");
+    exports.webapp = require("./canvasapp").webapp(exports);
     exports.init = function() {
         exports.run();
     };

@@ -9,8 +9,8 @@
 // outer: true
 // outer: Array
 // outer: false
-// outer: exports
 // outer: require
+// outer: exports
 (function() {
     // outer: document
     // outer: console
@@ -41,9 +41,9 @@
     // outer: false
     var started;
     var V2d;
-    // outer: exports
     // outer: require
-    require("./canvasapp");
+    // outer: exports
+    exports.webapp = require("./canvasapp").webapp(exports);
     exports.init = function() {
         // outer: exports
         exports.run();

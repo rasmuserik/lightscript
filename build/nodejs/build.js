@@ -1,7 +1,7 @@
 // outer: true
 // outer: undefined
-// outer: console
 // outer: JSON
+// outer: console
 // outer: exports
 var findRequires;
 var findExports;
@@ -10,6 +10,7 @@ var buildfile;
 var updatefile;
 var updatefiles;
 var mtime;
+var deps;
 // outer: Array
 var platforms;
 var sourcefiles;
@@ -56,10 +57,11 @@ Object.keys(path).forEach(function(name) {
     util.mkdir(path[name]);
 });
 //
-// ## global variables
+// ## global variables {{{2
 //
 sourcefiles = {};
 platforms = ["nodejs", "webjs"];
+deps = {};
 //
 // # Utility functions
 //
@@ -75,7 +77,7 @@ mtime = function(filename) {
     });
 };
 //
-// # Find/update list of filenames {{{1
+// # ...{{{1
 //
 updatefiles = function(callback) {
     // outer: updatefile
@@ -88,14 +90,16 @@ updatefiles = function(callback) {
 };
 // updatefile {{{2
 updatefile = function(filename, callback) {
+    // outer: true
     // outer: buildfile
     // outer: undefined
     // outer: platforms
     // outer: compiler
     var source;
-    // outer: console
     // outer: fs
     // outer: JSON
+    // outer: deps
+    // outer: console
     var cachefile;
     // outer: mtime
     var timestamp;
@@ -106,18 +110,28 @@ updatefile = function(filename, callback) {
     var name;
     name = filename.slice(0, - 3);
     sourcefiles[name] = obj = sourcefiles[name] || {};
+    // 
+    // Initialise simple values
+    //
     obj.name = name;
     obj.filename = path.source + filename;
     timestamp = mtime(obj.filename);
     //
     // read compilercache if possible
+    //
     cachefile = path.cache + name;
     if(timestamp <= mtime(cachefile)) {
-        sourcefiles[name] = JSON.parse(fs.readFileSync(cachefile, "utf8"));
         console.log("cached " + name);
-    } else if(!obj.timestamp || obj.timestamp < timestamp) {
-        //
-        // actually generate compiled file/data
+        deps = obj.deps;
+        obj = JSON.parse(fs.readFileSync(cachefile, "utf8"));
+        obj.deps = deps;
+        sourcefiles[name] = obj;
+    };
+    //
+    // actually generate compiled file/data if needed
+    //
+    if(!obj.timestamp || obj.timestamp < timestamp) {
+        console.log("compiling " + name);
         source = fs.readFileSync(obj.filename, "utf8");
         obj.ast = compiler.parsels(source);
         obj.timestamp = timestamp;
@@ -128,8 +142,40 @@ updatefile = function(filename, callback) {
         });
         obj.ast = undefined;
         fs.writeFile(cachefile, JSON.stringify(obj));
-        console.log("compiling " + name);
     };
+    //
+    // update dependencies
+    // 
+    platforms.forEach(function(platform) {
+        // outer: true
+        // outer: platforms
+        // outer: sourcefiles
+        // outer: obj
+        // outer: Object
+        Object.keys(obj[platform].requires).forEach(function(dest) {
+            // outer: true
+            // outer: obj
+            // outer: platform
+            // outer: platforms
+            var deps;
+            // outer: Object
+            // outer: sourcefiles
+            if(!sourcefiles[dest]) {
+                sourcefiles[dest] = {};
+            };
+            deps = sourcefiles[dest].deps;
+            if(!deps) {
+                deps = {};
+                sourcefiles[dest].deps = deps;
+                platforms.forEach(function(platform) {
+                    // outer: Object
+                    // outer: deps
+                    deps[platform] = {};
+                });
+            };
+            deps[platform][obj.name] = true;
+        });
+    });
     callback();
 };
 // buildfile {{{2
@@ -154,9 +200,12 @@ buildfile = function(obj, platform) {
     compileFns[platform](obj, dest);
     dest.ast = undefined;
 };
+//
 // compileFns {{{2
+// 
 compileFns = {
     webjs : function(obj, dest) {
+        // outer: true
         // outer: path
         // outer: fs
         // outer: compiler
@@ -167,6 +216,9 @@ compileFns = {
         src += compiler.ppjs(dest.ast);
         src += "});";
         fs.writeFileSync(path.webjs + obj.name + ".js", src);
+        if(dest.exports.webapp) {
+            obj.webapp = true;
+        };
     },
     nodejs : function(obj, dest) {
         // outer: path
@@ -237,13 +289,9 @@ findRequires = function(ast) {
 };
 // # Main {{{1
 exports.nodemain = function(arg) {
-    // outer: sourcefiles
-    // outer: console
     // outer: updatefiles
     updatefiles(function() {
-        // outer: sourcefiles
-        // outer: console
-        console.log(sourcefiles["build"]);
+        //console.log(sourcefiles["compiler"]);
     });
 };
 //

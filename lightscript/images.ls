@@ -1,4 +1,4 @@
-require("./webapp");
+exports.webapp = require("./webapp").webapp(exports);
 var jsonml = require("./jsonml");
 exports.webmain = function() {
     $("body").append("<div id=\"menu\" style=\"position:fixed; right: 0; width: 100pt;\"></div>");

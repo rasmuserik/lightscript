@@ -15,3 +15,4 @@ exports.run = function(name) {
         app.update(obj);
     }
 };
+exports.webapp = function() { };

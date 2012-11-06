@@ -1,4 +1,5 @@
-require("./canvasapp");
+exports.webapp = require("./canvasapp").webapp(exports);
+
 var log = require("./log");
 var V2d = require("./v2d").V2d;
 var util = require("./util");

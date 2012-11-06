@@ -47,7 +47,7 @@ var mtime = function(filename) {
     });
 };
 //
-// # Find/update list of filenames {{{1
+// # ...{{{1
 //
 var updatefiles = function(callback) {
     async.forEach(fs.readdirSync(path.source).filter(function(name) {
@@ -58,16 +58,6 @@ var updatefiles = function(callback) {
 var updatefile = function(filename, callback) {
     var name = filename.slice(0, - 3);
     sourcefiles[name] = var obj = sourcefiles[name] || {};
-    //
-    // Create dependency object
-    //
-    if(!obj.deps) {
-        obj.deps = {};
-        platforms.forEach(function(platform) {
-            obj.deps[platform] = {};
-        });
-    }
-    deps = obj.deps;
     // 
     // Initialise simple values
     //
@@ -79,12 +69,17 @@ var updatefile = function(filename, callback) {
     //
     var cachefile = path.cache + name;
     if(timestamp <= mtime(cachefile)) {
-        sourcefiles[name] = JSON.parse(fs.readFileSync(cachefile, "utf8"));
         console.log("cached " + name);
-    } else if(!obj.timestamp || obj.timestamp < timestamp) {
+        deps = obj.deps;
+        obj = JSON.parse(fs.readFileSync(cachefile, "utf8"));
+        obj.deps = deps;
+        sourcefiles[name] = obj;
+    } ;
         //
-        // othervise actually generate compiled file/data if needed
+        // actually generate compiled file/data if needed
         //
+    if(!obj.timestamp || obj.timestamp < timestamp) {
+        console.log("compiling " + name);
         var source = fs.readFileSync(obj.filename, "utf8");
         obj.ast = compiler.parsels(source);
         obj.timestamp = timestamp;
@@ -93,15 +88,29 @@ var updatefile = function(filename, callback) {
         });
         obj.ast = undefined;
         fs.writeFile(cachefile, JSON.stringify(obj));
-        console.log("compiling " + name);
     };
     //
     // update dependencies
     // 
+    platforms.forEach(function(platform) {
+        Object.keys(obj[platform].requires).forEach(function(dest) {
+            if(!sourcefiles[dest]) {
+                sourcefiles[dest] = {};
+            }
+            deps = sourcefiles[dest].deps;
+            if(!deps) {
+                deps = {};
+                sourcefiles[dest].deps = deps;
+                platforms.forEach(function(platform) {
+                    deps[platform] = {};
+                });
+            }
+            deps[platform][obj.name] = true;
+        });
+    });
     callback();
 };
 
-}
 // buildfile {{{2
 var buildfile = function(obj, platform) {
     var ast = compiler.applyMacros({
@@ -116,7 +125,9 @@ var buildfile = function(obj, platform) {
     compileFns[platform](obj, dest);
     dest.ast = undefined;
 };
+//
 // compileFns {{{2
+// 
 var compileFns = {
     webjs : function(obj, dest) {
         var src = "define(\"";
@@ -125,6 +136,9 @@ var compileFns = {
         src += compiler.ppjs(dest.ast);
         src += "});";
         fs.writeFileSync(path.webjs + obj.name + ".js", src);
+        if(dest.exports.webapp) {
+            obj.webapp = true;
+        }
     },
     nodejs : function(obj, dest) {
         var src = compiler.ppjs(dest.ast);
@@ -171,7 +185,7 @@ var findRequires = function(ast) {
 // # Main {{{1
 exports.nodemain = function(arg) {
     updatefiles(function() {
-        console.log(sourcefiles["build"]);
+        //console.log(sourcefiles["compiler"]);
     });
 };
 //
