@@ -17,7 +17,7 @@
     "express-logger": "*"
   },
   "scripts": {
-      "test": "./run.sh build pretty && ./run.sh test"
+      "test": "./run.sh build && ./run.sh test"
   },
   "engines": {"node": "*"}
 }
