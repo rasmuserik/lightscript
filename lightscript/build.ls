@@ -1,36 +1,129 @@
 // Thoughts on build system
 //  - dependency graph
-// 
-//  - ls-source
-//      - metadata (require-dependencies, nodemain, etc)
-//      - generated souce code
+//  - id: "kind:name" -> id list
+//  - update function based on kind 
+//  - rebuild-function based on kind
+//  
+var fs = require("fs");
+var async = require("async");
+var util = require("./util");
+var compiler = require("./compiler");
+// Definitions, paths etc {{{1
 //
-//  ------------------
-//
-// 
-// # Definitions, paths etc {{{1
-//
-// ## modules {{{2
+// Modules {{{2
 //
 var fs = require("fs");
 var async = require("async");
 var util = require("./util");
 var compiler = require("./compiler");
 //
-// ## paths{{{2
+// paths and extensions{{{2
+// Extensions {{{3
+extension = {
+    source: '.ls',
+    nodejs: '.js',
+    js: '.js',
+    pretty: '.ls',
+};
+// Paths {{{3
 //
 var path = {};
 path.source = __dirname + "/../../lightscript/";
 path.build = path.source + "../build/";
-path.cache = path.build + "cache/";
-path.nodejs = path.build + "nodejs/";
+path.nodejs = path.build + "node/";
 path.pretty = path.build + "lightscript/";
-path.webjs = path.build + "webjs/";
-// ### Make sure paths exists
+path.js = path.build + "js/";
+// Make sure paths exists
 Object.keys(path).forEach(function(name) {
     util.mkdir(path[name]);
 });
+// Get info from id {{{1
 //
+// getkind {{{2
+getkind = function(id) {
+    return id.split(':')[0];
+}
+// getname {{{2
+getname = function(id) {
+    return id.split(':')[1];
+}
+// getfilename {{{2
+getfilename = function(id) {
+    kind = getkind(id);
+    name = getname(id);
+    return path[kind] + name + extension[kind];
+}
+// mtime {{{2
+mtime = function(id) {
+    return util.mtime(getfilename(id));
+}
+// Dependency graph {{{1
+// 
+deps = util.trycatch(function() {
+    return JSON.parse(fs.readFileSync(path.build + 'deps.cache', "utf8"));
+}, function() {
+    // create default graph;
+    result = {};
+    fs.readdirSync(path.source).filter(function(name) {
+        return name.slice(- 3) === ".ls";
+    }).forEach(function(name) {
+        name = name.slice(0, -3);
+        result['source:' + name] = {};
+        result['js:' + name] = {};
+        result['js:' + name]['source:' + name] = true;
+    });
+    return result;
+});
+cacheDeps = function() {
+    fs.writeFile(path.build + 'deps.cache', JSON.stringify(deps));
+};
+cacheDeps();
+// Traverse deps and find out what needs to be rebuilt {{{1
+traverseDeps = function() {
+  needsRebuild = {};
+  rebuildLength = -1;
+  while(Object.keys(needsRebuild).length !== rebuildLength) {
+    rebuildLength = Object.keys(needsRebuild).length;
+    Object.keys(deps).forEach(function(dest) {
+        destTime = mtime(dest);
+        Object.keys(deps[dest]).forEach(function(src) {
+            if(needsRebuild[dest] || destTime <= mtime(src)) {
+                needsRebuild[dest] = true;
+            }
+        });
+    });
+  }
+  return needsRebuild;
+}
+// build function
+build = function(id) {
+    if(id.slice(0, 3) === 'js:') {
+      name = id.slice(3);
+      source = fs.readFileSync(getfilename("source:" + filename), "utf8");
+      plainast = compiler.parsels(source);
+      [ "lightscript", "nodejs", "webjs"].forEach(function(platform) {
+        var ast = compiler.applyMacros({ ast : plainast, name : name, platform : platform, });
+        if(platform === 'webjs') {
+            var src = "define(\"" + name + "\",function(exports, require){\n";
+            src += compiler.ppjs(dest.ast) + "});";
+            fs.writeFileSync(path.js + name + extension.js, src);
+        };
+      });
+    } 
+};
+// Rebuild function {{{1
+
+// Main {{{1
+exports.nodemain = function() {
+    Object.keys(traverseDeps()).forEach(build);
+};
+
+/*
+// # intermediate version {{{1
+path.cache = path.build + "cache/";
+
+//
+
 // ## global variables {{{2
 //
 var sourcefiles = {};
@@ -47,6 +140,20 @@ var mtime = function(filename) {
     });
 };
 //
+
+
+
+
+
+// type:name,
+//
+//  - ls-source
+//      - metadata (require-dependencies, nodemain, etc)
+//      - generated souce code
+//
+//  ------------------
+//
+// 
 // # ...{{{1
 //
 var updatefiles = function(callback) {
@@ -183,7 +290,7 @@ var findRequires = function(ast) {
     return acc;
 };
 // # Main {{{1
-exports.nodemain = function(arg) {
+exports.nodemainold = function(arg) {
     updatefiles(function() {
         //console.log(sourcefiles["compiler"]);
     });

@@ -1,22 +1,21 @@
-// outer: true
-// outer: undefined
-// outer: JSON
-// outer: console
-// outer: exports
-var findRequires;
-var findExports;
-var compileFns;
-var buildfile;
-var updatefile;
-var updatefiles;
-var mtime;
-var deps;
+// outer: dest
 // outer: Array
-var platforms;
-var sourcefiles;
+// outer: filename
+// outer: true
+// outer: JSON
+// outer: exports
+var build;
+var traverseDeps;
+var cacheDeps;
+var deps;
+var mtime;
+var getfilename;
+var getname;
+var getkind;
 // outer: __dirname
-// outer: Object
 var path;
+// outer: Object
+var extension;
 var compiler;
 var util;
 var async;
@@ -24,7 +23,226 @@ var async;
 var fs;
 // Thoughts on build system
 //  - dependency graph
+//  - id: "kind:name" -> id list
+//  - update function based on kind 
+//  - rebuild-function based on kind
+//  
+fs = require("fs");
+async = require("async");
+util = require("./util");
+compiler = require("./compiler");
+// Definitions, paths etc {{{1
+//
+// Modules {{{2
+//
+fs = require("fs");
+async = require("async");
+util = require("./util");
+compiler = require("./compiler");
+//
+// paths and extensions{{{2
+// Extensions {{{3
+extension = {
+    source : ".ls",
+    nodejs : ".js",
+    js : ".js",
+    pretty : ".ls",
+};
+// Paths {{{3
+//
+path = {};
+path.source = __dirname + "/../../lightscript/";
+path.build = path.source + "../build/";
+path.nodejs = path.build + "node/";
+path.pretty = path.build + "lightscript/";
+path.js = path.build + "js/";
+// Make sure paths exists
+Object.keys(path).forEach(function(name) {
+    // outer: path
+    // outer: util
+    util.mkdir(path[name]);
+});
+// Get info from id {{{1
+//
+// getkind {{{2
+getkind = function(id) {
+    return id.split(":")[0];
+};
+// getname {{{2
+getname = function(id) {
+    return id.split(":")[1];
+};
+// getfilename {{{2
+getfilename = function(id) {
+    // outer: extension
+    // outer: path
+    // outer: getname
+    var name;
+    // outer: getkind
+    var kind;
+    kind = getkind(id);
+    name = getname(id);
+    return path[kind] + name + extension[kind];
+};
+// mtime {{{2
+mtime = function(id) {
+    // outer: getfilename
+    // outer: util
+    return util.mtime(getfilename(id));
+};
+// Dependency graph {{{1
 // 
+deps = util.trycatch(function() {
+    // outer: path
+    // outer: fs
+    // outer: JSON
+    return JSON.parse(fs.readFileSync(path.build + "deps.cache", "utf8"));
+}, function() {
+    // outer: true
+    // outer: path
+    // outer: fs
+    // outer: Object
+    var result;
+    // create default graph;
+    result = {};
+    fs.readdirSync(path.source).filter(function(name) {
+        return name.slice(- 3) === ".ls";
+    }).forEach(function(name) {
+        // outer: true
+        // outer: Object
+        // outer: result
+        name = name.slice(0, - 3);
+        result["source:" + name] = {};
+        result["js:" + name] = {};
+        result["js:" + name]["source:" + name] = true;
+    });
+    return result;
+});
+cacheDeps = function() {
+    // outer: deps
+    // outer: JSON
+    // outer: path
+    // outer: fs
+    fs.writeFile(path.build + "deps.cache", JSON.stringify(deps));
+};
+cacheDeps();
+// Traverse deps and find out what needs to be rebuilt {{{1
+traverseDeps = function() {
+    // outer: true
+    // outer: mtime
+    // outer: deps
+    var rebuildLength;
+    // outer: Object
+    var needsRebuild;
+    needsRebuild = {};
+    rebuildLength = - 1;
+    while(Object.keys(needsRebuild).length !== rebuildLength) {
+        rebuildLength = Object.keys(needsRebuild).length;
+        Object.keys(deps).forEach(function(dest) {
+            // outer: true
+            // outer: needsRebuild
+            // outer: deps
+            // outer: Object
+            // outer: mtime
+            var destTime;
+            destTime = mtime(dest);
+            Object.keys(deps[dest]).forEach(function(src) {
+                // outer: true
+                // outer: mtime
+                // outer: destTime
+                // outer: dest
+                // outer: needsRebuild
+                if(needsRebuild[dest] || destTime <= mtime(src)) {
+                    needsRebuild[dest] = true;
+                };
+            });
+        });
+    };
+    return needsRebuild;
+};
+// build function
+build = function(id) {
+    // outer: extension
+    // outer: path
+    // outer: dest
+    // outer: Object
+    // outer: Array
+    // outer: compiler
+    var plainast;
+    // outer: filename
+    // outer: getfilename
+    // outer: fs
+    var source;
+    var name;
+    if(id.slice(0, 3) === "js:") {
+        name = id.slice(3);
+        source = fs.readFileSync(getfilename("source:" + filename), "utf8");
+        plainast = compiler.parsels(source);
+        [
+            "lightscript",
+            "nodejs",
+            "webjs",
+        ].forEach(function(platform) {
+            // outer: extension
+            // outer: path
+            // outer: fs
+            // outer: dest
+            var src;
+            // outer: name
+            // outer: plainast
+            // outer: Object
+            // outer: compiler
+            var ast;
+            ast = compiler.applyMacros({
+                ast : plainast,
+                name : name,
+                platform : platform,
+            });
+            if(platform === "webjs") {
+                src = "define(\"" + name + "\",function(exports, require){\n";
+                src += compiler.ppjs(dest.ast) + "});";
+                fs.writeFileSync(path.js + name + extension.js, src);
+            };
+        });
+    };
+};
+// Rebuild function {{{1
+// Main {{{1
+exports.nodemain = function() {
+    // outer: build
+    // outer: traverseDeps
+    // outer: Object
+    Object.keys(traverseDeps()).forEach(build);
+};
+/*
+// # intermediate version {{{1
+path.cache = path.build + "cache/";
+
+//
+
+// ## global variables {{{2
+//
+var sourcefiles = {};
+var platforms = ["nodejs", "webjs"];
+var deps = {};
+//
+// # Utility functions
+//
+var mtime = function(filename) {
+    return util.trycatch(function() {
+        return fs.statSync(filename).mtime.getTime();
+    }, function() {
+        return 0;
+    });
+};
+//
+
+
+
+
+
+// type:name,
+//
 //  - ls-source
 //      - metadata (require-dependencies, nodemain, etc)
 //      - generated souce code
@@ -32,112 +250,43 @@ var fs;
 //  ------------------
 //
 // 
-// # Definitions, paths etc {{{1
-//
-// ## modules {{{2
-//
-fs = require("fs");
-async = require("async");
-util = require("./util");
-compiler = require("./compiler");
-//
-// ## paths{{{2
-//
-path = {};
-path.source = __dirname + "/../../lightscript/";
-path.build = path.source + "../build/";
-path.cache = path.build + "cache/";
-path.nodejs = path.build + "nodejs/";
-path.pretty = path.build + "lightscript/";
-path.webjs = path.build + "webjs/";
-// ### Make sure paths exists
-Object.keys(path).forEach(function(name) {
-    // outer: path
-    // outer: util
-    util.mkdir(path[name]);
-});
-//
-// ## global variables {{{2
-//
-sourcefiles = {};
-platforms = ["nodejs", "webjs"];
-deps = {};
-//
-// # Utility functions
-//
-mtime = function(filename) {
-    // outer: fs
-    // outer: util
-    return util.trycatch(function() {
-        // outer: filename
-        // outer: fs
-        return fs.statSync(filename).mtime.getTime();
-    }, function() {
-        return 0;
-    });
-};
-//
 // # ...{{{1
 //
-updatefiles = function(callback) {
-    // outer: updatefile
-    // outer: path
-    // outer: fs
-    // outer: async
+var updatefiles = function(callback) {
     async.forEach(fs.readdirSync(path.source).filter(function(name) {
         return name.slice(- 3) === ".ls";
     }), updatefile, callback);
 };
 // updatefile {{{2
-updatefile = function(filename, callback) {
-    // outer: true
-    // outer: buildfile
-    // outer: undefined
-    // outer: platforms
-    // outer: compiler
-    var source;
-    // outer: fs
-    // outer: JSON
-    // outer: deps
-    // outer: console
-    var cachefile;
-    // outer: mtime
-    var timestamp;
-    // outer: path
-    // outer: Object
-    var obj;
-    // outer: sourcefiles
-    var name;
-    name = filename.slice(0, - 3);
-    sourcefiles[name] = obj = sourcefiles[name] || {};
+var updatefile = function(filename, callback) {
+    var name = filename.slice(0, - 3);
+    sourcefiles[name] = var obj = sourcefiles[name] || {};
     // 
     // Initialise simple values
     //
     obj.name = name;
     obj.filename = path.source + filename;
-    timestamp = mtime(obj.filename);
+    var timestamp = mtime(obj.filename);
     //
     // read compilercache if possible
     //
-    cachefile = path.cache + name;
+    var cachefile = path.cache + name;
     if(timestamp <= mtime(cachefile)) {
         console.log("cached " + name);
         deps = obj.deps;
         obj = JSON.parse(fs.readFileSync(cachefile, "utf8"));
         obj.deps = deps;
         sourcefiles[name] = obj;
-    };
-    //
-    // actually generate compiled file/data if needed
-    //
+    } ;
+        //
+        // actually generate compiled file/data if needed
+        //
     if(!obj.timestamp || obj.timestamp < timestamp) {
         console.log("compiling " + name);
-        source = fs.readFileSync(obj.filename, "utf8");
+        var source = fs.readFileSync(obj.filename, "utf8");
         obj.ast = compiler.parsels(source);
         obj.timestamp = timestamp;
         platforms.forEach(function(platform) {
-            // outer: obj
-            // outer: buildfile
             buildfile(obj, platform);
         });
         obj.ast = undefined;
@@ -147,53 +296,32 @@ updatefile = function(filename, callback) {
     // update dependencies
     // 
     platforms.forEach(function(platform) {
-        // outer: true
-        // outer: platforms
-        // outer: sourcefiles
-        // outer: obj
-        // outer: Object
         Object.keys(obj[platform].requires).forEach(function(dest) {
-            // outer: true
-            // outer: obj
-            // outer: platform
-            // outer: platforms
-            var deps;
-            // outer: Object
-            // outer: sourcefiles
             if(!sourcefiles[dest]) {
                 sourcefiles[dest] = {};
-            };
+            }
             deps = sourcefiles[dest].deps;
             if(!deps) {
                 deps = {};
                 sourcefiles[dest].deps = deps;
                 platforms.forEach(function(platform) {
-                    // outer: Object
-                    // outer: deps
                     deps[platform] = {};
                 });
-            };
+            }
             deps[platform][obj.name] = true;
         });
     });
     callback();
 };
+
 // buildfile {{{2
-buildfile = function(obj, platform) {
-    // outer: undefined
-    // outer: compileFns
-    // outer: findRequires
-    // outer: findExports
-    var dest;
-    // outer: Object
-    // outer: compiler
-    var ast;
-    ast = compiler.applyMacros({
+var buildfile = function(obj, platform) {
+    var ast = compiler.applyMacros({
         ast : obj.ast,
         name : obj.name,
         platform : platform,
     });
-    obj[platform] = dest = {};
+    obj[platform] = var dest = {};
     dest.ast = ast;
     dest.exports = findExports(ast);
     dest.requires = findRequires(ast);
@@ -203,14 +331,9 @@ buildfile = function(obj, platform) {
 //
 // compileFns {{{2
 // 
-compileFns = {
+var compileFns = {
     webjs : function(obj, dest) {
-        // outer: true
-        // outer: path
-        // outer: fs
-        // outer: compiler
-        var src;
-        src = "define(\"";
+        var src = "define(\"";
         src += obj.name;
         src += "\",function(exports, require){\n";
         src += compiler.ppjs(dest.ast);
@@ -218,46 +341,28 @@ compileFns = {
         fs.writeFileSync(path.webjs + obj.name + ".js", src);
         if(dest.exports.webapp) {
             obj.webapp = true;
-        };
+        }
     },
     nodejs : function(obj, dest) {
-        // outer: path
-        // outer: fs
-        // outer: compiler
-        var src;
-        src = compiler.ppjs(dest.ast);
+        var src = compiler.ppjs(dest.ast);
         fs.writeFileSync(path.nodejs + obj.name + ".js", src);
     },
-    pretty : function(obj, dest) {
-        // outer: path
-        // outer: fs
-        var src;
-        // outer: true
-        // outer: Object
-        // outer: compiler
-        var ast;
-        ast = compiler.applyMacros({
+    pretty: function(obj, dest) {
+        var ast = compiler.applyMacros({
             ast : dest.ast,
             name : obj.name,
             platform : "lightscript",
             reverse : true,
         });
-        src = compiler.ppls(dest.ast);
+        var src = compiler.ppls(dest.ast);
         fs.writeFileSync(path.pretty + obj.name + ".ls", src);
     },
 };
 //
-findExports = function(ast) {
-    // outer: true
-    var doIt;
-    // outer: Object
-    var acc;
+var findExports = function(ast) {
     //{{{2
-    acc = {};
-    doIt = function(ast) {
-        // outer: doIt
-        // outer: true
-        // outer: acc
+    var acc = {};
+    var doIt = function(ast) {
         if(ast.isa("call:.=") && ast.children[0].isa("id:exports")) {
             acc[ast.children[1].val] = true;
         };
@@ -266,17 +371,10 @@ findExports = function(ast) {
     doIt(ast);
     return acc;
 };
-findRequires = function(ast) {
-    // outer: true
-    var doIt;
-    // outer: Object
-    var acc;
+var findRequires = function(ast) {
     //{{{2
-    acc = {};
-    doIt = function(ast) {
-        // outer: doIt
-        // outer: true
-        // outer: acc
+    var acc = {};
+    var doIt = function(ast) {
         if(ast.isa("call:*()") && ast.children[0].isa("id:require")) {
             if(ast.children[1].kind === "str" && ast.children[1].val.slice(0, 2) === "./") {
                 acc[ast.children[1].val.slice(2)] = true;
@@ -288,8 +386,7 @@ findRequires = function(ast) {
     return acc;
 };
 // # Main {{{1
-exports.nodemain = function(arg) {
-    // outer: updatefiles
+exports.nodemainold = function(arg) {
     updatefiles(function() {
         //console.log(sourcefiles["compiler"]);
     });

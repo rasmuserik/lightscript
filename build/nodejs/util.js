@@ -293,7 +293,7 @@ util.valmap = function(obj, fn) {
     });
     return result;
 };
-// mkdir,cp {{{1
+// mkdir,cp,mtime {{{1
 if(true) {
     fs = require("fs");
     dirs = {};
@@ -316,6 +316,17 @@ if(true) {
         // outer: fs
         // outer: require
         require("util").pump(fs.createReadStream(src), fs.createWriteStream(dst), callback);
+    };
+    exports.mtime = function(filename) {
+        // outer: fs
+        // outer: util
+        return util.trycatch(function() {
+            // outer: filename
+            // outer: fs
+            return fs.statSync(filename).mtime.getTime();
+        }, function() {
+            return 0;
+        });
     };
 };
 // shuffle array {{{1

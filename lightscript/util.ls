@@ -174,7 +174,7 @@ util.valmap = function(obj, fn) {
     });
     return result;
 };
-// mkdir,cp {{{1
+// mkdir,cp,mtime {{{1
 if(`compiler.nodejs) {
     var fs = require("fs");
     var dirs = {};
@@ -191,6 +191,13 @@ if(`compiler.nodejs) {
     };
     exports.cp = function(src, dst, callback) {
         require("util").pump(fs.createReadStream(src), fs.createWriteStream(dst), callback);
+    };
+    exports.mtime = function(filename) {
+        return util.trycatch(function() {
+            return fs.statSync(filename).mtime.getTime();
+        }, function() {
+            return 0; 
+        });
     };
 };
 // shuffle array {{{1
