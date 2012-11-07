@@ -12,18 +12,18 @@ var compiler = require("./compiler");
 //
 // Modules {{{2
 //
-var fs = require("fs");
-var async = require("async");
-var util = require("./util");
-var compiler = require("./compiler");
+fs = require("fs");
+async = require("async");
+util = require("./util");
+compiler = require("./compiler");
 //
 // paths and extensions{{{2
 // Extensions {{{3
-extension = {
-    source: '.ls',
-    nodejs: '.js',
-    js: '.js',
-    pretty: '.ls',
+var extension = {
+    source : ".ls",
+    nodejs : ".js",
+    js : ".js",
+    pretty : ".ls",
 };
 // Paths {{{3
 //
@@ -40,84 +40,90 @@ Object.keys(path).forEach(function(name) {
 // Get info from id {{{1
 //
 // getkind {{{2
-getkind = function(id) {
-    return id.split(':')[0];
-}
+var getkind = function(id) {
+    return id.split(":")[0];
+};
 // getname {{{2
-getname = function(id) {
-    return id.split(':')[1];
-}
+var getname = function(id) {
+    return id.split(":")[1];
+};
 // getfilename {{{2
-getfilename = function(id) {
-    kind = getkind(id);
-    name = getname(id);
+var getfilename = function(id) {
+    var kind = getkind(id);
+    var name = getname(id);
     return path[kind] + name + extension[kind];
-}
+};
 // mtime {{{2
-mtime = function(id) {
+var mtime = function(id) {
     return util.mtime(getfilename(id));
-}
+};
 // Dependency graph {{{1
 // 
-deps = util.trycatch(function() {
-    return JSON.parse(fs.readFileSync(path.build + 'deps.cache', "utf8"));
+var deps = util.trycatch(function() {
+    return JSON.parse(fs.readFileSync(path.build + "deps.cache", "utf8"));
 }, function() {
     // create default graph;
-    result = {};
+    var result = {};
     fs.readdirSync(path.source).filter(function(name) {
         return name.slice(- 3) === ".ls";
     }).forEach(function(name) {
-        name = name.slice(0, -3);
-        result['source:' + name] = {};
-        result['js:' + name] = {};
-        result['js:' + name]['source:' + name] = true;
+        name = name.slice(0, - 3);
+        result["source:" + name] = {};
+        result["js:" + name] = {};
+        result["js:" + name]["source:" + name] = true;
     });
     return result;
 });
-cacheDeps = function() {
-    fs.writeFile(path.build + 'deps.cache', JSON.stringify(deps));
+var cacheDeps = function() {
+    fs.writeFile(path.build + "deps.cache", JSON.stringify(deps));
 };
 cacheDeps();
 // Traverse deps and find out what needs to be rebuilt {{{1
-traverseDeps = function() {
-  needsRebuild = {};
-  rebuildLength = -1;
-  while(Object.keys(needsRebuild).length !== rebuildLength) {
-    rebuildLength = Object.keys(needsRebuild).length;
-    Object.keys(deps).forEach(function(dest) {
-        destTime = mtime(dest);
-        Object.keys(deps[dest]).forEach(function(src) {
-            if(needsRebuild[dest] || destTime <= mtime(src)) {
-                needsRebuild[dest] = true;
-            }
+var traverseDeps = function() {
+    var needsRebuild = {};
+    var rebuildLength = - 1;
+    while(Object.keys(needsRebuild).length !== rebuildLength) {
+        rebuildLength = Object.keys(needsRebuild).length;
+        Object.keys(deps).forEach(function(dest) {
+            var destTime = mtime(dest);
+            Object.keys(deps[dest]).forEach(function(src) {
+                if(needsRebuild[dest] || destTime <= mtime(src)) {
+                    needsRebuild[dest] = true;
+                };
+            });
         });
-    });
-  }
-  return needsRebuild;
-}
+    };
+    return needsRebuild;
+};
 // build function
-build = function(id) {
-    if(id.slice(0, 3) === 'js:') {
-      name = id.slice(3);
-      source = fs.readFileSync(getfilename("source:" + filename), "utf8");
-      plainast = compiler.parsels(source);
-      [ "lightscript", "nodejs", "webjs"].forEach(function(platform) {
-        var ast = compiler.applyMacros({ ast : plainast, name : name, platform : platform, });
-        if(platform === 'webjs') {
-            var src = "define(\"" + name + "\",function(exports, require){\n";
-            src += compiler.ppjs(dest.ast) + "});";
-            fs.writeFileSync(path.js + name + extension.js, src);
-        };
-      });
-    } 
+var build = function(id) {
+    if(id.slice(0, 3) === "js:") {
+        var name = id.slice(3);
+        var source = fs.readFileSync(getfilename("source:" + filename), "utf8");
+        var plainast = compiler.parsels(source);
+        [
+            "lightscript",
+            "nodejs",
+            "webjs",
+        ].forEach(function(platform) {
+            var ast = compiler.applyMacros({
+                ast : plainast,
+                name : name,
+                platform : platform,
+            });
+            if(platform === "webjs") {
+                var src = "define(\"" + name + "\",function(exports, require){\n";
+                src += compiler.ppjs(dest.ast) + "});";
+                fs.writeFileSync(path.js + name + extension.js, src);
+            };
+        });
+    };
 };
 // Rebuild function {{{1
-
 // Main {{{1
 exports.nodemain = function() {
     Object.keys(traverseDeps()).forEach(build);
 };
-
 /*
 // # intermediate version {{{1
 path.cache = path.build + "cache/";
