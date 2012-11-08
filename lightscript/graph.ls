@@ -1,8 +1,9 @@
+var util = require("./util");
+if(`compiler.webjs) {
 exports.webapp = require("./canvasapp").webapp(exports);
 var log = require("./log");
 var V2d = require("./v2d").V2d;
-var util = require("./util");
-// # Spring-based graph layout
+// # Spring-based graph layout {{{1
 // This is experimental code, not really intended for reading yet.
 exports.init = function(app) {
     var canvas = app.canvas;
@@ -138,4 +139,15 @@ exports.init = function(app) {
         //ctx.fillText(JSON.stringify(graph.map(function(b){return graph[0].pos.dist(b.pos);})), 0,40);
     };
     run();
+};
+}
+// graph algorithms {{{1
+exports.traverseDAG = function(graph) {
+
+};
+
+// unit test {{{1
+exports.test = function(test) {
+    g = {};
+    test.done();
 };

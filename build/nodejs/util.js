@@ -293,6 +293,15 @@ util.valmap = function(obj, fn) {
     });
     return result;
 };
+// objForEach {{{
+exports.objForEach = function(obj, fn) {
+    // outer: Object
+    Object.keys(obj).forEach(function(key) {
+        // outer: obj
+        // outer: fn
+        fn(key, obj[key]);
+    });
+};
 // mkdir,cp,mtime {{{1
 if(true) {
     fs = require("fs");
@@ -381,22 +390,35 @@ if(true) {
 };
 // Testrunner {{{1
 exports.test = function(test) {
+    // outer: Object
+    var obj;
+    var count;
     // outer: exports
     var result;
-    var testcase;
+    var jsontest;
     if(true) {
-        testcase = test.create("load/save-JSON");
+        jsontest = test.create("load/save-JSON");
         result = exports.loadJSONSync("/does/not/exists", 1);
-        testcase.assertEqual(result, 1);
+        jsontest.assertEqual(result, 1);
         exports.saveJSON("/tmp/exports-save-json-testb", 2);
         exports.saveJSON("/tmp/exports-save-json-test", 2, function() {
-            // outer: testcase
+            // outer: jsontest
             // outer: exports
             // outer: result
             result = exports.loadJSONSync("/tmp/exports-save-json-test", 1);
-            testcase.assertEqual(result, 2);
-            testcase.done();
+            jsontest.assertEqual(result, 2);
+            jsontest.done();
         });
     };
+    count = 0;
+    obj = {a : 1, b : 2};
+    exports.objForEach(obj, function(key, val) {
+        // outer: count
+        // outer: obj
+        // outer: test
+        test.assert(key && obj[key] === val, "objforeach");
+        ++count;
+    });
+    test.assertEqual(count, 2, "objforeach count");
     test.done();
 };
