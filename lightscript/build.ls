@@ -121,38 +121,36 @@ var findRequires = function(ast) {
     return acc;
 };
 // Keep track of webapp requires {{{1
-webreq = util.trycatch(function() {
+var webreq = util.trycatch(function() {
     return JSON.parse(fs.readFileSync(path.build + "webreq.cache", "utf8"));
 }, function() {
     return {};
 });
-setwebreq = function(name, reqs) {
+var setwebreq = function(name, reqs) {
     reqs = Object.keys(reqs);
     reqs.forEach(function(req) {
         webreq[name] = webreq[name] || {};
         webreq[name][req] = true;
     });
     fs.writeFile(path.build + "webreq.cache", JSON.stringify(webreq));
-}
-webappdep = function(name) {
-    id = 'webapp:' + name;
+};
+var webappdep = function(name) {
+    var id = "webapp:" + name;
     deps[id] = {};
     deps[id][name] = true;
-    len = -1;
+    var len = - 1;
     while(Object.keys(deps[id]).length !== len) {
         len = Object.keys(deps[id]).length;
         Object.keys(deps[id]).forEach(function(dep) {
-            Object.keys(webreq[dep]||{}).forEach(function(child) {
-
-            });
+            Object.keys(webreq[dep] || {}).forEach(function(child) {});
         });
-    }
-    console.log('webapp', name);
-}
+    };
+    console.log("webapp", name);
+};
 // build function {{{1
 var build = function(id) {
     if(id.slice(0, 3) === "js:") {
-        console.log('build', id);
+        console.log("build", id);
         var name = id.slice(3);
         var source = fs.readFileSync(getfilename("source:" + name), "utf8");
         var plainast = compiler.parsels(source);
@@ -166,7 +164,7 @@ var build = function(id) {
                 name : name,
                 platform : platform,
             });
-            exports = findExports(ast);
+            var exports = findExports(ast);
             if(platform === "webjs") {
                 console.log(exports);
                 var src = "define(\"" + name + "\",function(exports, require){\n";
@@ -175,12 +173,17 @@ var build = function(id) {
                 setwebreq(name, findRequires(ast));
                 if(exports.webapp === true) {
                     webappdep(name);
-                }
+                };
             } else if(platform === "nodejs") {
                 fs.writeFileSync(path.nodejs + name + ".js", compiler.ppjs(ast));
             } else if(platform === "lightscript") {
-                var ast = compiler.applyMacros({ ast : ast, name : name, platform : platform, reverse: true});
-                var src = compiler.ppls(ast);
+                ast = compiler.applyMacros({
+                    ast : ast,
+                    name : name,
+                    platform : platform,
+                    reverse : true,
+                });
+                src = compiler.ppls(ast);
                 fs.writeFileSync(path.pretty + name + ".ls", src);
             };
         });

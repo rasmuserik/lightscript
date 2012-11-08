@@ -196,42 +196,47 @@ if(`compiler.nodejs) {
         return util.trycatch(function() {
             return fs.statSync(filename).mtime.getTime();
         }, function() {
-            return 0; 
+            return 0;
         });
     };
 };
 // shuffle array {{{1
 exports.shuffleArray = function(arr) {
-    i = arr.length;
+    var i = arr.length;
     while(i) {
         --i;
-        r = Math.random() * arr.length |0;
-        t = arr[i];
+        var r = Math.random() * arr.length | 0;
+        var t = arr[i];
         arr[i] = arr[r];
         arr[r] = t;
-    }
+    };
     return arr;
-}
+};
 // pick a random array element {{{1
 exports.arrayPick = function(arr) {
-   return arr[Math.random() * arr.length | 0]; 
+    return arr[Math.random() * arr.length | 0];
 };
 // save/load json {{{1
 if(`compiler.nodejs) {
     exports.saveJSON = function(filename, content) {
-        require('fs').writeFile(filename, JSON.stringify(content));
+        require("fs").writeFile(filename, JSON.stringify(content));
     };
     exports.loadJSON = function(filename, defaultVal) {
         if(!defaultVal) {
-            defaultVal = function(e) { return e; };
-        }
-        fn = (typeof(defaultVal) === 'function')?defaultVal : function() { return defaultVal; };
-        return util.trycatch(function() { return JSON.parse(require('fs').readFileSync(filename, 'utf8'))}, fn);
+            defaultVal = function(e) {
+                return e;
+            };
+        };
+        var fn = typeof defaultVal === "function" ? defaultVal : function() {
+            return defaultVal;
+        };
+        return util.trycatch(function() {
+            return JSON.parse(require("fs").readFileSync(filename, "utf8"));
+        }, fn);
     };
 };
 // Testrunner {{{1
 exports.test = function(tester) {
-    console.log('testing...');
-    if(`compiler.nodejs) {
-    }
+    console.log("testing...");
+    if(`compiler.nodejs) {};
 };

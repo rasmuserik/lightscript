@@ -50,7 +50,7 @@ exports.nodemain = function() {
         console.log("> " + "apps/" + opts.module.name);
         var apppath = "/usr/share/nginx/www/solsort/apps/" + opts.module.name;
         util.mkdir(apppath);
-        opts.dest.requires = recurseRequires(opts.dest.requires, 'webjs');
+        opts.dest.requires = recurseRequires(opts.dest.requires, "webjs");
         util.cp(templatepath + kind + ".html", apppath + "/index.html", function() {
             var canvasapp = "(function(){var modules={};";
             canvasapp += "var require=function(name){name=name.slice(2);";
@@ -143,8 +143,8 @@ exports.nodemain = function() {
         doIt(ast);
         return acc;
     };
-    recurseRequires = function(reqs, platform) {
-        count = 0;
+    var recurseRequires = function(reqs, platform) {
+        var count = 0;
         while(count !== Object.keys(reqs).length) {
             count = Object.keys(reqs).length;
             Object.keys(reqs).forEach(function(name) {
@@ -152,7 +152,7 @@ exports.nodemain = function() {
                     Object.keys(modules[name][platform].requires).forEach(function(dep) {
                         reqs[dep] = true;
                     });
-                }
+                };
             });
         };
         return reqs;

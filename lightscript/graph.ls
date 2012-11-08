@@ -1,5 +1,4 @@
 exports.webapp = require("./canvasapp").webapp(exports);
-
 var log = require("./log");
 var V2d = require("./v2d").V2d;
 var util = require("./util");
@@ -9,7 +8,7 @@ exports.init = function(app) {
     var canvas = app.canvas;
     canvas.width = app.w;
     canvas.height = app.h;
-    running = true;
+    var running = true;
     var basegraph = {};
     var i = 0;
     while(i < 100) {
@@ -21,7 +20,7 @@ exports.init = function(app) {
     Object.keys(basegraph).forEach(function(id) {
         basegraph[id] = {
             id : id,
-            force : new V2d(0,0),
+            force : new V2d(0, 0),
             velocity : new V2d(Math.random() - 0.5, Math.random() - 0.5),
             pos : new V2d(Math.random(), Math.random()),
             children : basegraph[id],
@@ -46,10 +45,10 @@ exports.init = function(app) {
         // #### Edges/springs
         graph.forEach(function(a) {
             a.children.forEach(function(b) {
-                    var v = b.pos.sub(a.pos);
-                    var force = v.scale(spring * Math.min(v.length(), 100));
-                    a.force = a.force.add(force);
-                    b.force = b.force.add(force.neg());
+                var v = b.pos.sub(a.pos);
+                var force = v.scale(spring * Math.min(v.length(), 100));
+                a.force = a.force.add(force);
+                b.force = b.force.add(force.neg());
             });
         });
         // #### Collisions
@@ -60,23 +59,23 @@ exports.init = function(app) {
                     var d = b.pos.dist(a.pos);
                     if(d < Math.PI / 2) {
                         //a.force = a.force.add( v.scale(repuls * Math.cos(d)));
-                        a.force = a.force.add( v.scale(repuls * (Math.PI / 2 - d)));
+                        a.force = a.force.add(v.scale(repuls * (Math.PI / 2 - d)));
                     };
                 };
             });
         });
         // ### Calculate velocity
         graph.forEach(function(elem) {
-            elem.velocity = elem.velocity.add( elem.force);
+            elem.velocity = elem.velocity.add(elem.force);
             elem.velocity = elem.velocity.scale(dampening);
             if(elem.velocity.length() > maxspeed) {
-                elem.velocity.scale(maxspeed-elem.velocity.length());
-            }
+                elem.velocity.scale(maxspeed - elem.velocity.length());
+            };
         });
         // ### Calculate position
         graph.forEach(function(elem) {
             var rescale = elem.velocity.length();
-            elem.pos = elem.pos.add( elem.velocity.scale(1 / Math.sqrt(1 + rescale)));
+            elem.pos = elem.pos.add(elem.velocity.scale(1 / Math.sqrt(1 + rescale)));
         });
         // ### Blit and repeat
         drawGraph();
@@ -84,9 +83,9 @@ exports.init = function(app) {
             setTimeout(run, 0);
         };
     };
-    runno = 0;
+    var runno = 0;
     var drawGraph = function() {
-    /*
+        /*
         if((++runno) & 15) {
             return undefined;
         }

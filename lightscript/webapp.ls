@@ -1,4 +1,4 @@
 exports.run = function(name) {
     require("./" + name).webmain();
 };
-exports.webapp = function() { };
+exports.webapp = function() {};

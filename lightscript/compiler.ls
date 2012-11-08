@@ -1,6 +1,6 @@
 // Compiler {{{1
 var codegen = undefined;
-ls2compiler = undefined;
+var ls2compiler = undefined;
 (function() {
     var applyMacros = function(macros, compiler) {
         var relations = function(ast) {
@@ -26,7 +26,7 @@ ls2compiler = undefined;
         compiler.asts = compiler.asts.map(doIt);
     };
     // orig build {{{2
-    var ls2compiler = function(src, target) {
+    ls2compiler = function(src, target) {
         var compiler = {
             asts : parse(tokenise(src)).map(rst2ast),
             forwardMacros : {},
@@ -1189,8 +1189,8 @@ var ast2rst = undefined;
 // ast2java {{{1
 // main {{{1
 exports.nodemain = function() {
-    src = require('fs').readFileSync('./lightscript/experiments.ls', 'utf8');
+    var src = require("fs").readFileSync("./lightscript/experiments.ls", "utf8");
     console.log(src);
-    ast = ls2compiler(src, "java").asts[0];
+    var ast = ls2compiler(src, "java").asts[0];
     console.log(ast.toList());
-}
+};

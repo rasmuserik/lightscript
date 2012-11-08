@@ -1,4 +1,4 @@
-api = require("./api");
+var api = require("./api");
 if(`compiler.nodejs) {
     var logname = process.env.HOME + "/data/log/" + require("os").hostname() + "-";
     var util = require("./util");

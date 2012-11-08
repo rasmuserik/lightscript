@@ -38,7 +38,7 @@ test.create = function(name, timeout) {
     return self;
 };
 var runTest = function(moduleName) {
-    var module = require('./' + moduleName);
+    var module = require("./" + moduleName);
     if(!module) {
         return ;
     };
