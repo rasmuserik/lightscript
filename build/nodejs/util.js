@@ -1,4 +1,3 @@
-// outer: console
 // outer: arguments
 // outer: null
 // outer: JSON
@@ -353,12 +352,12 @@ exports.arrayPick = function(arr) {
 };
 // save/load json {{{1
 if(true) {
-    exports.saveJSON = function(filename, content) {
+    exports.saveJSON = function(filename, content, callback) {
         // outer: JSON
         // outer: require
-        require("fs").writeFile(filename, JSON.stringify(content));
+        require("fs").writeFile(filename, JSON.stringify(content), callback);
     };
-    exports.loadJSON = function(filename, defaultVal) {
+    exports.loadJSONSync = function(filename, defaultVal) {
         // outer: require
         // outer: JSON
         // outer: util
@@ -368,7 +367,7 @@ if(true) {
                 return e;
             };
         };
-        fn = typeof defaultVal === "function" ? defaultVal : function() {
+        fn = typeof defaultVal === "function" ? defaultVal : function(err) {
             // outer: defaultVal
             return defaultVal;
         };
@@ -381,8 +380,23 @@ if(true) {
     };
 };
 // Testrunner {{{1
-exports.test = function(tester) {
-    // outer: console
-    console.log("testing...");
-    if(true) {};
+exports.test = function(test) {
+    // outer: exports
+    var result;
+    var testcase;
+    if(true) {
+        testcase = test.create("load/save-JSON");
+        result = exports.loadJSONSync("/does/not/exists", 1);
+        testcase.assertEqual(result, 1);
+        exports.saveJSON("/tmp/exports-save-json-testb", 2);
+        exports.saveJSON("/tmp/exports-save-json-test", 2, function() {
+            // outer: testcase
+            // outer: exports
+            // outer: result
+            result = exports.loadJSONSync("/tmp/exports-save-json-test", 1);
+            testcase.assertEqual(result, 2);
+            testcase.done();
+        });
+    };
+    test.done();
 };

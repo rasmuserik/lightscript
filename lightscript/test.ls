@@ -1,7 +1,7 @@
 var test = {};
 test.name = "";
 test.error = function(description) {
-    ++this.error;
+    ++this.errorcount;
     console.log(this.name + ":", description);
 };
 test.assertEqual = function(a, b, description) {
@@ -20,13 +20,13 @@ test.assert = function(result, description) {
     };
 };
 test.done = function() {
-    console.log(this.name + ": " + this.ok + "/" + (this.ok + this.error) + " tests ok");
+    console.log(this.name + ": " + this.ok + "/" + (this.ok + this.errorcount) + " tests ok");
     this.finished = true;
     clearTimeout(this.timeout);
 };
 test.create = function(name, timeout) {
     var self = Object.create(test);
-    self.error = self.ok = 0;
+    self.errorcount = self.ok = 0;
     timeout = timeout || 60000;
     self.name = this.name + name;
     self.timeout = setTimeout(function() {

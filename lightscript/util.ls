@@ -218,16 +218,16 @@ exports.arrayPick = function(arr) {
 };
 // save/load json {{{1
 if(`compiler.nodejs) {
-    exports.saveJSON = function(filename, content) {
-        require("fs").writeFile(filename, JSON.stringify(content));
+    exports.saveJSON = function(filename, content, callback) {
+        require("fs").writeFile(filename, JSON.stringify(content), callback);
     };
-    exports.loadJSON = function(filename, defaultVal) {
+    exports.loadJSONSync = function(filename, defaultVal) {
         if(!defaultVal) {
             defaultVal = function(e) {
                 return e;
             };
         };
-        var fn = typeof defaultVal === "function" ? defaultVal : function() {
+        var fn = typeof defaultVal === "function" ? defaultVal : function(err) {
             return defaultVal;
         };
         return util.trycatch(function() {
@@ -236,7 +236,17 @@ if(`compiler.nodejs) {
     };
 };
 // Testrunner {{{1
-exports.test = function(tester) {
-    console.log("testing...");
-    if(`compiler.nodejs) {};
+exports.test = function(test) {
+    if(`compiler.nodejs) {
+        testcase = test.create('load/save-JSON');
+        result = exports.loadJSONSync('/does/not/exists', 1);
+        testcase.assertEqual(result, 1);
+        exports.saveJSON('/tmp/exports-save-json-testb', 2);
+        exports.saveJSON('/tmp/exports-save-json-test', 2, function() {
+            result = exports.loadJSONSync('/tmp/exports-save-json-test', 1);
+            testcase.assertEqual(result, 2);
+            testcase.done();
+        });
+    };
+    test.done();
 };
