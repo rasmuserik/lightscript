@@ -174,6 +174,10 @@ util.valmap = function(obj, fn) {
     });
     return result;
 };
+// emptyObject {{{1
+exports.emptyObject = function(obj) {
+    return Object.keys(obj).length === 0;
+};
 // objForEach {{{
 exports.objForEach = function(obj, fn) {
     Object.keys(obj).forEach(function(key) {

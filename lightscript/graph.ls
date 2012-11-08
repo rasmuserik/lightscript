@@ -142,12 +142,51 @@ exports.init = function(app) {
 };
 }
 // graph algorithms {{{1
+exports.updateParents = function(graph) {
+    util.objForEach(graph, function(_, node) {
+        node.parents = {};
+    });
+    util.objForEach(graph, function(nodeId, node) {
+        util.objForEach(node.children, function(key, _) {
+            graph[key].parents[nodeId] = true;
+        });
+    });
+}
 exports.traverseDAG = function(graph) {
+    result = []
+    exports.updateParents(graph);
+    nextSet = [];
+    util.objForEach(graph, function(nodeId, node) {
+        // TODO - in progress
+    });
 
+};
+exports.ensureNode = function(graph, name) {
+    if(!graph[name]) {
+        graph[name] = {
+            id: name,
+            children: {}
+        };
+    }
+};
+exports.addEdge = function(graph, from, to) {
+    exports.ensureNode(graph, from);
+    exports.ensureNode(graph, to);
+    graph[from].children[to] = graph[from].children[to] || {};
+};
+exports.toDot = function(graph) {
+    throw 'transformation to graphviz not implemented yet';
 };
 
 // unit test {{{1
 exports.test = function(test) {
     g = {};
+    exports.addEdge(g, 'a', 'b');
+    exports.addEdge(g, 'b', 'c');
+    exports.addEdge(g, 'a', 'c');
+    test.assertEqual(JSON.stringify(exports.traverseDAG(g)), '["a", "b", "c"]');
+    exports.updateParents(g);
+    test.assert(util.emptyObject(g.a.parents), 'a has no parents');
+    test.assert(g.c.parents.a, 'c has parent a');
     test.done();
 };

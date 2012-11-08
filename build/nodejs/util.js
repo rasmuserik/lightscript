@@ -293,6 +293,11 @@ util.valmap = function(obj, fn) {
     });
     return result;
 };
+// emptyObject {{{1
+exports.emptyObject = function(obj) {
+    // outer: Object
+    return Object.keys(obj).length === 0;
+};
 // objForEach {{{
 exports.objForEach = function(obj, fn) {
     // outer: Object
