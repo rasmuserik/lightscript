@@ -1,3 +1,4 @@
+// outer: console
 // outer: arguments
 // outer: null
 // outer: JSON
@@ -349,4 +350,39 @@ exports.shuffleArray = function(arr) {
 exports.arrayPick = function(arr) {
     // outer: Math
     return arr[Math.random() * arr.length | 0];
+};
+// save/load json {{{1
+if(true) {
+    exports.saveJSON = function(filename, content) {
+        // outer: JSON
+        // outer: require
+        require("fs").writeFile(filename, JSON.stringify(content));
+    };
+    exports.loadJSON = function(filename, defaultVal) {
+        // outer: require
+        // outer: JSON
+        // outer: util
+        var fn;
+        if(!defaultVal) {
+            defaultVal = function(e) {
+                return e;
+            };
+        };
+        fn = typeof defaultVal === "function" ? defaultVal : function() {
+            // outer: defaultVal
+            return defaultVal;
+        };
+        return util.trycatch(function() {
+            // outer: filename
+            // outer: require
+            // outer: JSON
+            return JSON.parse(require("fs").readFileSync(filename, "utf8"));
+        }, fn);
+    };
+};
+// Testrunner {{{1
+exports.test = function(tester) {
+    // outer: console
+    console.log("testing...");
+    if(true) {};
 };

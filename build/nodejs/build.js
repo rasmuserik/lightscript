@@ -1,10 +1,14 @@
-// outer: dest
 // outer: Array
-// outer: filename
+// outer: console
 // outer: true
 // outer: JSON
 // outer: exports
 var build;
+var webappdep;
+var setwebreq;
+var webreq;
+var findRequires;
+var findExports;
 var traverseDeps;
 var cacheDeps;
 var deps;
@@ -160,34 +164,134 @@ traverseDeps = function() {
     };
     return needsRebuild;
 };
-// build function
+// find exports and requires in ast {{{1
+findExports = function(ast) {
+    // outer: true
+    var doIt;
+    // outer: Object
+    var acc;
+    acc = {};
+    doIt = function(ast) {
+        // outer: doIt
+        // outer: true
+        // outer: acc
+        if(ast.isa("call:.=") && ast.children[0].isa("id:exports")) {
+            acc[ast.children[1].val] = true;
+        };
+        ast.children.forEach(doIt);
+    };
+    doIt(ast);
+    return acc;
+};
+findRequires = function(ast) {
+    // outer: true
+    var doIt;
+    // outer: Object
+    var acc;
+    acc = {};
+    doIt = function(ast) {
+        // outer: doIt
+        // outer: true
+        // outer: acc
+        if(ast.isa("call:*()") && ast.children[0].isa("id:require")) {
+            if(ast.children[1].kind === "str" && ast.children[1].val.slice(0, 2) === "./") {
+                acc[ast.children[1].val.slice(2)] = true;
+            };
+        };
+        ast.children.forEach(doIt);
+    };
+    doIt(ast);
+    return acc;
+};
+// Keep track of webapp requires {{{1
+webreq = util.trycatch(function() {
+    // outer: path
+    // outer: fs
+    // outer: JSON
+    return JSON.parse(fs.readFileSync(path.build + "webreq.cache", "utf8"));
+}, function() {
+    // outer: Object
+    return {};
+});
+setwebreq = function(name, reqs) {
+    // outer: true
+    // outer: webreq
+    // outer: JSON
+    // outer: path
+    // outer: fs
+    // outer: Object
+    reqs = Object.keys(reqs);
+    reqs.forEach(function(req) {
+        // outer: true
+        // outer: Object
+        // outer: name
+        // outer: webreq
+        webreq[name] = webreq[name] || {};
+        webreq[name][req] = true;
+    });
+    fs.writeFile(path.build + "webreq.cache", JSON.stringify(webreq));
+};
+webappdep = function(name) {
+    // outer: webreq
+    // outer: console
+    var len;
+    // outer: true
+    // outer: Object
+    // outer: deps
+    var id;
+    id = "webapp:" + name;
+    deps[id] = {};
+    deps[id][name] = true;
+    len = - 1;
+    while(Object.keys(deps[id]).length !== len) {
+        len = Object.keys(deps[id]).length;
+        Object.keys(deps[id]).forEach(function(dep) {
+            // outer: webreq
+            // outer: Object
+            Object.keys(webreq[dep] || {}).forEach(function(child) {});
+        });
+    };
+    console.log("webapp", name);
+};
+// build function {{{1
 build = function(id) {
+    // outer: webappdep
+    // outer: true
+    // outer: findRequires
+    // outer: setwebreq
     // outer: extension
     // outer: path
-    // outer: dest
+    // outer: findExports
     // outer: Object
     // outer: Array
     // outer: compiler
     var plainast;
-    // outer: filename
     // outer: getfilename
     // outer: fs
     var source;
     var name;
+    // outer: console
     if(id.slice(0, 3) === "js:") {
+        console.log("build", id);
         name = id.slice(3);
-        source = fs.readFileSync(getfilename("source:" + filename), "utf8");
+        source = fs.readFileSync(getfilename("source:" + name), "utf8");
         plainast = compiler.parsels(source);
         [
             "lightscript",
             "nodejs",
             "webjs",
         ].forEach(function(platform) {
+            // outer: webappdep
+            // outer: true
+            // outer: findRequires
+            // outer: setwebreq
             // outer: extension
             // outer: path
             // outer: fs
-            // outer: dest
             var src;
+            // outer: console
+            // outer: findExports
+            var exports;
             // outer: name
             // outer: plainast
             // outer: Object
@@ -198,10 +302,27 @@ build = function(id) {
                 name : name,
                 platform : platform,
             });
+            exports = findExports(ast);
             if(platform === "webjs") {
+                console.log(exports);
                 src = "define(\"" + name + "\",function(exports, require){\n";
-                src += compiler.ppjs(dest.ast) + "});";
+                src += compiler.ppjs(ast) + "});";
                 fs.writeFileSync(path.js + name + extension.js, src);
+                setwebreq(name, findRequires(ast));
+                if(exports.webapp === true) {
+                    webappdep(name);
+                };
+            } else if(platform === "nodejs") {
+                fs.writeFileSync(path.nodejs + name + ".js", compiler.ppjs(ast));
+            } else if(platform === "lightscript") {
+                ast = compiler.applyMacros({
+                    ast : ast,
+                    name : name,
+                    platform : platform,
+                    reverse : true,
+                });
+                src = compiler.ppls(ast);
+                fs.writeFileSync(path.pretty + name + ".ls", src);
             };
         });
     };
@@ -358,9 +479,8 @@ var compileFns = {
         fs.writeFileSync(path.pretty + obj.name + ".ls", src);
     },
 };
-//
+// {{{1
 var findExports = function(ast) {
-    //{{{2
     var acc = {};
     var doIt = function(ast) {
         if(ast.isa("call:.=") && ast.children[0].isa("id:exports")) {
@@ -372,7 +492,6 @@ var findExports = function(ast) {
     return acc;
 };
 var findRequires = function(ast) {
-    //{{{2
     var acc = {};
     var doIt = function(ast) {
         if(ast.isa("call:*()") && ast.children[0].isa("id:require")) {

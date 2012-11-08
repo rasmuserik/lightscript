@@ -216,3 +216,22 @@ exports.shuffleArray = function(arr) {
 exports.arrayPick = function(arr) {
    return arr[Math.random() * arr.length | 0]; 
 };
+// save/load json {{{1
+if(`compiler.nodejs) {
+    exports.saveJSON = function(filename, content) {
+        require('fs').writeFile(filename, JSON.stringify(content));
+    };
+    exports.loadJSON = function(filename, defaultVal) {
+        if(!defaultVal) {
+            defaultVal = function(e) { return e; };
+        }
+        fn = (typeof(defaultVal) === 'function')?defaultVal : function() { return defaultVal; };
+        return util.trycatch(function() { return JSON.parse(require('fs').readFileSync(filename, 'utf8'))}, fn);
+    };
+};
+// Testrunner {{{1
+exports.test = function(tester) {
+    console.log('testing...');
+    if(`compiler.nodejs) {
+    }
+};

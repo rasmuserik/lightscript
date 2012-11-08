@@ -95,11 +95,66 @@ var traverseDeps = function() {
     };
     return needsRebuild;
 };
-// build function
+// find exports and requires in ast {{{1
+var findExports = function(ast) {
+    var acc = {};
+    var doIt = function(ast) {
+        if(ast.isa("call:.=") && ast.children[0].isa("id:exports")) {
+            acc[ast.children[1].val] = true;
+        };
+        ast.children.forEach(doIt);
+    };
+    doIt(ast);
+    return acc;
+};
+var findRequires = function(ast) {
+    var acc = {};
+    var doIt = function(ast) {
+        if(ast.isa("call:*()") && ast.children[0].isa("id:require")) {
+            if(ast.children[1].kind === "str" && ast.children[1].val.slice(0, 2) === "./") {
+                acc[ast.children[1].val.slice(2)] = true;
+            };
+        };
+        ast.children.forEach(doIt);
+    };
+    doIt(ast);
+    return acc;
+};
+// Keep track of webapp requires {{{1
+webreq = util.trycatch(function() {
+    return JSON.parse(fs.readFileSync(path.build + "webreq.cache", "utf8"));
+}, function() {
+    return {};
+});
+setwebreq = function(name, reqs) {
+    reqs = Object.keys(reqs);
+    reqs.forEach(function(req) {
+        webreq[name] = webreq[name] || {};
+        webreq[name][req] = true;
+    });
+    fs.writeFile(path.build + "webreq.cache", JSON.stringify(webreq));
+}
+webappdep = function(name) {
+    id = 'webapp:' + name;
+    deps[id] = {};
+    deps[id][name] = true;
+    len = -1;
+    while(Object.keys(deps[id]).length !== len) {
+        len = Object.keys(deps[id]).length;
+        Object.keys(deps[id]).forEach(function(dep) {
+            Object.keys(webreq[dep]||{}).forEach(function(child) {
+
+            });
+        });
+    }
+    console.log('webapp', name);
+}
+// build function {{{1
 var build = function(id) {
     if(id.slice(0, 3) === "js:") {
+        console.log('build', id);
         var name = id.slice(3);
-        var source = fs.readFileSync(getfilename("source:" + filename), "utf8");
+        var source = fs.readFileSync(getfilename("source:" + name), "utf8");
         var plainast = compiler.parsels(source);
         [
             "lightscript",
@@ -111,10 +166,22 @@ var build = function(id) {
                 name : name,
                 platform : platform,
             });
+            exports = findExports(ast);
             if(platform === "webjs") {
+                console.log(exports);
                 var src = "define(\"" + name + "\",function(exports, require){\n";
-                src += compiler.ppjs(dest.ast) + "});";
+                src += compiler.ppjs(ast) + "});";
                 fs.writeFileSync(path.js + name + extension.js, src);
+                setwebreq(name, findRequires(ast));
+                if(exports.webapp === true) {
+                    webappdep(name);
+                }
+            } else if(platform === "nodejs") {
+                fs.writeFileSync(path.nodejs + name + ".js", compiler.ppjs(ast));
+            } else if(platform === "lightscript") {
+                var ast = compiler.applyMacros({ ast : ast, name : name, platform : platform, reverse: true});
+                var src = compiler.ppls(ast);
+                fs.writeFileSync(path.pretty + name + ".ls", src);
             };
         });
     };
@@ -268,9 +335,8 @@ var compileFns = {
         fs.writeFileSync(path.pretty + obj.name + ".ls", src);
     },
 };
-//
+// {{{1
 var findExports = function(ast) {
-    //{{{2
     var acc = {};
     var doIt = function(ast) {
         if(ast.isa("call:.=") && ast.children[0].isa("id:exports")) {
@@ -282,7 +348,6 @@ var findExports = function(ast) {
     return acc;
 };
 var findRequires = function(ast) {
-    //{{{2
     var acc = {};
     var doIt = function(ast) {
         if(ast.isa("call:*()") && ast.children[0].isa("id:require")) {
