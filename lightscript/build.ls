@@ -1,5 +1,6 @@
 // Initialisation {{{1
 //
+graph = undefined;
 // Modules {{{2
 //
 var fs = require("fs");
@@ -8,43 +9,121 @@ var util = require("./util");
 var compiler = require("./compiler");
 var set = require("./set");
 //
-// Paths {{{3
+// Paths {{{2
 //
 var path = {};
+extension = {};
+// Initialisation function {{{2
+init = function() {
 path.source = __dirname + "/../../lightscript/";
 path.build = path.source + "../build/";
 path.nodejs = path.build + "node/";
 path.pretty = path.build + "lightscript/";
 path.js = path.build + "js/";
+// Extensions {{{3
+extension.source = ".ls";
+extension.nodejs = ".js";
+extension.js = ".js";
+extension.pretty = ".ls";
 // Make sure paths exists
 Object.keys(path).forEach(function(name) {
     util.mkdir(path[name]);
 });
-//
 // Dependency graph {{{3
-//
+// Load from cache {{{4
 graph = util.loadJSONSync(path.build + 'build.graph', {});
-(function() {
+    // find list of sourcefiles {{{4
     sourcefiles = fs.readdirSync(path.source).filter(function(name) {
         return name.slice(- 3) === ".ls";
     }).map(function(name) {
         return 'source:' + name.slice(0, -3);
     });
+    // add missing objects from sourcefiles {{{4
     sourcefiles.forEach(function(id) {
         if(!graph[id]) {
-            // TODO;
             console.log('generate build-graph object for', id);
+            ast = parseSource(id);
+            exports = findExports(ast);
+            graph[id] = node = {id: id, exports: exports};
         };
     });
+    // remove deleted sourcefiles
     sourcefiles = set.fromArray(sourcefiles);
     Object.keys(graph).filter(function(name) {
         return util.strStartsWith(name, 'source:');
+    }).forEach(function(name) {
+        if(!sourcefiles[name]) {
+            util.delprop(graph, name);
+        }
     });
-})();
-    
-
+};
 // Utility functions {{{1
-// {{{1
+// update timestamps {{{2
+timestamps = function() {
+    ts = {};
+    Object.keys(graph).forEach(function(name) {
+        fname = getfilename(name);
+        ts[fname] = ts[fname] || util.mtime(fname);
+        graph[name].timestamp = ts[fname];
+    });
+};
+// write graph to cache {{{2
+var cacheGraph = function() {
+    util.saveJSON(path.build + 'build.graph', graph);
+}
+// getkind {{{2
+var getkind = function(id) {
+    return id.split(":")[0];
+};
+// getname {{{2
+var getname = function(id) {
+    return id.split(":")[1];
+};
+// getfilename {{{2
+var getfilename = function(id) {
+    var kind = getkind(id);
+    var name = getname(id);
+    return path[kind] + name + extension[kind];
+};
+// parsesource {{{2
+parseSource = function(id) {
+    // TODO: cache this for previous value (NB: add util.cacheFn(fn, cachesize))
+    var source = fs.readFileSync(getfilename(id), "utf8");
+    return compiler.parsels(source);
+}
+// find exports in ast {{{2
+var findExports = function(ast) {
+    var acc = {};
+    var doIt = function(ast) {
+        if(ast.isa("call:.=") && ast.children[0].isa("id:exports")) {
+            acc[ast.children[1].val] = true;
+        };
+        ast.children.forEach(doIt);
+    };
+    doIt(ast);
+    return acc;
+};
+// find exports in ast {{{2
+var findRequires = function(ast) {
+    var acc = {};
+    var doIt = function(ast) {
+        if(ast.isa("call:*()") && ast.children[0].isa("id:require")) {
+            if(ast.children[1].kind === "str" && ast.children[1].val.slice(0, 2) === "./") {
+                acc[ast.children[1].val.slice(2)] = true;
+            };
+        };
+        ast.children.forEach(doIt);
+    };
+    doIt(ast);
+    return acc;
+};
+// Main {{{1
+exports.nodemain = function() {
+    init();
+    timestamps();
+    cacheGraph();
+    console.log('graph:', graph);
+}
 
 /*
 // Thoughts on build system

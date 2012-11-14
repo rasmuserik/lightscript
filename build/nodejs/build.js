@@ -1,6 +1,17 @@
+// outer: true
 // outer: console
-var graph;
 // outer: __dirname
+// outer: exports
+var findRequires;
+var findExports;
+var parseSource;
+var getfilename;
+var getname;
+var getkind;
+var cacheGraph;
+var timestamps;
+var init;
+var extension;
 // outer: Object
 var path;
 var set;
@@ -9,8 +20,11 @@ var util;
 var async;
 // outer: require
 var fs;
+// outer: undefined
+var graph;
 // Initialisation {{{1
 //
+graph = undefined;
 // Modules {{{2
 //
 fs = require("fs");
@@ -19,54 +33,189 @@ util = require("./util");
 compiler = require("./compiler");
 set = require("./set");
 //
-// Paths {{{3
+// Paths {{{2
 //
 path = {};
-path.source = __dirname + "/../../lightscript/";
-path.build = path.source + "../build/";
-path.nodejs = path.build + "node/";
-path.pretty = path.build + "lightscript/";
-path.js = path.build + "js/";
-// Make sure paths exists
-Object.keys(path).forEach(function(name) {
-    // outer: path
-    // outer: util
-    util.mkdir(path[name]);
-});
-//
-// Dependency graph {{{3
-//
-graph = util.loadJSONSync(path.build + "build.graph", {});
-(function() {
-    // outer: util
+extension = {};
+// Initialisation function {{{2
+init = function() {
+    // outer: findExports
+    // outer: parseSource
     // outer: console
-    // outer: graph
-    // outer: Object
     // outer: set
-    // outer: path
     // outer: fs
     var sourcefiles;
+    // outer: util
+    // outer: graph
+    // outer: Object
+    // outer: extension
+    // outer: __dirname
+    // outer: path
+    path.source = __dirname + "/../../lightscript/";
+    path.build = path.source + "../build/";
+    path.nodejs = path.build + "node/";
+    path.pretty = path.build + "lightscript/";
+    path.js = path.build + "js/";
+    // Extensions {{{3
+    extension.source = ".ls";
+    extension.nodejs = ".js";
+    extension.js = ".js";
+    extension.pretty = ".ls";
+    // Make sure paths exists
+    Object.keys(path).forEach(function(name) {
+        // outer: path
+        // outer: util
+        util.mkdir(path[name]);
+    });
+    // Dependency graph {{{3
+    // Load from cache {{{4
+    graph = util.loadJSONSync(path.build + "build.graph", {});
+    // find list of sourcefiles {{{4
     sourcefiles = fs.readdirSync(path.source).filter(function(name) {
         return name.slice(- 3) === ".ls";
     }).map(function(name) {
         return "source:" + name.slice(0, - 3);
     });
+    // add missing objects from sourcefiles {{{4
     sourcefiles.forEach(function(id) {
+        // outer: Object
+        var node;
+        // outer: findExports
+        var exports;
+        // outer: parseSource
+        var ast;
         // outer: console
         // outer: graph
         if(!graph[id]) {
-            // TODO;
             console.log("generate build-graph object for", id);
+            ast = parseSource(id);
+            exports = findExports(ast);
+            graph[id] = node = {id : id, exports : exports};
         };
     });
+    // remove deleted sourcefiles
     sourcefiles = set.fromArray(sourcefiles);
     Object.keys(graph).filter(function(name) {
         // outer: util
         return util.strStartsWith(name, "source:");
+    }).forEach(function(name) {
+        // outer: graph
+        // outer: util
+        // outer: sourcefiles
+        if(!sourcefiles[name]) {
+            util.delprop(graph, name);
+        };
     });
-})();
+};
 // Utility functions {{{1
-// {{{1
+// update timestamps {{{2
+timestamps = function() {
+    // outer: util
+    // outer: getfilename
+    // outer: graph
+    // outer: Object
+    var ts;
+    ts = {};
+    Object.keys(graph).forEach(function(name) {
+        // outer: graph
+        // outer: util
+        // outer: ts
+        // outer: getfilename
+        var fname;
+        fname = getfilename(name);
+        ts[fname] = ts[fname] || util.mtime(fname);
+        graph[name].timestamp = ts[fname];
+    });
+};
+// write graph to cache {{{2
+cacheGraph = function() {
+    // outer: graph
+    // outer: path
+    // outer: util
+    util.saveJSON(path.build + "build.graph", graph);
+};
+// getkind {{{2
+getkind = function(id) {
+    return id.split(":")[0];
+};
+// getname {{{2
+getname = function(id) {
+    return id.split(":")[1];
+};
+// getfilename {{{2
+getfilename = function(id) {
+    // outer: extension
+    // outer: path
+    // outer: getname
+    var name;
+    // outer: getkind
+    var kind;
+    kind = getkind(id);
+    name = getname(id);
+    return path[kind] + name + extension[kind];
+};
+// parsesource {{{2
+parseSource = function(id) {
+    // outer: compiler
+    // outer: getfilename
+    // outer: fs
+    var source;
+    // TODO: cache this for previous value (NB: add util.cacheFn(fn, cachesize))
+    source = fs.readFileSync(getfilename(id), "utf8");
+    return compiler.parsels(source);
+};
+// find exports in ast {{{2
+findExports = function(ast) {
+    // outer: true
+    var doIt;
+    // outer: Object
+    var acc;
+    acc = {};
+    doIt = function(ast) {
+        // outer: doIt
+        // outer: true
+        // outer: acc
+        if(ast.isa("call:.=") && ast.children[0].isa("id:exports")) {
+            acc[ast.children[1].val] = true;
+        };
+        ast.children.forEach(doIt);
+    };
+    doIt(ast);
+    return acc;
+};
+// find exports in ast {{{2
+findRequires = function(ast) {
+    // outer: true
+    var doIt;
+    // outer: Object
+    var acc;
+    acc = {};
+    doIt = function(ast) {
+        // outer: doIt
+        // outer: true
+        // outer: acc
+        if(ast.isa("call:*()") && ast.children[0].isa("id:require")) {
+            if(ast.children[1].kind === "str" && ast.children[1].val.slice(0, 2) === "./") {
+                acc[ast.children[1].val.slice(2)] = true;
+            };
+        };
+        ast.children.forEach(doIt);
+    };
+    doIt(ast);
+    return acc;
+};
+// Main {{{1
+exports.nodemain = function() {
+    // outer: graph
+    // outer: console
+    // outer: cacheGraph
+    // outer: timestamps
+    // outer: init
+    init();
+    timestamps();
+    cacheGraph();
+    console.log("graph:", graph);
+};
 /*
 // Thoughts on build system
 //  - dependency graph
