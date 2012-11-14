@@ -1,7 +1,10 @@
+// outer: ;
 // outer: true
 // outer: console
 // outer: __dirname
 // outer: exports
+var update;
+var ensureChild;
 var findRequires;
 var findExports;
 var parseSource;
@@ -90,7 +93,7 @@ init = function() {
             console.log("generate build-graph object for", id);
             ast = parseSource(id);
             exports = findExports(ast);
-            graph[id] = node = {id : id, exports : exports};
+            graph[id] = node = {children : {}, exports : exports};
         };
     });
     // remove deleted sourcefiles
@@ -183,7 +186,7 @@ findExports = function(ast) {
     doIt(ast);
     return acc;
 };
-// find exports in ast {{{2
+// find requires in ast {{{2
 findRequires = function(ast) {
     // outer: true
     var doIt;
@@ -204,18 +207,71 @@ findRequires = function(ast) {
     doIt(ast);
     return acc;
 };
+// Update dependencies {{{1
+ensureChild = function(node, child) {
+    // outer: true
+    // outer: Object
+    // outer: graph
+    // outer: ;
+    if(node.children[child]) {
+        return ;
+    };
+    if(!graph[child]) {
+        graph[child] = {children : {}, timestamp : 0};
+    };
+    node.children[child] = true;
+};
+update = function() {
+    // outer: ensureChild
+    // outer: getname
+    // outer: getkind
+    // outer: graph
+    // outer: util
+    util.objForEach(graph, function(id, node) {
+        // outer: ensureChild
+        // outer: getname
+        var name;
+        // outer: getkind
+        var kind;
+        kind = getkind(id);
+        name = getname(id);
+        if(kind === "source") {
+            if(node.exports.nodemain) {
+                ensureChild(node, "nodejs:" + name);
+            };
+        };
+    });
+};
 // Main {{{1
 exports.nodemain = function() {
     // outer: graph
     // outer: console
     // outer: cacheGraph
+    // outer: update
     // outer: timestamps
     // outer: init
     init();
     timestamps();
+    update();
     cacheGraph();
     console.log("graph:", graph);
 };
+// XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX{{{1
+// XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX{{{1
+// XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX{{{1
+// XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX{{{1
+// XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX{{{1
+// XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX{{{1
+// XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX{{{1
+// XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX{{{1
+// XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX{{{1
+// XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX{{{1
+// XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX{{{1
+// XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX{{{1
+// XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX{{{1
+// XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX{{{1
+// XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX{{{1
+// XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX{{{1
 /*
 // Thoughts on build system
 //  - dependency graph
@@ -227,6 +283,7 @@ var fs = require("fs");
 var async = require("async");
 var util = require("./util");
 var compiler = require("./compiler");
+//
 // Definitions, paths etc {{{1
 //
 // Modules {{{2

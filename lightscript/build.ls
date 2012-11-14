@@ -44,7 +44,7 @@ var init = function() {
             console.log("generate build-graph object for", id);
             var ast = parseSource(id);
             var exports = findExports(ast);
-            graph[id] = var node = {id : id, exports : exports};
+            graph[id] = var node = {children: {}, exports : exports};
         };
     });
     // remove deleted sourcefiles
@@ -103,7 +103,7 @@ var findExports = function(ast) {
     doIt(ast);
     return acc;
 };
-// find exports in ast {{{2
+// find requires in ast {{{2
 var findRequires = function(ast) {
     var acc = {};
     var doIt = function(ast) {
@@ -117,13 +117,54 @@ var findRequires = function(ast) {
     doIt(ast);
     return acc;
 };
+// Update dependencies {{{1
+ensureChild = function(node, child) {
+    if(node.children[child]) {
+        return;
+    }
+    if(!graph[child]) {
+        graph[child] = {
+            children: {},
+            timestamp: 0
+        }
+    }
+    node.children[child] = true;
+};
+update = function() {
+    util.objForEach(graph, function(id, node) {
+        kind = getkind(id);
+        name = getname(id);
+        if(kind === 'source') {
+            if(node.exports.nodemain) {
+                ensureChild(node, 'nodejs:' + name);
+            }
+        }
+    })
+}
 // Main {{{1
 exports.nodemain = function() {
     init();
     timestamps();
+    update();
     cacheGraph();
     console.log("graph:", graph);
 };
+// XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX{{{1
+// XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX{{{1
+// XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX{{{1
+// XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX{{{1
+// XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX{{{1
+// XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX{{{1
+// XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX{{{1
+// XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX{{{1
+// XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX{{{1
+// XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX{{{1
+// XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX{{{1
+// XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX{{{1
+// XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX{{{1
+// XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX{{{1
+// XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX{{{1
+// XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX{{{1
 /*
 // Thoughts on build system
 //  - dependency graph
@@ -135,6 +176,7 @@ var fs = require("fs");
 var async = require("async");
 var util = require("./util");
 var compiler = require("./compiler");
+//
 // Definitions, paths etc {{{1
 //
 // Modules {{{2
