@@ -152,15 +152,33 @@ exports.updateParents = function(graph) {
         });
     });
 }
+// Traverse a directed acyclic graph {{{2
+// - simple stupid $O(|E|^2)$ algorhthm.
 exports.traverseDAG = function(graph) {
     result = []
     exports.updateParents(graph);
-    nextSet = [];
-    util.objForEach(graph, function(nodeId, node) {
-        // TODO - in progress
-    });
-
+    visited = {};
+    prevLength = -1;
+    while(result.length !== prevLength) {
+        prevLength = result.length;
+        util.objForEach(graph, function(nodeId, node) {
+            if(!visited[nodeId]) {
+                ok = true;
+                Object.keys(node.parents).forEach(function(parentId) {
+                    if(!visited[parentId]) {
+                        ok = false;
+                    }
+                });
+                if(ok) {
+                    result.push(nodeId);
+                    visited[nodeId] = true;
+                }
+            }
+        });
+    }
+    return result;
 };
+// Ensure that a named node exists in a graph (or create it). {{{2
 exports.ensureNode = function(graph, name) {
     if(!graph[name]) {
         graph[name] = {
@@ -169,12 +187,15 @@ exports.ensureNode = function(graph, name) {
         };
     }
 };
+// Add an edge to a graph, and add nodes if they doesn't exists {{{2
 exports.addEdge = function(graph, from, to) {
     exports.ensureNode(graph, from);
     exports.ensureNode(graph, to);
     graph[from].children[to] = graph[from].children[to] || {};
 };
+// Export a graph into dot format {{{2
 exports.toDot = function(graph) {
+    // TODO
     throw 'transformation to graphviz not implemented yet';
 };
 
@@ -184,7 +205,7 @@ exports.test = function(test) {
     exports.addEdge(g, 'a', 'b');
     exports.addEdge(g, 'b', 'c');
     exports.addEdge(g, 'a', 'c');
-    test.assertEqual(JSON.stringify(exports.traverseDAG(g)), '["a", "b", "c"]');
+    test.assertEqual(JSON.stringify(exports.traverseDAG(g)), '["a","b","c"]');
     exports.updateParents(g);
     test.assert(util.emptyObject(g.a.parents), 'a has no parents');
     test.assert(g.c.parents.a, 'c has parent a');
