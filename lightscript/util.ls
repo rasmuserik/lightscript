@@ -179,7 +179,7 @@ exports.emptyObject = function(obj) {
     return Object.keys(obj).length === 0;
 };
 // strStartsWith {{{1
-exports.strStartsWith = function( str1, str2) {
+exports.strStartsWith = function(str1, str2) {
     return str1.slice(0, str2.length) === str2;
 };
 // objForEach {{{1
@@ -187,7 +187,7 @@ exports.objForEach = function(obj, fn) {
     Object.keys(obj).forEach(function(key) {
         fn(key, obj[key]);
     });
-}
+};
 // mkdir,cp,mtime {{{1
 if(`compiler.nodejs) {
     var fs = require("fs");
@@ -238,7 +238,7 @@ if(`compiler.nodejs) {
     exports.loadJSONSync = function(filename, defaultVal) {
         if(!defaultVal) {
             defaultVal = function(e) {
-                return {err: e};
+                return {err : e};
             };
         };
         var fn = typeof defaultVal === "function" ? defaultVal : function(err) {
@@ -252,26 +252,26 @@ if(`compiler.nodejs) {
 // Testrunner {{{1
 exports.test = function(test) {
     if(`compiler.nodejs) {
-        jsontest= test.create('load/save-JSON');
-        result = exports.loadJSONSync('/does/not/exists', 1);
+        var jsontest = test.create("load/save-JSON");
+        var result = exports.loadJSONSync("/does/not/exists", 1);
         jsontest.assertEqual(result, 1);
-        exports.saveJSON('/tmp/exports-save-json-testb', 2);
-        exports.saveJSON('/tmp/exports-save-json-test', 2, function() {
-            result = exports.loadJSONSync('/tmp/exports-save-json-test', 1);
+        exports.saveJSON("/tmp/exports-save-json-testb", 2);
+        exports.saveJSON("/tmp/exports-save-json-test", 2, function() {
+            result = exports.loadJSONSync("/tmp/exports-save-json-test", 1);
             jsontest.assertEqual(result, 2);
             jsontest.done();
         });
     };
-    count = 0;
-    obj = { a:1, b:2 };
+    var count = 0;
+    var obj = {a : 1, b : 2};
     exports.objForEach(obj, function(key, val) {
-        test.assert(key && obj[key] === val, 'objforeach');
+        test.assert(key && obj[key] === val, "objforeach");
         ++count;
     });
     test.assertEqual(count, 2, "objforeach count");
-    test.assert(exports.strStartsWith('foobarbaz', 'foobar'), 'strstartswith1');
-    test.assert(!exports.strStartsWith('qoobarbaz', 'foobar'), 'strstartswith2');
-    test.assert(exports.strStartsWith('foobarbaz', ''), 'strstartswith3');
-    test.assert(!exports.strStartsWith('foo', 'foobar'), 'strstartswith4');
+    test.assert(exports.strStartsWith("foobarbaz", "foobar"), "strstartswith1");
+    test.assert(!exports.strStartsWith("qoobarbaz", "foobar"), "strstartswith2");
+    test.assert(exports.strStartsWith("foobarbaz", ""), "strstartswith3");
+    test.assert(!exports.strStartsWith("foo", "foobar"), "strstartswith4");
     test.done();
 };
