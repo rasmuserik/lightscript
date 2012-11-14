@@ -178,7 +178,11 @@ util.valmap = function(obj, fn) {
 exports.emptyObject = function(obj) {
     return Object.keys(obj).length === 0;
 };
-// objForEach {{{
+// strStartsWith {{{1
+exports.strStartsWith = function( str1, str2) {
+    return str1.slice(0, str2.length) === str2;
+};
+// objForEach {{{1
 exports.objForEach = function(obj, fn) {
     Object.keys(obj).forEach(function(key) {
         fn(key, obj[key]);
@@ -234,7 +238,7 @@ if(`compiler.nodejs) {
     exports.loadJSONSync = function(filename, defaultVal) {
         if(!defaultVal) {
             defaultVal = function(e) {
-                return e;
+                return {err: e};
             };
         };
         var fn = typeof defaultVal === "function" ? defaultVal : function(err) {
@@ -265,5 +269,9 @@ exports.test = function(test) {
         ++count;
     });
     test.assertEqual(count, 2, "objforeach count");
+    test.assert(exports.strStartsWith('foobarbaz', 'foobar'), 'strstartswith1');
+    test.assert(!exports.strStartsWith('qoobarbaz', 'foobar'), 'strstartswith2');
+    test.assert(exports.strStartsWith('foobarbaz', ''), 'strstartswith3');
+    test.assert(!exports.strStartsWith('foo', 'foobar'), 'strstartswith4');
     test.done();
 };

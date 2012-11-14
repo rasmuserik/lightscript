@@ -1,3 +1,52 @@
+// Initialisation {{{1
+//
+// Modules {{{2
+//
+var fs = require("fs");
+var async = require("async");
+var util = require("./util");
+var compiler = require("./compiler");
+var set = require("./set");
+//
+// Paths {{{3
+//
+var path = {};
+path.source = __dirname + "/../../lightscript/";
+path.build = path.source + "../build/";
+path.nodejs = path.build + "node/";
+path.pretty = path.build + "lightscript/";
+path.js = path.build + "js/";
+// Make sure paths exists
+Object.keys(path).forEach(function(name) {
+    util.mkdir(path[name]);
+});
+//
+// Dependency graph {{{3
+//
+graph = util.loadJSONSync(path.build + 'build.graph', {});
+(function() {
+    sourcefiles = fs.readdirSync(path.source).filter(function(name) {
+        return name.slice(- 3) === ".ls";
+    }).map(function(name) {
+        return 'source:' + name.slice(0, -3);
+    });
+    sourcefiles.forEach(function(id) {
+        if(!graph[id]) {
+            // TODO;
+            console.log('generate build-graph object for', id);
+        };
+    });
+    sourcefiles = set.fromArray(sourcefiles);
+    Object.keys(graph).filter(function(name) {
+        return util.strStartsWith(name, 'source:');
+    });
+})();
+    
+
+// Utility functions {{{1
+// {{{1
+
+/*
 // Thoughts on build system
 //  - dependency graph
 //  - id: "kind:name" -> id list

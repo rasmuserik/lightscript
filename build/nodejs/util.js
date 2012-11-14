@@ -298,7 +298,11 @@ exports.emptyObject = function(obj) {
     // outer: Object
     return Object.keys(obj).length === 0;
 };
-// objForEach {{{
+// strStartsWith {{{1
+exports.strStartsWith = function(str1, str2) {
+    return str1.slice(0, str2.length) === str2;
+};
+// objForEach {{{1
 exports.objForEach = function(obj, fn) {
     // outer: Object
     Object.keys(obj).forEach(function(key) {
@@ -374,11 +378,13 @@ if(true) {
     exports.loadJSONSync = function(filename, defaultVal) {
         // outer: require
         // outer: JSON
+        // outer: Object
         // outer: util
         var fn;
         if(!defaultVal) {
             defaultVal = function(e) {
-                return e;
+                // outer: Object
+                return {err : e};
             };
         };
         fn = typeof defaultVal === "function" ? defaultVal : function(err) {
@@ -425,5 +431,9 @@ exports.test = function(test) {
         ++count;
     });
     test.assertEqual(count, 2, "objforeach count");
+    test.assert(exports.strStartsWith("foobarbaz", "foobar"), "strstartswith1");
+    test.assert(!exports.strStartsWith("qoobarbaz", "foobar"), "strstartswith2");
+    test.assert(exports.strStartsWith("foobarbaz", ""), "strstartswith3");
+    test.assert(!exports.strStartsWith("foo", "foobar"), "strstartswith4");
     test.done();
 };

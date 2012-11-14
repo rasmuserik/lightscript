@@ -1,41 +1,15 @@
-// outer: Array
 // outer: console
-// outer: true
-// outer: JSON
-// outer: exports
-var build;
-var webappdep;
-var setwebreq;
-var webreq;
-var findRequires;
-var findExports;
-var traverseDeps;
-var cacheDeps;
-var deps;
-var mtime;
-var getfilename;
-var getname;
-var getkind;
+var graph;
 // outer: __dirname
-var path;
 // outer: Object
-var extension;
+var path;
+var set;
 var compiler;
 var util;
 var async;
 // outer: require
 var fs;
-// Thoughts on build system
-//  - dependency graph
-//  - id: "kind:name" -> id list
-//  - update function based on kind 
-//  - rebuild-function based on kind
-//  
-fs = require("fs");
-async = require("async");
-util = require("./util");
-compiler = require("./compiler");
-// Definitions, paths etc {{{1
+// Initialisation {{{1
 //
 // Modules {{{2
 //
@@ -43,15 +17,8 @@ fs = require("fs");
 async = require("async");
 util = require("./util");
 compiler = require("./compiler");
+set = require("./set");
 //
-// paths and extensions{{{2
-// Extensions {{{3
-extension = {
-    source : ".ls",
-    nodejs : ".js",
-    js : ".js",
-    pretty : ".ls",
-};
 // Paths {{{3
 //
 path = {};
@@ -66,55 +33,110 @@ Object.keys(path).forEach(function(name) {
     // outer: util
     util.mkdir(path[name]);
 });
+//
+// Dependency graph {{{3
+//
+graph = util.loadJSONSync(path.build + "build.graph", {});
+(function() {
+    // outer: util
+    // outer: console
+    // outer: graph
+    // outer: Object
+    // outer: set
+    // outer: path
+    // outer: fs
+    var sourcefiles;
+    sourcefiles = fs.readdirSync(path.source).filter(function(name) {
+        return name.slice(- 3) === ".ls";
+    }).map(function(name) {
+        return "source:" + name.slice(0, - 3);
+    });
+    sourcefiles.forEach(function(id) {
+        // outer: console
+        // outer: graph
+        if(!graph[id]) {
+            // TODO;
+            console.log("generate build-graph object for", id);
+        };
+    });
+    sourcefiles = set.fromArray(sourcefiles);
+    Object.keys(graph).filter(function(name) {
+        // outer: util
+        return util.strStartsWith(name, "source:");
+    });
+})();
+// Utility functions {{{1
+// {{{1
+/*
+// Thoughts on build system
+//  - dependency graph
+//  - id: "kind:name" -> id list
+//  - update function based on kind 
+//  - rebuild-function based on kind
+//  
+var fs = require("fs");
+var async = require("async");
+var util = require("./util");
+var compiler = require("./compiler");
+// Definitions, paths etc {{{1
+//
+// Modules {{{2
+//
+fs = require("fs");
+async = require("async");
+util = require("./util");
+compiler = require("./compiler");
+//
+// paths and extensions{{{2
+// Extensions {{{3
+var extension = {
+    source : ".ls",
+    nodejs : ".js",
+    js : ".js",
+    pretty : ".ls",
+};
+// Paths {{{3
+//
+var path = {};
+path.source = __dirname + "/../../lightscript/";
+path.build = path.source + "../build/";
+path.nodejs = path.build + "node/";
+path.pretty = path.build + "lightscript/";
+path.js = path.build + "js/";
+// Make sure paths exists
+Object.keys(path).forEach(function(name) {
+    util.mkdir(path[name]);
+});
 // Get info from id {{{1
 //
 // getkind {{{2
-getkind = function(id) {
+var getkind = function(id) {
     return id.split(":")[0];
 };
 // getname {{{2
-getname = function(id) {
+var getname = function(id) {
     return id.split(":")[1];
 };
 // getfilename {{{2
-getfilename = function(id) {
-    // outer: extension
-    // outer: path
-    // outer: getname
-    var name;
-    // outer: getkind
-    var kind;
-    kind = getkind(id);
-    name = getname(id);
+var getfilename = function(id) {
+    var kind = getkind(id);
+    var name = getname(id);
     return path[kind] + name + extension[kind];
 };
 // mtime {{{2
-mtime = function(id) {
-    // outer: getfilename
-    // outer: util
+var mtime = function(id) {
     return util.mtime(getfilename(id));
 };
 // Dependency graph {{{1
 // 
-deps = util.trycatch(function() {
-    // outer: path
-    // outer: fs
-    // outer: JSON
+var deps = util.trycatch(function() {
     return JSON.parse(fs.readFileSync(path.build + "deps.cache", "utf8"));
 }, function() {
-    // outer: true
-    // outer: path
-    // outer: fs
-    // outer: Object
-    var result;
     // create default graph;
-    result = {};
+    var result = {};
     fs.readdirSync(path.source).filter(function(name) {
         return name.slice(- 3) === ".ls";
     }).forEach(function(name) {
-        // outer: true
-        // outer: Object
-        // outer: result
         name = name.slice(0, - 3);
         result["source:" + name] = {};
         result["js:" + name] = {};
@@ -122,40 +144,19 @@ deps = util.trycatch(function() {
     });
     return result;
 });
-cacheDeps = function() {
-    // outer: deps
-    // outer: JSON
-    // outer: path
-    // outer: fs
+var cacheDeps = function() {
     fs.writeFile(path.build + "deps.cache", JSON.stringify(deps));
 };
 cacheDeps();
 // Traverse deps and find out what needs to be rebuilt {{{1
-traverseDeps = function() {
-    // outer: true
-    // outer: mtime
-    // outer: deps
-    var rebuildLength;
-    // outer: Object
-    var needsRebuild;
-    needsRebuild = {};
-    rebuildLength = - 1;
+var traverseDeps = function() {
+    var needsRebuild = {};
+    var rebuildLength = - 1;
     while(Object.keys(needsRebuild).length !== rebuildLength) {
         rebuildLength = Object.keys(needsRebuild).length;
         Object.keys(deps).forEach(function(dest) {
-            // outer: true
-            // outer: needsRebuild
-            // outer: deps
-            // outer: Object
-            // outer: mtime
-            var destTime;
-            destTime = mtime(dest);
+            var destTime = mtime(dest);
             Object.keys(deps[dest]).forEach(function(src) {
-                // outer: true
-                // outer: mtime
-                // outer: destTime
-                // outer: dest
-                // outer: needsRebuild
                 if(needsRebuild[dest] || destTime <= mtime(src)) {
                     needsRebuild[dest] = true;
                 };
@@ -165,16 +166,9 @@ traverseDeps = function() {
     return needsRebuild;
 };
 // find exports and requires in ast {{{1
-findExports = function(ast) {
-    // outer: true
-    var doIt;
-    // outer: Object
-    var acc;
-    acc = {};
-    doIt = function(ast) {
-        // outer: doIt
-        // outer: true
-        // outer: acc
+var findExports = function(ast) {
+    var acc = {};
+    var doIt = function(ast) {
         if(ast.isa("call:.=") && ast.children[0].isa("id:exports")) {
             acc[ast.children[1].val] = true;
         };
@@ -183,16 +177,9 @@ findExports = function(ast) {
     doIt(ast);
     return acc;
 };
-findRequires = function(ast) {
-    // outer: true
-    var doIt;
-    // outer: Object
-    var acc;
-    acc = {};
-    doIt = function(ast) {
-        // outer: doIt
-        // outer: true
-        // outer: acc
+var findRequires = function(ast) {
+    var acc = {};
+    var doIt = function(ast) {
         if(ast.isa("call:*()") && ast.children[0].isa("id:require")) {
             if(ast.children[1].kind === "str" && ast.children[1].val.slice(0, 2) === "./") {
                 acc[ast.children[1].val.slice(2)] = true;
@@ -204,108 +191,53 @@ findRequires = function(ast) {
     return acc;
 };
 // Keep track of webapp requires {{{1
-webreq = util.trycatch(function() {
-    // outer: path
-    // outer: fs
-    // outer: JSON
+var webreq = util.trycatch(function() {
     return JSON.parse(fs.readFileSync(path.build + "webreq.cache", "utf8"));
 }, function() {
-    // outer: Object
     return {};
 });
-setwebreq = function(name, reqs) {
-    // outer: true
-    // outer: webreq
-    // outer: JSON
-    // outer: path
-    // outer: fs
-    // outer: Object
+var setwebreq = function(name, reqs) {
     reqs = Object.keys(reqs);
     reqs.forEach(function(req) {
-        // outer: true
-        // outer: Object
-        // outer: name
-        // outer: webreq
         webreq[name] = webreq[name] || {};
         webreq[name][req] = true;
     });
     fs.writeFile(path.build + "webreq.cache", JSON.stringify(webreq));
 };
-webappdep = function(name) {
-    // outer: webreq
-    // outer: console
-    var len;
-    // outer: true
-    // outer: Object
-    // outer: deps
-    var id;
-    id = "webapp:" + name;
+var webappdep = function(name) {
+    var id = "webapp:" + name;
     deps[id] = {};
     deps[id][name] = true;
-    len = - 1;
+    var len = - 1;
     while(Object.keys(deps[id]).length !== len) {
         len = Object.keys(deps[id]).length;
         Object.keys(deps[id]).forEach(function(dep) {
-            // outer: webreq
-            // outer: Object
             Object.keys(webreq[dep] || {}).forEach(function(child) {});
         });
     };
     console.log("webapp", name);
 };
 // build function {{{1
-build = function(id) {
-    // outer: webappdep
-    // outer: true
-    // outer: findRequires
-    // outer: setwebreq
-    // outer: extension
-    // outer: path
-    // outer: findExports
-    // outer: Object
-    // outer: Array
-    // outer: compiler
-    var plainast;
-    // outer: getfilename
-    // outer: fs
-    var source;
-    var name;
-    // outer: console
+var build = function(id) {
     if(id.slice(0, 3) === "js:") {
         console.log("build", id);
-        name = id.slice(3);
-        source = fs.readFileSync(getfilename("source:" + name), "utf8");
-        plainast = compiler.parsels(source);
+        var name = id.slice(3);
+        var source = fs.readFileSync(getfilename("source:" + name), "utf8");
+        var plainast = compiler.parsels(source);
         [
             "lightscript",
             "nodejs",
             "webjs",
         ].forEach(function(platform) {
-            // outer: webappdep
-            // outer: true
-            // outer: findRequires
-            // outer: setwebreq
-            // outer: extension
-            // outer: path
-            // outer: fs
-            var src;
-            // outer: console
-            // outer: findExports
-            var exports;
-            // outer: name
-            // outer: plainast
-            // outer: Object
-            // outer: compiler
-            var ast;
-            ast = compiler.applyMacros({
+            var ast = compiler.applyMacros({
                 ast : plainast,
                 name : name,
                 platform : platform,
             });
-            exports = findExports(ast);
+            var exports = findExports(ast);
             if(platform === "webjs") {
                 console.log(exports);
-                src = "define(\"" + name + "\",function(exports, require){\n";
+                var src = "define(\"" + name + "\",function(exports, require){\n";
                 src += compiler.ppjs(ast) + "});";
                 fs.writeFileSync(path.js + name + extension.js, src);
                 setwebreq(name, findRequires(ast));
@@ -330,9 +262,6 @@ build = function(id) {
 // Rebuild function {{{1
 // Main {{{1
 exports.nodemain = function() {
-    // outer: build
-    // outer: traverseDeps
-    // outer: Object
     Object.keys(traverseDeps()).forEach(build);
 };
 /*
