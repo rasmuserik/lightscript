@@ -1,8 +1,10 @@
-// outer: ;
+// outer: false
 // outer: true
 // outer: console
 // outer: __dirname
 // outer: exports
+var compilerTable;
+var optionalCompile;
 var update;
 var ensureChild;
 var findRequires;
@@ -212,9 +214,9 @@ ensureChild = function(node, child) {
     // outer: true
     // outer: Object
     // outer: graph
-    // outer: ;
+    // outer: undefined
     if(node.children[child]) {
-        return ;
+        return undefined;
     };
     if(!graph[child]) {
         graph[child] = {children : {}, timestamp : 0};
@@ -242,19 +244,56 @@ update = function() {
         };
     });
 };
+optionalCompile = function(id) {
+    // outer: getkind
+    // outer: compilerTable
+    // outer: util
+    // outer: graph
+    var timestamp;
+    // outer: false
+    var needsUpdate;
+    needsUpdate = false;
+    timestamp = graph[id].timestamp;
+    util.objForEach(graph[id].children, function(child) {
+        // outer: id
+        // outer: getkind
+        // outer: compilerTable
+        // outer: graph
+        // outer: timestamp
+        if(timestamp > graph[child].timestamp) {
+            (compilerTable[getkind(id)] || function(id) {
+                throw "cannot compile " + id;
+            })(id);
+        };
+    });
+};
+compilerTable = {};
+compilerTable.source = function(id) {
+    // outer: getkind
+    // outer: Object
+    // outer: graph
+    var node;
+    var platforms;
+    // outer: console
+    console.log("TODO: compile", id, platforms);
+    node = graph[id];
+    platforms = Object.keys(node.children).map(getkind);
+};
 // Main {{{1
 exports.nodemain = function() {
-    // outer: graph
-    // outer: console
     // outer: cacheGraph
+    // outer: optionalCompile
+    // outer: graph
+    // outer: require
     // outer: update
     // outer: timestamps
     // outer: init
     init();
     timestamps();
     update();
+    require("./graph").traverseDAG(graph).forEach(optionalCompile);
     cacheGraph();
-    console.log("graph:", graph);
+    //    console.log("graph:", graph);
 };
 // XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX{{{1
 // XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX{{{1

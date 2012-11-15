@@ -120,7 +120,7 @@ var findRequires = function(ast) {
 // Update dependencies {{{1
 ensureChild = function(node, child) {
     if(node.children[child]) {
-        return;
+        return undefined;
     }
     if(!graph[child]) {
         graph[child] = {
@@ -139,15 +139,33 @@ update = function() {
                 ensureChild(node, 'nodejs:' + name);
             }
         }
-    })
+    });
+};
+optionalCompile = function(id) {
+    needsUpdate = false;
+    timestamp = graph[id].timestamp;
+    util.objForEach(graph[id].children, function(child) {
+        if(timestamp > graph[child].timestamp) {
+    (compilerTable[getkind(id)] || function(id) {
+        throw "cannot compile " + id;
+    })(id);
+        }
+    });
+};
+compilerTable = {};
+compilerTable.source = function(id) {
+    console.log("TODO: compile", id, platforms);
+    node = graph[id];
+    platforms = Object.keys(node.children).map(getkind);
 }
 // Main {{{1
 exports.nodemain = function() {
     init();
     timestamps();
     update();
+    require('./graph').traverseDAG(graph).forEach(optionalCompile);
     cacheGraph();
-    console.log("graph:", graph);
+//    console.log("graph:", graph);
 };
 // XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX{{{1
 // XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX{{{1
