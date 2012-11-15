@@ -1,112 +1,66 @@
-// outer: false
-// outer: true
 // outer: console
-// outer: __dirname
 // outer: exports
-var compilerTable;
-var optionalCompile;
-var update;
-var ensureChild;
-var findRequires;
-var findExports;
-var parseSource;
-var getfilename;
-var getname;
-var getkind;
-var cacheGraph;
-var timestamps;
-var init;
-var extension;
-// outer: Object
-var path;
-var set;
-var compiler;
-var util;
-var async;
-// outer: require
-var fs;
-// outer: undefined
-var graph;
+exports.nodemain = function() {
+    // outer: console
+    console.log("here");
+};
+/*
 // Initialisation {{{1
 //
-graph = undefined;
+var graph = undefined;
 // Modules {{{2
 //
-fs = require("fs");
-async = require("async");
-util = require("./util");
-compiler = require("./compiler");
-set = require("./set");
+var fs = require("fs");
+var async = require("async");
+var util = require("./util");
+var compiler = require("./compiler");
+var set = require("./set");
 //
 // Paths {{{2
 //
-path = {};
-extension = {};
+var path = {};
+var extension = {};
 // Initialisation function {{{2
-init = function() {
-    // outer: findExports
-    // outer: parseSource
-    // outer: console
-    // outer: set
-    // outer: fs
-    var sourcefiles;
-    // outer: util
-    // outer: graph
-    // outer: Object
-    // outer: extension
-    // outer: __dirname
-    // outer: path
+var init = function() {
     path.source = __dirname + "/../../lightscript/";
     path.build = path.source + "../build/";
     path.nodejs = path.build + "node/";
+    path.node = path.build + "node/";
     path.pretty = path.build + "lightscript/";
     path.js = path.build + "js/";
     // Extensions {{{3
     extension.source = ".ls";
     extension.nodejs = ".js";
+    extension.node= ".js";
     extension.js = ".js";
     extension.pretty = ".ls";
     // Make sure paths exists
     Object.keys(path).forEach(function(name) {
-        // outer: path
-        // outer: util
         util.mkdir(path[name]);
     });
     // Dependency graph {{{3
     // Load from cache {{{4
     graph = util.loadJSONSync(path.build + "build.graph", {});
     // find list of sourcefiles {{{4
-    sourcefiles = fs.readdirSync(path.source).filter(function(name) {
+    var sourcefiles = fs.readdirSync(path.source).filter(function(name) {
         return name.slice(- 3) === ".ls";
     }).map(function(name) {
         return "source:" + name.slice(0, - 3);
     });
     // add missing objects from sourcefiles {{{4
     sourcefiles.forEach(function(id) {
-        // outer: Object
-        var node;
-        // outer: findExports
-        var exports;
-        // outer: parseSource
-        var ast;
-        // outer: console
-        // outer: graph
         if(!graph[id]) {
             console.log("generate build-graph object for", id);
-            ast = parseSource(id);
-            exports = findExports(ast);
-            graph[id] = node = {children : {}, exports : exports};
+            var ast = parseSource(id);
+            var exports = findExports(ast);
+            graph[id] = var node = {children: {}, exports : exports};
         };
     });
     // remove deleted sourcefiles
     sourcefiles = set.fromArray(sourcefiles);
     Object.keys(graph).filter(function(name) {
-        // outer: util
         return util.strStartsWith(name, "source:");
     }).forEach(function(name) {
-        // outer: graph
-        // outer: util
-        // outer: sourcefiles
         if(!sourcefiles[name]) {
             util.delprop(graph, name);
         };
@@ -114,72 +68,42 @@ init = function() {
 };
 // Utility functions {{{1
 // update timestamps {{{2
-timestamps = function() {
-    // outer: util
-    // outer: getfilename
-    // outer: graph
-    // outer: Object
-    var ts;
-    ts = {};
+var timestamps = function() {
+    var ts = {};
     Object.keys(graph).forEach(function(name) {
-        // outer: graph
-        // outer: util
-        // outer: ts
-        // outer: getfilename
-        var fname;
-        fname = getfilename(name);
+        var fname = getfilename(name);
         ts[fname] = ts[fname] || util.mtime(fname);
         graph[name].timestamp = ts[fname];
     });
 };
 // write graph to cache {{{2
-cacheGraph = function() {
-    // outer: graph
-    // outer: path
-    // outer: util
+var cacheGraph = function() {
     util.saveJSON(path.build + "build.graph", graph);
 };
 // getkind {{{2
-getkind = function(id) {
+var getkind = function(id) {
     return id.split(":")[0];
 };
 // getname {{{2
-getname = function(id) {
+var getname = function(id) {
     return id.split(":")[1];
 };
 // getfilename {{{2
-getfilename = function(id) {
-    // outer: extension
-    // outer: path
-    // outer: getname
-    var name;
-    // outer: getkind
-    var kind;
-    kind = getkind(id);
-    name = getname(id);
+var getfilename = function(id) {
+    var kind = getkind(id);
+    var name = getname(id);
     return path[kind] + name + extension[kind];
 };
 // parsesource {{{2
-parseSource = function(id) {
-    // outer: compiler
-    // outer: getfilename
-    // outer: fs
-    var source;
+var parseSource = function(id) {
     // TODO: cache this for previous value (NB: add util.cacheFn(fn, cachesize))
-    source = fs.readFileSync(getfilename(id), "utf8");
+    var source = fs.readFileSync(getfilename(id), "utf8");
     return compiler.parsels(source);
 };
 // find exports in ast {{{2
-findExports = function(ast) {
-    // outer: true
-    var doIt;
-    // outer: Object
-    var acc;
-    acc = {};
-    doIt = function(ast) {
-        // outer: doIt
-        // outer: true
-        // outer: acc
+var findExports = function(ast) {
+    var acc = {};
+    var doIt = function(ast) {
         if(ast.isa("call:.=") && ast.children[0].isa("id:exports")) {
             acc[ast.children[1].val] = true;
         };
@@ -189,16 +113,9 @@ findExports = function(ast) {
     return acc;
 };
 // find requires in ast {{{2
-findRequires = function(ast) {
-    // outer: true
-    var doIt;
-    // outer: Object
-    var acc;
-    acc = {};
-    doIt = function(ast) {
-        // outer: doIt
-        // outer: true
-        // outer: acc
+var findRequires = function(ast) {
+    var acc = {};
+    var doIt = function(ast) {
         if(ast.isa("call:*()") && ast.children[0].isa("id:require")) {
             if(ast.children[1].kind === "str" && ast.children[1].val.slice(0, 2) === "./") {
                 acc[ast.children[1].val.slice(2)] = true;
@@ -211,89 +128,66 @@ findRequires = function(ast) {
 };
 // Update dependencies {{{1
 ensureChild = function(node, child) {
-    // outer: true
-    // outer: Object
-    // outer: graph
-    // outer: undefined
     if(node.children[child]) {
         return undefined;
-    };
+    }
     if(!graph[child]) {
-        graph[child] = {children : {}, timestamp : 0};
-    };
+        graph[child] = {
+            children: {},
+            timestamp: 0
+        }
+    }
     node.children[child] = true;
 };
 update = function() {
-    // outer: ensureChild
-    // outer: getname
-    // outer: getkind
-    // outer: graph
-    // outer: util
     util.objForEach(graph, function(id, node) {
-        // outer: ensureChild
-        // outer: getname
-        var name;
-        // outer: getkind
-        var kind;
         kind = getkind(id);
         name = getname(id);
-        if(kind === "source") {
+        if(kind === 'source') {
             if(node.exports.nodemain) {
-                ensureChild(node, "nodejs:" + name);
-            };
-        };
+                ensureChild(node, 'nodejs:' + name);
+            }
+        }
     });
 };
 optionalCompile = function(id) {
-    // outer: getkind
-    // outer: compilerTable
-    // outer: util
-    // outer: graph
-    var timestamp;
-    // outer: false
-    var needsUpdate;
     needsUpdate = false;
     timestamp = graph[id].timestamp;
     util.objForEach(graph[id].children, function(child) {
-        // outer: id
-        // outer: getkind
-        // outer: compilerTable
-        // outer: graph
-        // outer: timestamp
         if(timestamp > graph[child].timestamp) {
-            (compilerTable[getkind(id)] || function(id) {
-                throw "cannot compile " + id;
-            })(id);
-        };
+    (compilerTable[getkind(id)] || function(id) {
+        throw "cannot compile " + id;
+    })(id);
+        }
     });
 };
 compilerTable = {};
 compilerTable.source = function(id) {
-    // outer: getkind
-    // outer: Object
-    // outer: graph
-    var node;
-    var platforms;
-    // outer: console
     console.log("TODO: compile", id, platforms);
     node = graph[id];
+    name = getname(id);
     platforms = Object.keys(node.children).map(getkind);
-};
+    plainast = parseSource(id);
+    platforms.forEach(function(platform) {
+            var ast = compiler.applyMacros({
+                ast : plainast,
+                name : name,
+                platform : platform,
+            });
+            if(platform === "nodejs") {
+                fs.writeFileSync(path.nodejs + name + ".js", compiler.ppjs(ast));
+            } 
+        });
+}
+
 // Main {{{1
 exports.nodemain = function() {
-    // outer: cacheGraph
-    // outer: optionalCompile
-    // outer: graph
-    // outer: require
-    // outer: update
-    // outer: timestamps
-    // outer: init
     init();
     timestamps();
     update();
-    require("./graph").traverseDAG(graph).forEach(optionalCompile);
+    require('./graph').traverseDAG(graph).forEach(optionalCompile);
     cacheGraph();
-    //    console.log("graph:", graph);
+//    console.log("graph:", graph);
 };
 // XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX{{{1
 // XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX{{{1
