@@ -1,4 +1,7 @@
-exports.run = function(name) {
+exports.webapp = function(app) {
+    document.write('<canvas id="canvas" style="position:fixed;top:0px;left:0px;width:100%;height:100%;"></canvas>');
+webapp = {};
+webapp.run = function() {
     var canvas = document.getElementById("canvas");
     var ctx = canvas.getContext("2d");
     var h = ctx.height = canvas.height = canvas.offsetHeight;
@@ -9,7 +12,6 @@ exports.run = function(name) {
         h : h,
         w : w,
     };
-    var app = require("./" + name);
     if(app.init) {
         app.init(obj);
     };
@@ -20,7 +22,6 @@ exports.run = function(name) {
         app.update(obj);
     };
 };
-exports.webapp = function(arg) {
-    console.log(arg);
+return webapp;
     return exports;
 };
