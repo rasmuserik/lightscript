@@ -1,14 +1,13 @@
 // outer: window
-// outer: Object
 // outer: document
+// outer: Object
 // outer: exports
 exports.webapp = function(app) {
     // outer: window
+    // outer: document
     // outer: exports
     // outer: Object
     var webapp;
-    // outer: document
-    document.write("<canvas id=\"canvas\" style=\"position:fixed;top:0px;left:0px;width:100%;height:100%;\"></canvas>");
     webapp = {};
     webapp.run = function() {
         // outer: window
@@ -20,6 +19,10 @@ exports.webapp = function(app) {
         var ctx;
         // outer: document
         var canvas;
+        canvas = document.getElementById("canvas");
+        if(!canvas) {
+            document.write("<canvas id=\"canvas\" style=\"position:fixed;top:0px;left:0px;width:100%;height:100%;\"></canvas>");
+        };
         canvas = document.getElementById("canvas");
         ctx = canvas.getContext("2d");
         h = ctx.height = canvas.height = canvas.offsetHeight;
