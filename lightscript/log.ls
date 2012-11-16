@@ -59,7 +59,7 @@ var logfn = function(level) {
         console.log("log", level, args);
         if(api.socket) {
             api.socket.emit("log", level, args);
-        }
+        };
     };
 };
 exports.info = logfn("info");

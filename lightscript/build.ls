@@ -5,15 +5,19 @@
 // watch ls-dir which recompiles regularly
 // Initialisation {{{1
 //
-util = require('./util');
-compiler = require('./compiler');
-fs = require('fs');
-meta = undefined;
-path = {};
-extension = {};
-compiled = {};
-platforms = ['nodejs', 'webjs', 'lightscript'];
-init = function() {
+var util = require("./util");
+var compiler = require("./compiler");
+var fs = require("fs");
+var meta = undefined;
+var path = {};
+var extension = {};
+var compiled = {};
+var platforms = [
+    "nodejs",
+    "webjs",
+    "lightscript",
+];
+var init = function() {
     path.source = __dirname + "/../../lightscript/";
     path.template = __dirname + "/../../template/";
     path.build = path.source + "../build/";
@@ -31,8 +35,8 @@ init = function() {
     var sourcefiles = fs.readdirSync(path.source).filter(function(name) {
         return name.slice(- 3) === ".ls";
     }).forEach(function(name) {
-        name = name.slice(0, -3);
-        meta[name] = meta[name] || {exports: {}, webdep: {}};
+        name = name.slice(0, - 3);
+        meta[name] = meta[name] || {exports : {}, webdep : {}};
     });
 };
 // Util {{{1
@@ -42,7 +46,7 @@ var filename = function(platform, name) {
 };
 // parseSource {{{2
 var parseSource = function(id) {
-    var source = fs.readFileSync(filename('source', id), "utf8");
+    var source = fs.readFileSync(filename("source", id), "utf8");
     return compiler.parsels(source);
 };
 // find exports in ast {{{2
@@ -86,7 +90,7 @@ var compileFns = {
     nodejs : function(name, ast) {
         return compiler.ppjs(ast);
     },
-    lightscript: function(name, ast) {
+    lightscript : function(name, ast) {
         ast = compiler.applyMacros({
             ast : ast,
             name : name,
@@ -97,9 +101,9 @@ var compileFns = {
     },
 };
 // compile {{{2
-compile = function(name) {
-    console.log('Compiling', name);
-    plainast = parseSource(name);
+var compile = function(name) {
+    console.log("Compiling", name);
+    var plainast = parseSource(name);
     meta[name].exports = findExports(plainast);
     platforms.forEach(function(platform) {
         var ast = compiler.applyMacros({
@@ -110,15 +114,15 @@ compile = function(name) {
         fs.writeFileSync(filename(platform, name), compileFns[platform](name, ast));
     });
     compiled[name] = true;
-}
+};
 // optionalCompile {{{2
-optionalCompile = function(name) {
-    if(util.mtime(filename('source', name)) > util.mtime(filename('nodejs', name))) {
+var optionalCompile = function(name) {
+    if(util.mtime(filename("source", name)) > util.mtime(filename("nodejs", name))) {
         compile(name);
-    }
-}
+    };
+};
 // build apps {{{2
-buildWebApp = function(name, modules) {
+var buildWebApp = function(name, modules) {
     console.log("build webapp", name, modules);
     var apppath = "/usr/share/nginx/www/solsort/apps/" + name;
     util.mkdir(apppath);
@@ -129,56 +133,56 @@ buildWebApp = function(name, modules) {
     source += "t(modules[name]={},require);return modules[name];}return t;};";
     source += "var define=function(name,fn){modules[name]=fn};";
     modules.forEach(function(name) {
-        source += fs.readFileSync(filename('webjs', name));
+        source += fs.readFileSync(filename("webjs", name));
     });
     source += "require(\"./webapp\").run(\"" + name + "\");";
     source += "})();";
     fs.writeFile(apppath + "/webapp.js", source);
 };
-buildWebApps = function() {
-    apps = [];
+var buildWebApps = function() {
+    var apps = [];
     util.objForEach(meta, function(name, info) {
         if(info.exports.webapp) {
             apps.push(name);
-        }
+        };
     });
     apps.forEach(function(app) {
-        recompile = false;
-        visited = {};
-        deps = [app, 'webapp'];
+        var recompile = false;
+        var visited = {};
+        var deps = [app, "webapp"];
         while(deps.length) {
-            dep = deps.pop();
+            var dep = deps.pop();
             if(!visited[dep]) {
                 deps = deps.concat(Object.keys(meta[dep].webdep));
                 if(compiled[dep]) {
                     recompile = true;
-                }
+                };
                 visited[dep] = true;
-            }
-        }
+            };
+        };
         if(recompile) {
             buildWebApp(app, Object.keys(visited));
-        }
+        };
     });
-}
-compileAll = function() {
+};
+var compileAll = function() {
     compiled = {};
     Object.keys(meta).forEach(optionalCompile);
     buildWebApps();
     util.saveJSON(path.build + "build.metadata", meta);
-}
+};
 // Main {{{1
 exports.nodemain = function(arg) {
     init();
     compileAll();
-    if(arg === 'watch') {
-        watchFn = function() {
+    if(arg === "watch") {
+        var watchFn = function() {
             watcher.close();
             setTimeout(function() {
-                compileAll();
+                util.trycatch(compileAll, function(err) { console.log(err); });
                 watcher = fs.watch(path.source, watchFn);
             }, 200);
         };
-        watcher = fs.watch(path.source, watchFn);
-    }
-}
+        var watcher = fs.watch(path.source, watchFn);
+    };
+};

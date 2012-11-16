@@ -304,6 +304,8 @@ compileAll = function() {
 };
 // Main {{{1
 exports.nodemain = function(arg) {
+    // outer: console
+    // outer: util
     // outer: setTimeout
     // outer: path
     // outer: fs
@@ -315,20 +317,27 @@ exports.nodemain = function(arg) {
     compileAll();
     if(arg === "watch") {
         watchFn = function() {
+            // outer: console
             // outer: watchFn
             // outer: path
             // outer: fs
             // outer: compileAll
+            // outer: util
             // outer: setTimeout
             // outer: watcher
             watcher.close();
             setTimeout(function() {
+                // outer: console
                 // outer: watchFn
                 // outer: path
                 // outer: fs
                 // outer: watcher
                 // outer: compileAll
-                compileAll();
+                // outer: util
+                util.trycatch(compileAll, function(err) {
+                    // outer: console
+                    console.log(err);
+                });
                 watcher = fs.watch(path.source, watchFn);
             }, 200);
         };
