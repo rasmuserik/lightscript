@@ -1,7 +1,12 @@
+// outer: setTimeout
+// outer: false
 // outer: console
 // outer: true
 // outer: __dirname
 // outer: exports
+var compileAll;
+var buildWebApps;
+var buildWebApp;
 var optionalCompile;
 var compile;
 var compileFns;
@@ -12,6 +17,7 @@ var filename;
 var init;
 // outer: Array
 var platforms;
+var compiled;
 var extension;
 // outer: Object
 var path;
@@ -34,6 +40,7 @@ fs = require("fs");
 meta = undefined;
 path = {};
 extension = {};
+compiled = {};
 platforms = [
     "nodejs",
     "webjs",
@@ -49,6 +56,7 @@ init = function() {
     // outer: __dirname
     // outer: path
     path.source = __dirname + "/../../lightscript/";
+    path.template = __dirname + "/../../template/";
     path.build = path.source + "../build/";
     path.nodejs = path.build + "nodejs/";
     path.webjs = path.build + "webjs/";
@@ -168,12 +176,17 @@ compile = function(name) {
     // outer: fs
     // outer: Object
     // outer: compiler
+    // outer: true
+    // outer: compiled
     // outer: platforms
+    // outer: findExports
+    // outer: meta
     // outer: parseSource
     var plainast;
     // outer: console
     console.log("Compiling", name);
     plainast = parseSource(name);
+    meta[name].exports = findExports(plainast);
     platforms.forEach(function(platform) {
         // outer: compileFns
         // outer: filename
@@ -190,6 +203,7 @@ compile = function(name) {
         });
         fs.writeFileSync(filename(platform, name), compileFns[platform](name, ast));
     });
+    compiled[name] = true;
 };
 // optionalCompile {{{2
 optionalCompile = function(name) {
@@ -200,17 +214,126 @@ optionalCompile = function(name) {
         compile(name);
     };
 };
-// Main {{{1
-exports.nodemain = function() {
+// build apps {{{2
+buildWebApp = function(name, modules) {
+    // outer: filename
+    // outer: fs
+    var source;
     // outer: path
     // outer: util
+    var apppath;
+    // outer: console
+    console.log("build webapp", name, modules);
+    apppath = "/usr/share/nginx/www/solsort/apps/" + name;
+    util.mkdir(apppath);
+    util.cp(path.template + "webapp.html", apppath + "/index.html");
+    source = "(function(){var modules={};";
+    source += "var require=function(name){name=name.slice(2);";
+    source += "var t=modules[name];if(typeof t===\"function\"){";
+    source += "t(modules[name]={},require);return modules[name];}return t;};";
+    source += "var define=function(name,fn){modules[name]=fn};";
+    modules.forEach(function(name) {
+        // outer: filename
+        // outer: fs
+        // outer: source
+        source += fs.readFileSync(filename("webjs", name));
+    });
+    source += "require(\"./webapp\").run(\"" + name + "\");";
+    source += "})();";
+    fs.writeFile(apppath + "/webapp.js", source);
+};
+buildWebApps = function() {
+    // outer: buildWebApp
+    // outer: true
+    // outer: compiled
+    // outer: Object
+    // outer: false
+    // outer: meta
+    // outer: util
+    // outer: Array
+    var apps;
+    apps = [];
+    util.objForEach(meta, function(name, info) {
+        // outer: apps
+        if(info.exports.webapp) {
+            apps.push(name);
+        };
+    });
+    apps.forEach(function(app) {
+        // outer: buildWebApp
+        // outer: true
+        // outer: compiled
+        // outer: meta
+        var dep;
+        // outer: Array
+        var deps;
+        // outer: Object
+        var visited;
+        // outer: false
+        var recompile;
+        recompile = false;
+        visited = {};
+        deps = [app];
+        while(deps.length) {
+            dep = deps.pop();
+            if(!visited[dep]) {
+                deps = deps.concat(Object.keys(meta[dep].webdep));
+                if(compiled[dep]) {
+                    recompile = true;
+                };
+                visited[dep] = true;
+            };
+        };
+        if(recompile) {
+            buildWebApp(app, Object.keys(visited));
+        };
+    });
+};
+compileAll = function() {
+    // outer: path
+    // outer: util
+    // outer: buildWebApps
     // outer: optionalCompile
     // outer: meta
     // outer: Object
+    // outer: compiled
+    compiled = {};
+    Object.keys(meta).forEach(optionalCompile);
+    buildWebApps();
+    util.saveJSON(path.build + "build.metadata", meta);
+};
+// Main {{{1
+exports.nodemain = function(arg) {
+    // outer: setTimeout
+    // outer: path
+    // outer: fs
+    var watcher;
+    var watchFn;
+    // outer: compileAll
     // outer: init
     init();
-    Object.keys(meta).forEach(optionalCompile);
-    util.saveJSON(path.build + "build.metadata", meta);
+    compileAll();
+    if(arg === "watch") {
+        watchFn = function() {
+            // outer: watchFn
+            // outer: path
+            // outer: fs
+            // outer: compileAll
+            // outer: setTimeout
+            // outer: watcher
+            watcher.close();
+            setTimeout(function() {
+                // outer: watchFn
+                // outer: path
+                // outer: fs
+                // outer: watcher
+                // outer: compileAll
+                compileAll();
+                watcher = fs.watch(path.source, watchFn);
+            }, 200);
+        };
+        watcher = fs.watch(path.source, watchFn);
+    };
 };
 /*
 // XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX{{{1

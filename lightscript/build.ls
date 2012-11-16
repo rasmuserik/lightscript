@@ -11,9 +11,11 @@ fs = require('fs');
 meta = undefined;
 path = {};
 extension = {};
+compiled = {};
 platforms = ['nodejs', 'webjs', 'lightscript'];
 init = function() {
     path.source = __dirname + "/../../lightscript/";
+    path.template = __dirname + "/../../template/";
     path.build = path.source + "../build/";
     path.nodejs = path.build + "nodejs/";
     path.webjs = path.build + "webjs/";
@@ -98,6 +100,7 @@ var compileFns = {
 compile = function(name) {
     console.log('Compiling', name);
     plainast = parseSource(name);
+    meta[name].exports = findExports(plainast);
     platforms.forEach(function(platform) {
         var ast = compiler.applyMacros({
             ast : plainast,
@@ -106,6 +109,7 @@ compile = function(name) {
         });
         fs.writeFileSync(filename(platform, name), compileFns[platform](name, ast));
     });
+    compiled[name] = true;
 }
 // optionalCompile {{{2
 optionalCompile = function(name) {
@@ -113,11 +117,70 @@ optionalCompile = function(name) {
         compile(name);
     }
 }
-// Main {{{1
-exports.nodemain = function() {
-    init();
+// build apps {{{2
+buildWebApp = function(name, modules) {
+    console.log("build webapp", name, modules);
+    var apppath = "/usr/share/nginx/www/solsort/apps/" + name;
+    util.mkdir(apppath);
+    util.cp(path.template + "webapp.html", apppath + "/index.html");
+    var source = "(function(){var modules={};";
+    source += "var require=function(name){name=name.slice(2);";
+    source += "var t=modules[name];if(typeof t===\"function\"){";
+    source += "t(modules[name]={},require);return modules[name];}return t;};";
+    source += "var define=function(name,fn){modules[name]=fn};";
+    modules.forEach(function(name) {
+        source += fs.readFileSync(filename('webjs', name));
+    });
+    source += "require(\"./webapp\").run(\"" + name + "\");";
+    source += "})();";
+    fs.writeFile(apppath + "/webapp.js", source);
+};
+buildWebApps = function() {
+    apps = [];
+    util.objForEach(meta, function(name, info) {
+        if(info.exports.webapp) {
+            apps.push(name);
+        }
+    });
+    apps.forEach(function(app) {
+        recompile = false;
+        visited = {};
+        deps = [app];
+        while(deps.length) {
+            dep = deps.pop();
+            if(!visited[dep]) {
+                deps = deps.concat(Object.keys(meta[dep].webdep));
+                if(compiled[dep]) {
+                    recompile = true;
+                }
+                visited[dep] = true;
+            }
+        }
+        if(recompile) {
+            buildWebApp(app, Object.keys(visited));
+        }
+    });
+}
+compileAll = function() {
+    compiled = {};
     Object.keys(meta).forEach(optionalCompile);
+    buildWebApps();
     util.saveJSON(path.build + "build.metadata", meta);
+}
+// Main {{{1
+exports.nodemain = function(arg) {
+    init();
+    compileAll();
+    if(arg === 'watch') {
+        watchFn = function() {
+            watcher.close();
+            setTimeout(function() {
+                compileAll();
+                watcher = fs.watch(path.source, watchFn);
+            }, 200);
+        };
+        watcher = fs.watch(path.source, watchFn);
+    }
 }
 /*
 // XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX{{{1

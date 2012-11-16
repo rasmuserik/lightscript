@@ -1,8 +1,9 @@
 // outer: window
-// outer: require
 // outer: Object
 // outer: document
 // outer: exports
+// outer: require
+require("./webapp");
 exports.run = function(name) {
     // outer: window
     // outer: require
