@@ -3,8 +3,121 @@
 // cached dependency graph for app-generation
 //
 // watch ls-dir which recompiles regularly
+// Initialisation {{{1
+//
+util = require('./util');
+compiler = require('./compiler');
+fs = require('fs');
+meta = undefined;
+path = {};
+extension = {};
+platforms = ['nodejs', 'webjs', 'lightscript'];
+init = function() {
+    path.source = __dirname + "/../../lightscript/";
+    path.build = path.source + "../build/";
+    path.nodejs = path.build + "nodejs/";
+    path.webjs = path.build + "webjs/";
+    path.lightscript = path.build + "lightscript/";
+    extension.source = ".ls";
+    extension.nodejs = ".js";
+    extension.webjs = ".js";
+    extension.lightscript = ".ls";
+    Object.keys(path).forEach(function(name) {
+        util.mkdir(path[name]);
+    });
+    meta = util.loadJSONSync(path.build + "build.metadata", {});
+    var sourcefiles = fs.readdirSync(path.source).filter(function(name) {
+        return name.slice(- 3) === ".ls";
+    }).forEach(function(name) {
+        name = name.slice(0, -3);
+        meta[name] = meta[name] || {exports: {}, webdep: {}};
+    });
+};
+// Util {{{1
+// filename {{{2
+var filename = function(platform, name) {
+    return path[platform] + name + extension[platform];
+};
+// parseSource {{{2
+var parseSource = function(id) {
+    var source = fs.readFileSync(filename('source', id), "utf8");
+    return compiler.parsels(source);
+};
+// find exports in ast {{{2
+var findExports = function(ast) {
+    var acc = {};
+    var doIt = function(ast) {
+        if(ast.isa("call:.=") && ast.children[0].isa("id:exports")) {
+            acc[ast.children[1].val] = true;
+        };
+        ast.children.forEach(doIt);
+    };
+    doIt(ast);
+    return acc;
+};
+// find requires in ast {{{2
+var findRequires = function(ast) {
+    var acc = {};
+    var doIt = function(ast) {
+        if(ast.isa("call:*()") && ast.children[0].isa("id:require")) {
+            if(ast.children[1].kind === "str" && ast.children[1].val.slice(0, 2) === "./") {
+                acc[ast.children[1].val.slice(2)] = true;
+            };
+        };
+        ast.children.forEach(doIt);
+    };
+    doIt(ast);
+    return acc;
+};
+// Compile {{{1
+// compileFns {{{2
+var compileFns = {
+    webjs : function(name, ast) {
+        var src = "define(\"";
+        src += name;
+        src += "\",function(exports, require){\n";
+        src += compiler.ppjs(ast);
+        src += "});";
+        meta[name].webdep = findRequires(ast);
+        return src;
+    },
+    nodejs : function(name, ast) {
+        return compiler.ppjs(ast);
+    },
+    lightscript: function(name, ast) {
+        ast = compiler.applyMacros({
+            ast : ast,
+            name : name,
+            platform : "lightscript",
+            reverse : true,
+        });
+        return compiler.ppls(ast);
+    },
+};
+// compile {{{2
+compile = function(name) {
+    console.log('Compiling', name);
+    plainast = parseSource(name);
+    platforms.forEach(function(platform) {
+        var ast = compiler.applyMacros({
+            ast : plainast,
+            name : name,
+            platform : platform,
+        });
+        fs.writeFileSync(filename(platform, name), compileFns[platform](name, ast));
+    });
+}
+// optionalCompile {{{2
+optionalCompile = function(name) {
+    if(util.mtime(filename('source', name)) > util.mtime(filename('nodejs', name))) {
+        compile(name);
+    }
+}
+// Main {{{1
 exports.nodemain = function() {
-    console.log('here');
+    init();
+    Object.keys(meta).forEach(optionalCompile);
+    util.saveJSON(path.build + "build.metadata", meta);
 }
 /*
 // XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX{{{1
