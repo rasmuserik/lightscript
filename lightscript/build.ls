@@ -179,7 +179,9 @@ exports.nodemain = function(arg) {
         var watchFn = function() {
             watcher.close();
             setTimeout(function() {
-                util.trycatch(compileAll, function(err) { console.log(err); });
+                util.trycatch(compileAll, function(err) {
+                    console.log(err);
+                });
                 watcher = fs.watch(path.source, watchFn);
             }, 200);
         };
