@@ -57,7 +57,9 @@ var logfn = function(level) {
     return function() {
         var args = Array.prototype.slice.call(arguments, 0);
         console.log("log", level, args);
-        api.socket.emit("log", level, args);
+        if(api.socket) {
+            api.socket.emit("log", level, args);
+        }
     };
 };
 exports.info = logfn("info");

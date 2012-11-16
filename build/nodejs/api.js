@@ -81,4 +81,23 @@ if(true) {
 // # client
 if(true) {
     exports.socket = require("socket.io-client").connect("http://localhost:8888");
-} else if(undefined) {};
+} else if(undefined && window.io) {
+    exports.clientid = window.solsortapi_clientid;
+    if(!exports.clientid) {
+        exports.clientid = cookieId(document.cookie);
+    } else  {
+        document.cookie = cookieIdStr(exports.clientid);
+    };
+    if(location.hostname.slice(- 9) === "localhost") {
+        exports.socket = window.io.connect("http://localhost:8888");
+    } else  {
+        exports.socket = window.io.connect("http://api.solsort.com");
+    };
+    exports.socket.on("solsortapi_clientid", function(id) {
+        // outer: cookieIdStr
+        // outer: document
+        // outer: exports
+        exports.clientid = id;
+        document.cookie = cookieIdStr(id);
+    });
+};

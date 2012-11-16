@@ -1,9 +1,9 @@
+// outer: console
 // outer: window
+// outer: require
 // outer: Object
 // outer: document
 // outer: exports
-// outer: require
-require("./webapp");
 exports.run = function(name) {
     // outer: window
     // outer: require
@@ -38,4 +38,9 @@ exports.run = function(name) {
         app.update(obj);
     };
 };
-exports.webapp = function() {};
+exports.webapp = function(arg) {
+    // outer: exports
+    // outer: console
+    console.log(arg);
+    return exports;
+};

@@ -5,6 +5,5 @@ exports.run = function(name) {
     // outer: require
     // outer: console
     console.log("webapp", name);
-    require("./" + name).webmain();
+    require("./" + name).webapp.run();
 };
-exports.webapp = function() {};

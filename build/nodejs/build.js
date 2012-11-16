@@ -273,7 +273,7 @@ buildWebApps = function() {
         var recompile;
         recompile = false;
         visited = {};
-        deps = [app];
+        deps = [app, "webapp"];
         while(deps.length) {
             dep = deps.pop();
             if(!visited[dep]) {

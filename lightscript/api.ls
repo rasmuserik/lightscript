@@ -37,7 +37,7 @@ if(`compiler.nodejs) {
 // # client
 if(`compiler.nodejs) {
     exports.socket = require("socket.io-client").connect("http://localhost:8888");
-} else if(`compiler.webjs) {
+} else if(`compiler.webjs && window.io) {
     exports.clientid = window.solsortapi_clientid;
     if(!exports.clientid) {
         exports.clientid = cookieId(document.cookie);

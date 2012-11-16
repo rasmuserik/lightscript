@@ -145,7 +145,7 @@ buildWebApps = function() {
     apps.forEach(function(app) {
         recompile = false;
         visited = {};
-        deps = [app];
+        deps = [app, 'webapp'];
         while(deps.length) {
             dep = deps.pop();
             if(!visited[dep]) {
