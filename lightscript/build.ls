@@ -182,4 +182,3 @@ exports.nodemain = function(arg) {
         watcher = fs.watch(path.source, watchFn);
     }
 }
-/*
