@@ -5,6 +5,24 @@ This language is in development and heavy flux, no need to look at it yet.
 
 Code also interspersed with other projects.
 
+# Version 3
+
+Based on version 2, but limited to base library for compiler etc.
+
+- Types
+    - Dictionary (ie. Java Hashmap, Python Dict, JavaScript Object, ....)
+    - Array (ie. Java Vector, Python Array, JavaScript Object, ...)
+    - Number (ie. Java double/int-number-wrapper, python number, JavaScript Number, ...)
+    - Function (ie. Java custom class, Python function w default value, js function, ...)
+    - Class (ie. Java Class, Python class, JavaScript prototype object, ...)
+    - Tuple (ie. Java Object Array, Python tuple, JavaScript array, ...)
+
+
+## Second milestone Types
+### Class
+### Tuple
+### Int
+
 # LightScript Language
 
 Intended Features:
