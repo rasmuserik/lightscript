@@ -17,6 +17,7 @@ Based on version 2, but limited to base library for compiler etc.
     - Class (ie. Java Class, Python class, JavaScript prototype object, ...)
     - ( Tuple (ie. Java Object Array, Python tuple, JavaScript array, ...) )
     - ( Integral types (int, byte, ...) )
+    - ( range/yield )
 - Library
     - file (filesystem)
     - net (a la socket.io, ...)
@@ -27,10 +28,25 @@ Based on version 2, but limited to base library for compiler etc.
     - Math
     - RegExp
 - Platforms
+    - prettyprint
     - JavaScript
     - Java
     - Python
-    - (C)
+    - C
+- Language (restrictions from JavaScript, in initial version, waiting for other targets + macro system)
+    - distinction between `foo.bar` as prototype-access (static), and `foo["bar"]` as dictionary/array-access.
+    - class-patterns: `X = function(...}; X.prototype.foo = function...` is method definition and only allowed place for `this`. `X` must be static.
+    - module-pattern: `modulename = require("./modulename");` is only way to access modules.
+    - only `"` for strings, `'` is going to be used for quote later on.
+    - control-structures: if-else, while, `&&`, `||`
+    - `return` only allowed in function-top-scope (to be implemented generally later)
+- AST (`kind`, `val`, `children`, `type`, `pos`)
+    - `kind`: `id`, `str`, `note`, `num`, `call`, `fn`, `control`, `assign`, (`quote`, `unquote`)
+    - fn: `val` is number of parameters, `children` contains parameters, then body
+    - note: `val` is note/comment-string, `children` is node the note concerns
+    - control: `|| p v`, `&& p v`, `?: p v v`, `if-else (p v)* v?`, `if-body v*` only in if-else-children, `while p v*`
+    - assign: `val` is id as in id, child is value to assign
+    - (unquote: val is optional compiletime result as json)
 
 # LightScript Language
 
