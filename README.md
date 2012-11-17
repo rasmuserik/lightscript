@@ -15,13 +15,22 @@ Based on version 2, but limited to base library for compiler etc.
     - Number (ie. Java double/int-number-wrapper, python number, JavaScript Number, ...)
     - Function (ie. Java custom class, Python function w default value, js function, ...)
     - Class (ie. Java Class, Python class, JavaScript prototype object, ...)
-    - Tuple (ie. Java Object Array, Python tuple, JavaScript array, ...)
-
-
-## Second milestone Types
-### Class
-### Tuple
-### Int
+    - ( Tuple (ie. Java Object Array, Python tuple, JavaScript array, ...) )
+    - ( Integral types (int, byte, ...) )
+- Library
+    - file (filesystem)
+    - net (a la socket.io, ...)
+    - storage (key-value-store)
+    - system (fork, webworker/cluster/..., ...)
+    - http(s)-client+server
+    - uuid
+    - Math
+    - RegExp
+- Platforms
+    - JavaScript
+    - Java
+    - Python
+    - (C)
 
 # LightScript Language
 
