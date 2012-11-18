@@ -191,11 +191,84 @@ exports.tokenise = tokenise = function(buffer, filename) {
 // ...
 // infix("/", 500)
 // ...
+
+infix = function(id, bp, nospace) { };
+infixr = function(id, bp) {};
+list = function(id, rparen, bp) {};
+prefix = function(id, bp, nospace) {};
+rparen = function(id) {};
+sep = function(id) {};
+special = function(id, opt) {};
+defaultToken = function(id) {};
+
+blockpp = infixlistpp = undefined;
+// Syntax definition {{{2
+table = {
+    ".": [infix, 1200, {nospace: true}],
+    "[": [list, 1200, {rparen: "]"}],
+    "*[]": [special, 1200, {pp : infixlistpp}],
+    "]": [rparen],
+    "(": [list, 1200, {rparen: ")"}],
+    "*()": [special, 1200, {pp : infixlistpp}],
+    ")": [rparen],
+    "{": [list, "}", 1100],
+    "*{}": [special, 1200, {pp : blockpp}],
+    "}": [rparen],
+    "#": [prefix, 1000, {nospace: true}],
+    "@": [prefix, 1000, {nospace: true}],
+    "++": [prefix, 1000, {nospace: true}],
+    "--": [prefix, 1000, {nospace: true}],
+    "!": [prefix, 1000, {nospace: true}],
+    "~": [prefix, 1000, {nospace: true}],
+    "`": [prefix, 1000, {nospace: true}],
+    "*": [infix, 900],
+    "/": [infix, 900],
+    "%": [infix, 900],
+    "-": [infix, 800],
+    "+": [infix, 800],
+    ">>>": [infix, 700],
+    ">>": [infix, 700],
+    "<<": [infix, 700],
+    "<=": [infix, 600],
+    ">=": [infix, 600],
+    ">": [infix, 600],
+    "<": [infix, 600],
+    "==": [infix, 500],
+    "!=": [infix, 500],
+    "!==": [infix, 500],
+    "===": [infix, 500],
+    "^": [infix, 400],
+    "|": [infix, 400],
+    "&": [infix, 400],
+    "&&": [infix, 300],
+    "||": [infix, 300],
+    ":": [infixr, 200],
+    "?": [infixr, 200],
+    "else": [infixr, 200],
+    "=": [infixr, 100],
+    ",": [sep],
+    ";": [sep],
+    "constructor": [defaultToken],
+    "valueOf": [defaultToken],
+    "toString": [defaultToken],
+    "toLocaleString": [defaultToken],
+    "hasOwnProperty": [defaultToken],
+    "isPrototypeOf": [defaultToken],
+    "propertyIsEnumerable": [defaultToken],
+    "return": [prefix],
+    "throw": [prefix],
+    "new": [prefix],
+    "typeof": [prefix],
+    "var": [prefix],
+    "str:": [defaultToken],
+    "note:": [sep], 
+}
+
 // Main for testing {{{1
 exports.nodemain = function(file) {
     file = file || "lightscript3";
     source = require("fs").readFileSync(__dirname + "/../../lightscript/" + file + ".ls", "utf8");
     tokens = tokenise(source);
-    ast = parse(tokens);
+//    ast = parse(tokens);
 };
 
