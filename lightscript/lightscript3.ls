@@ -193,7 +193,7 @@ exports.tokenise = tokenise = function(buffer, filename) {
 // ...
 // Main for testing {{{1
 exports.nodemain = function(file) {
-    file = file || "tokeniser";
+    file = file || "lightscript3";
     source = require("fs").readFileSync(__dirname + "/../../lightscript/" + file + ".ls", "utf8");
     tokens = tokenise(source);
     ast = parse(tokens);
