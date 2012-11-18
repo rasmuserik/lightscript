@@ -1,11 +1,35 @@
-Token = function(kind, val pos) {
+// Ast {{{1
+Ast = function(kind, val, children, opt) {
     this.kind = kind;
     this.val = val;
-    this.pos = pos;
+    this.children = children || [];
+    this.opt = opt || {};
+};
+Ast.prototype.create = function(kind, val, children) {
+    return new Ast(kind, val, children, this.opt);
+};
+Ast.prototype.isa = function(kindval) {
+    split = kindval.indexOf(":");
+    kind = kindval.slice(0, split);
+    val = kindval.slice(split + 1);
+    return this.kind === kind && this.val === val;
+};
+Ast.prototype.deepCopy = function() {
+    return new Ast(this.kind, this.val, this.children.map(function(child) {
+        return child.deepCopy();
+    }), this.opt);
+};
+Ast.prototype.toList = function() {
+    var result = this.children.map(function(node) {
+        return node.toList();
+    });
+    result.unshift(this.kind + ":" + this.val);
+    return result;
+};
+Ast.prototype.toString = function() {
+    return JSON.stringify(this.toList());
 }
-Token.prototype.toString = function() {
-    return JSON.stringify(this.val).slice(1, -1) + " : " + this.kind + "@" + this.pos.start.line;
-}
+// Tokeniser {{{1
 BufferPos = function(line, pos) {
     this.line = line;
     this.pos = pos;
@@ -53,7 +77,7 @@ exports.tokenise = tokenise = function(buffer, filename) {
         start = new BufferPos(lineno, pos - newlinePos);
     };
     var newToken = function(kind, val) {
-        return new Token(kind, val, new TokenPos(start, new BufferPos(lineno, pos - newlinePos), bufferDescr));
+        return new Ast(kind, val, [], {pos: new TokenPos(start, new BufferPos(lineno, pos - newlinePos), bufferDescr)});
     };
     var next = function() {
         var whitespace = " \t\r\n";
@@ -142,10 +166,36 @@ exports.tokenise = tokenise = function(buffer, filename) {
     };
     return tokens;
 };
-
+// Parser {{{1
+//
+// implementation sketch:
+//
+// table: {
+//    'foo': {
+//    led: function...
+//    nud: function...
+//    ...
+//    }
+// }
+// ... 
+// led = function(node) {
+//   obj = lookup(node);
+//   return obj["led"](node, obj);
+// }
+// ...
+// infix = function(id, bp) {
+//  table[id] = {}
+//  table[id].bp = bp;
+//  table[id].led = ...
+// }
+// ...
+// infix("/", 500)
+// ...
 // Main for testing {{{1
 exports.nodemain = function(file) {
     file = file || "tokeniser";
     source = require("fs").readFileSync(__dirname + "/../../lightscript/" + file + ".ls", "utf8");
     tokens = tokenise(source);
+    ast = parse(tokens);
 };
+
