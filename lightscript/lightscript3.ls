@@ -233,6 +233,8 @@ SyntaxObj.prototype.led = function(left) {
         ast.val = "*" + ast.val + paren;
         ast.children = [left];
         readList(paren, ast);
+    } else if(this.opt["noinfix"]) {
+        throw(ast + " must not occur as infix.");
     } else {
         ast.children = [left, parseExpr(this.bp - this.opt["dbp"])];
     }
