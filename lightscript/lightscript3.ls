@@ -1,7 +1,13 @@
+// Util {{{1
+extend = function(obj, data) {
+    Object.keys(data).forEach(function(key) {
+        obj[key] = data[key];
+    });
+}
 // Ast {{{1
 Ast = function(kind, val, children, opt) {
     this.kind = kind;
-    this.val = val;
+    this.val = val || "";
     this.children = children || [];
     this.opt = opt || {};
 };
@@ -158,11 +164,10 @@ exports.tokenise = tokenise = function(buffer, filename) {
         return result;
     };
     var tokens = [];
-    var token = next();
-    while(token) {
-        console.log("" + token);
-        tokens.push(token);
-        token = next();
+    var currentToken = next();
+    while(currentToken) {
+        tokens.push(currentToken);
+        currentToken = next();
     };
     return tokens;
 };
@@ -192,14 +197,85 @@ exports.tokenise = tokenise = function(buffer, filename) {
 // infix("/", 500)
 // ...
 
-infix = function(id, bp, nospace) { };
-infixr = function(id, bp) {};
-list = function(id, rparen, bp) {};
-prefix = function(id, bp, nospace) {};
-rparen = function(id) {};
-sep = function(id) {};
-special = function(id, opt) {};
-defaultToken = function(id) {};
+// Syntax object{{{2
+
+SyntaxObj = function(ast) {
+    this.ast = ast;
+    syntaxData = table[ast.kind + ":"] || table[ast.value] || (ast.val && table[ast.val[ast.val.length - 1]]) || table["default:"];
+    this.bp = syntaxData[1] || 0;
+    opt = syntaxData[3];
+    if(!opt) {
+        syntaxData[3] = opt = {};
+        extend(opt, defaultToken);
+        extend(opt, syntaxData[0]);
+        extend(opt, syntaxData[2] || {});
+    }
+    this.opt = opt;
+};
+SyntaxObj.prototype.led = function(left) {
+    this.ast.children = [left, parseExpr(this.bp - this.opt["dbp"])];
+}
+SyntaxObj.prototype.nud = function() {
+    return this.opt["nud"](this);
+}
+SyntaxObj.prototype.sep = function() {
+    return this.opt["sep"];
+}
+SyntaxObj.prototype.pp = function() {
+    return this.opt["pp"]();
+}
+// Parser {{{2
+token = undefined;
+nextToken = undefined;
+var parseExpr = function(rbp) {
+    rbp = rbp || 0;
+    var t = token;
+    nextToken();
+    t.nud();
+    var left = t;
+    while(rbp < token.bp && !t.sep()) {
+        t = token;
+        nextToken();
+        t.led(left.ast);
+        left = t;
+    };
+    return left.ast;
+};
+parse = function(tokens) {
+    var pos = 0;
+    nextToken = function() {
+        if(pos < tokens.length) {
+            ast = tokens[pos];
+            ++pos;
+        } else {
+            ast = new Ast("eof");
+        }
+        token = new SyntaxObj(ast);
+        return token;
+    };
+    nextToken();
+    var result = [];
+    while(token.ast.kind !== "eof") {
+        result.push(parseExpr());
+    };
+    return result;
+};
+
+
+// 
+infix = {};
+infixr = {};
+list = {};
+prefix = {};
+rparen = {};
+sep = {};
+special = {};
+defaultToken = {
+    led: function(left) {},
+    nud: function() {},
+    pp: function() {},
+    dbp: 0,
+};
 
 blockpp = infixlistpp = undefined;
 // Syntax definition {{{2
@@ -211,7 +287,7 @@ table = {
     "(": [list, 1200, {rparen: ")"}],
     "*()": [special, 1200, {pp : infixlistpp}],
     ")": [rparen],
-    "{": [list, "}", 1100],
+    "{": [list, 1100, {rparen: "}"}],
     "*{}": [special, 1200, {pp : blockpp}],
     "}": [rparen],
     "#": [prefix, 1000, {nospace: true}],
@@ -262,6 +338,8 @@ table = {
     "var": [prefix],
     "str:": [defaultToken],
     "note:": [sep], 
+    "default:": [defaultToken],
+    "eof:": [rparen],
 }
 
 // Main for testing {{{1
@@ -269,6 +347,7 @@ exports.nodemain = function(file) {
     file = file || "lightscript3";
     source = require("fs").readFileSync(__dirname + "/../../lightscript/" + file + ".ls", "utf8");
     tokens = tokenise(source);
-//    ast = parse(tokens);
+    asts = parse(tokens);
+    console.log(asts.join("\n"));
 };
 
