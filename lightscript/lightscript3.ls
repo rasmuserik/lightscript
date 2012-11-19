@@ -1,20 +1,20 @@
 // Util {{{1
-extend = function(obj, data) {
+var extend = function(obj, data) {
     Object.keys(data).forEach(function(key) {
         obj[key] = data[key];
     });
-}
-union = function(obj, obj2) {
-    result = {};
+};
+var union = function(obj, obj2) {
+    var result = {};
     Object.keys(obj).forEach(function(key) {
         result[key] = obj[key];
     });
     Object.keys(obj2).forEach(function(key) {
         result[key] = obj2[key];
     });
-}
+};
 // Ast {{{1
-Ast = function(kind, val, children, opt) {
+var Ast = function(kind, val, children, opt) {
     this.kind = kind;
     this.val = val || "";
     this.children = children || [];
@@ -24,9 +24,9 @@ Ast.prototype.create = function(kind, val, children) {
     return new Ast(kind, val, children, this.opt);
 };
 Ast.prototype.isa = function(kindval) {
-    split = kindval.indexOf(":");
-    kind = kindval.slice(0, split);
-    val = kindval.slice(split + 1);
+    var split = kindval.indexOf(":");
+    var kind = kindval.slice(0, split);
+    var val = kindval.slice(split + 1);
     return this.kind === kind && this.val === val;
 };
 Ast.prototype.deepCopy = function() {
@@ -43,27 +43,27 @@ Ast.prototype.toList = function() {
 };
 Ast.prototype.toString = function() {
     return JSON.stringify(this.toList());
-}
+};
 // Tokeniser {{{1
-BufferPos = function(line, pos) {
+var BufferPos = function(line, pos) {
     this.line = line;
     this.pos = pos;
-}
-BufferDescr = function(data, filename) {
+};
+var BufferDescr = function(data, filename) {
     this.filename = filename;
     this.data = data;
-}
-TokenPos = function(start, end, buffer) {
+};
+var TokenPos = function(start, end, buffer) {
     this.start = start;
     this.end = end;
     //this.buffer = buffer;
-}
-exports.tokenise = tokenise = function(buffer, filename) {
+};
+exports.tokenise = var tokenise = function(buffer, filename) {
     var pos = 0;
     var lineno = 1;
     var newlinePos = 0;
-    bufferDescr = new BufferDescr(buffer, filename);
-    var start = new BufferPos(0,0);
+    var bufferDescr = new BufferDescr(buffer, filename);
+    var start = new BufferPos(0, 0);
     var one_of = function(str) {
         return str.indexOf(peek()) !== - 1;
     };
@@ -81,7 +81,7 @@ exports.tokenise = tokenise = function(buffer, filename) {
         var result = buffer.slice(pos, pos + n);
         result.split("").forEach(function(c) {
             if(c === "\n") {
-                ++lineno; 
+                ++lineno;
                 newlinePos = pos;
             };
         });
@@ -92,7 +92,7 @@ exports.tokenise = tokenise = function(buffer, filename) {
         start = new BufferPos(lineno, pos - newlinePos);
     };
     var newToken = function(kind, val) {
-        return new Ast(kind, val, [], {pos: new TokenPos(start, new BufferPos(lineno, pos - newlinePos), bufferDescr)});
+        return new Ast(kind, val, [], {pos : new TokenPos(start, new BufferPos(lineno, pos - newlinePos), bufferDescr)});
     };
     var next = function() {
         var whitespace = " \t\r\n";
@@ -108,7 +108,7 @@ exports.tokenise = tokenise = function(buffer, filename) {
         };
         begin_token();
         if(peek() === "") {
-            result = undefined;
+            var result = undefined;
         } else if(starts_with("//")) {
             s = "";
             while(peek() && peek() !== "\n") {
@@ -132,8 +132,8 @@ exports.tokenise = tokenise = function(buffer, filename) {
                     c = pop();
                     c = ({
                         n : "\n",
-                      r : "\r",
-                      t : "\t",
+                        r : "\r",
+                        t : "\t",
                     })[c] || c;
                 };
                 s += c;
@@ -205,51 +205,52 @@ exports.tokenise = tokenise = function(buffer, filename) {
 // ...
 // infix("/", 500)
 // ...
-
 // Syntax Util {{{2
-readList = function(paren, ast) {
+var readList = function(paren, ast) {
     while(!token.opt["rparen"]) {
         ast.children.push(parseExpr());
-    }
+    };
     if(token.ast.val !== paren) {
-        throw JSON.stringify({err: "paren mismatch", start: ast, end: token.ast});
-    }
+        throw JSON.stringify({
+            err : "paren mismatch",
+            start : ast,
+            end : token.ast,
+        });
+    };
     nextToken();
 };
-
-blockpp = infixlistpp = undefined;
+var blockpp = var infixlistpp = undefined;
 // Syntax object {{{2
-
-SyntaxObj = function(ast) {
+var SyntaxObj = function(ast) {
     this.ast = ast;
-    syntaxData = table[ast.kind + ":"] || table[ast.value] || (ast.val && table[ast.val[ast.val.length - 1]]) || table["default:"];
+    var syntaxData = table[ast.kind + ":"] || table[ast.value] || (ast.val && table[ast.val[ast.val.length - 1]]) || table["default:"];
     this.bp = syntaxData[0] || 0;
     this.opt = syntaxData[1] || {};
 };
 SyntaxObj.prototype.led = function(left) {
-    ast = this.ast;
+    var ast = this.ast;
     if(this.opt["paren"]) {
-        paren = this.opt["paren"];
+        var paren = this.opt["paren"];
         ast.val = "*" + ast.val + paren;
         ast.children = [left];
         readList(paren, ast);
     } else if(this.opt["noinfix"]) {
-        throw(ast + " must not occur as infix.");
-    } else {
+        throw ast + " must not occur as infix.";
+    } else  {
         ast.children = [left, parseExpr(this.bp - this.opt["dbp"])];
-    }
-}
+    };
+};
 SyntaxObj.prototype.nud = function() {
     if(this.opt["paren"]) {
         readList(this.opt["paren"], this.ast);
-    }
-}
+    };
+};
 SyntaxObj.prototype.pp = function() {
     return this.opt["pp"]();
-}
+};
 // Parser {{{2
-token = undefined;
-nextToken = undefined;
+var token = undefined;
+var nextToken = undefined;
 var parseExpr = function(rbp) {
     rbp = rbp || 0;
     var t = token;
@@ -264,15 +265,15 @@ var parseExpr = function(rbp) {
     };
     return left.ast;
 };
-parse = function(tokens) {
+var parse = function(tokens) {
     var pos = 0;
     nextToken = function() {
         if(pos < tokens.length) {
-            ast = tokens[pos];
+            var ast = tokens[pos];
             ++pos;
-        } else {
+        } else  {
             ast = new Ast("eof");
-        }
+        };
         token = new SyntaxObj(ast);
         return token;
     };
@@ -283,78 +284,74 @@ parse = function(tokens) {
     };
     return result;
 };
-
-
 // Syntax definition {{{2
-table = {
-    ".": [1200, {nospace: true}],
-    "[": [1200, {paren: "]"}],
-    "*[]": [1200, {pp : infixlistpp}],
-    "(": [1200, {paren: ")"}],
-    "*()": [1200, {pp: infixlistpp}],
-    "{": [1100, {paren: "}"}],
-    "*{}": [1200, {pp: blockpp}],
-    "#": [1000, {nospace: true, noinfix: true}],
-    "@": [1000, {nospace: true, noinfix: true}],
-    "++": [1000, {nospace: true, noinfix: true}],
-    "--": [1000, {nospace: true, noinfix: true}],
-    "!": [1000, {nospace: true, noinfix: true}],
-    "~": [1000, {nospace: true, noinfix: true}],
-    "`": [1000, {nospace: true, noinfix: true}],
-    "*": [900],
-    "/": [900],
-    "%": [900],
-    "-": [800],
-    "+": [800],
-    ">>>": [700],
-    ">>": [700],
-    "<<": [700],
-    "<=": [600],
-    ">=": [600],
-    ">": [600],
-    "<": [600],
-    "==": [500],
-    "!=": [500],
-    "!==": [500],
-    "===": [500],
-    "^": [400],
-    "|": [400],
-    "&": [400],
-    "&&": [300],
-    "||": [300],
-    ":": [200, {dbp: 1}],
-    "?": [200, {dbp: 1}],
-    "else": [200, {dbp: 1}],
-    "=": [100, {dbp: 1}],
-    ",": [0, {sep: true}],
-    ";": [0, {sep: true}],
-    "note:": [0, {sep:true}], 
-    "]": [0, {rparen: true}],
-    ")": [0, {rparen: true}],
-    "}": [0, {rparen: true}],
-    "eof:": [0, {rparen:true}],
-    "constructor": [],
-    "valueOf": [],
-    "toString": [],
-    "toLocaleString": [],
-    "hasOwnProperty": [],
-    "isPrototypeOf": [],
-    "propertyIsEnumerable": [],
-    "return": [],
-    "throw": [],
-    "new": [],
-    "typeof": [],
-    "var": [],
-    "str:": [],
-    "default:": [],
-}
-
+var table = {
+    "." : [1200, {nospace : true}],
+    "[" : [1200, {paren : "]"}],
+    "*[]" : [1200, {pp : infixlistpp}],
+    "(" : [1200, {paren : ")"}],
+    "*()" : [1200, {pp : infixlistpp}],
+    "{" : [1100, {paren : "}"}],
+    "*{}" : [1200, {pp : blockpp}],
+    "#" : [1000, {nospace : true, noinfix : true}],
+    "@" : [1000, {nospace : true, noinfix : true}],
+    "++" : [1000, {nospace : true, noinfix : true}],
+    "--" : [1000, {nospace : true, noinfix : true}],
+    "!" : [1000, {nospace : true, noinfix : true}],
+    "~" : [1000, {nospace : true, noinfix : true}],
+    "`" : [1000, {nospace : true, noinfix : true}],
+    "*" : [900],
+    "/" : [900],
+    "%" : [900],
+    "-" : [800],
+    "+" : [800],
+    ">>>" : [700],
+    ">>" : [700],
+    "<<" : [700],
+    "<=" : [600],
+    ">=" : [600],
+    ">" : [600],
+    "<" : [600],
+    "==" : [500],
+    "!=" : [500],
+    "!==" : [500],
+    "===" : [500],
+    "^" : [400],
+    "|" : [400],
+    "&" : [400],
+    "&&" : [300],
+    "||" : [300],
+    ":" : [200, {dbp : 1}],
+    "?" : [200, {dbp : 1}],
+    "else" : [200, {dbp : 1}],
+    "=" : [100, {dbp : 1}],
+    "," : [0, {sep : true}],
+    ";" : [0, {sep : true}],
+    "note:" : [0, {sep : true}],
+    "]" : [0, {rparen : true}],
+    ")" : [0, {rparen : true}],
+    "}" : [0, {rparen : true}],
+    "eof:" : [0, {rparen : true}],
+    "constructor" : [],
+    "valueOf" : [],
+    "toString" : [],
+    "toLocaleString" : [],
+    "hasOwnProperty" : [],
+    "isPrototypeOf" : [],
+    "propertyIsEnumerable" : [],
+    "return" : [],
+    "throw" : [],
+    "new" : [],
+    "typeof" : [],
+    "var" : [],
+    "str:" : [],
+    "default:" : [],
+};
 // Main for testing {{{1
 exports.nodemain = function(file) {
     file = file || "lightscript3";
-    source = require("fs").readFileSync(__dirname + "/../../lightscript/" + file + ".ls", "utf8");
-    tokens = tokenise(source);
-    asts = parse(tokens);
+    var source = require("fs").readFileSync(__dirname + "/../../lightscript/" + file + ".ls", "utf8");
+    var tokens = tokenise(source);
+    var asts = parse(tokens);
     console.log(asts.join("\n"));
 };
-

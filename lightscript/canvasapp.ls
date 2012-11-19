@@ -4,8 +4,8 @@ exports.webapp = function(app) {
         var canvas = document.getElementById("canvas");
         if(!canvas) {
             document.write("<canvas id=\"canvas\" style=\"position:fixed;top:0px;left:0px;width:100%;height:100%;\"></canvas>");
-        }
-        var canvas = document.getElementById("canvas");
+        };
+        canvas = document.getElementById("canvas");
         var ctx = canvas.getContext("2d");
         var h = ctx.height = canvas.height = canvas.offsetHeight;
         var w = ctx.width = canvas.width = canvas.offsetWidth;
