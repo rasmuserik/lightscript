@@ -4,6 +4,15 @@ extend = function(obj, data) {
         obj[key] = data[key];
     });
 }
+union = function(obj, obj2) {
+    result = {};
+    Object.keys(obj).forEach(function(key) {
+        result[key] = obj[key];
+    });
+    Object.keys(obj2).forEach(function(key) {
+        result[key] = obj2[key];
+    });
+}
 // Ast {{{1
 Ast = function(kind, val, children, opt) {
     this.kind = kind;
@@ -198,27 +207,14 @@ exports.tokenise = tokenise = function(buffer, filename) {
 // ...
 
 // Syntax Util {{{2
-readList = function(rparen, ast) {
-    while(!token.opt["isRParen"]) {
+readList = function(paren, ast) {
+    while(!token.opt["rparen"]) {
         ast.children.push(parseExpr());
     }
-    if(token.ast.val !== rparen) {
+    if(token.ast.val !== paren) {
         throw JSON.stringify({err: "paren mismatch", start: ast, end: token.ast});
     }
     nextToken();
-}
-infix = {};
-infixr = {};
-list = {};
-prefix = {};
-rparen = {"isRParen": true};
-sep = {};
-special = {};
-defaultToken = {
-    led: function(left) {},
-    nud: function() {},
-    pp: function() {},
-    dbp: 0,
 };
 
 blockpp = infixlistpp = undefined;
@@ -227,30 +223,23 @@ blockpp = infixlistpp = undefined;
 SyntaxObj = function(ast) {
     this.ast = ast;
     syntaxData = table[ast.kind + ":"] || table[ast.value] || (ast.val && table[ast.val[ast.val.length - 1]]) || table["default:"];
-    this.bp = syntaxData[1] || 0;
-    opt = syntaxData[3];
-    if(!opt) {
-        syntaxData[3] = opt = {};
-        extend(opt, defaultToken);
-        extend(opt, syntaxData[0]);
-        extend(opt, syntaxData[2] || {});
-    }
-    this.opt = opt;
+    this.bp = syntaxData[0] || 0;
+    this.opt = syntaxData[1] || {};
 };
 SyntaxObj.prototype.led = function(left) {
     ast = this.ast;
-    if(this.opt["rparen"]) {
-        rparen = this.opt["rparen"];
-        ast.val = "*" + ast.val + rparen;
+    if(this.opt["paren"]) {
+        paren = this.opt["paren"];
+        ast.val = "*" + ast.val + paren;
         ast.children = [left];
-        readList(rparen, ast);
+        readList(paren, ast);
     } else {
         ast.children = [left, parseExpr(this.bp - this.opt["dbp"])];
     }
 }
 SyntaxObj.prototype.nud = function() {
-    if(this.opt["rparen"]) {
-        readList(this.opt["rparen"], this.ast);
+    if(this.opt["paren"]) {
+        readList(this.opt["paren"], this.ast);
     }
 }
 SyntaxObj.prototype.sep = function() {
@@ -299,66 +288,66 @@ parse = function(tokens) {
 
 // Syntax definition {{{2
 table = {
-    ".": [infix, 1200, {nospace: true}],
-    "[": [list, 1200, {rparen: "]"}],
-    "*[]": [special, 1200, {pp : infixlistpp}],
-    "]": [rparen],
-    "(": [list, 1200, {rparen: ")"}],
-    "*()": [special, 1200, {pp : infixlistpp}],
-    ")": [rparen],
-    "{": [list, 1100, {rparen: "}"}],
-    "*{}": [special, 1200, {pp : blockpp}],
-    "}": [rparen],
-    "#": [prefix, 1000, {nospace: true}],
-    "@": [prefix, 1000, {nospace: true}],
-    "++": [prefix, 1000, {nospace: true}],
-    "--": [prefix, 1000, {nospace: true}],
-    "!": [prefix, 1000, {nospace: true}],
-    "~": [prefix, 1000, {nospace: true}],
-    "`": [prefix, 1000, {nospace: true}],
-    "*": [infix, 900],
-    "/": [infix, 900],
-    "%": [infix, 900],
-    "-": [infix, 800],
-    "+": [infix, 800],
-    ">>>": [infix, 700],
-    ">>": [infix, 700],
-    "<<": [infix, 700],
-    "<=": [infix, 600],
-    ">=": [infix, 600],
-    ">": [infix, 600],
-    "<": [infix, 600],
-    "==": [infix, 500],
-    "!=": [infix, 500],
-    "!==": [infix, 500],
-    "===": [infix, 500],
-    "^": [infix, 400],
-    "|": [infix, 400],
-    "&": [infix, 400],
-    "&&": [infix, 300],
-    "||": [infix, 300],
-    ":": [infixr, 200],
-    "?": [infixr, 200],
-    "else": [infixr, 200],
-    "=": [infixr, 100],
-    ",": [sep],
-    ";": [sep],
-    "constructor": [defaultToken],
-    "valueOf": [defaultToken],
-    "toString": [defaultToken],
-    "toLocaleString": [defaultToken],
-    "hasOwnProperty": [defaultToken],
-    "isPrototypeOf": [defaultToken],
-    "propertyIsEnumerable": [defaultToken],
-    "return": [prefix],
-    "throw": [prefix],
-    "new": [prefix],
-    "typeof": [prefix],
-    "var": [prefix],
-    "str:": [defaultToken],
-    "note:": [sep], 
-    "default:": [defaultToken],
-    "eof:": [rparen],
+    ".": [1200, {nospace: true}],
+    "[": [1200, {paren: "]"}],
+    "*[]": [1200, {pp : infixlistpp}],
+    "(": [1200, {paren: ")"}],
+    "*()": [1200, {pp: infixlistpp}],
+    "{": [1100, {paren: "}"}],
+    "*{}": [1200, {pp: blockpp}],
+    "#": [1000, {nospace: true, noinfix: true}],
+    "@": [1000, {nospace: true, noinfix: true}],
+    "++": [1000, {nospace: true, noinfix: true}],
+    "--": [1000, {nospace: true, noinfix: true}],
+    "!": [1000, {nospace: true, noinfix: true}],
+    "~": [1000, {nospace: true, noinfix: true}],
+    "`": [1000, {nospace: true, noinfix: true}],
+    "*": [900],
+    "/": [900],
+    "%": [900],
+    "-": [800],
+    "+": [800],
+    ">>>": [700],
+    ">>": [700],
+    "<<": [700],
+    "<=": [600],
+    ">=": [600],
+    ">": [600],
+    "<": [600],
+    "==": [500],
+    "!=": [500],
+    "!==": [500],
+    "===": [500],
+    "^": [400],
+    "|": [400],
+    "&": [400],
+    "&&": [300],
+    "||": [300],
+    ":": [200, {dbp: 1}],
+    "?": [200, {dbp: 1}],
+    "else": [200, {dbp: 1}],
+    "=": [100, {dbp: 1}],
+    ",": [0, {sep: true}],
+    ";": [0, {sep: true}],
+    "note:": [0, {sep:true}], 
+    "]": [0, {rparen: true}],
+    ")": [0, {rparen: true}],
+    "}": [0, {rparen: true}],
+    "eof:": [0, {rparen:true}],
+    "constructor": [],
+    "valueOf": [],
+    "toString": [],
+    "toLocaleString": [],
+    "hasOwnProperty": [],
+    "isPrototypeOf": [],
+    "propertyIsEnumerable": [],
+    "return": [],
+    "throw": [],
+    "new": [],
+    "typeof": [],
+    "var": [],
+    "str:": [],
+    "default:": [],
 }
 
 // Main for testing {{{1
