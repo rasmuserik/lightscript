@@ -1,18 +1,3 @@
-// Util {{{1
-var extend = function(obj, data) {
-    Object.keys(data).forEach(function(key) {
-        obj[key] = data[key];
-    });
-};
-var union = function(obj, obj2) {
-    var result = {};
-    Object.keys(obj).forEach(function(key) {
-        result[key] = obj[key];
-    });
-    Object.keys(obj2).forEach(function(key) {
-        result[key] = obj2[key];
-    });
-};
 // Ast {{{1
 var Ast = function(kind, val, children, opt) {
     this.kind = kind;
