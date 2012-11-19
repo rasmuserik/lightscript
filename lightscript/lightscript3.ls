@@ -197,7 +197,32 @@ exports.tokenise = tokenise = function(buffer, filename) {
 // infix("/", 500)
 // ...
 
-// Syntax object{{{2
+// Syntax Util {{{2
+readList = function(rparen, ast) {
+    while(!token.opt["isRParen"]) {
+        ast.children.push(parseExpr());
+    }
+    if(token.ast.val !== rparen) {
+        throw JSON.stringify({err: "paren mismatch", start: ast, end: token.ast});
+    }
+    nextToken();
+}
+infix = {};
+infixr = {};
+list = {};
+prefix = {};
+rparen = {"isRParen": true};
+sep = {};
+special = {};
+defaultToken = {
+    led: function(left) {},
+    nud: function() {},
+    pp: function() {},
+    dbp: 0,
+};
+
+blockpp = infixlistpp = undefined;
+// Syntax object {{{2
 
 SyntaxObj = function(ast) {
     this.ast = ast;
@@ -213,10 +238,20 @@ SyntaxObj = function(ast) {
     this.opt = opt;
 };
 SyntaxObj.prototype.led = function(left) {
-    this.ast.children = [left, parseExpr(this.bp - this.opt["dbp"])];
+    ast = this.ast;
+    if(this.opt["rparen"]) {
+        rparen = this.opt["rparen"];
+        ast.val = "*" + ast.val + rparen;
+        ast.children = [left];
+        readList(rparen, ast);
+    } else {
+        ast.children = [left, parseExpr(this.bp - this.opt["dbp"])];
+    }
 }
 SyntaxObj.prototype.nud = function() {
-    return this.opt["nud"](this);
+    if(this.opt["rparen"]) {
+        readList(this.opt["rparen"], this.ast);
+    }
 }
 SyntaxObj.prototype.sep = function() {
     return this.opt["sep"];
@@ -262,22 +297,6 @@ parse = function(tokens) {
 };
 
 
-// 
-infix = {};
-infixr = {};
-list = {};
-prefix = {};
-rparen = {};
-sep = {};
-special = {};
-defaultToken = {
-    led: function(left) {},
-    nud: function() {},
-    pp: function() {},
-    dbp: 0,
-};
-
-blockpp = infixlistpp = undefined;
 // Syntax definition {{{2
 table = {
     ".": [infix, 1200, {nospace: true}],
