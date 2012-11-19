@@ -242,9 +242,6 @@ SyntaxObj.prototype.nud = function() {
         readList(this.opt["paren"], this.ast);
     }
 }
-SyntaxObj.prototype.sep = function() {
-    return this.opt["sep"];
-}
 SyntaxObj.prototype.pp = function() {
     return this.opt["pp"]();
 }
@@ -257,7 +254,7 @@ var parseExpr = function(rbp) {
     nextToken();
     t.nud();
     var left = t;
-    while(rbp < token.bp && !t.sep()) {
+    while(rbp < token.bp && !t.opt["sep"]) {
         t = token;
         nextToken();
         t.led(left.ast);
