@@ -29,11 +29,12 @@ Based on version 2, but limited to base library for compiler etc.
     - RegExp
 - Platforms
     - prettyprint
-    - JavaScript
     - Java
-    - Python
+    - JavaScript
     - C
+    - Python
     - PHP
+    - ActionScript/Flash (for IE)
 - Language (restrictions from JavaScript, in initial version, waiting for other targets + macro system)
     - distinction between `foo.bar` as prototype-access (static), and `foo["bar"]` as dictionary/array-access.
     - class-patterns: `X = function(...}; X.prototype.foo = function...` is method definition and only allowed place for `this`. `X` must be static.

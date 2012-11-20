@@ -204,11 +204,42 @@ var readList = function(paren, ast) {
     };
     nextToken();
 };
-var blockpp = var infixlistpp = undefined;
+pp = function(ast, bp) {
+    bp = bp || 0;
+    syn = new SyntaxObj(ast);
+        result = "";
+    if(syn.bp && syn.bp < bp) {
+        result += "(";
+    } 
+    result += syn.pp();
+    if(syn.bp && syn.bp < bp) {
+        result += ")";
+    }
+    return result;
+}
+// Prettyprinter {{{2
+var blockpp = function(synobj) {
+    // console.log("blockpp", synobj);
+};
+var infixlistpp = function(synobj) {
+    // console.log("infixlistpp", synobj);
+};
+blockpp = infixlistpp = undefined;
+var listpp = function(synobj) {
+    ast = synobj.ast;
+    childpp = ast.children.map(function(child) {
+        return new SyntaxObj(child);
+    }).filter(function(obj) {
+        return !obj.opt["sep"];
+    }).map(function(child) {
+        return child.pp();
+    }).join(", ");
+    return synobj.ast.val + childpp + synobj.opt["paren"];
+};
 // Syntax object {{{2
 var SyntaxObj = function(ast) {
     this.ast = ast;
-    var syntaxData = table[ast.kind + ":"] || table[ast.value] || (ast.val && table[ast.val[ast.val.length - 1]]) || table["default:"];
+    var syntaxData = table[ast.kind + ":"] || table[ast.val] || (ast.val && table[ast.val[ast.val.length - 1]]) || table["default:"];
     this.bp = syntaxData[0] || 0;
     this.opt = syntaxData[1] || {};
 };
@@ -228,10 +259,32 @@ SyntaxObj.prototype.led = function(left) {
 SyntaxObj.prototype.nud = function() {
     if(this.opt["paren"]) {
         readList(this.opt["paren"], this.ast);
+    } else if(this.opt["noinfix"]) {
+        this.ast.children = [parseExpr(this.bp)];
     };
 };
 SyntaxObj.prototype.pp = function() {
-    return this.opt["pp"]();
+    ast = this.ast;
+    children = ast.children;
+    if(this.opt["nospace"]) {
+        space = "";
+    } else {
+        space = " ";
+    }
+    if(this.opt["pp"]) {
+        result = this.opt["pp"](this);
+    } else if(children.length === 0) {
+        result = ast.val
+    } else if(children.length === 1) {
+        result = ast.val + space + pp(children[0], this.bp);
+    } else if(children.length === 2) {
+        result = pp(children[0], this.bp);
+        result += space + ast.val + space;
+        result += pp(children[1], this.bp + 1 - this.opt["dbp"]);
+    } else{
+        result = "<([" + ast.val + "|" + children.map(pp).join(", ") + "])>";
+    }
+    return result
 };
 // Parser {{{2
 var token = undefined;
@@ -272,11 +325,11 @@ var parse = function(tokens) {
 // Syntax definition {{{2
 var table = {
     "." : [1200, {nospace : true}],
-    "[" : [1200, {paren : "]"}],
+    "[" : [1200, {paren : "]", pp: listpp}],
     "*[]" : [1200, {pp : infixlistpp}],
-    "(" : [1200, {paren : ")"}],
+    "(" : [1200, {paren : ")", pp: listpp}],
     "*()" : [1200, {pp : infixlistpp}],
-    "{" : [1100, {paren : "}"}],
+    "{" : [1100, {paren : "}", pp: listpp}],
     "*{}" : [1200, {pp : blockpp}],
     "#" : [1000, {nospace : true, noinfix : true}],
     "@" : [1000, {nospace : true, noinfix : true}],
@@ -317,6 +370,11 @@ var table = {
     ")" : [0, {rparen : true}],
     "}" : [0, {rparen : true}],
     "eof:" : [0, {rparen : true}],
+    "return" : [0, {noinfix: true}],
+    "throw" : [0, {noinfix: true}],
+    "new" : [0, {noinfix:true}],
+    "typeof" : [0, {noinfix:true}],
+    "var" : [0, {noinfix:true}],
     "constructor" : [],
     "valueOf" : [],
     "toString" : [],
@@ -324,11 +382,6 @@ var table = {
     "hasOwnProperty" : [],
     "isPrototypeOf" : [],
     "propertyIsEnumerable" : [],
-    "return" : [],
-    "throw" : [],
-    "new" : [],
-    "typeof" : [],
-    "var" : [],
     "str:" : [],
     "default:" : [],
 };
@@ -338,5 +391,6 @@ exports.nodemain = function(file) {
     var source = require("fs").readFileSync(__dirname + "/../../lightscript/" + file + ".ls", "utf8");
     var tokens = tokenise(source);
     var asts = parse(tokens);
-    console.log(asts.join("\n"));
+    result = asts.map(pp).join("\n");
+    console.log(result);
 };
