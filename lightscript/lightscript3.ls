@@ -218,13 +218,17 @@ pp = function(ast, bp) {
     return result;
 }
 // Prettyprinter {{{2
-var blockpp = function(synobj) {
-    // console.log("blockpp", synobj);
-};
 var infixlistpp = function(synobj) {
-    // console.log("infixlistpp", synobj);
+    ast = synobj.ast;
+    childpp = ast.children.slice(1).map(function(child) {
+        return new SyntaxObj(child);
+    }).filter(function(obj) {
+        return !obj.opt["sep"];
+    }).map(function(child) {
+        return child.pp();
+    }).join(", ");
+    return pp(ast.children[0]) + synobj.ast.val[1] + childpp + synobj.ast.val[2];
 };
-blockpp = infixlistpp = undefined;
 var listpp = function(synobj) {
     ast = synobj.ast;
     childpp = ast.children.map(function(child) {
@@ -236,6 +240,9 @@ var listpp = function(synobj) {
     }).join(", ");
     return synobj.ast.val + childpp + synobj.opt["paren"];
 };
+strpp = function(obj) {
+    return JSON.stringify(obj.ast.val);
+}
 // Syntax object {{{2
 var SyntaxObj = function(ast) {
     this.ast = ast;
@@ -282,7 +289,8 @@ SyntaxObj.prototype.pp = function() {
         result += space + ast.val + space;
         result += pp(children[1], this.bp + 1 - this.opt["dbp"]);
     } else{
-        result = "<([" + ast.val + "|" + children.map(pp).join(", ") + "])>";
+        throw "prettyprint error, too long node: " + ast;
+        //result = "<([" + ast.val + "|" + children.map(pp).join(", ") + "])>";
     }
     return result
 };
@@ -330,7 +338,7 @@ var table = {
     "(" : [1200, {paren : ")", pp: listpp}],
     "*()" : [1200, {pp : infixlistpp}],
     "{" : [1100, {paren : "}", pp: listpp}],
-    "*{}" : [1200, {pp : blockpp}],
+    "*{}" : [1200, {pp : infixlistpp}],
     "#" : [1000, {nospace : true, noinfix : true}],
     "@" : [1000, {nospace : true, noinfix : true}],
     "++" : [1000, {nospace : true, noinfix : true}],
@@ -375,6 +383,7 @@ var table = {
     "new" : [0, {noinfix:true}],
     "typeof" : [0, {noinfix:true}],
     "var" : [0, {noinfix:true}],
+    "str:" : [0, {pp: strpp}],
     "constructor" : [],
     "valueOf" : [],
     "toString" : [],
@@ -382,7 +391,6 @@ var table = {
     "hasOwnProperty" : [],
     "isPrototypeOf" : [],
     "propertyIsEnumerable" : [],
-    "str:" : [],
     "default:" : [],
 };
 // Main for testing {{{1
