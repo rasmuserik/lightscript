@@ -8,10 +8,7 @@ var Ast = function(kind, val, children, opt) {
 Ast.prototype.create = function(kind, val, children) {
     return new Ast(kind, val, children, this.opt);
 };
-Ast.prototype.isa = function(kindval) {
-    var split = kindval.indexOf(":");
-    var kind = kindval.slice(0, split);
-    var val = kindval.slice(split + 1);
+Ast.prototype.isa = function(kind, val) {
     return this.kind === kind && this.val === val;
 };
 Ast.prototype.deepCopy = function() {
@@ -29,6 +26,13 @@ Ast.prototype.toList = function() {
 Ast.prototype.toString = function() {
     return JSON.stringify(this.toList());
 };
+astFromList = function(list) {
+    kindval = list[0];
+    splitpos = kindval.indexOf(":");
+    kind = kindval.slice(0, splitpos);
+    val = kindval.slice(splitpos + 1);
+    return new Ast(kind, val, list.slice(1).map(astFromList));
+}
 // Tokeniser {{{1
 var BufferPos = function(line, pos) {
     this.line = line;
@@ -166,30 +170,6 @@ exports.tokenise = var tokenise = function(buffer, filename) {
     return tokens;
 };
 // Parser {{{1
-//
-// implementation sketch:
-//
-// table: {
-//    'foo': {
-//    led: function...
-//    nud: function...
-//    ...
-//    }
-// }
-// ... 
-// led = function(node) {
-//   obj = lookup(node);
-//   return obj["led"](node, obj);
-// }
-// ...
-// infix = function(id, bp) {
-//  table[id] = {}
-//  table[id].bp = bp;
-//  table[id].led = ...
-// }
-// ...
-// infix("/", 500)
-// ...
 // Syntax Util {{{2
 var readList = function(paren, ast) {
     while(!token.opt["rparen"]) {
@@ -290,9 +270,8 @@ SyntaxObj.prototype.pp = function() {
         result += pp(children[1], this.bp + 1 - this.opt["dbp"]);
     } else{
         throw "prettyprint error, too long node: " + ast;
-        //result = "<([" + ast.val + "|" + children.map(pp).join(", ") + "])>";
     }
-    return result
+    return result;
 };
 // Parser {{{2
 var token = undefined;
