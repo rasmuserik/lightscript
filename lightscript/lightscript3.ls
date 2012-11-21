@@ -26,13 +26,13 @@ Ast.prototype.toList = function() {
 Ast.prototype.toString = function() {
     return JSON.stringify(this.toList());
 };
-astFromList = function(list) {
-    kindval = list[0];
-    splitpos = kindval.indexOf(":");
-    kind = kindval.slice(0, splitpos);
-    val = kindval.slice(splitpos + 1);
+var astFromList = function(list) {
+    var kindval = list[0];
+    var splitpos = kindval.indexOf(":");
+    var kind = kindval.slice(0, splitpos);
+    var val = kindval.slice(splitpos + 1);
     return new Ast(kind, val, list.slice(1).map(astFromList));
-}
+};
 // Tokeniser {{{1
 var BufferPos = function(line, pos) {
     this.line = line;
@@ -184,23 +184,23 @@ var readList = function(paren, ast) {
     };
     nextToken();
 };
-pp = function(ast, bp) {
+var pp = function(ast, bp) {
     bp = bp || 0;
-    syn = new SyntaxObj(ast);
-        result = "";
+    var syn = new SyntaxObj(ast);
+    var result = "";
     if(syn.bp && syn.bp < bp) {
         result += "(";
-    } 
+    };
     result += syn.pp();
     if(syn.bp && syn.bp < bp) {
         result += ")";
-    }
+    };
     return result;
-}
+};
 // Prettyprinter {{{2
 var infixlistpp = function(synobj) {
-    ast = synobj.ast;
-    childpp = ast.children.slice(1).map(function(child) {
+    var ast = synobj.ast;
+    var childpp = ast.children.slice(1).map(function(child) {
         return new SyntaxObj(child);
     }).filter(function(obj) {
         return !obj.opt["sep"];
@@ -210,8 +210,8 @@ var infixlistpp = function(synobj) {
     return pp(ast.children[0]) + synobj.ast.val[1] + childpp + synobj.ast.val[2];
 };
 var listpp = function(synobj) {
-    ast = synobj.ast;
-    childpp = ast.children.map(function(child) {
+    var ast = synobj.ast;
+    var childpp = ast.children.map(function(child) {
         return new SyntaxObj(child);
     }).filter(function(obj) {
         return !obj.opt["sep"];
@@ -220,9 +220,9 @@ var listpp = function(synobj) {
     }).join(", ");
     return synobj.ast.val + childpp + synobj.opt["paren"];
 };
-strpp = function(obj) {
+var strpp = function(obj) {
     return JSON.stringify(obj.ast.val);
-}
+};
 // Syntax object {{{2
 var SyntaxObj = function(ast) {
     this.ast = ast;
@@ -251,26 +251,26 @@ SyntaxObj.prototype.nud = function() {
     };
 };
 SyntaxObj.prototype.pp = function() {
-    ast = this.ast;
-    children = ast.children;
+    var ast = this.ast;
+    var children = ast.children;
     if(this.opt["nospace"]) {
-        space = "";
-    } else {
+        var space = "";
+    } else  {
         space = " ";
-    }
+    };
     if(this.opt["pp"]) {
-        result = this.opt["pp"](this);
+        var result = this.opt["pp"](this);
     } else if(children.length === 0) {
-        result = ast.val
+        result = ast.val;
     } else if(children.length === 1) {
         result = ast.val + space + pp(children[0], this.bp);
     } else if(children.length === 2) {
         result = pp(children[0], this.bp);
         result += space + ast.val + space;
         result += pp(children[1], this.bp + 1 - this.opt["dbp"]);
-    } else{
+    } else  {
         throw "prettyprint error, too long node: " + ast;
-    }
+    };
     return result;
 };
 // Parser {{{2
@@ -312,11 +312,11 @@ var parse = function(tokens) {
 // Syntax definition {{{2
 var table = {
     "." : [1200, {nospace : true}],
-    "[" : [1200, {paren : "]", pp: listpp}],
+    "[" : [1200, {paren : "]", pp : listpp}],
     "*[]" : [1200, {pp : infixlistpp}],
-    "(" : [1200, {paren : ")", pp: listpp}],
+    "(" : [1200, {paren : ")", pp : listpp}],
     "*()" : [1200, {pp : infixlistpp}],
-    "{" : [1100, {paren : "}", pp: listpp}],
+    "{" : [1100, {paren : "}", pp : listpp}],
     "*{}" : [1200, {pp : infixlistpp}],
     "#" : [1000, {nospace : true, noinfix : true}],
     "@" : [1000, {nospace : true, noinfix : true}],
@@ -357,12 +357,12 @@ var table = {
     ")" : [0, {rparen : true}],
     "}" : [0, {rparen : true}],
     "eof:" : [0, {rparen : true}],
-    "return" : [0, {noinfix: true}],
-    "throw" : [0, {noinfix: true}],
-    "new" : [0, {noinfix:true}],
-    "typeof" : [0, {noinfix:true}],
-    "var" : [0, {noinfix:true}],
-    "str:" : [0, {pp: strpp}],
+    "return" : [0, {noinfix : true}],
+    "throw" : [0, {noinfix : true}],
+    "new" : [0, {noinfix : true}],
+    "typeof" : [0, {noinfix : true}],
+    "var" : [0, {noinfix : true}],
+    "str:" : [0, {pp : strpp}],
     "constructor" : [],
     "valueOf" : [],
     "toString" : [],
@@ -378,6 +378,6 @@ exports.nodemain = function(file) {
     var source = require("fs").readFileSync(__dirname + "/../../lightscript/" + file + ".ls", "utf8");
     var tokens = tokenise(source);
     var asts = parse(tokens);
-    result = asts.map(pp).join("\n");
+    var result = asts.map(pp).join("\n");
     console.log(result);
 };
