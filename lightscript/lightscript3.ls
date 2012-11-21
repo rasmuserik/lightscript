@@ -252,40 +252,50 @@ PrettyPrinter = function() {
     this.indent = 0;
     this.width = 80;
     this.linebreak = false;
+    this.acc = [];
 }
+PrettyPrinter.prototype.str = function(str) {
+    this.acc.push(str);
+};
 PrettyPrinter.prototype.pp = function(ast, bp) {
     bp = bp || 0;
     var syn = new SyntaxObj(ast);
-    var result = "";
     if(syn.bp && syn.bp < bp) {
-        result += "(";
+        this.str("(");
     };
-    result += syn.pp(this);
+    this.str(syn.pp(this));
     if(syn.bp && syn.bp < bp) {
-        result += ")";
+        this.str(")");
     };
-    return result;
 };
 PrettyPrinter.prototype.list = function(list) {
     self = this;
-    return list.map(function(child) {
+    sep = ""; 
+    list.map(function(child) {
         return new SyntaxObj(child);
     }).filter(function(obj) {
         return !obj.opt["sep"];
     }).map(function(child) {
-        return child.pp(self);
-    }).join(", ");
+        self.str(sep);
+        child.pp(self);
+        sep = ", ";
+    });
 };
 var infixlistpp = function(synobj, pp) {
     var ast = synobj.ast;
-    return pp.pp(ast.children[0]) + ast.val[1] + pp.list(ast.children.slice(1)) + ast.val[2];
+    pp.pp(ast.children[0]);
+    pp.str(ast.val[1]);
+    pp.list(ast.children.slice(1)); 
+    pp.str(ast.val[2]);
 };
 var listpp = function(synobj, pp) {
     var ast = synobj.ast;
-    return ast.val + pp.list(ast.children) + synobj.opt["paren"];
+    pp.str(ast.val);
+    pp.list(ast.children);
+    pp.str(synobj.opt["paren"]);
 };
 var strpp = function(obj, pp) {
-    return JSON.stringify(obj.ast.val);
+    pp.str(JSON.stringify(obj.ast.val));
 };
 SyntaxObj.prototype.pp = function(pp) {
     var ast = this.ast;
@@ -296,19 +306,19 @@ SyntaxObj.prototype.pp = function(pp) {
         space = " ";
     };
     if(this.opt["pp"]) {
-        var result = this.opt["pp"](this, pp);
+        this.opt["pp"](this, pp);
     } else if(children.length === 0) {
-        result = ast.val;
+        pp.str(ast.val);
     } else if(children.length === 1) {
-        result = ast.val + space + pp.pp(children[0], this.bp);
+        pp.str(ast.val + space); 
+        pp.pp(children[0], this.bp);
     } else if(children.length === 2) {
-        result = pp.pp(children[0], this.bp);
-        result += space + ast.val + space;
-        result += pp.pp(children[1], this.bp + 1 - this.opt["dbp"]);
+        pp.pp(children[0], this.bp);
+        pp.str(space + ast.val + space);
+        pp.pp(children[1], this.bp + 1 - this.opt["dbp"]);
     } else  {
         throw "prettyprint error, too long node: " + ast;
     };
-    return result;
 };
 // Syntax definition {{{2
 var table = {
@@ -381,6 +391,8 @@ exports.nodemain = function(file) {
     var asts = parse(tokens);
     pp = new PrettyPrinter();
     asts.forEach(function(ast) {
-        console.log(pp.pp(ast));
+        pp.pp(ast);
+        pp.str("\n");
     });
+    console.log(pp.acc.join(""));
 };
