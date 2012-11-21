@@ -33,6 +33,17 @@ var astFromList = function(list) {
     var val = kindval.slice(splitpos + 1);
     return new Ast(kind, val, list.slice(1).map(astFromList));
 };
+// Matcher {{{2
+// Pattern matching notes
+// matcher = new Matcher();
+// matcher.pattern(["id:*{}", ["id:*()", ["id:function"], ".a"], "..b"],  function(match) { ... });
+// matcher.pattern(["id:*{}", ], ".a]"] : function(match) { ... });
+// matcher.pattern(["str:.a"]: function(match) { ... }); 
+//
+// matcher function
+// parameter: match object with bound vars, and match.node = full node
+// try most specific match first. If result is undefined, try next match
+
 // Tokeniser {{{1
 var BufferPos = function(line, pos) {
     this.line = line;
@@ -251,10 +262,35 @@ PrettyPrinter = function() {
     this.pos = 0;
     this.indent = 0;
     this.width = 80;
-    this.linebreak = false;
+    this.singleLine = false;
     this.acc = [];
 }
+PrettyPrinter.prototype.increaseIndent = function() {
+    ++this.indent;
+};
+PrettyPrinter.prototype.decreaseIndent = function() {
+    --this.indent;
+};
+PrettyPrinter.prototype.newLine = function(indent) {
+    indent = (indent || 0) + this.indent;
+    this.str("\n");
+    while(indent > 0) {
+        this.str("        ");
+        --indent;
+    }
+
+};
 PrettyPrinter.prototype.str = function(str) {
+    if(str.slice(-1) === "\n") {
+        if(this.singleLine) {
+            throw "hasNewLine";
+        }
+        this.pos = 0;
+    }
+    if(this.pos > this.width) {
+        this.newLine(1);
+    }
+    this.pos += str.length;
     this.acc.push(str);
 };
 PrettyPrinter.prototype.pp = function(ast, bp) {
@@ -263,13 +299,14 @@ PrettyPrinter.prototype.pp = function(ast, bp) {
     if(syn.bp && syn.bp < bp) {
         this.str("(");
     };
-    this.str(syn.pp(this));
+    syn.pp(this);
     if(syn.bp && syn.bp < bp) {
         this.str(")");
     };
 };
 PrettyPrinter.prototype.list = function(list) {
     self = this;
+    self.increaseIndent();
     sep = ""; 
     list.map(function(child) {
         return new SyntaxObj(child);
@@ -280,6 +317,7 @@ PrettyPrinter.prototype.list = function(list) {
         child.pp(self);
         sep = ", ";
     });
+    self.decreaseIndent();
 };
 var infixlistpp = function(synobj, pp) {
     var ast = synobj.ast;
@@ -392,7 +430,7 @@ exports.nodemain = function(file) {
     pp = new PrettyPrinter();
     asts.forEach(function(ast) {
         pp.pp(ast);
-        pp.str("\n");
+        //pp.str("\n");
     });
     console.log(pp.acc.join(""));
 };
