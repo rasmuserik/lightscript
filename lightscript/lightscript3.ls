@@ -26,24 +26,28 @@ Ast.prototype.toList = function() {
 Ast.prototype.toString = function() {
     return JSON.stringify(this.toList());
 };
-var astFromList = function(list) {
-    var kindval = list[0];
-    var splitpos = kindval.indexOf(":");
-    var kind = kindval.slice(0, splitpos);
-    var val = kindval.slice(splitpos + 1);
-    return new Ast(kind, val, list.slice(1).map(astFromList));
+Ast.prototype.createFromList = function(list) {
+    if(Array.isArray(list)) {
+        var kindval = list[0];
+        var splitpos = kindval.indexOf(":");
+        var kind = kindval.slice(0, splitpos);
+        var val = kindval.slice(splitpos + 1);
+        var result = this.create(kind, val, list.slice(1).map(astFromList));
+    } else  {
+        result = list;
+    };
+    return result;
 };
 // Matcher {{{2
 // Pattern matching notes
 // matcher = new Matcher();
-// matcher.pattern(["id:*{}", ["id:*()", ["id:function"], ".a"], "..b"],  function(match) { ... });
-// matcher.pattern(["id:*{}", ], ".a]"] : function(match) { ... });
-// matcher.pattern(["str:.a"]: function(match) { ... }); 
+// matcher.pattern(["id:*{}", ["id:*()", ["id:function"], "?a"], "??b"],  function(match) { ... });
+// matcher.pattern(["id:*{}", "?a"] : function(match) { ... });
+// matcher.pattern(["str:?a"]: function(match) { ... }); 
 //
 // matcher function
-// parameter: match object with bound vars, and match.node = full node
+// parameter: match object with bound vars, and match.ast = full node
 // try most specific match first. If result is undefined, try next match
-
 // Tokeniser {{{1
 var BufferPos = function(line, pos) {
     this.line = line;
@@ -258,13 +262,13 @@ SyntaxObj.prototype.nud = function() {
     };
 };
 // Prettyprinter {{{2
-PrettyPrinter = function() {
+var PrettyPrinter = function() {
     this.pos = 0;
     this.indent = 0;
     this.width = 80;
     this.singleLine = false;
     this.acc = [];
-}
+};
 PrettyPrinter.prototype.increaseIndent = function() {
     ++this.indent;
 };
@@ -277,19 +281,19 @@ PrettyPrinter.prototype.newLine = function(indent) {
     while(indent > 0) {
         this.str("        ");
         --indent;
-    }
-
+    };
 };
 PrettyPrinter.prototype.str = function(str) {
-    if(str.slice(-1) === "\n") {
+    if(str.slice(- 1) === "\n") {
         if(this.singleLine) {
+            // to be used for backtracking, for linebreaks in lists
             throw "hasNewLine";
-        }
+        };
         this.pos = 0;
-    }
+    };
     if(this.pos > this.width) {
         this.newLine(1);
-    }
+    };
     this.pos += str.length;
     this.acc.push(str);
 };
@@ -304,10 +308,15 @@ PrettyPrinter.prototype.pp = function(ast, bp) {
         this.str(")");
     };
 };
+// TODO: list pretty printing:
+// 1) set this.singleLine=true and try to print list on current line
+// 2) retry print one item per line instead
+//
+// OR: revert to lightscript2-like behaviour
 PrettyPrinter.prototype.list = function(list) {
-    self = this;
+    var self = this;
     self.increaseIndent();
-    sep = ""; 
+    var sep = "";
     list.map(function(child) {
         return new SyntaxObj(child);
     }).filter(function(obj) {
@@ -323,7 +332,7 @@ var infixlistpp = function(synobj, pp) {
     var ast = synobj.ast;
     pp.pp(ast.children[0]);
     pp.str(ast.val[1]);
-    pp.list(ast.children.slice(1)); 
+    pp.list(ast.children.slice(1));
     pp.str(ast.val[2]);
 };
 var listpp = function(synobj, pp) {
@@ -348,7 +357,7 @@ SyntaxObj.prototype.pp = function(pp) {
     } else if(children.length === 0) {
         pp.str(ast.val);
     } else if(children.length === 1) {
-        pp.str(ast.val + space); 
+        pp.str(ast.val + space);
         pp.pp(children[0], this.bp);
     } else if(children.length === 2) {
         pp.pp(children[0], this.bp);
@@ -427,7 +436,7 @@ exports.nodemain = function(file) {
     var source = require("fs").readFileSync(__dirname + "/../../lightscript/" + file + ".ls", "utf8");
     var tokens = tokenise(source);
     var asts = parse(tokens);
-    pp = new PrettyPrinter();
+    var pp = new PrettyPrinter();
     asts.forEach(function(ast) {
         pp.pp(ast);
         //pp.str("\n");
