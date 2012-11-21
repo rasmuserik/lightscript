@@ -44,9 +44,18 @@ Ast.prototype.createFromList = function(list) {
 // matcher.pattern(["id:*{}", ["id:*()", ["id:function"], "?a"], "??b"],  function(match) { ... });
 // matcher.pattern(["id:*{}", "?a"] : function(match) { ... });
 // matcher.pattern(["str:?a"]: function(match) { ... }); 
+// matcher.pattern(["id:?operator", "?lhs", "??rhs"]: function(match, ast) {
+//     return match.ast.create('call', match.operator, [match.lhs].concat(match.rhs));
+// }); 
+// matcher.pattern(["id:var", "?val"]: function(match, ast) {
+//      return match.val;
+// }); 
+//
+// matcher.pattern(["id:=", ["id:.", ["id:.", ["id:?class"] [id:prototype]] ["id:?member"]] "?value"], function(match) {
+// })
 //
 // matcher function
-// parameter: match object with bound vars, and match.ast = full node
+// parameter: match object with bound vars, and match.ast = full node, match.parent = parent node
 // try most specific match first. If result is undefined, try next match
 // Tokeniser {{{1
 var BufferPos = function(line, pos) {
