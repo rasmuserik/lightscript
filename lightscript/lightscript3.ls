@@ -169,21 +169,8 @@ exports.tokenise = var tokenise = function(buffer, filename) {
     };
     return tokens;
 };
-// Parser {{{1
-// Syntax Util {{{2
-var readList = function(paren, ast) {
-    while(!token.opt["rparen"]) {
-        ast.children.push(parseExpr());
-    };
-    if(token.ast.val !== paren) {
-        throw JSON.stringify({
-            err : "paren mismatch",
-            start : ast,
-            end : token.ast,
-        });
-    };
-    nextToken();
-};
+// Syntax {{{1
+// Prettyprinter {{{2
 var pp = function(ast, bp) {
     bp = bp || 0;
     var syn = new SyntaxObj(ast);
@@ -197,31 +184,74 @@ var pp = function(ast, bp) {
     };
     return result;
 };
-// Prettyprinter {{{2
-var infixlistpp = function(synobj) {
-    var ast = synobj.ast;
-    var childpp = ast.children.slice(1).map(function(child) {
+var pplist = function(list) {
+    return list.map(function(child) {
         return new SyntaxObj(child);
     }).filter(function(obj) {
         return !obj.opt["sep"];
     }).map(function(child) {
         return child.pp();
     }).join(", ");
-    return pp(ast.children[0]) + synobj.ast.val[1] + childpp + synobj.ast.val[2];
+};
+var infixlistpp = function(synobj) {
+    var ast = synobj.ast;
+    return pp(ast.children[0]) + ast.val[1] + pplist(ast.children.slice(1)) + ast.val[2];
 };
 var listpp = function(synobj) {
     var ast = synobj.ast;
-    var childpp = ast.children.map(function(child) {
-        return new SyntaxObj(child);
-    }).filter(function(obj) {
-        return !obj.opt["sep"];
-    }).map(function(child) {
-        return child.pp();
-    }).join(", ");
-    return synobj.ast.val + childpp + synobj.opt["paren"];
+    return ast.val + pplist(ast.children) + synobj.opt["paren"];
 };
 var strpp = function(obj) {
     return JSON.stringify(obj.ast.val);
+};
+// Parser {{{2
+var readList = function(paren, ast) {
+    while(!token.opt["rparen"]) {
+        ast.children.push(parseExpr());
+    };
+    if(token.ast.val !== paren) {
+        throw JSON.stringify({
+            err : "paren mismatch",
+            start : ast,
+            end : token.ast,
+        });
+    };
+    nextToken();
+};
+var token = undefined;
+var nextToken = undefined;
+var parseExpr = function(rbp) {
+    rbp = rbp || 0;
+    var t = token;
+    nextToken();
+    t.nud();
+    var left = t;
+    while(rbp < token.bp && !t.opt["sep"]) {
+        t = token;
+        nextToken();
+        t.led(left.ast);
+        left = t;
+    };
+    return left.ast;
+};
+var parse = function(tokens) {
+    var pos = 0;
+    nextToken = function() {
+        if(pos < tokens.length) {
+            var ast = tokens[pos];
+            ++pos;
+        } else  {
+            ast = new Ast("eof");
+        };
+        token = new SyntaxObj(ast);
+        return token;
+    };
+    nextToken();
+    var result = [];
+    while(token.ast.kind !== "eof") {
+        result.push(parseExpr());
+    };
+    return result;
 };
 // Syntax object {{{2
 var SyntaxObj = function(ast) {
@@ -270,42 +300,6 @@ SyntaxObj.prototype.pp = function() {
         result += pp(children[1], this.bp + 1 - this.opt["dbp"]);
     } else  {
         throw "prettyprint error, too long node: " + ast;
-    };
-    return result;
-};
-// Parser {{{2
-var token = undefined;
-var nextToken = undefined;
-var parseExpr = function(rbp) {
-    rbp = rbp || 0;
-    var t = token;
-    nextToken();
-    t.nud();
-    var left = t;
-    while(rbp < token.bp && !t.opt["sep"]) {
-        t = token;
-        nextToken();
-        t.led(left.ast);
-        left = t;
-    };
-    return left.ast;
-};
-var parse = function(tokens) {
-    var pos = 0;
-    nextToken = function() {
-        if(pos < tokens.length) {
-            var ast = tokens[pos];
-            ++pos;
-        } else  {
-            ast = new Ast("eof");
-        };
-        token = new SyntaxObj(ast);
-        return token;
-    };
-    nextToken();
-    var result = [];
-    while(token.ast.kind !== "eof") {
-        result.push(parseExpr());
     };
     return result;
 };
