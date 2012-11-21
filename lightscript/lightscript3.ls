@@ -170,39 +170,12 @@ exports.tokenise = var tokenise = function(buffer, filename) {
     return tokens;
 };
 // Syntax {{{1
-// Prettyprinter {{{2
-var pp = function(ast, bp) {
-    bp = bp || 0;
-    var syn = new SyntaxObj(ast);
-    var result = "";
-    if(syn.bp && syn.bp < bp) {
-        result += "(";
-    };
-    result += syn.pp();
-    if(syn.bp && syn.bp < bp) {
-        result += ")";
-    };
-    return result;
-};
-var pplist = function(list) {
-    return list.map(function(child) {
-        return new SyntaxObj(child);
-    }).filter(function(obj) {
-        return !obj.opt["sep"];
-    }).map(function(child) {
-        return child.pp();
-    }).join(", ");
-};
-var infixlistpp = function(synobj) {
-    var ast = synobj.ast;
-    return pp(ast.children[0]) + ast.val[1] + pplist(ast.children.slice(1)) + ast.val[2];
-};
-var listpp = function(synobj) {
-    var ast = synobj.ast;
-    return ast.val + pplist(ast.children) + synobj.opt["paren"];
-};
-var strpp = function(obj) {
-    return JSON.stringify(obj.ast.val);
+// Syntax object {{{2
+var SyntaxObj = function(ast) {
+    this.ast = ast;
+    var syntaxData = table[ast.kind + ":"] || table[ast.val] || (ast.val && table[ast.val[ast.val.length - 1]]) || table["default:"];
+    this.bp = syntaxData[0] || 0;
+    this.opt = syntaxData[1] || {};
 };
 // Parser {{{2
 var readList = function(paren, ast) {
@@ -253,13 +226,6 @@ var parse = function(tokens) {
     };
     return result;
 };
-// Syntax object {{{2
-var SyntaxObj = function(ast) {
-    this.ast = ast;
-    var syntaxData = table[ast.kind + ":"] || table[ast.val] || (ast.val && table[ast.val[ast.val.length - 1]]) || table["default:"];
-    this.bp = syntaxData[0] || 0;
-    this.opt = syntaxData[1] || {};
-};
 SyntaxObj.prototype.led = function(left) {
     var ast = this.ast;
     if(this.opt["paren"]) {
@@ -280,7 +246,48 @@ SyntaxObj.prototype.nud = function() {
         this.ast.children = [parseExpr(this.bp)];
     };
 };
-SyntaxObj.prototype.pp = function() {
+// Prettyprinter {{{2
+PrettyPrinter = function() {
+    this.pos = 0;
+    this.indent = 0;
+    this.width = 80;
+    this.linebreak = false;
+}
+PrettyPrinter.prototype.pp = function(ast, bp) {
+    bp = bp || 0;
+    var syn = new SyntaxObj(ast);
+    var result = "";
+    if(syn.bp && syn.bp < bp) {
+        result += "(";
+    };
+    result += syn.pp(this);
+    if(syn.bp && syn.bp < bp) {
+        result += ")";
+    };
+    return result;
+};
+PrettyPrinter.prototype.list = function(list) {
+    self = this;
+    return list.map(function(child) {
+        return new SyntaxObj(child);
+    }).filter(function(obj) {
+        return !obj.opt["sep"];
+    }).map(function(child) {
+        return child.pp(self);
+    }).join(", ");
+};
+var infixlistpp = function(synobj, pp) {
+    var ast = synobj.ast;
+    return pp.pp(ast.children[0]) + ast.val[1] + pp.list(ast.children.slice(1)) + ast.val[2];
+};
+var listpp = function(synobj, pp) {
+    var ast = synobj.ast;
+    return ast.val + pp.list(ast.children) + synobj.opt["paren"];
+};
+var strpp = function(obj, pp) {
+    return JSON.stringify(obj.ast.val);
+};
+SyntaxObj.prototype.pp = function(pp) {
     var ast = this.ast;
     var children = ast.children;
     if(this.opt["nospace"]) {
@@ -289,15 +296,15 @@ SyntaxObj.prototype.pp = function() {
         space = " ";
     };
     if(this.opt["pp"]) {
-        var result = this.opt["pp"](this);
+        var result = this.opt["pp"](this, pp);
     } else if(children.length === 0) {
         result = ast.val;
     } else if(children.length === 1) {
-        result = ast.val + space + pp(children[0], this.bp);
+        result = ast.val + space + pp.pp(children[0], this.bp);
     } else if(children.length === 2) {
-        result = pp(children[0], this.bp);
+        result = pp.pp(children[0], this.bp);
         result += space + ast.val + space;
-        result += pp(children[1], this.bp + 1 - this.opt["dbp"]);
+        result += pp.pp(children[1], this.bp + 1 - this.opt["dbp"]);
     } else  {
         throw "prettyprint error, too long node: " + ast;
     };
@@ -372,6 +379,8 @@ exports.nodemain = function(file) {
     var source = require("fs").readFileSync(__dirname + "/../../lightscript/" + file + ".ls", "utf8");
     var tokens = tokenise(source);
     var asts = parse(tokens);
-    var result = asts.map(pp).join("\n");
-    console.log(result);
+    pp = new PrettyPrinter();
+    asts.forEach(function(ast) {
+        console.log(pp.pp(ast));
+    });
 };
