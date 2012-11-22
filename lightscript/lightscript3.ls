@@ -272,7 +272,7 @@ SyntaxObj.prototype.nud = function() {
 };
 // Prettyprinter {{{2
 var PrettyPrinter = function() {
-    this.indent = -1;
+    this.indent = - 1;
     this.acc = [];
 };
 PrettyPrinter.prototype.increaseIndent = function() {
@@ -316,14 +316,14 @@ PrettyPrinter.prototype.list = function(list, newlineLength) {
         self.str(sep);
         if(list.length > newlineLength) {
             self.newline();
-        }
+        };
         child.pp(self);
         sep = ", ";
     });
     self.decreaseIndent();
     if(list.length > newlineLength) {
         self.newline();
-    }
+    };
 };
 var infixlistpp = function(obj, pp) {
     pp.pp(obj.ast.children[0]);
@@ -365,12 +365,24 @@ SyntaxObj.prototype.pp = function(pp) {
 // Syntax definition {{{2
 var table = {
     "." : [1200, {nospace : true}],
-    "[" : [1200, {paren : "]", pp : listpp, nlcount: 4}],
-    "*[]" : [1200, {pp : infixlistpp, nlcount: 4}],
-    "(" : [1200, {paren : ")", pp : listpp, nlcount: 1}],
-    "*()" : [1200, {pp : infixlistpp, nlcount: 10}],
-    "{" : [1100, {paren : "}", pp : listpp, nlcount: 4}],
-    "*{}" : [1200, {pp : infixlistpp, nlcount: 0}],
+    "[" : [1200, {
+        paren : "]",
+        pp : listpp,
+        nlcount : 4,
+    }],
+    "*[]" : [1200, {pp : infixlistpp, nlcount : 4}],
+    "(" : [1200, {
+        paren : ")",
+        pp : listpp,
+        nlcount : 1,
+    }],
+    "*()" : [1200, {pp : infixlistpp, nlcount : 10}],
+    "{" : [1100, {
+        paren : "}",
+        pp : listpp,
+        nlcount : 4,
+    }],
+    "*{}" : [1200, {pp : infixlistpp, nlcount : 0}],
     "#" : [1000, {nospace : true, noinfix : true}],
     "@" : [1000, {nospace : true, noinfix : true}],
     "++" : [1000, {nospace : true, noinfix : true}],
@@ -429,7 +441,7 @@ var table = {
 exports.nodemain = function(file) {
     file = file || "lightscript3";
     var source = require("fs").readFileSync(__dirname + "/../../lightscript/" + file + ".ls", "utf8");
-    source = "module{"+ source + "}";
+    source = "module{" + source + "}";
     var tokens = tokenise(source);
     var asts = parse(tokens);
     var pp = new PrettyPrinter();
