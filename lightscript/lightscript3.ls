@@ -272,10 +272,7 @@ SyntaxObj.prototype.nud = function() {
 };
 // Prettyprinter {{{2
 var PrettyPrinter = function() {
-    this.pos = 0;
-    this.indent = 0;
-    this.width = 80;
-    this.singleLine = false;
+    this.indent = -1;
     this.acc = [];
 };
 PrettyPrinter.prototype.increaseIndent = function() {
@@ -284,26 +281,15 @@ PrettyPrinter.prototype.increaseIndent = function() {
 PrettyPrinter.prototype.decreaseIndent = function() {
     --this.indent;
 };
-PrettyPrinter.prototype.newLine = function(indent) {
+PrettyPrinter.prototype.newline = function(indent) {
     indent = (indent || 0) + this.indent;
     this.str("\n");
     while(indent > 0) {
-        this.str("        ");
+        this.str("  ");
         --indent;
     };
 };
 PrettyPrinter.prototype.str = function(str) {
-    if(str.slice(- 1) === "\n") {
-        if(this.singleLine) {
-            // to be used for backtracking, for linebreaks in lists
-            throw "hasNewLine";
-        };
-        this.pos = 0;
-    };
-    if(this.pos > this.width) {
-        this.newLine(1);
-    };
-    this.pos += str.length;
     this.acc.push(str);
 };
 PrettyPrinter.prototype.pp = function(ast, bp) {
@@ -317,38 +303,38 @@ PrettyPrinter.prototype.pp = function(ast, bp) {
         this.str(")");
     };
 };
-// TODO: list pretty printing:
-// 1) set this.singleLine=true and try to print list on current line
-// 2) retry print one item per line instead
-//
 // OR: revert to lightscript2-like behaviour
-PrettyPrinter.prototype.list = function(list) {
+PrettyPrinter.prototype.list = function(list, newlineLength) {
     var self = this;
     self.increaseIndent();
     var sep = "";
-    list.map(function(child) {
+    list.filter(function(ast) {
+        return !ast.isa("id", ",") && !ast.isa("id", ";");
+    }).map(function(child) {
         return new SyntaxObj(child);
-    }).filter(function(obj) {
-        return !obj.opt["sep"];
     }).map(function(child) {
         self.str(sep);
+        if(list.length > newlineLength) {
+            self.newline();
+        }
         child.pp(self);
         sep = ", ";
     });
     self.decreaseIndent();
+    if(list.length > newlineLength) {
+        self.newline();
+    }
 };
-var infixlistpp = function(synobj, pp) {
-    var ast = synobj.ast;
-    pp.pp(ast.children[0]);
-    pp.str(ast.val[1]);
-    pp.list(ast.children.slice(1));
-    pp.str(ast.val[2]);
+var infixlistpp = function(obj, pp) {
+    pp.pp(obj.ast.children[0]);
+    pp.str(obj.ast.val[1]);
+    pp.list(obj.ast.children.slice(1), obj.opt["nlcount"]);
+    pp.str(obj.ast.val[2]);
 };
-var listpp = function(synobj, pp) {
-    var ast = synobj.ast;
-    pp.str(ast.val);
-    pp.list(ast.children);
-    pp.str(synobj.opt["paren"]);
+var listpp = function(obj, pp) {
+    pp.str(obj.ast.val);
+    pp.list(obj.ast.children, obj.opt["nlcount"]);
+    pp.str(obj.opt["paren"]);
 };
 var strpp = function(obj, pp) {
     pp.str(JSON.stringify(obj.ast.val));
@@ -379,12 +365,12 @@ SyntaxObj.prototype.pp = function(pp) {
 // Syntax definition {{{2
 var table = {
     "." : [1200, {nospace : true}],
-    "[" : [1200, {paren : "]", pp : listpp}],
-    "*[]" : [1200, {pp : infixlistpp}],
-    "(" : [1200, {paren : ")", pp : listpp}],
-    "*()" : [1200, {pp : infixlistpp}],
-    "{" : [1100, {paren : "}", pp : listpp}],
-    "*{}" : [1200, {pp : infixlistpp}],
+    "[" : [1200, {paren : "]", pp : listpp, nlcount: 4}],
+    "*[]" : [1200, {pp : infixlistpp, nlcount: 4}],
+    "(" : [1200, {paren : ")", pp : listpp, nlcount: 1}],
+    "*()" : [1200, {pp : infixlistpp, nlcount: 10}],
+    "{" : [1100, {paren : "}", pp : listpp, nlcount: 4}],
+    "*{}" : [1200, {pp : infixlistpp, nlcount: 0}],
     "#" : [1000, {nospace : true, noinfix : true}],
     "@" : [1000, {nospace : true, noinfix : true}],
     "++" : [1000, {nospace : true, noinfix : true}],
@@ -443,6 +429,7 @@ var table = {
 exports.nodemain = function(file) {
     file = file || "lightscript3";
     var source = require("fs").readFileSync(__dirname + "/../../lightscript/" + file + ".ls", "utf8");
+    source = "module{"+ source + "}";
     var tokens = tokenise(source);
     var asts = parse(tokens);
     var pp = new PrettyPrinter();
