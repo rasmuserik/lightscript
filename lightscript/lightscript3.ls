@@ -127,7 +127,7 @@ exports.tokenise = var tokenise = function(buffer, filename) {
             while(peek() && peek() !== "\n") {
                 s += pop();
             };
-            s += pop();
+            pop();
             result = newToken("note", s);
         } else if(starts_with("/*")) {
             s = "";
@@ -274,6 +274,7 @@ SyntaxObj.prototype.nud = function() {
 var PrettyPrinter = function() {
     this.indent = - 1;
     this.acc = [];
+    this.prevWasNewline = false;
 };
 PrettyPrinter.prototype.increaseIndent = function() {
     ++this.indent;
@@ -282,15 +283,19 @@ PrettyPrinter.prototype.decreaseIndent = function() {
     --this.indent;
 };
 PrettyPrinter.prototype.newline = function(indent) {
+    if(!this.prevWasNewline) {
     indent = (indent || 0) + this.indent;
     this.str("\n");
     while(indent > 0) {
-        this.str("  ");
+        this.str("    ");
         --indent;
     };
+    this.prevWasNewline = true;
+    }
 };
 PrettyPrinter.prototype.str = function(str) {
     this.acc.push(str);
+    this.prevWasNewline = false;
 };
 PrettyPrinter.prototype.pp = function(ast, bp) {
     bp = bp || 0;
@@ -303,11 +308,12 @@ PrettyPrinter.prototype.pp = function(ast, bp) {
         this.str(")");
     };
 };
-var listpp = function(isInfix, newlineLength, rparen) {
+var listpp = function(isInfix, newlineLength, prefixSpace) {
     return function(obj, pp) {
         var ast = obj.ast;
         if(isInfix) {
             pp.pp(ast.children[0]);
+            pp.str(prefixSpace);
             pp.str(ast.val[1]);
             var list = ast.children.slice(1);
         } else  {
@@ -315,18 +321,19 @@ var listpp = function(isInfix, newlineLength, rparen) {
             list = ast.children;
         };
         pp.increaseIndent();
-        var sep = "";
-        list.filter(function(ast) {
-            return !ast.isa("id", ",") && !ast.isa("id", ";");
-        }).map(function(child) {
+        space = "";
+        list.map(function(child) {
             return new SyntaxObj(child);
         }).map(function(child) {
-            pp.str(sep);
+            if(!child.opt["sep"]) {
             if(list.length > newlineLength) {
                 pp.newline();
+            } else {
+                pp.str(space);
+                space = " ";
             };
+            }
             child.pp(pp);
-            sep = ", ";
         });
         pp.decreaseIndent();
         if(list.length > newlineLength) {
@@ -341,6 +348,11 @@ var listpp = function(isInfix, newlineLength, rparen) {
 };
 var strpp = function(obj, pp) {
     pp.str(JSON.stringify(obj.ast.val));
+};
+var notepp = function(obj, pp) {
+    pp.newline();
+    pp.str(obj.ast.val);
+    pp.newline();
 };
 SyntaxObj.prototype.pp = function(pp) {
     var ast = this.ast;
@@ -368,12 +380,12 @@ SyntaxObj.prototype.pp = function(pp) {
 // Syntax definition {{{2
 var table = {
     "." : [1200, {nospace : true}],
-    "[" : [1200, {pp : listpp(false, 4), paren: "]"}],
-    "*[]" : [1200, {pp : listpp(true, 4)}],
-    "(" : [1200, {pp : listpp(false, 1), paren: ")"}],
-    "*()" : [1200, {pp : listpp(true, 10)}],
-    "{" : [1100, {pp : listpp(false, 4), paren: "}"}],
-    "*{}" : [1200, {pp : listpp(true, 0)}],
+    "[" : [1200, {pp : listpp(false, 4, ""), paren: "]"}],
+    "*[]" : [1200, {pp : listpp(true, 4, "")}],
+    "(" : [1200, {pp : listpp(false, 1, ""), paren: ")"}],
+    "*()" : [1200, {pp : listpp(true, 10, "")}],
+    "{" : [1100, {pp : listpp(false, 4, ""), paren: "}"}],
+    "*{}" : [1200, {pp : listpp(true, 0, " ")}],
     "#" : [1000, {nospace : true, noinfix : true}],
     "@" : [1000, {nospace : true, noinfix : true}],
     "++" : [1000, {nospace : true, noinfix : true}],
@@ -408,7 +420,7 @@ var table = {
     "=" : [100, {dbp : 1}],
     "," : [0, {sep : true}],
     ";" : [0, {sep : true}],
-    "note:" : [0, {sep : true}],
+    "note:" : [0, {sep : true, pp: notepp}],
     "]" : [0, {rparen : true}],
     ")" : [0, {rparen : true}],
     "}" : [0, {rparen : true}],
