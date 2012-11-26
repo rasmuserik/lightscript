@@ -303,38 +303,41 @@ PrettyPrinter.prototype.pp = function(ast, bp) {
         this.str(")");
     };
 };
-// OR: revert to lightscript2-like behaviour
-PrettyPrinter.prototype.list = function(list, newlineLength) {
-    var self = this;
-    self.increaseIndent();
-    var sep = "";
-    list.filter(function(ast) {
-        return !ast.isa("id", ",") && !ast.isa("id", ";");
-    }).map(function(child) {
-        return new SyntaxObj(child);
-    }).map(function(child) {
-        self.str(sep);
-        if(list.length > newlineLength) {
-            self.newline();
+var listpp = function(isInfix, newlineLength, rparen) {
+    return function(obj, pp) {
+        var ast = obj.ast;
+        if(isInfix) {
+            pp.pp(ast.children[0]);
+            pp.str(ast.val[1]);
+            var list = ast.children.slice(1);
+        } else  {
+            pp.str(ast.val);
+            list = ast.children;
         };
-        child.pp(self);
-        sep = ", ";
-    });
-    self.decreaseIndent();
-    if(list.length > newlineLength) {
-        self.newline();
+        pp.increaseIndent();
+        var sep = "";
+        list.filter(function(ast) {
+            return !ast.isa("id", ",") && !ast.isa("id", ";");
+        }).map(function(child) {
+            return new SyntaxObj(child);
+        }).map(function(child) {
+            pp.str(sep);
+            if(list.length > newlineLength) {
+                pp.newline();
+            };
+            child.pp(pp);
+            sep = ", ";
+        });
+        pp.decreaseIndent();
+        if(list.length > newlineLength) {
+            pp.newline();
+        };
+        if(isInfix) {
+            pp.str(ast.val[2]);
+        } else {
+            pp.str(obj.opt["paren"]);
+        }
     };
-};
-var infixlistpp = function(obj, pp) {
-    pp.pp(obj.ast.children[0]);
-    pp.str(obj.ast.val[1]);
-    pp.list(obj.ast.children.slice(1), obj.opt["nlcount"]);
-    pp.str(obj.ast.val[2]);
-};
-var listpp = function(obj, pp) {
-    pp.str(obj.ast.val);
-    pp.list(obj.ast.children, obj.opt["nlcount"]);
-    pp.str(obj.opt["paren"]);
 };
 var strpp = function(obj, pp) {
     pp.str(JSON.stringify(obj.ast.val));
@@ -365,24 +368,12 @@ SyntaxObj.prototype.pp = function(pp) {
 // Syntax definition {{{2
 var table = {
     "." : [1200, {nospace : true}],
-    "[" : [1200, {
-        paren : "]",
-        pp : listpp,
-        nlcount : 4,
-    }],
-    "*[]" : [1200, {pp : infixlistpp, nlcount : 4}],
-    "(" : [1200, {
-        paren : ")",
-        pp : listpp,
-        nlcount : 1,
-    }],
-    "*()" : [1200, {pp : infixlistpp, nlcount : 10}],
-    "{" : [1100, {
-        paren : "}",
-        pp : listpp,
-        nlcount : 4,
-    }],
-    "*{}" : [1200, {pp : infixlistpp, nlcount : 0}],
+    "[" : [1200, {pp : listpp(false, 4), paren: "]"}],
+    "*[]" : [1200, {pp : listpp(true, 4)}],
+    "(" : [1200, {pp : listpp(false, 1), paren: ")"}],
+    "*()" : [1200, {pp : listpp(true, 10)}],
+    "{" : [1100, {pp : listpp(false, 4), paren: "}"}],
+    "*{}" : [1200, {pp : listpp(true, 0)}],
     "#" : [1000, {nospace : true, noinfix : true}],
     "@" : [1000, {nospace : true, noinfix : true}],
     "++" : [1000, {nospace : true, noinfix : true}],
