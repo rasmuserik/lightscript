@@ -419,7 +419,9 @@ var listpp = function(isInfix, newlineLength, prefixSpace) {
             pp.str(ast.val);
             list = ast.children;
         };
-        pp.increaseIndent();
+        if(list.length > newlineLength) {
+            pp.increaseIndent();
+        }
         var space = "";
         list.map(function(child) {
             return new SyntaxObj(child);
@@ -434,8 +436,8 @@ var listpp = function(isInfix, newlineLength, prefixSpace) {
             };
             child.pp(pp);
         });
-        pp.decreaseIndent();
         if(list.length > newlineLength) {
+            pp.decreaseIndent();
             pp.newline();
         };
         if(isInfix) {
