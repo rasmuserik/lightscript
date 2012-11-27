@@ -37,8 +37,7 @@ Ast.prototype.createFromList = function(list) {
     };
     return result;
 };
-// Ast transformations {{{1
-// Matcher {{{2
+// Ast Matcher {{{1
 // Pattern matching notes
 // matcher = new Matcher();
 // matcher.pattern(["id", "*{}", ["id", "*()", ["id:function"], "?a"], "??b"],  function(match) { ... });
@@ -58,7 +57,7 @@ Ast.prototype.createFromList = function(list) {
 // parameter: match object with bound vars, and match.ast = full node, match.parent = parent node
 // try most specific match first. If result is undefined, try next match
 //
-// MatcherPattern {{{3
+// MatcherPattern {{{2
 MatcherPattern = function(pattern) {
     if(typeof(pattern) === "string") {
         if(pattern[0] === "?") {
@@ -103,7 +102,7 @@ MatcherPattern.prototype.match = function(ast, matchResult) {
     }
     return matchResult;
 };
-// MatchResult {{{3
+// MatchResult {{{2
 MatchResult = function(fn) {
     this.captures = {};
     this.ok = true;
@@ -119,12 +118,12 @@ MatchResult.prototype.capture = function(key, val) {
 MatchResult.prototype.increaseRanking = function() {
     ++this.rank;
 }
-// MatchEntry {{{3
+// MatchEntry {{{2
 MatchEntry = function(pattern, fn) {
     this.pattern = new MatcherPattern(pattern);
     this.fn = fn;
 }
-// Matcher {{{3
+// Matcher {{{2
 Matcher = function() {
     this.table = {};
 };
@@ -137,7 +136,6 @@ Matcher.prototype.match = function(ast) {
     matchers = this.table[ast.kind];
     if(matchers) {
         matchers.map(function(matcher) {
-            console.log(matcher);
             return matcher.pattern.match(ast, new MatchResult(matcher.fn));
         }).filter(function(result) {
             return result.ok;
