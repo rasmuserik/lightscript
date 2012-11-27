@@ -365,7 +365,7 @@ SyntaxObj.prototype.led = function(left) {
 SyntaxObj.prototype.nud = function() {
     if(this.opt["paren"]) {
         readList(this.opt["paren"], this.ast);
-    } else if(this.opt["noinfix"]) {
+    } else if(this.opt["noinfix"] || this.bp) {
         this.ast.children = [parseExpr(this.bp)];
     };
 };
