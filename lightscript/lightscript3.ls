@@ -80,15 +80,15 @@ MatcherPattern = function(pattern) {
     };
 };
 MatcherPattern.prototype.match = function(ast, matchResult) {
-    if(!this.endglob && this.children.length !== ast.children.length) {
-        matchResult.failure();
-    } else if(this.anyVal) {
+    if(this.anyVal) {
         matchResult.capture(this.anyVal, ast);
     } else if(this.str) {
         matchResult.increaseRanking();
         if(ast !== this.str) {
             matchResult.failure();
         }
+    } else if(!this.endglob && this.children.length !== ast.children.length) {
+        matchResult.failure();
     } else {
         this.kind.match(ast.kind, matchResult);
         this.val.match(ast.val, matchResult);
@@ -104,10 +104,11 @@ MatcherPattern.prototype.match = function(ast, matchResult) {
     return matchResult;
 };
 // MatchResult {{{3
-MatchResult = function() {
+MatchResult = function(fn) {
     this.captures = {};
     this.ok = true;
     this.rank = 0;
+    this.fn = fn;
 }
 MatchResult.prototype.failure = function() {
     this.ok = false;
@@ -135,8 +136,9 @@ Matcher.prototype.match = function(ast) {
     result = undefined;
     matchers = this.table[ast.kind];
     if(matchers) {
-        matchers.map(function(pattern) {
-            return pattern.match(ast, new MatchResult());
+        matchers.map(function(matcher) {
+            console.log(matcher);
+            return matcher.pattern.match(ast, new MatchResult(matcher.fn));
         }).filter(function(result) {
             return result.ok;
         }).sort(function(a, b) {
@@ -148,6 +150,13 @@ Matcher.prototype.match = function(ast) {
         });
     }
     return result;
+};
+Matcher.prototype.recursiveWalk = function(ast) {
+    self = this;
+    ast.children.map(function(child) {
+        self.recursiveWalk(child);
+    });
+    this.match(ast);
 };
 // Tokeniser {{{1
 var BufferPos = function(line, pos) {
@@ -538,11 +547,15 @@ exports.nodemain = function(file) {
     var source = require("fs").readFileSync(__dirname + "/../../lightscript/" + file + ".ls", "utf8");
     source = "module{" + source + "}";
     var tokens = tokenise(source);
-    var asts = parse(tokens);
+    var ast = parse(tokens)[0];
     var pp = new PrettyPrinter();
-    asts.forEach(function(ast) {
-        pp.pp(ast);
-        //pp.str("\n");
-    });
+    pp.pp(ast);
     console.log(pp.acc.join(""));
+    matcher = new Matcher();
+    ids = {};
+    matcher.pattern(["id", "?id"], function(match, ast) {
+        ids[match["id"]] = true;
+    });
+    matcher.recursiveWalk(ast);
+    console.log(Object.keys(ids));
 };
