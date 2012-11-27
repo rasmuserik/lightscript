@@ -58,21 +58,21 @@ Ast.prototype.createFromList = function(list) {
 // try most specific match first. If result is undefined, try next match
 //
 // MatcherPattern {{{2
-MatcherPattern = function(pattern) {
-    if(typeof(pattern) === "string") {
+var MatcherPattern = function(pattern) {
+    if(typeof pattern === "string") {
         if(pattern[0] === "?") {
             this.anyVal = pattern.slice(1);
-        } else {
+        } else  {
             this.str = pattern;
-        }
-    } else {
+        };
+    } else  {
         this.kind = new MatcherPattern(pattern[0]);
         this.val = new MatcherPattern(pattern[1]);
         this.children = pattern.slice(2);
         if(pattern[pattern.length - 1].slice(0, 2) === "??") {
             this.endglob = pattern[pattern.length - 1].slice(2);
-            this.children = pattern.slice(0, -1);
-        } 
+            this.children = pattern.slice(0, - 1);
+        };
         this.children = this.children.map(function(child) {
             return new MatcherPattern(child);
         });
@@ -85,55 +85,55 @@ MatcherPattern.prototype.match = function(ast, matchResult) {
         matchResult.increaseRanking();
         if(ast !== this.str) {
             matchResult.failure();
-        }
+        };
     } else if(!this.endglob && this.children.length !== ast.children.length) {
         matchResult.failure();
-    } else {
+    } else  {
         this.kind.match(ast.kind, matchResult);
         this.val.match(ast.val, matchResult);
-        i = 0;
+        var i = 0;
         while(i < this.children.length) {
             this.children[i].match(ast.children[i], matchResult);
             ++i;
-        }
+        };
         if(this.endglob) {
             matchResult.capture(this.endglob, ast.children.slice(i));
-        }
-    }
+        };
+    };
     return matchResult;
 };
 // MatchResult {{{2
-MatchResult = function(fn) {
+var MatchResult = function(fn) {
     this.captures = {};
     this.ok = true;
     this.rank = 0;
     this.fn = fn;
-}
+};
 MatchResult.prototype.failure = function() {
     this.ok = false;
-}
+};
 MatchResult.prototype.capture = function(key, val) {
     this.captures[key] = val;
-}
+};
 MatchResult.prototype.increaseRanking = function() {
     ++this.rank;
-}
+};
 // MatchEntry {{{2
-MatchEntry = function(pattern, fn) {
+var MatchEntry = function(pattern, fn) {
     this.pattern = new MatcherPattern(pattern);
     this.fn = fn;
-}
+};
 // Matcher {{{2
-Matcher = function() {
+var Matcher = function() {
     this.table = {};
 };
 Matcher.prototype.pattern = function(pattern, fn) {
-    this.table[pattern[0]] = matchers = this.table[pattern[0]] || [];
+    this.table[pattern[0]] = var matchers = this.table[pattern[0]] || [];
     matchers.push(new MatchEntry(pattern, fn));
 };
 Matcher.prototype.match = function(ast) {
-    result = undefined;
-    matchers = this.table[ast.kind];
+    var result = undefined;
+    var matchers = this.table[ast.kind];
     if(matchers) {
         matchers.map(function(matcher) {
             return matcher.pattern.match(ast, new MatchResult(matcher.fn));
@@ -144,13 +144,13 @@ Matcher.prototype.match = function(ast) {
         }).forEach(function(match) {
             if(!result) {
                 result = match.fn(match.captures, ast);
-            }
+            };
         });
-    }
+    };
     return result;
 };
 Matcher.prototype.recursiveWalk = function(ast) {
-    self = this;
+    var self = this;
     ast.children.map(function(child) {
         self.recursiveWalk(child);
     });
@@ -383,14 +383,14 @@ PrettyPrinter.prototype.decreaseIndent = function() {
 };
 PrettyPrinter.prototype.newline = function(indent) {
     if(!this.prevWasNewline) {
-    indent = (indent || 0) + this.indent;
-    this.str("\n");
-    while(indent > 0) {
-        this.str("    ");
-        --indent;
+        indent = (indent || 0) + this.indent;
+        this.str("\n");
+        while(indent > 0) {
+            this.str("    ");
+            --indent;
+        };
+        this.prevWasNewline = true;
     };
-    this.prevWasNewline = true;
-    }
 };
 PrettyPrinter.prototype.str = function(str) {
     this.acc.push(str);
@@ -420,18 +420,18 @@ var listpp = function(isInfix, newlineLength, prefixSpace) {
             list = ast.children;
         };
         pp.increaseIndent();
-        space = "";
+        var space = "";
         list.map(function(child) {
             return new SyntaxObj(child);
         }).map(function(child) {
             if(!child.opt["sep"]) {
-            if(list.length > newlineLength) {
-                pp.newline();
-            } else {
-                pp.str(space);
-                space = " ";
+                if(list.length > newlineLength) {
+                    pp.newline();
+                } else  {
+                    pp.str(space);
+                    space = " ";
+                };
             };
-            }
             child.pp(pp);
         });
         pp.decreaseIndent();
@@ -440,9 +440,9 @@ var listpp = function(isInfix, newlineLength, prefixSpace) {
         };
         if(isInfix) {
             pp.str(ast.val[2]);
-        } else {
+        } else  {
             pp.str(obj.opt["paren"]);
-        }
+        };
     };
 };
 var strpp = function(obj, pp) {
@@ -479,11 +479,11 @@ SyntaxObj.prototype.pp = function(pp) {
 // Syntax definition {{{2
 var table = {
     "." : [1200, {nospace : true}],
-    "[" : [1200, {pp : listpp(false, 4, ""), paren: "]"}],
+    "[" : [1200, {pp : listpp(false, 4, ""), paren : "]"}],
     "*[]" : [1200, {pp : listpp(true, 4, "")}],
-    "(" : [1200, {pp : listpp(false, 1, ""), paren: ")"}],
+    "(" : [1200, {pp : listpp(false, 1, ""), paren : ")"}],
     "*()" : [1200, {pp : listpp(true, 10, "")}],
-    "{" : [1100, {pp : listpp(false, 4, ""), paren: "}"}],
+    "{" : [1100, {pp : listpp(false, 4, ""), paren : "}"}],
     "*{}" : [1200, {pp : listpp(true, 0, " ")}],
     "#" : [1000, {nospace : true, noinfix : true}],
     "@" : [1000, {nospace : true, noinfix : true}],
@@ -519,7 +519,7 @@ var table = {
     "=" : [100, {dbp : 1}],
     "," : [0, {sep : true}],
     ";" : [0, {sep : true}],
-    "note:" : [0, {sep : true, pp: notepp}],
+    "note:" : [0, {sep : true, pp : notepp}],
     "]" : [0, {rparen : true}],
     ")" : [0, {rparen : true}],
     "}" : [0, {rparen : true}],
@@ -549,8 +549,8 @@ exports.nodemain = function(file) {
     var pp = new PrettyPrinter();
     pp.pp(ast);
     console.log(pp.acc.join(""));
-    matcher = new Matcher();
-    ids = {};
+    var matcher = new Matcher();
+    var ids = {};
     matcher.pattern(["id", "?id"], function(match, ast) {
         ids[match["id"]] = true;
     });
