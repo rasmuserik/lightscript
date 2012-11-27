@@ -1,3 +1,26 @@
+// Util {{{1
+pplist = function(list, indent) {
+    indent = indent || "  ";
+    if(!Array.isArray(list)) {
+        return list;
+    };
+    var result = list.map(function(elem) {
+        return pplist(elem, indent + "  ");
+    });
+    var len = 0;
+    result.forEach(function(elem) {
+        len += elem.length + 1;
+    });
+    if(result[1]) {
+        result[1] = result[0] + " "+ result[1];
+        result.shift();
+    };
+    if(len < 72) {
+        return "[" + result.join(" ") + "]";
+    } else  {
+        return "[" + result.join("\n" + indent) + "]";
+    };
+};
 // Ast {{{1
 var Ast = function(kind, val, children, opt) {
     this.kind = kind;
@@ -27,11 +50,12 @@ Ast.prototype.toList = function() {
 Ast.prototype.toString = function() {
     return JSON.stringify(this.toList());
 };
-Ast.prototype.createFromList = function(list) {
+Ast.prototype.fromList = function(list) {
     if(Array.isArray(list)) {
-        var kind = list[0];
-        var val = list[1];
-        var result = this.create(kind, val, list.slice(2).map(astFromList));
+        self = this;
+        var result = this.create(list[0], list[1], list.slice(2).map( function(child) {
+            return self.fromList(child);
+        }));
     } else  {
         result = list;
     };
@@ -68,10 +92,11 @@ var MatcherPattern = function(pattern) {
     } else  {
         this.kind = new MatcherPattern(pattern[0]);
         this.val = new MatcherPattern(pattern[1]);
-        this.children = pattern.slice(2);
         if(pattern[pattern.length - 1].slice(0, 2) === "??") {
             this.endglob = pattern[pattern.length - 1].slice(2);
-            this.children = pattern.slice(0, - 1);
+            this.children = pattern.slice(2, - 1);
+        } else {
+            this.children = pattern.slice(2);
         };
         this.children = this.children.map(function(child) {
             return new MatcherPattern(child);
@@ -86,6 +111,8 @@ MatcherPattern.prototype.match = function(ast, matchResult) {
         if(ast !== this.str) {
             matchResult.failure();
         };
+    } else if(this.children.length > ast.children.length) {
+        matchResult.failure();
     } else if(!this.endglob && this.children.length !== ast.children.length) {
         matchResult.failure();
     } else  {
@@ -155,6 +182,11 @@ Matcher.prototype.recursiveWalk = function(ast) {
         self.recursiveWalk(child);
     });
     this.match(ast);
+};
+Matcher.prototype.recursiveTransform = function(ast) {
+    var self = this;
+    t = ast.create(ast.kind, ast.val, ast.children.map(function(child) { return self.recursiveTransform(child); }));
+    return this.match(t) || t;
 };
 // Tokeniser {{{1
 var BufferPos = function(line, pos) {
@@ -359,7 +391,7 @@ SyntaxObj.prototype.led = function(left) {
     } else if(this.opt["noinfix"]) {
         throw ast + " must not occur as infix.";
     } else  {
-        ast.children = [left, parseExpr(this.bp - this.opt["dbp"])];
+        ast.children = [left, parseExpr(this.bp - (this.opt["dbp"]||0))];
     };
 };
 SyntaxObj.prototype.nud = function() {
@@ -480,9 +512,9 @@ SyntaxObj.prototype.pp = function(pp) {
 };
 // Syntax definition {{{2
 var table = {
-    "." : [1200, {nospace : true}],
-    "[" : [1200, {pp : listpp(false, 4, ""), paren : "]"}],
-    "*[]" : [1200, {pp : listpp(true, 4, "")}],
+    "." : [1300, {nospace : true}],
+    "[" : [1200, {pp : listpp(false, 6, ""), paren : "]"}],
+    "*[]" : [1200, {pp : listpp(true, 6, "")}],
     "(" : [1200, {pp : listpp(false, 1, ""), paren : ")"}],
     "*()" : [1200, {pp : listpp(true, 10, "")}],
     "{" : [1100, {pp : listpp(false, 4, ""), paren : "}"}],
@@ -541,6 +573,12 @@ var table = {
     "propertyIsEnumerable" : [],
     "default:" : [],
 };
+// rst to ast {{{1
+rstToAst = new Matcher();
+rstToAst.pattern(["id", "*()", ["id", ".", "?obj", ["id", "?method"]], "??args"], function(match, ast) {
+    console.log("" + match["method"]);
+    return ast.fromList(["id", match["method"], match["obj"]].concat(match["args"]));
+});
 // Main for testing {{{1
 exports.nodemain = function(file) {
     file = file || "lightscript3";
@@ -550,12 +588,8 @@ exports.nodemain = function(file) {
     var ast = parse(tokens)[0];
     var pp = new PrettyPrinter();
     pp.pp(ast);
-    console.log(pp.acc.join(""));
-    var matcher = new Matcher();
-    var ids = {};
-    matcher.pattern(["id", "?id"], function(match, ast) {
-        ids[match["id"]] = true;
-    });
-    matcher.recursiveWalk(ast);
-    console.log(Object.keys(ids));
+    //console.log(pp.acc.join(""));
+    ast = rstToAst.recursiveTransform(ast);
+    console.log(pplist(ast.toList()));
+    //console.log(pplist(rstToAst.recursiveTransform(ast).toList()));
 };
