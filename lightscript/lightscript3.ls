@@ -176,10 +176,10 @@ exports.tokenise = var tokenise = function(buffer, filename) {
     var newlinePos = 0;
     var bufferDescr = new BufferDescr(buffer, filename);
     var start = new BufferPos(0, 0);
-    var one_of = function(str) {
+    var oneOf = function(str) {
         return str.indexOf(peek()) !== - 1;
     };
-    var starts_with = function(str) {
+    var startsWith = function(str) {
         return peek(str.length) === str;
     };
     var peek = function(n, delta) {
@@ -200,7 +200,7 @@ exports.tokenise = var tokenise = function(buffer, filename) {
         pos += n;
         return result;
     };
-    var begin_token = function() {
+    var beginToken = function() {
         start = new BufferPos(lineno, pos - newlinePos);
     };
     var newToken = function(kind, val) {
@@ -208,37 +208,37 @@ exports.tokenise = var tokenise = function(buffer, filename) {
     };
     var next = function() {
         var whitespace = " \t\r\n";
-        var single_symbol = "(){}[]:;,`?";
-        var joined_symbol = "=+-*/<>%!|&^~#.@";
+        var singleSymbol = "(){}[]:;,`?";
+        var joinedSymbol = "=+-*/<>%!|&^~#.@";
         var ident = "_qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM$";
         var digits = "0123456789";
         var hexdigits = digits + "abcdefABCDEF";
         var s = undefined;
         var c = undefined;
-        while(peek() && one_of(whitespace)) {
+        while(peek() && oneOf(whitespace)) {
             pop();
         };
-        begin_token();
+        beginToken();
         if(peek() === "") {
             var result = undefined;
-        } else if(starts_with("//")) {
+        } else if(startsWith("//")) {
             s = "";
             while(peek() && peek() !== "\n") {
                 s += pop();
             };
             pop();
             result = newToken("note", s);
-        } else if(starts_with("/*")) {
+        } else if(startsWith("/*")) {
             s = "";
             while(peek() && peek(2) !== "*/") {
                 s += pop();
             };
             s += pop(2);
             result = newToken("note", s);
-        } else if(one_of("\"")) {
+        } else if(oneOf("\"")) {
             s = "";
             var quote = pop();
-            while(!starts_with(quote)) {
+            while(!startsWith(quote)) {
                 c = pop();
                 if(c === "\\") {
                     c = pop();
@@ -252,30 +252,30 @@ exports.tokenise = var tokenise = function(buffer, filename) {
             };
             pop();
             result = newToken("str", s);
-        } else if(one_of(digits) || (peek() === "." && digits.indexOf(peek(1, 1)) !== - 1)) {
+        } else if(oneOf(digits) || (peek() === "." && digits.indexOf(peek(1, 1)) !== - 1)) {
             s = pop();
             if(peek() !== "x") {
-                while(peek() && one_of(".e" + digits)) {
+                while(peek() && oneOf(".e" + digits)) {
                     s += pop();
                 };
             } else  {
                 s = pop(2);
-                while(peek() && one_of(hexdigits)) {
+                while(peek() && oneOf(hexdigits)) {
                     s += pop();
                 };
             };
             result = newToken("num", s);
-        } else if(one_of(single_symbol)) {
+        } else if(oneOf(singleSymbol)) {
             result = newToken("id", pop());
-        } else if(one_of(joined_symbol)) {
+        } else if(oneOf(joinedSymbol)) {
             s = "";
-            while(peek() && one_of(joined_symbol)) {
+            while(peek() && oneOf(joinedSymbol)) {
                 s += pop();
             };
             result = newToken("id", s);
-        } else if(one_of(ident)) {
+        } else if(oneOf(ident)) {
             s = "";
-            while(peek() && one_of(ident + digits)) {
+            while(peek() && oneOf(ident + digits)) {
                 s += pop();
             };
             result = newToken("id", s);
