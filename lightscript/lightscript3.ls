@@ -20,7 +20,8 @@ Ast.prototype.toList = function() {
     var result = this.children.map(function(node) {
         return node.toList();
     });
-    result.unshift(this.kind + ":" + this.val);
+    result.unshift(this.val);
+    result.unshift(this.kind);
     return result;
 };
 Ast.prototype.toString = function() {
@@ -28,27 +29,26 @@ Ast.prototype.toString = function() {
 };
 Ast.prototype.createFromList = function(list) {
     if(Array.isArray(list)) {
-        var kindval = list[0];
-        var splitpos = kindval.indexOf(":");
-        var kind = kindval.slice(0, splitpos);
-        var val = kindval.slice(splitpos + 1);
-        var result = this.create(kind, val, list.slice(1).map(astFromList));
+        var kind = list[0];
+        var val = list[1];
+        var result = this.create(kind, val, list.slice(2).map(astFromList));
     } else  {
         result = list;
     };
     return result;
 };
+// Ast transformations {{{1
 // Matcher {{{2
 // Pattern matching notes
 // matcher = new Matcher();
-// matcher.pattern(["id:*{}", ["id:*()", ["id:function"], "?a"], "??b"],  function(match) { ... });
-// matcher.pattern(["id:*{}", "?a"] : function(match) { ... });
-// matcher.pattern(["str:?a"]: function(match) { ... }); 
-// matcher.pattern(["id:?operator", "?lhs", "??rhs"]: function(match, ast) {
-//     return match.ast.create('call', match.operator, [match.lhs].concat(match.rhs));
+// matcher.pattern(["id", "*{}", ["id", "*()", ["id:function"], "?a"], "??b"],  function(match) { ... });
+// matcher.pattern(["id", "*{}", "?a"], function(match) { ... });
+// matcher.pattern(["str", "?a"], function(match) { ... }); 
+// matcher.pattern(["id", "?operator", "?lhs", "??rhs"]: function(match, ast) {
+//     return ast.create('call', match["operator"], [match["lhs"]].concat(match["rhs"]));
 // }); 
-// matcher.pattern(["id:var", "?val"]: function(match, ast) {
-//      return match.val;
+// matcher.pattern(["id", "var", "?val"]: function(match, ast) {
+//      return match["val"];
 // }); 
 //
 // matcher.pattern(["id:=", ["id:.", ["id:.", ["id:?class"] [id:prototype]] ["id:?member"]] "?value"], function(match) {
@@ -57,6 +57,98 @@ Ast.prototype.createFromList = function(list) {
 // matcher function
 // parameter: match object with bound vars, and match.ast = full node, match.parent = parent node
 // try most specific match first. If result is undefined, try next match
+//
+// MatcherPattern {{{3
+MatcherPattern = function(pattern) {
+    if(typeof(pattern) === "string") {
+        if(pattern[0] === "?") {
+            this.anyVal = pattern.slice(1);
+        } else {
+            this.str = pattern;
+        }
+    } else {
+        this.kind = new MatcherPattern(pattern[0]);
+        this.val = new MatcherPattern(pattern[1]);
+        this.children = pattern.slice(2);
+        if(pattern[pattern.length - 1].slice(0, 2) === "??") {
+            this.endglob = pattern[pattern.length - 1].slice(2);
+            this.children = pattern.slice(0, -1);
+        } 
+        this.children = this.children.map(function(child) {
+            return new MatcherPattern(child);
+        });
+    };
+};
+MatcherPattern.prototype.match = function(ast, matchResult) {
+    if(!this.endglob && this.children.length !== ast.children.length) {
+        matchResult.failure();
+    } else if(this.anyVal) {
+        matchResult.capture(this.anyVal, ast);
+    } else if(this.str) {
+        matchResult.increaseRanking();
+        if(ast !== this.str) {
+            matchResult.failure();
+        }
+    } else {
+        this.kind.match(ast.kind, matchResult);
+        this.val.match(ast.val, matchResult);
+        i = 0;
+        while(i < this.children.length) {
+            this.children[i].match(ast.children[i], matchResult);
+            ++i;
+        }
+        if(this.endglob) {
+            matchResult.capture(this.endglob, ast.children.slice(i));
+        }
+    }
+    return matchResult;
+};
+// MatchResult {{{3
+MatchResult = function() {
+    this.captures = {};
+    this.ok = true;
+    this.rank = 0;
+}
+MatchResult.prototype.failure = function() {
+    this.ok = false;
+}
+MatchResult.prototype.capture = function(key, val) {
+    this.captures[key] = val;
+}
+MatchResult.prototype.increaseRanking = function() {
+    ++this.rank;
+}
+// MatchEntry {{{3
+MatchEntry = function(pattern, fn) {
+    this.pattern = new MatcherPattern(pattern);
+    this.fn = fn;
+}
+// Matcher {{{3
+Matcher = function() {
+    this.table = {};
+};
+Matcher.prototype.pattern = function(pattern, fn) {
+    this.table[pattern[0]] = matchers = this.table[pattern[0]] || [];
+    matchers.push(new MatchEntry(pattern, fn));
+};
+Matcher.prototype.match = function(ast) {
+    result = undefined;
+    matchers = this.table[ast.kind];
+    if(matchers) {
+        matchers.map(function(pattern) {
+            return pattern.match(ast, new MatchResult());
+        }).filter(function(result) {
+            return result.ok;
+        }).sort(function(a, b) {
+            return a.rank - b.rank;
+        }).forEach(function(match) {
+            if(!result) {
+                result = match.fn(match.captures, ast);
+            }
+        });
+    }
+    return result;
+};
 // Tokeniser {{{1
 var BufferPos = function(line, pos) {
     this.line = line;
