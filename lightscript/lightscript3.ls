@@ -583,7 +583,7 @@ rstToAst = new Matcher();
 rstToAst.pattern(["call", "*()", "??args"], function(match, ast) {
     return ast.fromList(["call", "*()"].concat(match["args"].filter(notSep)));
 });
-rstToAst.pattern(["call", "*()", ["call", ".", "?obj", ["id", "?method"]], "??args"], function(match, ast) {
+rstToAst.pattern(["call", "*()", ["call", ".", "?obj", ["str", "?method"]], "??args"], function(match, ast) {
     return ast.fromList(["call", match["method"], match["obj"]].concat(match["args"].filter(notSep)));
 });
 rstToAst.pattern(["call", "*{}", ["call", "*()", ["id", "function"], "??args"] "??body"], function(match, ast) {
@@ -667,5 +667,12 @@ exports.nodemain = function(file) {
     //console.log(pp.acc.join(""));
     ast = rstToAst.recursiveTransform(ast);
     console.log(pplist(ast.toList()));
+    matcher = new Matcher();
+    names = {};
+    matcher.pattern(["call", "?method", "??any"], function(match, ast) {
+        names[match["method"]] = true;
+    });
+    matcher.recursiveTransform(ast);
+    console.log(Object.keys(names).sort());
     //console.log(pplist(rstToAst.recursiveTransform(ast).toList()));
 };
