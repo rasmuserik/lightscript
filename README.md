@@ -30,7 +30,7 @@ Based on version 2, but limited to base library for compiler etc.
 - Platforms
     - prettyprint
     - Java
-    - JavaScript
+    - JavaScript (NB: generate as https://developer.mozilla.org/en-US/docs/SpiderMonkey/Parser_API via uglify2 or similar)
     - C
     - Python
     - PHP
