@@ -667,12 +667,16 @@ exports.nodemain = function(file) {
     //console.log(pp.acc.join(""));
     ast = rstToAst.recursiveTransform(ast);
     console.log(pplist(ast.toList()));
-    matcher = new Matcher();
     names = {};
-    matcher.pattern(["call", "?method", "??any"], function(match, ast) {
-        names[match["method"]] = true;
+    recursiveVisit = function(ast) {
+        names[ast.kind] = obj = names[ast.kind] || {};
+        obj[ast.val] = true;
+        ast.children.map(recursiveVisit);
+    }
+    recursiveVisit(ast);
+    Object.keys(names).forEach(function(kind) {
+        names[kind] = Object.keys(names[kind]).sort();
     });
-    matcher.recursiveTransform(ast);
-    console.log(Object.keys(names).sort());
+    console.log(names);
     //console.log(pplist(rstToAst.recursiveTransform(ast).toList()));
 };
