@@ -5,7 +5,26 @@ This language is in development and heavy flux, no need to look at it yet.
 
 Code also interspersed with other projects.
 
+# Why
+
+I want 
+- reusable code across different platforms: JavaScript, Java, embedded C, (Python, PHP, ...).
+- closures, first class functions, types, extensible syntax(operator overloading etc.) ...
+- treat code as data, staged computation, ...
+
+Design critierias:
+- KISS - Keep It Simple
+- Friendly abstract syntax tree.
+- Minimal abstraction of host language.
+- Bijective mapping between AST and prettyprinted source.
+
 # Version 3
+
+Milestones:
+- Prettyprint itself (running on lightscript2)
+- Run itself on Java (running on lightscript2)
+- Run itself on JavaScript
+- Run itself on C
 
 Based on version 2, but limited to base library for compiler etc.
 
@@ -29,9 +48,9 @@ Based on version 2, but limited to base library for compiler etc.
     - RegExp
 - Platforms
     - prettyprint
-    - Java
+    - Java (source or bytecode)
     - JavaScript (NB: generate as https://developer.mozilla.org/en-US/docs/SpiderMonkey/Parser_API via uglify2 or similar)
-    - C
+    - C (or llvm)
     - Python
     - PHP
     - ActionScript/Flash (for IE)
@@ -41,7 +60,7 @@ Based on version 2, but limited to base library for compiler etc.
     - module-pattern: `modulename = require("./modulename");` is only way to access modules.
     - only `"` for strings, `'` is going to be used for quote later on.
     - control-structures: if-else, while, `&&`, `||`
-    - `return` only allowed in function-top-scope (to be implemented generally later)
+    - `return` only allowed in function-top-scope (to be implemented generally later OR be functional-like return last val)
 - AST (`kind`, `val`, `children`, `type`, `pos`)
     - `kind`: `id`, `str`, `note`, `num`, `call`, `fn`, `control`, `assign`, (`quote`, `unquote`)
     - fn: `val` is number of parameters, `children` contains parameters, then body
@@ -63,7 +82,7 @@ Intended Features:
 - Good integration with host-language (javascript/java/c/...)
 
 Intended backends / packaging:
-- JavaScript (with codemaps)
+- JavaScript (with codemaps, via mozilla-AST)
     - node-server
     - html5-app
     - (NB: mozilla ignite)
@@ -88,6 +107,7 @@ Intended backends / packaging:
     - (iOS)
     - (symbian, nokia store)
     - (blackberry)
+- (Python for scientific computing)
 - (OpenCL for performance)
 - (interpreted stack-language)
 - (php - drupal module)
