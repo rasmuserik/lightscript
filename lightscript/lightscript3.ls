@@ -511,7 +511,13 @@ SyntaxObj.prototype.pp = function(pp) {
         pp.str(space + ast.val + space);
         pp.pp(children[1], this.bp + 1 - this.opt["dbp"]);
     } else  {
-        throw "prettyprint error, too long node: " + ast;
+        pp.str("-:<");
+        pp.str(ast.kind + " " + ast.val);
+        ast.children.forEach(function(child) {
+            pp.str(" | ");
+            pp.pp(child);
+        });
+        pp.str(">:-");
     };
 };
 // Syntax definition {{{2
@@ -581,111 +587,68 @@ var table = {
 var notSep = function(ast) {
     return ast.kind !== "id" || (ast.val !== ";" && ast.val !== ",");
 };
+var matchReplace = function(match, elem, filter) {
+    filter = filter || notSep;
+    if(Array.isArray(elem)) {
+        var tail = undefined;
+        if(elem[elem.length -1].slice(0, 2) === "??") {
+            tail = match[elem[elem.length - 1].slice(2)].filter(filter);
+            elem = elem.slice(0, -1);
+        }
+        result = elem.map(function(child) {
+            return matchReplace(match, child, filter);
+        });
+        if(tail) {
+            result = result.concat(tail);
+        }
+    } else if(typeof(elem) === "string" && elem[0] === "?") {
+        result = match[elem.slice(1)];
+    } else {
+        result = elem;
+    }
+    return result;
+}
+astTransform = function(from, to) {
+    rstToAst.pattern(from, function(match, ast) {
+        return ast.fromList(matchReplace(match, to));
+    });
+    astToRst.pattern(to, function(match, ast) {
+        return ast.fromList(matchReplace(match, from));
+    });
+};
 var rstToAst = new Matcher();
-rstToAst.pattern([
-    "call",
-    "*()",
-    "??args",
-], function(match, ast) {
+var astToRst = new Matcher();
+rstToAst.pattern([ "call", "*()", "??args", ], function(match, ast) {
     return ast.fromList(["call", "*()"].concat(match["args"].filter(notSep)));
 });
-rstToAst.pattern([
-    "call",
-    "*()",
-    [
-        "call",
-        ".",
-        "?obj",
-        ["str", "?method"],
-    ],
-    "??args",
-], function(match, ast) {
-    return ast.fromList([
-        "call",
-        match["method"],
-        match["obj"],
-    ].concat(match["args"].filter(notSep)));
+astTransform(["call", "*()", [ "call", ".", "?obj", ["str", "?method"]] "??args"], ["call", "?method", "?obj", "??args"]);
+astTransform(["call", ".", "?obj", ["id", "?id"]], ["call", ".", "?obj", ["str", "?id"]]);
+/*
+rstToAst.pattern([ "call", ".", "?obj", ["id", "?id"], ], function(match, ast) {
+    return ast.fromList([ "call", ".", match["obj"], ["str", match["id"]], ]);
 });
-rstToAst.pattern([
-    "call",
-    "*{}",
-    [
-        "call",
-        "*()",
-        ["id", "function"],
-        "??args",
-    ],
-    "??body",
-], function(match, ast) {
+*/
+rstToAst.pattern([ "call", "*{}", [ "call", "*()", ["id", "function"], "??args", ], "??body", ], function(match, ast) {
     var args = match["args"].filter(notSep);
     return ast.fromList(["fn", " "].concat(args).concat([["block", " "].concat(match["body"].filter(notSep))]));
 });
-rstToAst.pattern([
-    "call",
-    "=",
-    ["id", "?name"],
-    "?val",
-], function(match, ast) {
-    return ast.fromList([
-        "assign",
-        match["name"],
-        match["val"],
-    ]);
+rstToAst.pattern([ "call", "=", ["id", "?name"], "?val", ], function(match, ast) {
+    return ast.fromList([ "assign", match["name"], match["val"], ]);
 });
-rstToAst.pattern([
-    "call",
-    "new",
-    [
-        "call",
-        "*()",
-        "?class",
-        "??args",
-    ],
-], function(match, ast) {
-    return ast.fromList([
-        "call",
-        "new",
-        match["class"],
-    ].concat(match["args"]));
+rstToAst.pattern([ "call", "new", [ "call", "*()", "?class", "??args", ], ], function(match, ast) {
+    return ast.fromList([ "call", "new", match["class"], ].concat(match["args"]));
 });
-rstToAst.pattern([
-    "call",
-    "var",
-    "?val",
-], function(match, ast) {
+rstToAst.pattern([ "call", "var", "?val", ], function(match, ast) {
     return match["val"];
 });
-rstToAst.pattern([
-    "id",
-    "(",
-    "?val",
-], function(match, ast) {
+rstToAst.pattern([ "id", "(", "?val", ], function(match, ast) {
     return match["val"];
 });
-rstToAst.pattern([
-    "call",
-    "*{}",
-    [
-        "call",
-        "*()",
-        ["id", "while"],
-        "?cond",
-    ],
-    "??body",
-], function(match, ast) {
-    return ast.fromList([
-        "branch",
-        "while",
-        match["cond"],
-        ["block", " "].concat(match["body"].filter(notSep)),
-    ]);
+rstToAst.pattern([ "call", "*{}", [ "call", "*()", ["id", "while"], "?cond", ], "??body", ], function(match, ast) {
+    return ast.fromList([ "branch", "while", match["cond"], ["block", " "].concat(match["body"].filter(notSep)), ]);
 });
 // HashMap Literal
-rstToAst.pattern([
-    "id",
-    "{",
-    "??elems",
-], function(match, ast) {
+rstToAst.pattern([ "id", "{", "??elems", ], function(match, ast) {
     var ok = true;
     var args = [];
     match["elems"].forEach(function(child) {
@@ -698,182 +661,45 @@ rstToAst.pattern([
     });
     var result = undefined;
     if(ok) {
-        result = ast.fromList([
-            "call",
-            "new",
-            ["id", "HashMap"],
-        ].concat(args));
+        result = ast.fromList([ "call", "new", ["id", "HashMap"], ].concat(args));
     };
     return result;
 });
 // Array Literal
-rstToAst.pattern([
-    "id",
-    "[",
-    "??elems",
-], function(match, ast) {
-    return ast.fromList([
-        "call",
-        "new",
-        ["id", "Array"],
-    ].concat(match["elems"].filter(notSep)));
+rstToAst.pattern([ "id", "[", "??elems", ], function(match, ast) {
+    return ast.fromList([ "call", "new", ["id", "Array"], ].concat(match["elems"].filter(notSep)));
 });
 // Module body
-rstToAst.pattern([
-    "call",
-    "*{}",
-    ["id", "module"],
-    "??body",
-], function(match, ast) {
+rstToAst.pattern([ "call", "*{}", ["id", "module"], "??body", ], function(match, ast) {
     return ast.fromList(["block", "module"].concat(match["body"].filter(notSep)));
 });
-rstToAst.pattern([
-    "call",
-    "||",
-    "?p1",
-    "?p2",
-], function(match, ast) {
-    return ast.fromList([
-        "branch",
-        "||",
-        match["p1"],
-        match["p2"],
-    ]);
+rstToAst.pattern([ "call", "||", "?p1", "?p2", ], function(match, ast) {
+    return ast.fromList([ "branch", "||", match["p1"], match["p2"], ]);
 });
-rstToAst.pattern([
-    "call",
-    "&&",
-    "?p1",
-    "?p2",
-], function(match, ast) {
-    return ast.fromList([
-        "branch",
-        "&&",
-        match["p1"],
-        match["p2"],
-    ]);
+rstToAst.pattern([ "call", "&&", "?p1", "?p2", ], function(match, ast) {
+    return ast.fromList([ "branch", "&&", match["p1"], match["p2"], ]);
 });
-rstToAst.pattern([
-    "call",
-    ".",
-    "?obj",
-    ["id", "?id"],
-], function(match, ast) {
-    return ast.fromList([
-        "call",
-        ".",
-        match["obj"],
-        ["str", match["id"]],
-    ]);
+rstToAst.pattern([ "call", "=", [ "call", "*[]", "?obj", "?idx", ], "?val", ], function(match, ast) {
+    return ast.fromList([ "call", "*[]=", match["obj"], match["idx"], match["val"], ]);
 });
-rstToAst.pattern([
-    "call",
-    "=",
-    [
-        "call",
-        "*[]",
-        "?obj",
-        "?idx",
-    ],
-    "?val",
-], function(match, ast) {
-    return ast.fromList([
-        "call",
-        "*[]=",
-        match["obj"],
-        match["idx"],
-        match["val"],
-    ]);
-});
-rstToAst.pattern([
-    "call",
-    "else",
-    [
-        "branch",
-        "cond",
-        "??cond1",
-    ],
-    [
-        "branch",
-        "cond",
-        "??cond2",
-    ],
+rstToAst.pattern([ "call", "else", [ "branch", "cond", "??cond1", ], [ "branch", "cond", "??cond2", ],
 ], function(match, ast) {
     return ast.fromList(["branch", "cond"].concat(match["cond1"]).concat(match["cond2"]));
 });
-rstToAst.pattern([
-    "call",
-    "=",
-    [
-        "call",
-        ".",
-        "?obj",
-        "?member",
-    ],
-    "?val",
-], function(match, ast) {
-    return ast.fromList([
-        "call",
-        ".=",
-        match["obj"],
-        match["member"],
-        match["val"],
-    ]);
+rstToAst.pattern([ "call", "=", [ "call", ".", "?obj", "?member", ], "?val", ], function(match, ast) {
+    return ast.fromList([ "call", ".=", match["obj"], match["member"], match["val"], ]);
 });
-rstToAst.pattern([
-    "call",
-    "*{}",
-    [
-        "call",
-        "*()",
-        ["id", "if"],
-        "?p",
-    ],
-    "??body",
-], function(match, ast) {
-    return ast.fromList([
-        "branch",
-        "cond",
-        match["p"],
-        ["block", " "].concat(match["body"].filter(notSep)),
-    ]);
+rstToAst.pattern([ "call", "*{}", [ "call", "*()", ["id", "if"], "?p", ], "??body", ], function(match, ast) {
+    return ast.fromList([ "branch", "cond", match["p"], ["block", " "].concat(match["body"].filter(notSep)), ]);
 });
-rstToAst.pattern([
-    "call",
-    "else",
-    [
-        "branch",
-        "cond",
-        "??cond",
-    ],
-    [
-        "id",
-        "{",
-        "??body",
-    ],
-], function(match, ast) {
+rstToAst.pattern([ "call", "else", [ "branch", "cond", "??cond", ], [ "id", "{", "??body", ], ], function(match, ast) {
     return ast.fromList(["branch", "cond"].concat(match["cond"]).concat([["id", "true"], ["block", " "].concat(match["body"].filter(notSep))]));
 });
-rstToAst.pattern([
-    "call",
-    "throw",
-    "?result",
-], function(match, ast) {
-    return ast.fromList([
-        "branch",
-        "throw",
-        match["result"],
-    ]);
+rstToAst.pattern([ "call", "throw", "?result", ], function(match, ast) {
+    return ast.fromList([ "branch", "throw", match["result"], ]);
 });
-rstToAst.pattern([
-    "call",
-    "return",
-    "?result",
-], function(match, ast) {
-    return ast.fromList([
-        "branch",
-        "return",
-        match["result"],
+rstToAst.pattern([ "call", "return", "?result", ], function(match, ast) {
+    return ast.fromList([ "branch", "return", match["result"],
     ]);
 });
 // Main for testing {{{1
@@ -883,11 +709,13 @@ exports.nodemain = function(file) {
     source = "module{" + source + "}";
     var tokens = tokenise(source);
     var ast = parse(tokens)[0];
+    ast = rstToAst.recursiveTransform(ast);
+    ast = astToRst.recursiveTransform(ast);
     var pp = new PrettyPrinter();
     pp.pp(ast);
     //console.log(pp.acc.join(""));
-    ast = rstToAst.recursiveTransform(ast);
     console.log(pplist(ast.toList()));
+    /*
     var names = {};
     var recursiveVisit = function(ast) {
         names[ast.kind] = var obj = names[ast.kind] || {};
@@ -899,5 +727,6 @@ exports.nodemain = function(file) {
         names[kind] = Object.keys(names[kind]).sort();
     });
     console.log(names);
+    */
     //console.log(pplist(rstToAst.recursiveTransform(ast).toList()));
 };
