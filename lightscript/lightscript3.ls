@@ -1,7 +1,10 @@
 // TODO:
 //
 // branch:cond/block:  id:+=  id:[   in ast2rst
+// comma/semicolon insertion
+// extra parens (foo.bar()).baz() in pp
 // pos+type as true part of ast, rather than opt
+// js-backend
 //
 // Util {{{1
 var pplist = function(list, indent) {
