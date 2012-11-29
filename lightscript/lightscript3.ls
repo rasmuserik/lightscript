@@ -1,3 +1,8 @@
+// TODO:
+//
+// branch:cond/block:  id:+=  id:[   in ast2rst
+// pos+type as true part of ast, rather than opt
+//
 // Util {{{1
 var pplist = function(list, indent) {
     indent = indent || "  ";
@@ -695,12 +700,11 @@ exports.nodemain = function(file) {
     var tokens = tokenise(source);
     var ast = parse(tokens)[0];
     ast = rstToAst.recursivePostTransform(ast);
+    //ast = astToRst.recursivePreTransform(ast);
     console.log(pplist(ast.toList()));
-    ast = astToRst.recursivePreTransform(ast);
     var pp = new PrettyPrinter();
     pp.pp(ast);
 //    console.log(pp.acc.join(""));
-    /*
     var names = {};
     var recursiveVisit = function(ast) {
         names[ast.kind] = var obj = names[ast.kind] || {};
@@ -712,6 +716,7 @@ exports.nodemain = function(file) {
         names[kind] = Object.keys(names[kind]).sort();
     });
     console.log(names);
+    /*
     */
     //console.log(pplist(rstToAst.recursiveTransform(ast).toList()));
 };
