@@ -631,15 +631,24 @@ astTransform = function(from, to) {
     rstToAstTransform(from, to);
     astToRstTransform(to, from);
 };
+// transformations
+astTransform(["id", "[", "??elems"], ["call", "new", ["id", "Array"], "??elems"]);
+astTransform(["call", "*{}", ["id", "module"], "??body"], ["block", "module", "??body"]);
+astTransform(["call", "||", "?p1", "?p2"], ["branch", "||", "?p1", "?p2"]);
+astTransform(["call", "&&", "?p1", "?p2"], ["branch", "&&", "?p1", "?p2"]);
+astTransform(["call", "=", ["call", "*[]", "?obj", "?idx"], "?val"], ["call", "*[]=", "?obj", "?idx", "?val"]);
+astTransform(["call", "=", ["call", ".", "?obj", "?member"], "?val"], ["call", ".=", "?obj", "?member", "?val"]);
+astTransform(["call", "throw", "?result"], ["branch", "throw", "?result"]);
+astTransform(["call", "return", "?result"], ["branch", "return", "?result"]);
 astTransform(["call", "*()", "??args"], ["call", "*()", "??args"]);
-astTransform(["call", "*()", [ "call", ".", "?obj", ["str", "?method"]] "??args"], ["call", "?method", "?obj", "??args"]);
 astTransform(["call", ".", "?obj", ["id", "?id"]], ["call", ".", "?obj", ["str", "?id"]]);
 astTransform(["call", "*{}", ["call", "*()", ["id", "function"], "??args"], "??body"], ["fn", " ", ["block", " ", "??args"], ["block", " ", "??body"]]);
+astTransform(["call", "*{}", ["call", "*()", ["id", "while"], "?cond"], "??body"], ["branch", "for", ["block", " "], "?cond", ["block", " ", "??body"]]);
 astTransform(["call", "=", ["id", "?name"], "?val"], ["assign", "?name", "?val"]);
 astTransform(["call", "new", ["call", "*()", "?class", "??args"]], ["call", "new", "?class", "??args"]);
+rstToAstTransform(["call", "*()", [ "call", ".", "?obj", ["str", "?method"]] "??args"], ["call", "?method", "?obj", "??args"]);
 rstToAstTransform([ "call", "var", "?val", ], "?val");
 rstToAstTransform([ "id", "(", "?val", ], "?val");
-astTransform(["call", "*{}", ["call", "*()", ["id", "while"], "?cond"], "??body"], ["branch", "for", ["block", " "], "?cond", ["block", " ", "??body"]]);
 // HashMap Literal
 rstToAst.pattern([ "id", "{", "??elems", ], function(match, ast) {
     var ok = true;
@@ -658,14 +667,6 @@ rstToAst.pattern([ "id", "{", "??elems", ], function(match, ast) {
     };
     return result;
 });
-// Array Literal
-astTransform(["id", "[", "??elems"], ["call", "new", ["id", "Array"], "??elems"]);
-// Module body
-astTransform(["call", "*{}", ["id", "module"], "??body"], ["block", "module", "??body"]);
-astTransform(["call", "||", "?p1", "?p2"], ["branch", "||", "?p1", "?p2"]);
-astTransform(["call", "&&", "?p1", "?p2"], ["branch", "&&", "?p1", "?p2"]);
-astTransform(["call", "=", ["call", "*[]", "?obj", "?idx"], "?val"], ["call", "*[]=", "?obj", "?idx", "?val"]);
-astTransform(["call", "=", ["call", ".", "?obj", "?member"], "?val"], ["call", ".=", "?obj", "?member", "?val"]);
 // If-else
 rstToAst.pattern([ "call", "else", [ "branch", "cond", "??cond1", ], [ "branch", "cond", "??cond2", ],
 ], function(match, ast) {
@@ -677,9 +678,6 @@ rstToAst.pattern([ "call", "*{}", [ "call", "*()", ["id", "if"], "?p", ], "??bod
 rstToAst.pattern([ "call", "else", [ "branch", "cond", "??cond", ], [ "id", "{", "??body", ], ], function(match, ast) {
     return ast.fromList(["branch", "cond"].concat(match["cond"]).concat([["id", "true"], ["block", " "].concat(match["body"].filter(notSep))]));
 });
-// ....
-astTransform(["call", "throw", "?result"], ["branch", "throw", "?result"]);
-astTransform(["call", "return", "?result"], ["branch", "return", "?result"]);
 // Main for testing {{{1
 exports.nodemain = function(file) {
     file = file || "lightscript3";
@@ -688,11 +686,11 @@ exports.nodemain = function(file) {
     var tokens = tokenise(source);
     var ast = parse(tokens)[0];
     ast = rstToAst.recursivePostTransform(ast);
-    console.log(pplist(ast.toList()));
+    //console.log(pplist(ast.toList()));
     ast = astToRst.recursivePreTransform(ast);
     var pp = new PrettyPrinter();
     pp.pp(ast);
-    console.log(pp.acc.join(""));
+    //console.log(pp.acc.join(""));
     /*
     var names = {};
     var recursiveVisit = function(ast) {
