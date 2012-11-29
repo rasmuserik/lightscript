@@ -599,6 +599,12 @@ rstToAst.pattern(["call", "new", ["call", "*()", "?class", "??args"]], function(
 rstToAst.pattern(["call", "var", "?val"], function(match, ast) {
     return match["val"];
 });
+rstToAst.pattern(["id", "(", "?val"], function(match, ast) {
+    return match["val"];
+});
+rstToAst.pattern(["call", "*{}", ["call", "*()", ["id", "while"], "?cond"], "??body"], function(match, ast) {
+    return ast.fromList(["branch", "while", match["cond"], ["block", " "].concat(match["body"].filter(notSep))]);
+});
 // HashMap Literal
 rstToAst.pattern(["id", "{", "??elems"], function(match, ast) {
     ok = true;
