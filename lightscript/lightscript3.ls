@@ -183,17 +183,17 @@ Matcher.prototype.recursiveWalk = function(ast) {
     });
     this.match(ast);
 };
-Matcher.prototype.recursivePostTransform = function(ast) {
+Matcher.prototype.recursivePreTransform = function(ast) {
     var self = this;
     ast = this.match(ast) || ast;
     return ast.create(ast.kind, ast.val, ast.children.map(function(child) {
-        return self.recursivePostTransform(child);
+        return self.recursivePreTransform(child);
     }));
 };
-Matcher.prototype.recursivePreTransform = function(ast) {
+Matcher.prototype.recursivePostTransform = function(ast) {
     var self = this;
     var t = ast.create(ast.kind, ast.val, ast.children.map(function(child) {
-        return self.recursivePreTransform(child);
+        return self.recursivePostTransform(child);
     }));
     return this.match(t) || t;
 };
@@ -649,6 +649,15 @@ astTransform(["call", "new", ["call", "*()", "?class", "??args"]], ["call", "new
 rstToAstTransform(["call", "*()", [ "call", ".", "?obj", ["str", "?method"]] "??args"], ["call", "?method", "?obj", "??args"]);
 rstToAstTransform([ "call", "var", "?val", ], "?val");
 rstToAstTransform([ "id", "(", "?val", ], "?val");
+astToRst.pattern(["call", "?method", "?obj", "??args"], function(match, ast) {
+    prio = (table[match["method"]] || [])[0];
+    if(prio) {
+        result = undefined;
+    } else {
+        result = ast.fromList(matchReplace(match, ["call", "*()", ["call", ".", "?obj", ["id", "?method"]], "??args"]));
+    }
+    return result;
+});
 // HashMap Literal
 rstToAst.pattern([ "id", "{", "??elems", ], function(match, ast) {
     var ok = true;
@@ -668,12 +677,12 @@ rstToAst.pattern([ "id", "{", "??elems", ], function(match, ast) {
     return result;
 });
 // If-else
+rstToAst.pattern([ "call", "*{}", [ "call", "*()", ["id", "if"], "?p", ], "??body", ], function(match, ast) {
+    return ast.fromList([ "branch", "cond", match["p"], ["block", " "].concat(match["body"].filter(notSep)), ]);
+});
 rstToAst.pattern([ "call", "else", [ "branch", "cond", "??cond1", ], [ "branch", "cond", "??cond2", ],
 ], function(match, ast) {
     return ast.fromList(["branch", "cond"].concat(match["cond1"]).concat(match["cond2"]));
-});
-rstToAst.pattern([ "call", "*{}", [ "call", "*()", ["id", "if"], "?p", ], "??body", ], function(match, ast) {
-    return ast.fromList([ "branch", "cond", match["p"], ["block", " "].concat(match["body"].filter(notSep)), ]);
 });
 rstToAst.pattern([ "call", "else", [ "branch", "cond", "??cond", ], [ "id", "{", "??body", ], ], function(match, ast) {
     return ast.fromList(["branch", "cond"].concat(match["cond"]).concat([["id", "true"], ["block", " "].concat(match["body"].filter(notSep))]));
@@ -686,11 +695,11 @@ exports.nodemain = function(file) {
     var tokens = tokenise(source);
     var ast = parse(tokens)[0];
     ast = rstToAst.recursivePostTransform(ast);
-    //console.log(pplist(ast.toList()));
+    console.log(pplist(ast.toList()));
     ast = astToRst.recursivePreTransform(ast);
     var pp = new PrettyPrinter();
     pp.pp(ast);
-    //console.log(pp.acc.join(""));
+//    console.log(pp.acc.join(""));
     /*
     var names = {};
     var recursiveVisit = function(ast) {
