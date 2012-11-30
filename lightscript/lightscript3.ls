@@ -609,17 +609,6 @@ var notSep = function(ast) {
 var noSeps = function(list) {
     return list.filter(notSep);
 }
-var addSeps = function(sep) {
-    return function(list) {
-        result = [];
-        list.forEach(function(elem) {
-            result.push(elem);
-            result.push(sep);
-        });
-        list.pop();
-        return result;
-    }
-};
 var matchReplace = function(match, elem, filter) {
     filter = filter || id;
     if(Array.isArray(elem)) {
@@ -657,6 +646,39 @@ astToRstTransform = function(from, to, filter) {
 astTransform = function(from, to, opts) {
     rstToAstTransform(from, to);
     astToRstTransform(to, from);
+};
+// Commas and semicolons {{{2
+addCommas = function(ast) {
+    ast.children = ast.children.map(addCommas);
+    sep = undefined;
+    if(ast.isa("call", "*{}")) {
+        skipfirst = true;
+        addlast = true;
+        sep = new Ast("id", ";");
+    }
+    if(ast.isa("call", "*()")) {
+        skipfirst = true;
+        sep = new Ast("id", ",");
+    }
+    if(ast.isa("id", "[") || ast.isa("id", "{")) {
+        sep = new Ast("id", ",");
+    }
+    if(sep) {
+        children = [];
+        ast.children.forEach(function(child) {
+            children.push(child);
+            if(!skipfirst && child.kind !== "note")  {
+                children.push(sep);
+            }
+            skipfirst = false;
+        });
+        lastchild = children[children.length - 1];
+        if(!addlast && lastchild === sep) {
+            children.pop();
+        }
+        ast.children = children;
+    }
+    return ast;
 };
 // transformations {{{2
 astTransform(["call", "*{}", ["id", "module"], "??body"], ["block", "module", "??body"]);
@@ -702,9 +724,7 @@ astToRst.pattern(["call", "new", ["id", "Array"], "??elems"], function(match, as
     elems = [];
     match["elems"].forEach(function(elem) {
         elems.push(elem);
-        elems.push(["id", ","]);
     });
-    elems.pop();
     return ast.fromList(["id", "["].concat(elems));
 });
 rstToAst.pattern([ "id", "{", "??elems", ], function(match, ast) {
@@ -768,11 +788,12 @@ exports.nodemain = function(file) {
     var tokens = tokenise(source);
     var ast = parse(tokens)[0];
     ast = rstToAst.recursivePostTransform(ast);
-    //ast = astToRst.recursivePreTransform(ast);
-    console.log(pplist(ast.toList()));
+    ast = astToRst.recursivePreTransform(ast);
+    ast = addCommas(ast);
+    //console.log(pplist(ast.toList()));
     var pp = new PrettyPrinter();
     pp.pp(ast);
-//    console.log(pp.acc.join(""));
+    console.log(pp.acc.join(""));
     var names = {};
     var recursiveVisit = function(ast) {
         names[ast.kind] = var obj = names[ast.kind] || {};
@@ -783,7 +804,7 @@ exports.nodemain = function(file) {
     Object.keys(names).forEach(function(kind) {
         names[kind] = Object.keys(names[kind]).sort();
     });
-    console.log(names);
+    //console.log(names);
     /*
     */
     //console.log(pplist(rstToAst.recursiveTransform(ast).toList()));
