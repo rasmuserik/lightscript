@@ -695,6 +695,20 @@ rstToAst.pattern([ "call", "else", [ "branch", "cond", "??cond1", ], [ "branch",
 rstToAst.pattern([ "call", "else", [ "branch", "cond", "??cond", ], [ "id", "{", "??body", ], ], function(match, ast) {
     return ast.fromList(["branch", "cond"].concat(match["cond"]).concat([["id", "true"], ["block", " "].concat(match["body"].filter(notSep))]));
 });
+astToRst.pattern(["branch", "cond", "??branches"], function(match, ast) {
+    branches = match["branches"];
+    body = branches.pop();
+    cond = branches.pop();
+    rhs = ["call", "*{}", ["call", "*()", ["id", "if"], cond]].concat(body.children);
+    while(branches.length > 0) {
+        body = branches.pop();
+        cond = branches.pop();
+        lhs = ["call", "*{}", ["call", "*()", ["id", "if"], cond]].concat(body.children);
+        rhs = ["call", "else", lhs, rhs];
+    }
+    console.log(rhs);
+    return ast.fromList(rhs);
+});
 // Main for testing {{{1
 exports.nodemain = function(file) {
     file = file || "lightscript3";
