@@ -1,8 +1,9 @@
 // TODO:
 //
-// refactor/cleanup, ie. id-function/filter/... in rst-ast-matcher
-// pos+type as true part of ast, rather than opt
+// code analysis
 // java-backend
+// pos+type as true part of ast, rather than opt
+// refactor/cleanup, ie. id-function/filter/... in rst-ast-matcher
 //
 // Util {{{1
 id = function(x) {
