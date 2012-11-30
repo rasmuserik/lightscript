@@ -1,12 +1,15 @@
 // TODO:
 //
-// branch:cond/block:  id:+=  id:[   in ast2rst
 // comma/semicolon insertion
-// extra parens (foo.bar()).baz() in pp
 // pos+type as true part of ast, rather than opt
-// js-backend
+// java-backend
+//
+// done
+// extra parens (foo.bar()).baz() in pp
+// branch:cond/block:  id:+=  id:[   in ast2rst
 //
 // Util {{{1
+var id = function(x) { return x; };
 var pplist = function(list, indent) {
     indent = indent || "  ";
     if(!Array.isArray(list)) {
@@ -603,12 +606,26 @@ var table = {
 var notSep = function(ast) {
     return ast.kind !== "id" || (ast.val !== ";" && ast.val !== ",");
 };
+var noSeps = function(list) {
+    return list.filter(notSep);
+}
+var addSeps = function(sep) {
+    return function(list) {
+        result = [];
+        list.forEach(function(elem) {
+            result.push(elem);
+            result.push(sep);
+        });
+        list.pop();
+        return result;
+    }
+};
 var matchReplace = function(match, elem, filter) {
-    filter = filter || notSep;
+    filter = filter || id;
     if(Array.isArray(elem)) {
         var tail = undefined;
         if(elem[elem.length -1].slice(0, 2) === "??") {
-            tail = match[elem[elem.length - 1].slice(2)].filter(filter);
+            tail = filter(match[elem[elem.length - 1].slice(2)]);
             elem = elem.slice(0, -1);
         }
         result = elem.map(function(child) {
@@ -626,17 +643,18 @@ var matchReplace = function(match, elem, filter) {
 }
 var rstToAst = new Matcher();
 var astToRst = new Matcher();
-rstToAstTransform = function(from, to) {
+rstToAstTransform = function(from, to, filter) {
+    filter = filter || noSeps;
     rstToAst.pattern(from, function(match, ast) {
-        return ast.fromList(matchReplace(match, to));
+        return ast.fromList(matchReplace(match, to, filter));
     });
 }
-astToRstTransform = function(from, to) {
+astToRstTransform = function(from, to, filter) {
     astToRst.pattern(from, function(match, ast) {
-        return ast.fromList(matchReplace(match, to));
+        return ast.fromList(matchReplace(match, to, filter));
     });
 }
-astTransform = function(from, to) {
+astTransform = function(from, to, opts) {
     rstToAstTransform(from, to);
     astToRstTransform(to, from);
 };
@@ -674,7 +692,7 @@ astToRst.pattern(["call", "?method", "?obj", "??args"], function(match, ast) {
     if(prio) {
         result = undefined;
     } else {
-        result = ast.fromList(matchReplace(match, ["call", "*()", ["call", ".", "?obj", ["id", "?method"]], "??args"]));
+        result = ast.fromList(matchReplace(match, ["call", "*()", ["call", ".", "?obj", ["id", "?method"]], "??args"], noSeps));
     }
     return result;
 });
