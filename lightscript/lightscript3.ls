@@ -466,7 +466,7 @@ var listpp = function(isInfix, newlineLength, prefixSpace) {
     return function(obj, pp) {
         var ast = obj.ast;
         if(isInfix) {
-            pp.pp(ast.children[0]);
+            pp.pp(ast.children[0], obj.bp);
             pp.str(prefixSpace);
             pp.str(ast.val[1]);
             var list = ast.children.slice(1);
