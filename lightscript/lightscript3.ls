@@ -1,12 +1,7 @@
 // TODO:
 //
-// comma/semicolon insertion
 // pos+type as true part of ast, rather than opt
 // java-backend
-//
-// done
-// extra parens (foo.bar()).baz() in pp
-// branch:cond/block:  id:+=  id:[   in ast2rst
 //
 // Util {{{1
 var id = function(x) { return x; };
@@ -752,7 +747,6 @@ astToRst.pattern(["call", "new", ["id", "HashMap"], "??elems"], function(match, 
     i = 0;
     while(i < elems.length) {
         list.push(["call", ":", elems[i], elems[i+1]]);
-        list.push(["id", ","]);
         i += 2;
     }
     list.pop();
@@ -795,7 +789,7 @@ exports.nodemain = function(file) {
     //console.log(pplist(ast.toList()));
     var pp = new PrettyPrinter();
     pp.pp(ast);
-    console.log(pp.acc.join(""));
+    console.log(pp.acc.join("").split("\n").slice(1, -1).join("\n"));
     var names = {};
     var recursiveVisit = function(ast) {
         names[ast.kind] = var obj = names[ast.kind] || {};
