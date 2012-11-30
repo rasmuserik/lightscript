@@ -538,8 +538,8 @@ SyntaxObj.prototype.pp = function(pp) {
 // Syntax definition {{{2
 var table = {
     "." : [1200, {nospace : true}],
-    "[" : [1200, {pp : listpp(false, 6, ""), paren : "]"}],
-    "*[]" : [1200, {pp : listpp(true, 6, "")}],
+    "[" : [1200, {pp : listpp(false, 10, ""), paren : "]"}],
+    "*[]" : [1200, {pp : listpp(true, 10, "")}],
     "(" : [1200, {pp : listpp(false, 1, ""), paren : ")"}],
     "*()" : [1200, {pp : listpp(true, 10, "")}],
     "{" : [1100, {pp : listpp(false, 4, ""), paren : "}"}],
@@ -599,6 +599,7 @@ var table = {
     "default:" : [],
 };
 // rst to ast {{{1
+// Setup {{{2
 var notSep = function(ast) {
     return ast.kind !== "id" || (ast.val !== ";" && ast.val !== ",");
 };
@@ -639,8 +640,7 @@ astTransform = function(from, to) {
     rstToAstTransform(from, to);
     astToRstTransform(to, from);
 };
-// transformations
-astTransform(["id", "[", "??elems"], ["call", "new", ["id", "Array"], "??elems"]);
+// transformations {{{2
 astTransform(["call", "*{}", ["id", "module"], "??body"], ["block", "module", "??body"]);
 astTransform(["call", "||", "?p1", "?p2"], ["branch", "||", "?p1", "?p2"]);
 astTransform(["call", "&&", "?p1", "?p2"], ["branch", "&&", "?p1", "?p2"]);
@@ -655,8 +655,20 @@ astTransform(["call", "*{}", ["call", "*()", ["id", "while"], "?cond"], "??body"
 astTransform(["call", "=", ["id", "?name"], "?val"], ["assign", "?name", "?val"]);
 astTransform(["call", "new", ["call", "*()", "?class", "??args"]], ["call", "new", "?class", "??args"]);
 rstToAstTransform(["call", "*()", [ "call", ".", "?obj", ["str", "?method"]] "??args"], ["call", "?method", "?obj", "??args"]);
-rstToAstTransform([ "call", "var", "?val", ], "?val");
-rstToAstTransform([ "id", "(", "?val", ], "?val");
+rstToAstTransform([ "call", "var", "?val"], "?val");
+rstToAstTransform([ "id", "(", "?val"], "?val");
+rstToAst.pattern([ "call", "+=", "?target", "?val"], function(match, ast) {
+    return rstToAst.match(ast.fromList(matchReplace(match, ["call", "=", "?target", ["call", "+", "?target", "?val"]])));
+});
+rstToAst.pattern([ "call", "-=", "?target", "?val"], function(match, ast) {
+    return rstToAst.match(ast.fromList(matchReplace(match, ["call", "=", "?target", ["call", "-", "?target", "?val"]])));
+});
+rstToAst.pattern([ "call", "++", "?target"], function(match, ast) {
+    return rstToAst.match(ast.fromList(matchReplace(match, ["call", "+=", "?target", ["num", "1"]])));
+});
+rstToAst.pattern([ "call", "--", "?target"], function(match, ast) {
+    return rstToAst.match(ast.fromList(matchReplace(match, ["call", "-=", "?target", ["num", "1"]])));
+});
 astToRst.pattern(["call", "?method", "?obj", "??args"], function(match, ast) {
     prio = (table[match["method"]] || [])[0];
     if(prio) {
@@ -666,7 +678,17 @@ astToRst.pattern(["call", "?method", "?obj", "??args"], function(match, ast) {
     }
     return result;
 });
-// HashMap Literal
+// Array and HashMap Literals {{{2
+rstToAstTransform(["id", "[", "??elems"], ["call", "new", ["id", "Array"], "??elems"]);
+astToRst.pattern(["call", "new", ["id", "Array"], "??elems"], function(match, ast) {
+    elems = [];
+    match["elems"].forEach(function(elem) {
+        elems.push(elem);
+        elems.push(["id", ","]);
+    });
+    elems.pop();
+    return ast.fromList(["id", "["].concat(elems));
+});
 rstToAst.pattern([ "id", "{", "??elems", ], function(match, ast) {
     var ok = true;
     var args = [];
@@ -684,7 +706,19 @@ rstToAst.pattern([ "id", "{", "??elems", ], function(match, ast) {
     };
     return result;
 });
-// If-else
+astToRst.pattern(["call", "new", ["id", "HashMap"], "??elems"], function(match, ast) {
+    list = [];
+    elems = match["elems"];
+    i = 0;
+    while(i < elems.length) {
+        list.push(["call", ":", elems[i], elems[i+1]]);
+        list.push(["id", ","]);
+        i += 2;
+    }
+    list.pop();
+    return ast.fromList(["id", "{"].concat(list));
+});
+// If-else {{{2
 rstToAst.pattern([ "call", "*{}", [ "call", "*()", ["id", "if"], "?p", ], "??body", ], function(match, ast) {
     return ast.fromList([ "branch", "cond", match["p"], ["block", " "].concat(match["body"].filter(notSep)), ]);
 });
@@ -706,7 +740,6 @@ astToRst.pattern(["branch", "cond", "??branches"], function(match, ast) {
         lhs = ["call", "*{}", ["call", "*()", ["id", "if"], cond]].concat(body.children);
         rhs = ["call", "else", lhs, rhs];
     }
-    console.log(rhs);
     return ast.fromList(rhs);
 });
 // Main for testing {{{1
