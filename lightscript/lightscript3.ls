@@ -749,7 +749,6 @@ astToRst.pattern(["call", "new", ["id", "HashMap"], "??elems"], function(match, 
         list.push(["call", ":", elems[i], elems[i+1]]);
         i += 2;
     }
-    list.pop();
     return ast.fromList(["id", "{"].concat(list));
 });
 // If-else {{{2
