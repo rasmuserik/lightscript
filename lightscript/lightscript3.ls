@@ -537,7 +537,7 @@ SyntaxObj.prototype.pp = function(pp) {
 };
 // Syntax definition {{{2
 var table = {
-    "." : [1300, {nospace : true}],
+    "." : [1200, {nospace : true}],
     "[" : [1200, {pp : listpp(false, 6, ""), paren : "]"}],
     "*[]" : [1200, {pp : listpp(true, 6, "")}],
     "(" : [1200, {pp : listpp(false, 1, ""), paren : ")"}],
