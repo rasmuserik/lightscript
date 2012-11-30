@@ -240,6 +240,7 @@ exports.tokenise = var tokenise = function(buffer, filename) {
         return buffer.slice(pos + delta, pos + delta + n);
     };
     var pop = function(n) {
+        lineno;
         n = n || 1;
         newlinePos;
         var result = buffer.slice(pos, pos + n);
@@ -527,7 +528,7 @@ SyntaxObj.prototype.pp = function(pp) {
     } else if(children.length === 2) {
         pp.pp(children[0], this.bp);
         pp.str(space + ast.val + space);
-        pp.pp(children[1], this.bp + 1 - this.opt["dbp"]);
+        pp.pp(children[1], this.bp + 1 - (this.opt["dbp"]||0));
     } else  {
         pp.str("-:<");
         pp.str(ast.kind + " " + ast.val);
@@ -688,6 +689,7 @@ astTransform(["call", "=", ["call", "*[]", "?obj", "?idx"], "?val"], ["call", "*
 astTransform(["call", "=", ["call", ".", "?obj", "?member"], "?val"], ["call", ".=", "?obj", "?member", "?val"]);
 astTransform(["call", "throw", "?result"], ["branch", "throw", "?result"]);
 astTransform(["call", "return", "?result"], ["branch", "return", "?result"]);
+astTransform(["call", "typeof", "?result"], ["call", "typeof", "?result"]);
 astTransform(["call", "*()", "??args"], ["call", "*()", "??args"]);
 astTransform(["call", ".", "?obj", ["id", "?id"]], ["call", ".", "?obj", ["str", "?id"]]);
 astTransform(["call", "*{}", ["call", "*()", ["id", "function"], "??args"], "??body"], ["fn", " ", ["block", " ", "??args"], ["block", " ", "??body"]]);
