@@ -62,7 +62,7 @@ Ast.prototype.toList = function() {
     return result;
 };
 Ast.prototype.toString = function() {
-    return JSON.stringify(this.toList());
+    return pplist(this.toList());
 };
 Ast.prototype.fromList = function(list) {
     if(Array.isArray(list)) {
@@ -548,7 +548,7 @@ table = {
     "[" : [1200, {pp : listpp(false, 10, ""), paren : "]"}],
     "*[]" : [1200, {pp : listpp(true, 10, "")}],
     "(" : [1200, {pp : listpp(false, 1, ""), paren : ")"}],
-    "*()" : [1200, {pp : listpp(true, 10, "")}],
+    "*()" : [1200, {pp : listpp(true, 20, "")}],
     "{" : [1100, {pp : listpp(false, 4, ""), paren : "}"}],
     "*{}" : [1200, {pp : listpp(true, 0, " ")}],
     "#" : [1000, {nospace : true, noinfix : true}],
