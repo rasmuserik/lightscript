@@ -783,12 +783,13 @@ astToRst.pattern(["branch", "cond", "??branches"], function(match, ast) {
     return ast.fromList(rhs);
 });
 // Class {{{2
-astTransform(["call", "=", ["call", ".", ["call", ".", ["id", "?class"], ["str", "prototype"]], ["str", "?member"]], "?val"], ["member", "?member", ["id", "?class"], "?val"]);
+astTransform(["call", "=", ["call", ".", ["call", ".", ["id", "?class"], ["str", "prototype"]], ["str", "?member"]], 
+        ["fn", "", ["block", "", "??args"], "?body"]], ["fn", "?member", ["block", "", ["call", ":", ["id", "this"], ["id", "?class"]], "??args"], "?body"]);
 uppercase = "QWERTYUIOPASDFGHJKLZXCVBNM";
-rstToAst.pattern(["call", "=", ["id", "?class"], ["fn", " ", "?args", "?body"]], function(match, ast) {
+rstToAst.pattern(["call", "=", ["id", "?class"], ["fn", "", ["block", "", "??args"], "?body"]], function(match, ast) {
     result = undefined;
     if(uppercase.indexOf(match["class"][0]) !== -1) {
-        result = ast.fromList(matchReplace(match, ["member", "new", ["id", "?class"], ["fn", " ", "?args", "?body"]]));
+        result = ast.fromList(matchReplace(match, ["fn", "new", ["block", "", ["call", ":", ["id", "this"], ["id", "?class"]], "??args"], "?body"]));
     }
     return result;
 });
