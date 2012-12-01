@@ -778,6 +778,17 @@ astToRst.pattern(["branch", "cond", "??branches"], function(match, ast) {
     };
     return ast.fromList(rhs);
 });
+// Class {{{2
+astTransform(["call", "=", ["call", ".", ["call", ".", ["id", "?class"], ["str", "prototype"]], ["str", "?member"]], "?val"], ["member", "?member", ["id", "?class"], "?val"]);
+uppercase = "QWERTYUIOPASDFGHJKLZXCVBNM";
+rstToAst.pattern(["call", "=", ["id", "?class"], ["fn", " ", "?args", "?body"]], function(match, ast) {
+    result = undefined;
+    if(uppercase.indexOf(match["class"][0]) !== -1) {
+        result = ast.fromList(matchReplace(match, ["member", "new", ["id", "?class"], ["fn", " ", "?args", "?body"]]));
+    }
+    return result;
+});
+astToRstTransform(["member", "new", ["id", "?class"], "?fn"], ["call", "=", ["id", "?class"], "?fn"]);
 // Main for testing {{{1
 exports.nodemain = function(file) {
     file = file || "lightscript3";
