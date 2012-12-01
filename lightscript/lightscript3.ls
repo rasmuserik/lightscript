@@ -2,7 +2,9 @@
 //
 // code analysis
 // java-backend
-// pos+type as true part of ast, rather than opt
+// generalise tree matcher 
+// - transform functions between tree and arbitrary object
+// - match filter
 // refactor/cleanup, ie. id-function/filter/... in rst-ast-matcher
 //
 // Util {{{1
@@ -32,14 +34,16 @@ pplist = function(list, indent) {
     };
 };
 // Ast {{{1
-Ast = function(kind, val, children, opt) {
+Ast = function(kind, val, children, pos, type, opt) {
     this.kind = kind;
     this.val = val || "";
     this.children = children || [];
-    this.opt = opt || {};
+    this.pos = pos;
+    this.type = type;
+    this.opt = opt;
 };
 Ast.prototype.create = function(kind, val, children) {
-    return new Ast(kind, val, children, this.opt);
+    return new Ast(kind, val, children, this.pos);
 };
 Ast.prototype.isa = function(kind, val) {
     return this.kind === kind && this.val === val;
@@ -47,7 +51,7 @@ Ast.prototype.isa = function(kind, val) {
 Ast.prototype.deepCopy = function() {
     return new Ast(this.kind, this.val, this.children.map(function(child) {
         return child.deepCopy();
-    }), this.opt);
+    }), this.pos, this.type);
 };
 Ast.prototype.toList = function() {
     result = this.children.map(function(node) {
