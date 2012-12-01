@@ -685,7 +685,7 @@ addCommas = function(ast) {
     return ast;
 };
 // transformations {{{2
-astTransform(["call", "*{}", ["id", "module"], "??body"], ["block", "module", "??body"]);
+rstToAstTransform(["call", "*{}", ["id", "module"], "??body"], ["call", "*()", ["fn", "", ["block", ""], ["block", "", "??body"]]])
 astTransform(["call", "||", "?p1", "?p2"], ["branch", "||", "?p1", "?p2"]);
 astTransform(["call", "&&", "?p1", "?p2"], ["branch", "&&", "?p1", "?p2"]);
 astTransform(["call", "=", ["call", "*[]", "?obj", "?idx"], "?val"], ["call", "*[]=", "?obj", "?idx", "?val"]);
@@ -794,6 +794,52 @@ rstToAst.pattern(["call", "=", ["id", "?class"], ["fn", "", ["block", "", "??arg
     return result;
 });
 astToRstTransform(["fn", "new", ["block", "", ["call", ":", ["id", "this"], ["id", "?class"]], "??args"], "?body"], ["call", "=", ["id", "?class"], ["fn", "", ["block", "", "??args"], "?body"]]);
+// Analysis {{{1
+Scope = function() {
+    this.write = {};
+    this.read = {};
+    this.args = {};
+    this.children = [];
+    this.parent = undefined;
+    this.fn = undefined;
+};
+analyseChildren = function(ast, scope) {
+    ast.children.forEach(function(child) {
+        analyse(child, scope);
+    });
+}
+analyse = function(ast, scope) {
+    ({
+        id: function(ast, scope) {
+            scope.read[ast.val] = true;
+        },
+        assign: function(ast, scope) {
+            scope.write[ast.val] = true;
+        },
+        block: analyseChildren,
+        call: analyseChildren,
+        fn: function(ast, scope) {
+            parent = scope;
+            scope = new Scope();
+            //scope.parent = parent;
+            //scope.fn = ast;
+            parent.children.push(scope);
+            ast.children[0].children.forEach(function(arg) {
+                if(arg.isa("call", ":")) {
+                    scope.args[arg.children[0].val] = arg.children[1].val;
+                } else {
+                    scope.args[arg.val] = "Var";
+                }
+            });
+            analyseChildren(ast.children[1], scope);
+        },
+        note: id,
+        num: id,
+        str: id,
+        branch: analyseChildren
+    })[ast.kind](ast, scope);
+    return scope;
+};
 // Main for testing {{{1
 exports.nodemain = function(file) {
     file = file || "lightscript3";
