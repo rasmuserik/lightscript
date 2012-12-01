@@ -793,7 +793,7 @@ rstToAst.pattern(["call", "=", ["id", "?class"], ["fn", "", ["block", "", "??arg
     }
     return result;
 });
-astToRstTransform(["member", "new", ["id", "?class"], "?fn"], ["call", "=", ["id", "?class"], "?fn"]);
+astToRstTransform(["fn", "new", ["block", "", ["call", ":", ["id", "this"], ["id", "?class"]], "??args"], "?body"], ["call", "=", ["id", "?class"], ["fn", "", ["block", "", "??args"], "?body"]]);
 // Main for testing {{{1
 exports.nodemain = function(file) {
     file = file || "lightscript3";
