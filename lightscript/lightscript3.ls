@@ -23,7 +23,7 @@ pplist = function(list, indent) {
     result.forEach(function(elem) {
         len = len + (elem.length + 1);
     });
-    if(result[1]) {
+    if(result[1] !== undefined) {
         result[1] = result[0] + " " + JSON.stringify(result[1]).slice(1, - 1);
         result.shift();
     };
@@ -120,7 +120,7 @@ MatcherPattern = function(pattern) {
 MatcherPattern.prototype.match = function(ast, matchResult) {
     if(this.anyVal) {
         matchResult.capture(this.anyVal, ast);
-    } else if(this.str) {
+    } else if(this.str !== undefined) {
         matchResult.increaseRanking();
         if(ast !== this.str) {
             matchResult.failure();
@@ -695,8 +695,8 @@ astTransform(["call", "return", "?result"], ["branch", "return", "?result"]);
 astTransform(["call", "typeof", "?result"], ["call", "typeof", "?result"]);
 astTransform(["call", "*()", "??args"], ["call", "*()", "??args"]);
 astTransform(["call", ".", "?obj", ["id", "?id"]], ["call", ".", "?obj", ["str", "?id"]]);
-astTransform(["call", "*{}", ["call", "*()", ["id", "function"], "??args"], "??body"], ["fn", " ", ["block", " ", "??args"], ["block", " ", "??body"]]);
-astTransform(["call", "*{}", ["call", "*()", ["id", "while"], "?cond"], "??body"], ["branch", "for", ["block", " "], "?cond", ["block", " ", "??body"]]);
+astTransform(["call", "*{}", ["call", "*()", ["id", "function"], "??args"], "??body"], ["fn", "", ["block", "", "??args"], ["block", "", "??body"]]);
+astTransform(["call", "*{}", ["call", "*()", ["id", "while"], "?cond"], "??body"], ["branch", "for", ["block", ""], "?cond", ["block", "", "??body"]]);
 astTransform(["call", "=", ["id", "?name"], "?val"], ["assign", "?name", "?val"]);
 astTransform(["call", "new", ["call", "*()", "?class", "??args"]], ["call", "new", "?class", "??args"]);
 rstToAstTransform(["call", "*()", ["call", ".", "?obj", ["str", "?method"]], "??args"], ["call", "?method", "?obj", "??args"]);
@@ -761,13 +761,13 @@ astToRst.pattern(["call", "new", ["id", "HashMap"], "??elems"], function(match, 
 });
 // If-else {{{2
 rstToAst.pattern(["call", "*{}", ["call", "*()", ["id", "if"], "?p"], "??body"], function(match, ast) {
-    return ast.fromList(["branch", "cond", match["p"], ["block", " "].concat(match["body"].filter(notSep))]);
+    return ast.fromList(["branch", "cond", match["p"], ["block", ""].concat(match["body"].filter(notSep))]);
 });
 rstToAst.pattern(["call", "else", ["branch", "cond", "??cond1"], ["branch", "cond", "??cond2"]], function(match, ast) {
     return ast.fromList(["branch", "cond"].concat(match["cond1"]).concat(match["cond2"]));
 });
 rstToAst.pattern(["call", "else", ["branch", "cond", "??cond"], ["id", "{", "??body"]], function(match, ast) {
-    return ast.fromList(["branch", "cond"].concat(match["cond"]).concat([["id", "true"], ["block", " "].concat(match["body"].filter(notSep))]));
+    return ast.fromList(["branch", "cond"].concat(match["cond"]).concat([["id", "true"], ["block", ""].concat(match["body"].filter(notSep))]));
 });
 astToRst.pattern(["branch", "cond", "??branches"], function(match, ast) {
     branches = match["branches"];
