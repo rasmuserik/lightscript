@@ -11,6 +11,20 @@
 id = function(x) {
     return x;
 };
+extend = function(dst, src) {
+    Object.keys(src).forEach(function(key) {
+        dst[key] = src[key];
+    });
+    return dst;
+}
+extendExcept = function(dst, src, except) {
+    Object.keys(src).forEach(function(key) {
+        if(!except[key]) {
+            dst[key] = src[key];
+        }
+    });
+    return dst;
+}
 pplist = function(list, indent) {
     indent = indent || "  ";
     if(!Array.isArray(list)) {
@@ -225,7 +239,7 @@ TokenPos = function(start, end, buffer) {
     this.end = end;
     //this.buffer = buffer;
     };
-exports.tokenise = tokenise = function(buffer, filename) {
+tokenise = function(buffer, filename) {
     pos = 0;
     lineno = 1;
     newlinePos = 0;
@@ -724,8 +738,8 @@ astToRst.pattern(["call", "?method", "?obj", "??args"], function(match, ast) {
     return result;
 });
 // Array and HashMap Literals {{{2
-rstToAstTransform(["id", "[", "??elems"], ["call", "new", ["id", "Array"], "??elems"]);
-astToRst.pattern(["call", "new", ["id", "Array"], "??elems"], function(match, ast) {
+rstToAstTransform(["id", "[", "??elems"], ["call", "new", ["id", "Vector"], "??elems"]);
+astToRst.pattern(["call", "new", ["id", "Vector"], "??elems"], function(match, ast) {
     elems = [];
     match["elems"].forEach(function(elem) {
         elems.push(elem);
@@ -795,14 +809,28 @@ rstToAst.pattern(["call", "=", ["id", "?class"], ["fn", "", ["block", "", "??arg
 });
 astToRstTransform(["fn", "new", ["block", "", ["call", ":", ["id", "this"], ["id", "?class"]], "??args"], "?body"], ["call", "=", ["id", "?class"], ["fn", "", ["block", "", "??args"], "?body"]]);
 // Analysis {{{1
+// Scope object {{{2
 Scope = function() {
     this.write = {};
     this.read = {};
+    this.arg = {};
+    this.vars = {};
+    this.childVars= {};
     this.local = {};
-    this.children = [];
     this.parent = undefined;
+    this.children = [];
     this.fn = undefined;
 };
+Scope.prototype.inScope = function(name) {
+    result = false;
+    if(this.vars[name]) {
+        result = true;    
+    } else if(this.parent) {
+        result = this.parent.inScope(name);
+    }
+    return result;
+};
+// Extract data {{{2
 childrenExtractData = function(ast, scope) {
     ast.children.forEach(function(child) {
         extractData(child, scope);
@@ -810,10 +838,10 @@ childrenExtractData = function(ast, scope) {
 }
 extractDataTable = {
         id: function(ast, scope) {
-            scope.read[ast.val] = true;
+            scope.read[ast.val] = {};
         },
         assign: function(ast, scope) {
-            scope.write[ast.val] = true;
+            scope.write[ast.val] = {};
         },
         block: childrenExtractData,
         call: childrenExtractData,
@@ -825,9 +853,9 @@ extractDataTable = {
             parent.children.push(scope);
             ast.children[0].children.forEach(function(arg) {
                 if(arg.isa("call", ":")) {
-                    scope.local[arg.children[0].val] = arg.children[1].val;
+                    scope.arg[arg.children[0].val] = {type: arg.children[1].val};
                 } else {
-                    scope.local[arg.val] = "Var";
+                    scope.arg[arg.val] = {};
                 }
             });
             childrenExtractData(ast.children[1], scope);
@@ -836,16 +864,31 @@ extractDataTable = {
         num: id,
         str: id,
         branch: childrenExtractData
-    };
+};
 extractData = function(ast, scope) {
     extractDataTable[ast.kind](ast, scope);
     return scope;
-};
-childAccess = function(scope) {
 }
+// Analysis child access {{{2
+Scope.prototype.childAccess = function() {
+    self = this;
+    extend(extend(extend(self.vars, self.read), self.write), self.arg);
+    extend(self.local, self.arg);
+    Object.keys(self.write).forEach(function(name) {
+        if(!self.parent || !self.parent.inScope(name)) {
+            self.local[name] = self.write[name];
+        }
+    });
+    self.children.forEach(function(child) {
+        child.childAccess();
+        extendExcept(self.childVars, child.vars, child.local);
+        extendExcept(self.childVars, child.childVars, child.local);
+    });
+}
+// analyse main {{{2
 analyse = function(ast) {
     scope = extractData(ast, new Scope());
-    childAccess(scope);
+    scope.childAccess();
     return scope
 };
 // Main for testing {{{1
@@ -856,12 +899,15 @@ exports.nodemain = function(file) {
     tokens = tokenise(source);
     ast = parse(tokens)[0];
     ast = rstToAst.recursivePostTransform(ast);
+    //console.log(pplist(ast.toList()));
+    /*
     ast = astToRst.recursivePreTransform(ast);
     ast = addCommas(ast);
-    //console.log(pplist(ast.toList()));
     pp = new PrettyPrinter();
     pp.pp(ast);
-    console.log(pp.acc.join("").split("\n").slice(1, - 1).join("\n"));
+    //console.log(pp.acc.join("").split("\n").slice(1, - 1).join("\n"));
+    console.log(pp.acc.join(""));
+    */
     names = {};
     recursiveVisit = function(ast) {
         names[ast.kind] = obj = names[ast.kind] || {};
@@ -872,7 +918,8 @@ exports.nodemain = function(file) {
     Object.keys(names).forEach(function(kind) {
         names[kind] = Object.keys(names[kind]).sort();
     });
-    //console.log(names);
+ //   console.log(names);
+    console.log(require("util").inspect(analyse(ast), false, 100));
     /*
     */
     //console.log(pplist(rstToAst.recursiveTransform(ast).toList()));
