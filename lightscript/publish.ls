@@ -104,11 +104,15 @@ exports.nodemain = function() {
                     });
                 } else if(file.type === "less") {
                     fs.readFile(src + file.name, "utf8", function(err, less) {
+                        util.trycatch(function() {
                         require("less").render(less, function (err, css) {
                             if(err) {
                                 console.log(file.name, err, file);
                             }
                             fs.writeFile(dst + file.name.replace(".less", ".css"), css);
+                        });
+                        }, function(err) {
+                            console.log(err);
                         });
                     });
                 } else  {

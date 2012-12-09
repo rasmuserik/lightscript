@@ -208,15 +208,27 @@ exports.nodemain = function() {
                         // outer: file
                         // outer: console
                         // outer: require
-                        require("less").render(less, function(err, css) {
+                        // outer: util
+                        util.trycatch(function() {
                             // outer: dst
                             // outer: fs
                             // outer: file
                             // outer: console
-                            if(err) {
-                                console.log(file.name, err, file);
-                            };
-                            fs.writeFile(dst + file.name.replace(".less", ".css"), css);
+                            // outer: less
+                            // outer: require
+                            require("less").render(less, function(err, css) {
+                                // outer: dst
+                                // outer: fs
+                                // outer: file
+                                // outer: console
+                                if(err) {
+                                    console.log(file.name, err, file);
+                                };
+                                fs.writeFile(dst + file.name.replace(".less", ".css"), css);
+                            });
+                        }, function(err) {
+                            // outer: console
+                            console.log(err);
                         });
                     });
                 } else  {
