@@ -56,7 +56,7 @@ exports.nodemain = function() {
         util.mkdir(dst + "/common/js/");
         util.cp("./build/webjs/solsort.js", dst + "/common/js/solsort.js", function(err) {
             if(err) {
-                console.log("Error:", err, file);
+                console.log("Error:", err, "solsort.js");
             };
         });
         files.map(function(file) {
@@ -100,6 +100,15 @@ exports.nodemain = function() {
                                 return console.log("could not access:", templatename);
                             };
                             savehtml(file.name.slice(0, - 2) + "html", html, doc);
+                        });
+                    });
+                } else if(file.type === "less") {
+                    fs.readFile(src + file.name, "utf8", function(err, less) {
+                        require("less").render(less, function (err, css) {
+                            if(err) {
+                                console.log(file.name, err, file);
+                            }
+                            fs.writeFile(dst + file.name.replace(".less", ".css"), css);
                         });
                     });
                 } else  {

@@ -5,6 +5,7 @@
   "homepage": "http://lightscript.net",
   "description": "the lightscript programming language",
   "dependencies": {
+    "less": "*",
     "async": "*",
     "mustache": "*",
     "glob": "*",
