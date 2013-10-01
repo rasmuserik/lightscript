@@ -1,8 +1,8 @@
 {
   "name": "lightscript",
-  "version": "0.0.1",
+  "version": "0.3.0",
   "author": "Rasmus Erik Voel Jensen",
-  "homepage": "http://lightscript.net",
+  "homepage": "http://solsort.com/lightscript",
   "description": "the lightscript programming language",
   "dependencies": {
     "less": "*",
@@ -18,7 +18,7 @@
     "express-logger": "*"
   },
   "scripts": {
-      "test": "./run.sh build && ./run.sh test"
+      "test": "node lightscript.ls.js compile; node lightscript.ls.js test"
   },
   "engines": {"node": "*"}
 }
