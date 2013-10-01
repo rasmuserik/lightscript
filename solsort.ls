@@ -1038,7 +1038,7 @@ time = function(str) {
     console.log(str, Date.now() - t0);
     t0 = Date.now();
 };
-// Main for testing {{{2
+// Main for testing {{{1
 run(function() {
     fname = __dirname + "/solsort.ls";
     fs = require("fs");
