@@ -7,6 +7,18 @@
 // - match filter
 // refactor/cleanup, ie. id-function/filter/... in rst-ast-matcher
 //
+//
+// Node types
+// - call
+// - fn
+// - block
+// - note
+// - assign
+// - branch
+// - id
+// - str
+// - num
+//
 // Util {{{1
 id = function(x) {
     return x;
@@ -48,25 +60,30 @@ pplist = function(list, indent) {
     };
 };
 // Ast {{{1
-Ast = function(kind, val, children, pos, type, opt) {
+// Constructor {{{2
+Ast = function(kind, val, children, pos) {
     this.kind = kind;
     this.val = val || "";
     this.children = children || [];
     this.pos = pos;
-    this.type = type;
-    this.opt = opt;
+    this.opt = {};
+    this.parent = undefined
 };
+// Ast.create {{{2
 Ast.prototype.create = function(kind, val, children) {
     return new Ast(kind, val, children, this.pos);
 };
+// Ast.isa {{{2
 Ast.prototype.isa = function(kind, val) {
     return this.kind === kind && this.val === val;
 };
+// Ast.deepCopy {{{2
 Ast.prototype.deepCopy = function() {
     return new Ast(this.kind, this.val, this.children.map(function(child) {
         return child.deepCopy();
-    }), this.pos, this.type);
+    }), this.pos);
 };
+// Ast.toList {{{2
 Ast.prototype.toList = function() {
     result = this.children.map(function(node) {
         return node.toList();
@@ -75,9 +92,11 @@ Ast.prototype.toList = function() {
     result.unshift(this.kind);
     return result;
 };
+// Ast.toString {{{2
 Ast.prototype.toString = function() {
     return pplist(this.toList());
 };
+// Ast.fromList {{{2
 Ast.prototype.fromList = function(list) {
     if(Array.isArray(list)) {
         self = this;
@@ -89,6 +108,10 @@ Ast.prototype.fromList = function(list) {
     };
     return result;
 };
+// Ast.error {{{2
+Ast.prototype.error = function(desc) {
+    throw "Error: " + desc + " at pos: " + JSON.stringify(this.pos);
+}
 // Ast Matcher {{{1
 // Pattern matching notes
 // matcher = new Matcher();
@@ -698,6 +721,22 @@ addCommas = function(ast) {
     };
     return ast;
 };
+// Add var definitions {{{2
+addVars = function(ast) {
+    ast.children = ast.children.map(addVars);
+    if(ast.kind=== "fn") {
+        vars = ast.opt["vars"];
+        if(!vars) {
+            ast.error("Trying to add var statements to function with out var-analysis data");
+        }
+        Object.keys(vars).forEach(function(id){
+            if(!vars[id]["parent"] && vars[id]["assign"]) {
+                ast.children[1].children.unshift(ast.fromList(["call", "var", ["id", id]]));
+            }
+        })
+    }
+    return ast;
+}
 // transformations {{{2
 rstToAstTransform(["call", "*{}", ["id", "module"], "??body"], ["call", "*()", ["fn", "", ["block", ""], ["block", "", "??body"]]])
 astTransform(["call", "||", "?p1", "?p2"], ["branch", "||", "?p1", "?p2"]);
@@ -707,6 +746,7 @@ astTransform(["call", "=", ["call", ".", "?obj", "?member"], "?val"], ["call", "
 astTransform(["call", "throw", "?result"], ["branch", "throw", "?result"]);
 astTransform(["call", "return", "?result"], ["branch", "return", "?result"]);
 astTransform(["call", "typeof", "?result"], ["call", "typeof", "?result"]);
+astTransform(["call", "var", "?result"], ["call", "var", "?result"]);
 astTransform(["call", "*()", "??args"], ["call", "*()", "??args"]);
 astTransform(["call", ".", "?obj", ["id", "?id"]], ["call", ".", "?obj", ["str", "?id"]]);
 astTransform(["call", "*{}", ["call", "*()", ["id", "function"], "??args"], "??body"], ["fn", "", ["block", "", "??args"], ["block", "", "??body"]]);
@@ -891,23 +931,89 @@ analyse = function(ast) {
     scope.childAccess();
     return scope
 };
+// Analysis2 {{{1
+analyse = function(node) {
+    // Accumulators {{{2
+    fns = []
+    vars = {}
+    node.opt["vars"] = vars;
+    // arguments{{{2
+    parentFn = node.opt["parentFn"];
+    if(parentFn) {
+        Object.keys(parentFn.opt.vars).forEach(function(id) {
+            if(parentFn.opt.vars[id]["parent"] || parentFn.opt.vars[id]["assign"]) {
+                vars[id] = {parent: true}
+            }
+        });
+        node.children[0].children.forEach(function(id) {
+            if(id.isa("call", ":")) {
+                if(id.children[0].kind !== "id" || id.children[1].kind !== "id") {
+                    id.error("not typed id");
+                }
+                vars[id.children[0].val] = {
+                    arg: true,
+                    type: id.children[1].val
+                }
+            } else if(id.kind === "id") {
+                vars[id.val] = {arg: true}
+            } else {
+                id.error("Analysis: id is not an \"id\"");
+            }
+        });
+    }
+    // Analyse subtree {{{2
+    subanalysis = function(node) {
+        node.children.forEach(function(child) {
+            child.parent = node;
+        })
+        if(node.kind === "fn") {
+            fns.push(node);
+        } else { 
+            if(node.kind === "assign") {
+                vars[node.val] = vars[node.val] || {};
+                vars[node.val]["assign"] = true
+            } else if(node.kind === "id") {
+                vars[node.val] = vars[node.val] || {};
+                vars[node.val]["access"] = true
+            }
+            node.children.forEach(function(child) {
+                subanalysis(child);
+            });
+        }
+        
+    }
+    subanalysis(node.children[1]);
+    node.children[1].children.forEach(function(child) {
+        subanalysis(child)
+    });
+
+    // Analyse subfunctions {{{2
+    fns.forEach(function(childFn) {
+        childFn.opt["parentFn"] = node;
+        analyse(childFn);
+    });
+}
 // Main for testing {{{1
 exports.nodemain = function(file) {
+    t0 = Date.now()
     file = file || "lightscript3";
     source = require("fs").readFileSync(__dirname + "/../../lightscript/" + file + ".ls", "utf8");
-    source = "module{" + source + "}";
+    source = "function(){" + source + "}";
     tokens = tokenise(source);
     ast = parse(tokens)[0];
     ast = rstToAst.recursivePostTransform(ast);
     //console.log(pplist(ast.toList()));
-    /*
+    analyse(ast);
+    ast = addVars(ast);
     ast = astToRst.recursivePreTransform(ast);
     ast = addCommas(ast);
     pp = new PrettyPrinter();
     pp.pp(ast);
-    //console.log(pp.acc.join("").split("\n").slice(1, - 1).join("\n"));
-    console.log(pp.acc.join(""));
+    console.log(pp.acc.join("").split("\n").slice(1, - 1).join("\n"));
+    //console.log(pp.acc.join(""));
+    /*
     */
+    /*
     names = {};
     recursiveVisit = function(ast) {
         names[ast.kind] = obj = names[ast.kind] || {};
@@ -920,7 +1026,6 @@ exports.nodemain = function(file) {
     });
  //   console.log(names);
     console.log(require("util").inspect(analyse(ast), false, 100));
-    /*
     */
     //console.log(pplist(rstToAst.recursiveTransform(ast).toList()));
 };
