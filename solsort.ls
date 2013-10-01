@@ -1,8 +1,8 @@
 // Util {{{1
 // (call function) {{{2
 run = function(fn) {
-    fn()
-}
+    fn();
+};
 // id identity function {{{2
 id = function(x) {
     return x;
@@ -13,16 +13,16 @@ extend = function(dst, src) {
         dst[key] = src[key];
     });
     return dst;
-}
+};
 // extendExcept {{{2
 extendExcept = function(dst, src, except) {
     Object.keys(src).forEach(function(key) {
         if(!except[key]) {
             dst[key] = src[key];
-        }
+        };
     });
     return dst;
-}
+};
 // pplist - prettyprint a list {{{2
 pplist = function(list, indent) {
     indent = indent || "  ";
@@ -78,7 +78,7 @@ Ast = function(kind, val, children, pos) {
     this.children = children || [];
     this.pos = pos;
     this.opt = {};
-    this.parent = undefined
+    this.parent = undefined;
 };
 // Ast.create {{{4
 Ast.prototype.create = function(kind, val, children) {
@@ -122,7 +122,7 @@ Ast.prototype.fromList = function(list) {
 // Ast.error {{{4
 Ast.prototype.error = function(desc) {
     throw "Error: " + desc + " at pos: " + JSON.stringify(this.pos);
-}
+};
 // Ast Matcher {{{3
 // Pattern matching notes
 // matcher = new Matcher();
@@ -735,21 +735,21 @@ addCommas = function(ast) {
 // Add var definitions {{{4
 addVars = function(ast) {
     ast.children = ast.children.map(addVars);
-    if(ast.kind=== "fn") {
+    if(ast.kind === "fn") {
         vars = ast.opt["vars"];
         if(!vars) {
             ast.error("Trying to add var statements to function with out var-analysis data");
-        }
-        Object.keys(vars).forEach(function(id){
+        };
+        Object.keys(vars).forEach(function(id) {
             if(!vars[id]["parent"] && vars[id]["assign"]) {
                 ast.children[1].children.unshift(ast.fromList(["call", "var", ["id", id]]));
-            }
-        })
-    }
+            };
+        });
+    };
     return ast;
-}
+};
 // transformations {{{4
-rstToAstTransform(["call", "*{}", ["id", "module"], "??body"], ["call", "*()", ["fn", "", ["block", ""], ["block", "", "??body"]]])
+rstToAstTransform(["call", "*{}", ["id", "module"], "??body"], ["call", "*()", ["fn", "", ["block", ""], ["block", "", "??body"]]]);
 astTransform(["call", "||", "?p1", "?p2"], ["branch", "||", "?p1", "?p2"]);
 astTransform(["call", "&&", "?p1", "?p2"], ["branch", "&&", "?p1", "?p2"]);
 astTransform(["call", "=", ["call", "*[]", "?obj", "?idx"], "?val"], ["call", "*[]=", "?obj", "?idx", "?val"]);
@@ -848,14 +848,13 @@ astToRst.pattern(["branch", "cond", "??branches"], function(match, ast) {
     return ast.fromList(rhs);
 });
 // Class {{{4
-astTransform(["call", "=", ["call", ".", ["call", ".", ["id", "?class"], ["str", "prototype"]], ["str", "?member"]], 
-        ["fn", "", ["block", "", "??args"], "?body"]], ["fn", "?member", ["block", "", ["call", ":", ["id", "this"], ["id", "?class"]], "??args"], "?body"]);
+astTransform(["call", "=", ["call", ".", ["call", ".", ["id", "?class"], ["str", "prototype"]], ["str", "?member"]], ["fn", "", ["block", "", "??args"], "?body"]], ["fn", "?member", ["block", "", ["call", ":", ["id", "this"], ["id", "?class"]], "??args"], "?body"]);
 uppercase = "QWERTYUIOPASDFGHJKLZXCVBNM";
 rstToAst.pattern(["call", "=", ["id", "?class"], ["fn", "", ["block", "", "??args"], "?body"]], function(match, ast) {
     result = undefined;
-    if(uppercase.indexOf(match["class"][0]) !== -1) {
+    if(uppercase.indexOf(match["class"][0]) !== - 1) {
         result = ast.fromList(matchReplace(match, ["fn", "new", ["block", "", ["call", ":", ["id", "this"], ["id", "?class"]], "??args"], "?body"]));
-    }
+    };
     return result;
 });
 astToRstTransform(["fn", "new", ["block", "", ["call", ":", ["id", "this"], ["id", "?class"]], "??args"], "?body"], ["call", "=", ["id", "?class"], ["fn", "", ["block", "", "??args"], "?body"]]);
@@ -866,7 +865,7 @@ Scope = function() {
     this.read = {};
     this.arg = {};
     this.vars = {};
-    this.childVars= {};
+    this.childVars = {};
     this.local = {};
     this.parent = undefined;
     this.children = [];
@@ -875,10 +874,10 @@ Scope = function() {
 Scope.prototype.inScope = function(name) {
     result = false;
     if(this.vars[name]) {
-        result = true;    
+        result = true;
     } else if(this.parent) {
         result = this.parent.inScope(name);
-    }
+    };
     return result;
 };
 // Extract data {{{4
@@ -886,40 +885,40 @@ childrenExtractData = function(ast, scope) {
     ast.children.forEach(function(child) {
         extractData(child, scope);
     });
-}
+};
 extractDataTable = {
-        id: function(ast, scope) {
-            scope.read[ast.val] = {};
-        },
-        assign: function(ast, scope) {
-            scope.write[ast.val] = {};
-        },
-        block: childrenExtractData,
-        call: childrenExtractData,
-        fn: function(ast, scope) {
-            parent = scope;
-            scope = new Scope();
-            scope.parent = parent;
-            //scope.fn = ast;
-            parent.children.push(scope);
-            ast.children[0].children.forEach(function(arg) {
-                if(arg.isa("call", ":")) {
-                    scope.arg[arg.children[0].val] = {type: arg.children[1].val};
-                } else {
-                    scope.arg[arg.val] = {};
-                }
-            });
-            childrenExtractData(ast.children[1], scope);
-        },
-        note: id,
-        num: id,
-        str: id,
-        branch: childrenExtractData
+    id : function(ast, scope) {
+        scope.read[ast.val] = {};
+    },
+    assign : function(ast, scope) {
+        scope.write[ast.val] = {};
+    },
+    block : childrenExtractData,
+    call : childrenExtractData,
+    fn : function(ast, scope) {
+        parent = scope;
+        scope = new Scope();
+        scope.parent = parent;
+        //scope.fn = ast;
+        parent.children.push(scope);
+        ast.children[0].children.forEach(function(arg) {
+            if(arg.isa("call", ":")) {
+                scope.arg[arg.children[0].val] = {type : arg.children[1].val};
+            } else if(true) {
+                scope.arg[arg.val] = {};
+            };
+        });
+        childrenExtractData(ast.children[1], scope);
+    },
+    note : id,
+    num : id,
+    str : id,
+    branch : childrenExtractData
 };
 extractData = function(ast, scope) {
     extractDataTable[ast.kind](ast, scope);
     return scope;
-}
+};
 // Analysis child access {{{4
 Scope.prototype.childAccess = function() {
     self = this;
@@ -928,93 +927,88 @@ Scope.prototype.childAccess = function() {
     Object.keys(self.write).forEach(function(name) {
         if(!self.parent || !self.parent.inScope(name)) {
             self.local[name] = self.write[name];
-        }
+        };
     });
     self.children.forEach(function(child) {
         child.childAccess();
         extendExcept(self.childVars, child.vars, child.local);
         extendExcept(self.childVars, child.childVars, child.local);
     });
-}
+};
 // analyse main {{{4
 analyse = function(ast) {
     scope = extractData(ast, new Scope());
     scope.childAccess();
-    return scope
+    return scope;
 };
 // Analysis2 {{{3
 analyse = function(node) {
     // Accumulators {{{4
-    fns = []
-    vars = {}
+    fns = [];
+    vars = {};
     node.opt["vars"] = vars;
     // arguments{{{4
     parentFn = node.opt["parentFn"];
     if(parentFn) {
         Object.keys(parentFn.opt.vars).forEach(function(id) {
             if(parentFn.opt.vars[id]["parent"] || parentFn.opt.vars[id]["assign"]) {
-                vars[id] = {parent: true}
-            }
+                vars[id] = {parent : true};
+            };
         });
         node.children[0].children.forEach(function(id) {
             if(id.isa("call", ":")) {
                 if(id.children[0].kind !== "id" || id.children[1].kind !== "id") {
                     id.error("not typed id");
-                }
-                vars[id.children[0].val] = {
-                    arg: true,
-                    type: id.children[1].val
-                }
+                };
+                vars[id.children[0].val] = {arg : true, type : id.children[1].val};
             } else if(id.kind === "id") {
-                vars[id.val] = {arg: true}
-            } else {
+                vars[id.val] = {arg : true};
+            } else if(true) {
                 id.error("Analysis: id is not an \"id\"");
-            }
+            };
         });
-    }
+    };
     // Analyse subtree {{{4
     subanalysis = function(node) {
         node.children.forEach(function(child) {
             child.parent = node;
-        })
+        });
         if(node.kind === "fn") {
             fns.push(node);
-        } else { 
+        } else if(true) {
             if(node.kind === "assign") {
                 vars[node.val] = vars[node.val] || {};
-                vars[node.val]["assign"] = true
+                vars[node.val]["assign"] = true;
             } else if(node.kind === "id") {
                 vars[node.val] = vars[node.val] || {};
-                vars[node.val]["access"] = true
-            }
+                vars[node.val]["access"] = true;
+            };
             node.children.forEach(function(child) {
                 subanalysis(child);
             });
-        }
-        
-    }
+        };
+    };
     subanalysis(node.children[1]);
     node.children[1].children.forEach(function(child) {
-        subanalysis(child)
+        subanalysis(child);
     });
-
     // Analyse subfunctions {{{4
     fns.forEach(function(childFn) {
         childFn.opt["parentFn"] = node;
         analyse(childFn);
     });
-}
+};
 // API {{{2
 ls2ast = function(source) {
     source = "function(){" + source + "}";
     tokens = tokenise(source);
-        time("tokenise")
+    time("tokenise");
     ast = parse(tokens)[0];
-        time("parse")
+    time("parse");
     ast = rstToAst.recursivePostTransform(ast);
-        time("transform")
+    time("transform");
     return ast;
-}
+};
 ast2js = function(ast) {
     ast = ast.deepCopy();
     analyse(ast);
@@ -1024,26 +1018,26 @@ ast2js = function(ast) {
     pp = new PrettyPrinter();
     pp.pp(ast);
     return pp.acc.join("").split("\n").slice(1, - 1).join("\n");
-}
+};
 ast2ls = function(ast) {
-    ast = ast.deepCopy()
-        time("deepcopy")
+    ast = ast.deepCopy();
+    time("deepcopy");
     ast = astToRst.recursivePreTransform(ast);
-        time("transform")
+    time("transform");
     ast = addCommas(ast);
-        time("commas")
+    time("commas");
     pp = new PrettyPrinter();
     pp.pp(ast);
-        time("prettyprint")
+    time("prettyprint");
     result = pp.acc.join("").split("\n").slice(1, - 1).join("\n");
-        time("pp.join")
-        return result
-}
+    time("pp.join");
+    return result;
+};
+t0 = Date.now();
+time = function(str) {
+    console.log(str, Date.now() - t0);
     t0 = Date.now();
-    time = function(str) {
-        console.log(str, Date.now() - t0);
-        t0 = Date.now();
-    }
+};
 // Main for testing {{{2
 run(function() {
     fname = __dirname + "/solsort.ls";
@@ -1051,9 +1045,9 @@ run(function() {
     source = fs.readFileSync(fname, "utf8");
     time("read file");
     ast = ls2ast(source);
-    time("parse / compile to ast")
+    time("parse / compile to ast");
     fs.writeFile(fname + ".pp", ast2ls(ast));
-    time("write pp")
+    time("write pp");
     fs.writeFile(fname + ".js", ast2js(ast));
-    time("write js")
+    time("write js");
 });
