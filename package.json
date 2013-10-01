@@ -18,7 +18,7 @@
     "express-logger": "*"
   },
   "scripts": {
-      "test": "node solsort.ls.js compile; node solsort.ls.js test"
+      "test": "node solsort.ls.js compile; diff solsort.ls solsort.ls.pp && node solsort.ls.js test"
   },
   "engines": {"node": "*"}
 }

@@ -1153,7 +1153,7 @@ ast2js = function(ast) {
     ast = addCommas(ast);
     pp = new PrettyPrinter();
     pp.pp(ast);
-    return pp.acc.join("").split("\n").slice(1, - 1).join("\n");
+    return pp.acc.join("").split("\n").slice(1, - 1).join("\n") + "\n";
 };
 ast2ls = function(ast) {
     var result;
@@ -1168,7 +1168,7 @@ ast2ls = function(ast) {
     pp = new PrettyPrinter();
     pp.pp(ast);
     time("prettyprint");
-    result = pp.acc.join("").split("\n").slice(1, - 1).join("\n");
+    result = pp.acc.join("").split("\n").slice(1, - 1).join("\n") + "\n";
     time("pp.join");
     return result;
 };
@@ -1177,7 +1177,7 @@ time = function(str) {
     console.log(str, Date.now() - t0);
     t0 = Date.now();
 };
-// Main for testing {{{2
+// Main for testing {{{1
 run(function() {
     var ast;
     var source;

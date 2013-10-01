@@ -1017,7 +1017,7 @@ ast2js = function(ast) {
     ast = addCommas(ast);
     pp = new PrettyPrinter();
     pp.pp(ast);
-    return pp.acc.join("").split("\n").slice(1, - 1).join("\n");
+    return pp.acc.join("").split("\n").slice(1, - 1).join("\n") + "\n";
 };
 ast2ls = function(ast) {
     ast = ast.deepCopy();
@@ -1029,7 +1029,7 @@ ast2ls = function(ast) {
     pp = new PrettyPrinter();
     pp.pp(ast);
     time("prettyprint");
-    result = pp.acc.join("").split("\n").slice(1, - 1).join("\n");
+    result = pp.acc.join("").split("\n").slice(1, - 1).join("\n") + "\n";
     time("pp.join");
     return result;
 };
