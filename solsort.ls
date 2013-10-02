@@ -470,7 +470,7 @@ tokenise = function(buffer, filename) {
     };
     return tokens;
 };
-// Syntax {{{3
+// Syntax (parser and prettyprinter) {{{3
 // Syntax object {{{4
 SyntaxObj = function(ast) {
     this.ast = ast;
@@ -566,7 +566,7 @@ PrettyPrinter.prototype.newline = function(indent) {
         indent = (indent || 0) + this.indent;
         this.str("\n");
         while(indent > 0) {
-            this.str("    ");
+            this.str("  ");
             indent = indent - 1;
         };
         this.prevWasNewline = true;
