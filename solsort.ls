@@ -1056,19 +1056,17 @@ ast2ls = function(ast) {
 };
 // routes {{{2
 routes["compile"] = function() {
-  console.log("compiling");
-  fname = "/solsort.ls";
-  loadfile(fname, function(err, source) {
+  console.log("compiling...");
+  loadfile("/solsort.ls", function(err, source) {
     ast = ls2ast(source);
-    savefile(fname + ".js", ast2js(ast));
+    savefile("/solsort.js", ast2js(ast));
   });
 };
 routes["prettyprint"] = function() {
   console.log("prettyprinting");
-  fname = "/solsort.ls";
-  loadfile(fname, function(err, source) {
+  loadfile("/solsort.ls", function(err, source) {
     ast = ls2ast(source);
-    savefile(fname + ".pp", ast2ls(ast));
+    savefile("/solsort.ls.pp", ast2ls(ast));
   });
 };
 // web server {{{1
@@ -1095,12 +1093,7 @@ webpage = function(content, opt) {
 };
 // express handler {{{2
 handler = function(req, res, next) {
-  if(req.url === "/solsort.js") {
-    require("fs").readFile(__dirname + "/solsort.ls.js", function(err, data) {
-      res.set("Content-Type", "application/javascript");
-      res.end(data);
-    });
-  } else if(req.url[1] === "_") {
+  if(req.url[1] === "_") {
     res.end(webpage([["h1", "hello"]]));
   } else if(true) {
     next();
@@ -1111,7 +1104,7 @@ routes["devserver"] = function(app) {
   routes["gencontent"](app);
   express = require("express");
   server = express();
-  server.use(express.static(__dirname + "/static"));
+  server.use(express.static(__dirname));
   server.use(handler);
   port = 4444;
   server.listen(port);
