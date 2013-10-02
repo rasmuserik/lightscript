@@ -41,7 +41,7 @@ foreach = function(obj, fn) {
     Object.keys(obj).forEach(function(key) {
         fn(key, obj[key]);
     });
-}
+};
 // run(fn) call function {{{2
 run = function(fn) {
     fn();
@@ -93,31 +93,33 @@ pplist = function(list, indent) {
 xmlEscape = function(str) {
     return str.replace(RegExp("&", "g"), "&amp;").replace(RegExp("<", "g"), "&lt;");
 };
-
 jsonml2xml = function(jsonml) {
-    if (typeof jsonml === "string") { return xmlEscape(jsonml); }
-    if (typeof jsonml === "number") { return String(jsonml); }
+    if(typeof jsonml === "string") {
+        return xmlEscape(jsonml);
+    };
+    if(typeof jsonml === "number") {
+        return String(jsonml);
+    };
     result = "<" + jsonml[0];
     pos = 2;
     if(jsonml[1] && jsonml[1].constructor === Object) {
         console.log("HERE", jsonml[1]);
         foreach(jsonml[1], function(key, val) {
-            result += " " + key + "=\"" + val + "\"";
+            result = result + (" " + key + "=\"" + val + "\"");
         });
-    } else {
+    } else if(true) {
         pos = 1;
-    }
-    if (pos === jsonml.length) {
-      return result + "/>";
-    }
-    result += ">";
-    while (pos < jsonml.length) {
-      result += jsonml2xml(jsonml[pos]);
-      ++pos;
-    }
+    };
+    if(pos === jsonml.length) {
+        return result + "/>";
+    };
+    result = result + ">";
+    while(pos < jsonml.length) {
+        result = result + jsonml2xml(jsonml[pos]);
+        pos = pos + 1;
+    };
     return result + ("</" + jsonml[0] + ">");
-  };
-
+};
 // LightScript Language {{{1
 // Notes {{{2
 // TODO:
@@ -1034,20 +1036,12 @@ routes["prettyprint"] = function() {
 };
 // static content {{{1
 webpage = function(content, opt) {
-    opt = opt || {}
-    return "<!DOCTYPE html>" + jsonml2xml(
-        ["html", 
-            ["head", 
-                ["meta", {"http-equiv":"content-type", content:"text/html;charset=UTF-8"}],
-                ["title" opt.title || "solsort.com"],
-                ["link", {"rel":"shortcut icon", href:opt.icon}]],
-             ["body"].concat(content).concat([["script", {src: "/solsort.js"}, ""]])]
-
-    )
-}
+    opt = opt || {};
+    return "<!DOCTYPE html>" + jsonml2xml(["html", ["head", ["meta", {"http-equiv" : "content-type", content : "text/html;charset=UTF-8"}], ["title", opt.title || "solsort.com"], ["link", {"rel" : "shortcut icon", href : opt.icon}]], ["body"].concat(content).concat([["script", {src : "/solsort.js"}, ""]])]);
+};
 routes["gencontent"] = function(app) {
     // TODO
-}
+    };
 // web server {{{1
 handler = function(req, res, next) {
     if(req.url === "/solsort.js") {
@@ -1055,16 +1049,16 @@ handler = function(req, res, next) {
             res.set("Content-Type", "application/javascript");
             res.end(data);
         });
-        } else if(req.url[1] === "_") {
+    } else if(req.url[1] === "_") {
         res.end(webpage([["h1", "hello"]]));
-    } else {
+    } else if(true) {
         next();
-    }
-}
+    };
+};
 routes["devserver"] = function(app) {
     routes["gencontent"](app);
     express = require("express");
-    server= express();
+    server = express();
     server.use(express.static(__dirname + "/static"));
     server.use(handler);
     port = 4444;
