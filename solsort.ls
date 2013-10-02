@@ -1034,15 +1034,13 @@ routes["prettyprint"] = function() {
         writeFile(fname + ".pp", ast2ls(ast));
     });
 };
-// static content {{{1
+// web server {{{1
+// static content {{{2
 webpage = function(content, opt) {
     opt = opt || {};
     return "<!DOCTYPE html>" + jsonml2xml(["html", ["head", ["meta", {"http-equiv" : "content-type", content : "text/html;charset=UTF-8"}], ["title", opt.title || "solsort.com"], ["link", {"rel" : "shortcut icon", href : opt.icon}]], ["body"].concat(content).concat([["script", {src : "/solsort.js"}, ""]])]);
 };
-routes["gencontent"] = function(app) {
-    // TODO
-    };
-// web server {{{1
+// express handler {{{2
 handler = function(req, res, next) {
     if(req.url === "/solsort.js") {
         readFile(__dirname + "/solsort.ls.js", function(err, data) {
@@ -1055,6 +1053,7 @@ handler = function(req, res, next) {
         next();
     };
 };
+// routes {{{2
 routes["devserver"] = function(app) {
     routes["gencontent"](app);
     express = require("express");
@@ -1065,3 +1064,6 @@ routes["devserver"] = function(app) {
     server.listen(port);
     console.log("starting web server on port", port);
 };
+routes["gencontent"] = function(app) {
+    // TODO
+    };
