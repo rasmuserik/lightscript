@@ -44,129 +44,129 @@ isNode = typeof process === "object" && typeof process["versions"] === "object" 
 isBrowser = typeof navigator === "object" && typeof navigator["userAgent"] === "string" && navigator["userAgent"].indexOf("Mozilla") !== - 1;
 // nextTick(fn) {{{2
 if(isNode) {
-    nextTick = process.nextTick;
+  nextTick = process.nextTick;
 } else if(true) {
-    nextTick = function(fn) {
-        setTimeout(fn, 0);
-    };
+  nextTick = function(fn) {
+    setTimeout(fn, 0);
+  };
 };
 // Main dispatch {{{2
 routes = {};
 routes["default"] = function() {
-    console.log("default route");
+  console.log("default route");
 };
 // File IO {{{2
 if(isNode) {
-    readFile = require("fs").readFile;
-    writeFile = require("fs").writeFile;
+  readFile = require("fs").readFile;
+  writeFile = require("fs").writeFile;
 };
 // actual dispatch {{{2
 nextTick(function() {
-    var app;
-    var args;
-    if(isNode) {
-        args = process.argv.slice(2).filter(function(arg) {
-            return arg[0] !== "-";
-        });
-    } else if(isBrowser) {
-        args = (location.hash || location.pathname).slice(1).split("/");
-    };
-    app = new App({args : args});
-    (routes[args[0]] || routes["default"])(app);
+  var app;
+  var args;
+  if(isNode) {
+    args = process.argv.slice(2).filter(function(arg) {
+      return arg[0] !== "-";
+    });
+  } else if(isBrowser) {
+    args = (location.hash || location.pathname).slice(1).split("/");
+  };
+  app = new App({args : args});
+  (routes[args[0]] || routes["default"])(app);
 });
 // App {{{1
 App = function(opt) {
-    this.args = opt.args;
+  this.args = opt.args;
 };
 // Util {{{1
 // foreach {{{2
 foreach = function(obj, fn) {
-    Object.keys(obj).forEach(function(key) {
-        fn(key, obj[key]);
-    });
+  Object.keys(obj).forEach(function(key) {
+    fn(key, obj[key]);
+  });
 };
 // run(fn) call function {{{2
 run = function(fn) {
-    fn();
+  fn();
 };
 // id(x) identity function {{{2
 id = function(x) {
-    return x;
+  return x;
 };
 // extend(dst, src) {{{2
 extend = function(dst, src) {
-    Object.keys(src).forEach(function(key) {
-        dst[key] = src[key];
-    });
-    return dst;
+  Object.keys(src).forEach(function(key) {
+    dst[key] = src[key];
+  });
+  return dst;
 };
 // extendExcept(dst, src, ignore) {{{2
 extendExcept = function(dst, src, except) {
-    Object.keys(src).forEach(function(key) {
-        if(!except[key]) {
-            dst[key] = src[key];
-        };
-    });
-    return dst;
+  Object.keys(src).forEach(function(key) {
+    if(!except[key]) {
+      dst[key] = src[key];
+    };
+  });
+  return dst;
 };
 // pplist(list, [indent]) - prettyprint a list {{{2
 pplist = function(list, indent) {
-    var len;
-    var result;
-    var indent;
-    indent = indent || "  ";
-    if(!Array.isArray(list)) {
-        return list;
-    };
-    result = list.map(function(elem) {
-        return pplist(elem, indent + "  ");
-    });
-    len = 0;
-    result.forEach(function(elem) {
-        len = len + (elem.length + 1);
-    });
-    if(result[1] !== undefined) {
-        result[1] = result[0] + " " + JSON.stringify(result[1]).slice(1, - 1);
-        result.shift();
-    };
-    if(len < 72) {
-        return "[" + result.join(" ") + "]";
-    } else if(true) {
-        return "[" + result.join("\n" + indent) + "]";
-    };
+  var len;
+  var result;
+  var indent;
+  indent = indent || "  ";
+  if(!Array.isArray(list)) {
+    return list;
+  };
+  result = list.map(function(elem) {
+    return pplist(elem, indent + "  ");
+  });
+  len = 0;
+  result.forEach(function(elem) {
+    len = len + (elem.length + 1);
+  });
+  if(result[1] !== undefined) {
+    result[1] = result[0] + " " + JSON.stringify(result[1]).slice(1, - 1);
+    result.shift();
+  };
+  if(len < 72) {
+    return "[" + result.join(" ") + "]";
+  } else if(true) {
+    return "[" + result.join("\n" + indent) + "]";
+  };
 };
 // XML {{{1
 xmlEscape = function(str) {
-    return str.replace(RegExp("&", "g"), "&amp;").replace(RegExp("<", "g"), "&lt;");
+  return str.replace(RegExp("&", "g"), "&amp;").replace(RegExp("<", "g"), "&lt;");
 };
 jsonml2xml = function(jsonml) {
-    var pos;
-    var result;
-    if(typeof jsonml === "string") {
-        return xmlEscape(jsonml);
-    };
-    if(typeof jsonml === "number") {
-        return String(jsonml);
-    };
-    result = "<" + jsonml[0];
-    pos = 2;
-    if(jsonml[1] && jsonml[1].constructor === Object) {
-        console.log("HERE", jsonml[1]);
-        foreach(jsonml[1], function(key, val) {
-            result = result + (" " + key + "=\"" + val + "\"");
-        });
-    } else if(true) {
-        pos = 1;
-    };
-    if(pos === jsonml.length) {
-        return result + "/>";
-    };
-    result = result + ">";
-    while(pos < jsonml.length) {
-        result = result + jsonml2xml(jsonml[pos]);
-        pos = pos + 1;
-    };
-    return result + ("</" + jsonml[0] + ">");
+  var pos;
+  var result;
+  if(typeof jsonml === "string") {
+    return xmlEscape(jsonml);
+  };
+  if(typeof jsonml === "number") {
+    return String(jsonml);
+  };
+  result = "<" + jsonml[0];
+  pos = 2;
+  if(jsonml[1] && jsonml[1].constructor === Object) {
+    console.log("HERE", jsonml[1]);
+    foreach(jsonml[1], function(key, val) {
+      result = result + (" " + key + "=\"" + val + "\"");
+    });
+  } else if(true) {
+    pos = 1;
+  };
+  if(pos === jsonml.length) {
+    return result + "/>";
+  };
+  result = result + ">";
+  while(pos < jsonml.length) {
+    result = result + jsonml2xml(jsonml[pos]);
+    pos = pos + 1;
+  };
+  return result + ("</" + jsonml[0] + ">");
 };
 // LightScript Language {{{1
 // Notes {{{2
@@ -195,58 +195,58 @@ jsonml2xml = function(jsonml) {
 // Ast {{{3
 // Constructor {{{4
 Ast = function(kind, val, children, pos) {
-    this.kind = kind;
-    this.val = val || "";
-    this.children = children || [];
-    this.pos = pos;
-    this.opt = {};
-    this.parent = undefined;
+  this.kind = kind;
+  this.val = val || "";
+  this.children = children || [];
+  this.pos = pos;
+  this.opt = {};
+  this.parent = undefined;
 };
 // Ast.create {{{4
 Ast.prototype.create = function(kind, val, children) {
-    return new Ast(kind, val, children, this.pos);
+  return new Ast(kind, val, children, this.pos);
 };
 // Ast.isa {{{4
 Ast.prototype.isa = function(kind, val) {
-    return this.kind === kind && this.val === val;
+  return this.kind === kind && this.val === val;
 };
 // Ast.deepCopy {{{4
 Ast.prototype.deepCopy = function() {
-    return new Ast(this.kind, this.val, this.children.map(function(child) {
-        return child.deepCopy();
-    }), this.pos);
+  return new Ast(this.kind, this.val, this.children.map(function(child) {
+    return child.deepCopy();
+  }), this.pos);
 };
 // Ast.toList {{{4
 Ast.prototype.toList = function() {
-    var result;
-    result = this.children.map(function(node) {
-        return node.toList();
-    });
-    result.unshift(this.val);
-    result.unshift(this.kind);
-    return result;
+  var result;
+  result = this.children.map(function(node) {
+    return node.toList();
+  });
+  result.unshift(this.val);
+  result.unshift(this.kind);
+  return result;
 };
 // Ast.toString {{{4
 Ast.prototype.toString = function() {
-    return pplist(this.toList());
+  return pplist(this.toList());
 };
 // Ast.fromList {{{4
 Ast.prototype.fromList = function(list) {
-    var result;
-    var self;
-    if(Array.isArray(list)) {
-        self = this;
-        result = this.create(list[0], list[1], list.slice(2).map(function(child) {
-            return self.fromList(child);
-        }));
-    } else if(true) {
-        result = list;
-    };
-    return result;
+  var result;
+  var self;
+  if(Array.isArray(list)) {
+    self = this;
+    result = this.create(list[0], list[1], list.slice(2).map(function(child) {
+      return self.fromList(child);
+    }));
+  } else if(true) {
+    result = list;
+  };
+  return result;
 };
 // Ast.error {{{4
 Ast.prototype.error = function(desc) {
-    throw "Error: " + desc + " at pos: " + JSON.stringify(this.pos);
+  throw "Error: " + desc + " at pos: " + JSON.stringify(this.pos);
 };
 // Ast Matcher {{{3
 // Pattern matching notes
@@ -270,674 +270,674 @@ Ast.prototype.error = function(desc) {
 //
 // MatcherPattern {{{4
 MatcherPattern = function(pattern) {
-    if(typeof pattern === "string") {
-        if(pattern[0] === "?") {
-            this.anyVal = pattern.slice(1);
-        } else if(true) {
-            this.str = pattern;
-        };
+  if(typeof pattern === "string") {
+    if(pattern[0] === "?") {
+      this.anyVal = pattern.slice(1);
     } else if(true) {
-        this.kind = new MatcherPattern(pattern[0]);
-        this.val = new MatcherPattern(pattern[1]);
-        if(pattern[pattern.length - 1].slice(0, 2) === "??") {
-            this.endglob = pattern[pattern.length - 1].slice(2);
-            this.children = pattern.slice(2, - 1);
-        } else if(true) {
-            this.children = pattern.slice(2);
-        };
-        this.children = this.children.map(function(child) {
-            return new MatcherPattern(child);
-        });
+      this.str = pattern;
     };
+  } else if(true) {
+    this.kind = new MatcherPattern(pattern[0]);
+    this.val = new MatcherPattern(pattern[1]);
+    if(pattern[pattern.length - 1].slice(0, 2) === "??") {
+      this.endglob = pattern[pattern.length - 1].slice(2);
+      this.children = pattern.slice(2, - 1);
+    } else if(true) {
+      this.children = pattern.slice(2);
+    };
+    this.children = this.children.map(function(child) {
+      return new MatcherPattern(child);
+    });
+  };
 };
 MatcherPattern.prototype.match = function(ast, matchResult) {
-    var i;
-    if(this.anyVal) {
-        matchResult.capture(this.anyVal, ast);
-    } else if(this.str !== undefined) {
-        matchResult.increaseRanking();
-        if(ast !== this.str) {
-            matchResult.failure();
-        };
-    } else if(this.children.length > ast.children.length) {
-        matchResult.failure();
-    } else if(!this.endglob && this.children.length !== ast.children.length) {
-        matchResult.failure();
-    } else if(true) {
-        this.kind.match(ast.kind, matchResult);
-        this.val.match(ast.val, matchResult);
-        i = 0;
-        while(i < this.children.length) {
-            this.children[i].match(ast.children[i], matchResult);
-            i = i + 1;
-        };
-        if(this.endglob) {
-            matchResult.capture(this.endglob, ast.children.slice(i));
-        };
+  var i;
+  if(this.anyVal) {
+    matchResult.capture(this.anyVal, ast);
+  } else if(this.str !== undefined) {
+    matchResult.increaseRanking();
+    if(ast !== this.str) {
+      matchResult.failure();
     };
-    return matchResult;
+  } else if(this.children.length > ast.children.length) {
+    matchResult.failure();
+  } else if(!this.endglob && this.children.length !== ast.children.length) {
+    matchResult.failure();
+  } else if(true) {
+    this.kind.match(ast.kind, matchResult);
+    this.val.match(ast.val, matchResult);
+    i = 0;
+    while(i < this.children.length) {
+      this.children[i].match(ast.children[i], matchResult);
+      i = i + 1;
+    };
+    if(this.endglob) {
+      matchResult.capture(this.endglob, ast.children.slice(i));
+    };
+  };
+  return matchResult;
 };
 // MatchResult {{{4
 MatchResult = function(fn) {
-    this.captures = {};
-    this.ok = true;
-    this.rank = 0;
-    this.fn = fn;
+  this.captures = {};
+  this.ok = true;
+  this.rank = 0;
+  this.fn = fn;
 };
 MatchResult.prototype.failure = function() {
-    this.ok = false;
+  this.ok = false;
 };
 MatchResult.prototype.capture = function(key, val) {
-    this.captures[key] = val;
+  this.captures[key] = val;
 };
 MatchResult.prototype.increaseRanking = function() {
-    this.rank = this.rank + 1;
+  this.rank = this.rank + 1;
 };
 // MatchEntry {{{4
 MatchEntry = function(pattern, fn) {
-    this.pattern = new MatcherPattern(pattern);
-    this.fn = fn;
+  this.pattern = new MatcherPattern(pattern);
+  this.fn = fn;
 };
 // Matcher {{{4
 Matcher = function() {
-    this.table = {};
+  this.table = {};
 };
 Matcher.prototype.pattern = function(pattern, fn) {
-    var matchers;
-    this.table[pattern[0]] = matchers = this.table[pattern[0]] || [];
-    matchers.push(new MatchEntry(pattern, fn));
+  var matchers;
+  this.table[pattern[0]] = matchers = this.table[pattern[0]] || [];
+  matchers.push(new MatchEntry(pattern, fn));
 };
 Matcher.prototype.match = function(ast) {
-    var matchers;
-    var result;
-    result = undefined;
-    matchers = this.table[ast.kind];
-    if(matchers) {
-        matchers.map(function(matcher) {
-            return matcher.pattern.match(ast, new MatchResult(matcher.fn));
-        }).filter(function(result) {
-            return result.ok;
-        }).sort(function(a, b) {
-            return b.rank - a.rank;
-        }).forEach(function(match) {
-            if(!result) {
-                result = match.fn(match.captures, ast);
-            };
-        });
-    };
-    return result;
+  var matchers;
+  var result;
+  result = undefined;
+  matchers = this.table[ast.kind];
+  if(matchers) {
+    matchers.map(function(matcher) {
+      return matcher.pattern.match(ast, new MatchResult(matcher.fn));
+    }).filter(function(result) {
+      return result.ok;
+    }).sort(function(a, b) {
+      return b.rank - a.rank;
+    }).forEach(function(match) {
+      if(!result) {
+        result = match.fn(match.captures, ast);
+      };
+    });
+  };
+  return result;
 };
 Matcher.prototype.recursiveWalk = function(ast) {
-    var self;
-    self = this;
-    ast.children.map(function(child) {
-        self.recursiveWalk(child);
-    });
-    this.match(ast);
+  var self;
+  self = this;
+  ast.children.map(function(child) {
+    self.recursiveWalk(child);
+  });
+  this.match(ast);
 };
 Matcher.prototype.recursivePreTransform = function(ast) {
-    var self;
-    var ast;
-    self = this;
-    ast = this.match(ast) || ast;
-    return ast.create(ast.kind, ast.val, ast.children.map(function(child) {
-        return self.recursivePreTransform(child);
-    }));
+  var self;
+  var ast;
+  self = this;
+  ast = this.match(ast) || ast;
+  return ast.create(ast.kind, ast.val, ast.children.map(function(child) {
+    return self.recursivePreTransform(child);
+  }));
 };
 Matcher.prototype.recursivePostTransform = function(ast) {
-    var t;
-    var self;
-    self = this;
-    t = ast.create(ast.kind, ast.val, ast.children.map(function(child) {
-        return self.recursivePostTransform(child);
-    }));
-    return this.match(t) || t;
+  var t;
+  var self;
+  self = this;
+  t = ast.create(ast.kind, ast.val, ast.children.map(function(child) {
+    return self.recursivePostTransform(child);
+  }));
+  return this.match(t) || t;
 };
 // Tokeniser {{{3
 BufferPos = function(line, pos) {
-    this.line = line;
-    this.pos = pos;
+  this.line = line;
+  this.pos = pos;
 };
 BufferDescr = function(data, filename) {
-    this.filename = filename;
-    this.data = data;
+  this.filename = filename;
+  this.data = data;
 };
 TokenPos = function(start, end, buffer) {
-    this.start = start;
-    this.end = end;
-    //this.buffer = buffer;
-    };
+  this.start = start;
+  this.end = end;
+  //this.buffer = buffer;
+  };
 tokenise = function(buffer, filename) {
-    var currentToken;
-    var tokens;
-    var next;
-    var newToken;
-    var beginToken;
-    var pop;
-    var peek;
-    var startsWith;
-    var oneOf;
-    var start;
-    var bufferDescr;
-    var newlinePos;
-    var lineno;
-    var pos;
-    pos = 0;
-    lineno = 1;
-    newlinePos = 0;
-    bufferDescr = new BufferDescr(buffer, filename);
-    start = new BufferPos(0, 0);
-    oneOf = function(str) {
-        return str.indexOf(peek()) !== - 1;
+  var currentToken;
+  var tokens;
+  var next;
+  var newToken;
+  var beginToken;
+  var pop;
+  var peek;
+  var startsWith;
+  var oneOf;
+  var start;
+  var bufferDescr;
+  var newlinePos;
+  var lineno;
+  var pos;
+  pos = 0;
+  lineno = 1;
+  newlinePos = 0;
+  bufferDescr = new BufferDescr(buffer, filename);
+  start = new BufferPos(0, 0);
+  oneOf = function(str) {
+    return str.indexOf(peek()) !== - 1;
+  };
+  startsWith = function(str) {
+    return peek(str.length) === str;
+  };
+  peek = function(n, delta) {
+    var delta;
+    var n;
+    n = n || 1;
+    delta = delta || 0;
+    return buffer.slice(pos + delta, pos + delta + n);
+  };
+  pop = function(n) {
+    var result;
+    var n;
+    lineno;
+    n = n || 1;
+    newlinePos;
+    result = buffer.slice(pos, pos + n);
+    result.split("").forEach(function(c) {
+      if(c === "\n") {
+        lineno = lineno + 1;
+        newlinePos = pos;
+      };
+    });
+    pos = pos + n;
+    return result;
+  };
+  beginToken = function() {
+    start = new BufferPos(lineno, pos - newlinePos);
+  };
+  newToken = function(kind, val) {
+    return new Ast(kind, val, [], {pos : new TokenPos(start, new BufferPos(lineno, pos - newlinePos), bufferDescr)});
+  };
+  next = function() {
+    var quote;
+    var result;
+    var c;
+    var s;
+    var hexdigits;
+    var digits;
+    var ident;
+    var joinedSymbol;
+    var singleSymbol;
+    var whitespace;
+    whitespace = " \t\r\n";
+    singleSymbol = "(){}[]:;,`?";
+    joinedSymbol = "=+-*/<>%!|&^~#.@";
+    ident = "_qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM$";
+    digits = "0123456789";
+    hexdigits = digits + "abcdefABCDEF";
+    s = undefined;
+    c = undefined;
+    while(peek() && oneOf(whitespace)) {
+      pop();
     };
-    startsWith = function(str) {
-        return peek(str.length) === str;
-    };
-    peek = function(n, delta) {
-        var delta;
-        var n;
-        n = n || 1;
-        delta = delta || 0;
-        return buffer.slice(pos + delta, pos + delta + n);
-    };
-    pop = function(n) {
-        var result;
-        var n;
-        lineno;
-        n = n || 1;
-        newlinePos;
-        result = buffer.slice(pos, pos + n);
-        result.split("").forEach(function(c) {
-            if(c === "\n") {
-                lineno = lineno + 1;
-                newlinePos = pos;
-            };
-        });
-        pos = pos + n;
-        return result;
-    };
-    beginToken = function() {
-        start = new BufferPos(lineno, pos - newlinePos);
-    };
-    newToken = function(kind, val) {
-        return new Ast(kind, val, [], {pos : new TokenPos(start, new BufferPos(lineno, pos - newlinePos), bufferDescr)});
-    };
-    next = function() {
-        var quote;
-        var result;
-        var c;
-        var s;
-        var hexdigits;
-        var digits;
-        var ident;
-        var joinedSymbol;
-        var singleSymbol;
-        var whitespace;
-        whitespace = " \t\r\n";
-        singleSymbol = "(){}[]:;,`?";
-        joinedSymbol = "=+-*/<>%!|&^~#.@";
-        ident = "_qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM$";
-        digits = "0123456789";
-        hexdigits = digits + "abcdefABCDEF";
-        s = undefined;
-        c = undefined;
-        while(peek() && oneOf(whitespace)) {
-            pop();
+    beginToken();
+    if(peek() === "") {
+      result = undefined;
+    } else if(startsWith("//")) {
+      s = "";
+      while(peek() && peek() !== "\n") {
+        s = s + pop();
+      };
+      pop();
+      result = newToken("note", s);
+    } else if(startsWith("/*")) {
+      s = "";
+      while(peek() && peek(2) !== "*/") {
+        s = s + pop();
+      };
+      s = s + pop(2);
+      result = newToken("note", s);
+    } else if(oneOf("\"")) {
+      s = "";
+      quote = pop();
+      while(!startsWith(quote)) {
+        c = pop();
+        if(c === "\\") {
+          c = pop();
+          c = ({
+            n : "\n",
+            r : "\r",
+            t : "\t"
+          })[c] || c;
         };
-        beginToken();
-        if(peek() === "") {
-            result = undefined;
-        } else if(startsWith("//")) {
-            s = "";
-            while(peek() && peek() !== "\n") {
-                s = s + pop();
-            };
-            pop();
-            result = newToken("note", s);
-        } else if(startsWith("/*")) {
-            s = "";
-            while(peek() && peek(2) !== "*/") {
-                s = s + pop();
-            };
-            s = s + pop(2);
-            result = newToken("note", s);
-        } else if(oneOf("\"")) {
-            s = "";
-            quote = pop();
-            while(!startsWith(quote)) {
-                c = pop();
-                if(c === "\\") {
-                    c = pop();
-                    c = ({
-                        n : "\n",
-                        r : "\r",
-                        t : "\t"
-                    })[c] || c;
-                };
-                s = s + c;
-            };
-            pop();
-            result = newToken("str", s);
-        } else if(oneOf(digits) || (peek() === "." && digits.indexOf(peek(1, 1)) !== - 1)) {
-            s = pop();
-            if(peek() !== "x") {
-                while(peek() && oneOf(".e" + digits)) {
-                    s = s + pop();
-                };
-            } else if(true) {
-                s = pop(2);
-                while(peek() && oneOf(hexdigits)) {
-                    s = s + pop();
-                };
-            };
-            result = newToken("num", s);
-        } else if(oneOf(singleSymbol)) {
-            result = newToken("id", pop());
-        } else if(oneOf(joinedSymbol)) {
-            s = "";
-            while(peek() && oneOf(joinedSymbol)) {
-                s = s + pop();
-            };
-            result = newToken("id", s);
-        } else if(oneOf(ident)) {
-            s = "";
-            while(peek() && oneOf(ident + digits)) {
-                s = s + pop();
-            };
-            result = newToken("id", s);
-        } else if(true) {
-            throw "Tokenisation error: " + peek().charCodeAt(0) + " (" + peek() + ") at pos " + pos;
+        s = s + c;
+      };
+      pop();
+      result = newToken("str", s);
+    } else if(oneOf(digits) || (peek() === "." && digits.indexOf(peek(1, 1)) !== - 1)) {
+      s = pop();
+      if(peek() !== "x") {
+        while(peek() && oneOf(".e" + digits)) {
+          s = s + pop();
         };
-        return result;
+      } else if(true) {
+        s = pop(2);
+        while(peek() && oneOf(hexdigits)) {
+          s = s + pop();
+        };
+      };
+      result = newToken("num", s);
+    } else if(oneOf(singleSymbol)) {
+      result = newToken("id", pop());
+    } else if(oneOf(joinedSymbol)) {
+      s = "";
+      while(peek() && oneOf(joinedSymbol)) {
+        s = s + pop();
+      };
+      result = newToken("id", s);
+    } else if(oneOf(ident)) {
+      s = "";
+      while(peek() && oneOf(ident + digits)) {
+        s = s + pop();
+      };
+      result = newToken("id", s);
+    } else if(true) {
+      throw "Tokenisation error: " + peek().charCodeAt(0) + " (" + peek() + ") at pos " + pos;
     };
-    tokens = [];
+    return result;
+  };
+  tokens = [];
+  currentToken = next();
+  while(currentToken) {
+    tokens.push(currentToken);
     currentToken = next();
-    while(currentToken) {
-        tokens.push(currentToken);
-        currentToken = next();
-    };
-    return tokens;
+  };
+  return tokens;
 };
-// Syntax {{{3
+// Syntax (parser and prettyprinter) {{{3
 // Syntax object {{{4
 SyntaxObj = function(ast) {
-    var syntaxData;
-    this.ast = ast;
-    syntaxData = table[ast.kind + ":"] || table[ast.val] || (ast.val && table[ast.val[ast.val.length - 1]]) || table["default:"];
-    this.bp = syntaxData[0] || 0;
-    this.opt = syntaxData[1] || {};
+  var syntaxData;
+  this.ast = ast;
+  syntaxData = table[ast.kind + ":"] || table[ast.val] || (ast.val && table[ast.val[ast.val.length - 1]]) || table["default:"];
+  this.bp = syntaxData[0] || 0;
+  this.opt = syntaxData[1] || {};
 };
 // Parser {{{4
 readList = function(paren, ast) {
-    while(!token.opt["rparen"]) {
-        ast.children.push(parseExpr());
-    };
-    if(token.ast.val !== paren) {
-        throw JSON.stringify({
-            err : "paren mismatch",
-            start : ast,
-            end : token.ast
-        });
-    };
-    nextToken();
+  while(!token.opt["rparen"]) {
+    ast.children.push(parseExpr());
+  };
+  if(token.ast.val !== paren) {
+    throw JSON.stringify({
+      err : "paren mismatch",
+      start : ast,
+      end : token.ast
+    });
+  };
+  nextToken();
 };
 token = undefined;
 nextToken = undefined;
 parseExpr = function(rbp) {
-    var left;
-    var t;
-    var rbp;
-    rbp = rbp || 0;
+  var left;
+  var t;
+  var rbp;
+  rbp = rbp || 0;
+  t = token;
+  nextToken();
+  t.nud();
+  left = t;
+  while(rbp < token.bp && !t.opt["sep"]) {
     t = token;
     nextToken();
-    t.nud();
+    t.led(left.ast);
     left = t;
-    while(rbp < token.bp && !t.opt["sep"]) {
-        t = token;
-        nextToken();
-        t.led(left.ast);
-        left = t;
-    };
-    return left.ast;
+  };
+  return left.ast;
 };
 parse = function(tokens) {
-    var result;
-    var pos;
-    pos = 0;
-    nextToken = function() {
-        var ast;
-        if(pos < tokens.length) {
-            ast = tokens[pos];
-            pos = pos + 1;
-        } else if(true) {
-            ast = new Ast("eof");
-        };
-        token = new SyntaxObj(ast);
-        return token;
+  var result;
+  var pos;
+  pos = 0;
+  nextToken = function() {
+    var ast;
+    if(pos < tokens.length) {
+      ast = tokens[pos];
+      pos = pos + 1;
+    } else if(true) {
+      ast = new Ast("eof");
     };
-    nextToken();
-    result = [];
-    while(token.ast.kind !== "eof") {
-        result.push(parseExpr());
-    };
-    return result;
+    token = new SyntaxObj(ast);
+    return token;
+  };
+  nextToken();
+  result = [];
+  while(token.ast.kind !== "eof") {
+    result.push(parseExpr());
+  };
+  return result;
 };
 SyntaxObj.prototype.led = function(left) {
-    var paren;
-    var ast;
-    ast = this.ast;
-    if(this.opt["paren"]) {
-        paren = this.opt["paren"];
-        ast.val = "*" + ast.val + paren;
-        ast.children = [left];
-        readList(paren, ast);
-    } else if(this.opt["noinfix"]) {
-        throw ast + " must not occur as infix.";
-    } else if(true) {
-        ast.children = [left, parseExpr(this.bp - (this.opt["dbp"] || 0))];
-    };
-    ast.kind = "call";
+  var paren;
+  var ast;
+  ast = this.ast;
+  if(this.opt["paren"]) {
+    paren = this.opt["paren"];
+    ast.val = "*" + ast.val + paren;
+    ast.children = [left];
+    readList(paren, ast);
+  } else if(this.opt["noinfix"]) {
+    throw ast + " must not occur as infix.";
+  } else if(true) {
+    ast.children = [left, parseExpr(this.bp - (this.opt["dbp"] || 0))];
+  };
+  ast.kind = "call";
 };
 SyntaxObj.prototype.nud = function() {
-    if(this.opt["paren"]) {
-        readList(this.opt["paren"], this.ast);
-    } else if(this.opt["noinfix"] || this.bp) {
-        this.ast.children = [parseExpr(this.bp)];
-        this.ast.kind = "call";
-    };
+  if(this.opt["paren"]) {
+    readList(this.opt["paren"], this.ast);
+  } else if(this.opt["noinfix"] || this.bp) {
+    this.ast.children = [parseExpr(this.bp)];
+    this.ast.kind = "call";
+  };
 };
 // Prettyprinter {{{4
 PrettyPrinter = function() {
-    this.indent = - 1;
-    this.acc = [];
-    this.prevWasNewline = false;
+  this.indent = - 1;
+  this.acc = [];
+  this.prevWasNewline = false;
 };
 PrettyPrinter.prototype.increaseIndent = function() {
-    this.indent = this.indent + 1;
+  this.indent = this.indent + 1;
 };
 PrettyPrinter.prototype.decreaseIndent = function() {
-    this.indent = this.indent - 1;
+  this.indent = this.indent - 1;
 };
 PrettyPrinter.prototype.newline = function(indent) {
-    var indent;
-    if(!this.prevWasNewline) {
-        indent = (indent || 0) + this.indent;
-        this.str("\n");
-        while(indent > 0) {
-            this.str("    ");
-            indent = indent - 1;
-        };
-        this.prevWasNewline = true;
+  var indent;
+  if(!this.prevWasNewline) {
+    indent = (indent || 0) + this.indent;
+    this.str("\n");
+    while(indent > 0) {
+      this.str("  ");
+      indent = indent - 1;
     };
+    this.prevWasNewline = true;
+  };
 };
 PrettyPrinter.prototype.str = function(str) {
-    this.acc.push(str);
-    this.prevWasNewline = false;
+  this.acc.push(str);
+  this.prevWasNewline = false;
 };
 PrettyPrinter.prototype.pp = function(ast, bp) {
-    var syn;
-    var bp;
-    bp = bp || 0;
-    syn = new SyntaxObj(ast);
-    if(syn.bp && syn.bp < bp) {
-        this.str("(");
-    };
-    syn.pp(this);
-    if(syn.bp && syn.bp < bp) {
-        this.str(")");
-    };
+  var syn;
+  var bp;
+  bp = bp || 0;
+  syn = new SyntaxObj(ast);
+  if(syn.bp && syn.bp < bp) {
+    this.str("(");
+  };
+  syn.pp(this);
+  if(syn.bp && syn.bp < bp) {
+    this.str(")");
+  };
 };
 listpp = function(isInfix, newlineLength, prefixSpace) {
-    return function(obj, pp) {
-        var space;
-        var list;
-        var ast;
-        ast = obj.ast;
-        if(isInfix) {
-            pp.pp(ast.children[0], obj.bp);
-            pp.str(prefixSpace);
-            pp.str(ast.val[1]);
-            list = ast.children.slice(1);
-        } else if(true) {
-            pp.str(ast.val);
-            list = ast.children;
-        };
-        if(list.length > newlineLength) {
-            pp.increaseIndent();
-        };
-        space = "";
-        list.map(function(child) {
-            return new SyntaxObj(child);
-        }).map(function(child) {
-            if(!child.opt["sep"]) {
-                if(list.length > newlineLength) {
-                    pp.newline();
-                } else if(true) {
-                    pp.str(space);
-                    space = " ";
-                };
-            };
-            child.pp(pp);
-        });
-        if(list.length > newlineLength) {
-            pp.decreaseIndent();
-            pp.newline();
-        };
-        if(isInfix) {
-            pp.str(ast.val[2]);
-        } else if(true) {
-            pp.str(obj.opt["paren"]);
-        };
+  return function(obj, pp) {
+    var space;
+    var list;
+    var ast;
+    ast = obj.ast;
+    if(isInfix) {
+      pp.pp(ast.children[0], obj.bp);
+      pp.str(prefixSpace);
+      pp.str(ast.val[1]);
+      list = ast.children.slice(1);
+    } else if(true) {
+      pp.str(ast.val);
+      list = ast.children;
     };
+    if(list.length > newlineLength) {
+      pp.increaseIndent();
+    };
+    space = "";
+    list.map(function(child) {
+      return new SyntaxObj(child);
+    }).map(function(child) {
+      if(!child.opt["sep"]) {
+        if(list.length > newlineLength) {
+          pp.newline();
+        } else if(true) {
+          pp.str(space);
+          space = " ";
+        };
+      };
+      child.pp(pp);
+    });
+    if(list.length > newlineLength) {
+      pp.decreaseIndent();
+      pp.newline();
+    };
+    if(isInfix) {
+      pp.str(ast.val[2]);
+    } else if(true) {
+      pp.str(obj.opt["paren"]);
+    };
+  };
 };
 strpp = function(obj, pp) {
-    pp.str(JSON.stringify(obj.ast.val));
+  pp.str(JSON.stringify(obj.ast.val));
 };
 notepp = function(obj, pp) {
-    pp.newline();
-    pp.str(obj.ast.val);
-    pp.newline();
+  pp.newline();
+  pp.str(obj.ast.val);
+  pp.newline();
 };
 SyntaxObj.prototype.pp = function(pp) {
-    var space;
-    var children;
-    var ast;
-    ast = this.ast;
-    children = ast.children;
-    if(this.opt["nospace"]) {
-        space = "";
-    } else if(true) {
-        space = " ";
-    };
-    if(this.opt["pp"]) {
-        this.opt["pp"](this, pp);
-    } else if(children.length === 0) {
-        pp.str(ast.val);
-    } else if(children.length === 1) {
-        pp.str(ast.val + space);
-        pp.pp(children[0], this.bp);
-    } else if(children.length === 2) {
-        pp.pp(children[0], this.bp);
-        pp.str(space + ast.val + space);
-        pp.pp(children[1], this.bp + 1 - (this.opt["dbp"] || 0));
-    } else if(true) {
-        pp.str("-:<");
-        pp.str(ast.kind + " " + ast.val);
-        ast.children.forEach(function(child) {
-            pp.str(" | ");
-            pp.pp(child);
-        });
-        pp.str(">:-");
-    };
+  var space;
+  var children;
+  var ast;
+  ast = this.ast;
+  children = ast.children;
+  if(this.opt["nospace"]) {
+    space = "";
+  } else if(true) {
+    space = " ";
+  };
+  if(this.opt["pp"]) {
+    this.opt["pp"](this, pp);
+  } else if(children.length === 0) {
+    pp.str(ast.val);
+  } else if(children.length === 1) {
+    pp.str(ast.val + space);
+    pp.pp(children[0], this.bp);
+  } else if(children.length === 2) {
+    pp.pp(children[0], this.bp);
+    pp.str(space + ast.val + space);
+    pp.pp(children[1], this.bp + 1 - (this.opt["dbp"] || 0));
+  } else if(true) {
+    pp.str("-:<");
+    pp.str(ast.kind + " " + ast.val);
+    ast.children.forEach(function(child) {
+      pp.str(" | ");
+      pp.pp(child);
+    });
+    pp.str(">:-");
+  };
 };
 // Syntax definition {{{4
 table = {
-    "." : [1200, {nospace : true}],
-    "[" : [1200, {pp : listpp(false, 10, ""), paren : "]"}],
-    "*[]" : [1200, {pp : listpp(true, 10, "")}],
-    "(" : [1200, {pp : listpp(false, 1, ""), paren : ")"}],
-    "*()" : [1200, {pp : listpp(true, 20, "")}],
-    "{" : [1100, {pp : listpp(false, 4, ""), paren : "}"}],
-    "*{}" : [1200, {pp : listpp(true, 0, " ")}],
-    "#" : [1000, {nospace : true, noinfix : true}],
-    "@" : [1000, {nospace : true, noinfix : true}],
-    "++" : [1000, {nospace : true, noinfix : true}],
-    "--" : [1000, {nospace : true, noinfix : true}],
-    "!" : [1000, {nospace : true, noinfix : true}],
-    "~" : [1000, {nospace : true, noinfix : true}],
-    "`" : [1000, {nospace : true, noinfix : true}],
-    "*" : [900],
-    "/" : [900],
-    "%" : [900],
-    "-" : [800],
-    "+" : [800],
-    ">>>" : [700],
-    ">>" : [700],
-    "<<" : [700],
-    "<=" : [600],
-    ">=" : [600],
-    ">" : [600],
-    "<" : [600],
-    "==" : [500],
-    "!=" : [500],
-    "!==" : [500],
-    "===" : [500],
-    "^" : [400],
-    "|" : [400],
-    "&" : [400],
-    "&&" : [300],
-    "||" : [300],
-    ":" : [200, {dbp : 1}],
-    "?" : [200, {dbp : 1}],
-    "else" : [200, {dbp : 1}],
-    "=" : [100, {dbp : 1}],
-    "," : [0, {sep : true}],
-    ";" : [0, {sep : true}],
-    "note:" : [0, {sep : true, pp : notepp}],
-    "]" : [0, {rparen : true}],
-    ")" : [0, {rparen : true}],
-    "}" : [0, {rparen : true}],
-    "eof:" : [0, {rparen : true}],
-    "return" : [0, {noinfix : true}],
-    "throw" : [0, {noinfix : true}],
-    "new" : [0, {noinfix : true}],
-    "typeof" : [0, {noinfix : true}],
-    "var" : [0, {noinfix : true}],
-    "str:" : [0, {pp : strpp}],
-    "constructor" : [],
-    "valueOf" : [],
-    "toString" : [],
-    "toLocaleString" : [],
-    "hasOwnProperty" : [],
-    "isPrototypeOf" : [],
-    "propertyIsEnumerable" : [],
-    "default:" : []
+  "." : [1200, {nospace : true}],
+  "[" : [1200, {pp : listpp(false, 10, ""), paren : "]"}],
+  "*[]" : [1200, {pp : listpp(true, 10, "")}],
+  "(" : [1200, {pp : listpp(false, 1, ""), paren : ")"}],
+  "*()" : [1200, {pp : listpp(true, 20, "")}],
+  "{" : [1100, {pp : listpp(false, 4, ""), paren : "}"}],
+  "*{}" : [1200, {pp : listpp(true, 0, " ")}],
+  "#" : [1000, {nospace : true, noinfix : true}],
+  "@" : [1000, {nospace : true, noinfix : true}],
+  "++" : [1000, {nospace : true, noinfix : true}],
+  "--" : [1000, {nospace : true, noinfix : true}],
+  "!" : [1000, {nospace : true, noinfix : true}],
+  "~" : [1000, {nospace : true, noinfix : true}],
+  "`" : [1000, {nospace : true, noinfix : true}],
+  "*" : [900],
+  "/" : [900],
+  "%" : [900],
+  "-" : [800],
+  "+" : [800],
+  ">>>" : [700],
+  ">>" : [700],
+  "<<" : [700],
+  "<=" : [600],
+  ">=" : [600],
+  ">" : [600],
+  "<" : [600],
+  "==" : [500],
+  "!=" : [500],
+  "!==" : [500],
+  "===" : [500],
+  "^" : [400],
+  "|" : [400],
+  "&" : [400],
+  "&&" : [300],
+  "||" : [300],
+  ":" : [200, {dbp : 1}],
+  "?" : [200, {dbp : 1}],
+  "else" : [200, {dbp : 1}],
+  "=" : [100, {dbp : 1}],
+  "," : [0, {sep : true}],
+  ";" : [0, {sep : true}],
+  "note:" : [0, {sep : true, pp : notepp}],
+  "]" : [0, {rparen : true}],
+  ")" : [0, {rparen : true}],
+  "}" : [0, {rparen : true}],
+  "eof:" : [0, {rparen : true}],
+  "return" : [0, {noinfix : true}],
+  "throw" : [0, {noinfix : true}],
+  "new" : [0, {noinfix : true}],
+  "typeof" : [0, {noinfix : true}],
+  "var" : [0, {noinfix : true}],
+  "str:" : [0, {pp : strpp}],
+  "constructor" : [],
+  "valueOf" : [],
+  "toString" : [],
+  "toLocaleString" : [],
+  "hasOwnProperty" : [],
+  "isPrototypeOf" : [],
+  "propertyIsEnumerable" : [],
+  "default:" : []
 };
 // Transformations of syntax tree (RST to/from AST) {{{3
 // Setup {{{4
 notSep = function(ast) {
-    return ast.kind !== "id" || (ast.val !== ";" && ast.val !== ",");
+  return ast.kind !== "id" || (ast.val !== ";" && ast.val !== ",");
 };
 noSeps = function(list) {
-    return list.filter(notSep);
+  return list.filter(notSep);
 };
 matchReplace = function(match, elem, filter) {
-    var result;
-    var tail;
-    var filter;
-    var elem;
-    filter = filter || id;
-    if(Array.isArray(elem)) {
-        tail = undefined;
-        if(elem[elem.length - 1].slice(0, 2) === "??") {
-            tail = filter(match[elem[elem.length - 1].slice(2)]);
-            elem = elem.slice(0, - 1);
-        };
-        result = elem.map(function(child) {
-            return matchReplace(match, child, filter);
-        });
-        if(tail) {
-            result = result.concat(tail);
-        };
-    } else if(typeof elem === "string" && elem[0] === "?") {
-        result = match[elem.slice(1)];
-    } else if(true) {
-        result = elem;
+  var result;
+  var tail;
+  var filter;
+  var elem;
+  filter = filter || id;
+  if(Array.isArray(elem)) {
+    tail = undefined;
+    if(elem[elem.length - 1].slice(0, 2) === "??") {
+      tail = filter(match[elem[elem.length - 1].slice(2)]);
+      elem = elem.slice(0, - 1);
     };
-    return result;
+    result = elem.map(function(child) {
+      return matchReplace(match, child, filter);
+    });
+    if(tail) {
+      result = result.concat(tail);
+    };
+  } else if(typeof elem === "string" && elem[0] === "?") {
+    result = match[elem.slice(1)];
+  } else if(true) {
+    result = elem;
+  };
+  return result;
 };
 rstToAst = new Matcher();
 astToRst = new Matcher();
 rstToAstTransform = function(from, to, filter) {
-    var filter;
-    filter = filter || noSeps;
-    rstToAst.pattern(from, function(match, ast) {
-        return ast.fromList(matchReplace(match, to, filter));
-    });
+  var filter;
+  filter = filter || noSeps;
+  rstToAst.pattern(from, function(match, ast) {
+    return ast.fromList(matchReplace(match, to, filter));
+  });
 };
 astToRstTransform = function(from, to, filter) {
-    astToRst.pattern(from, function(match, ast) {
-        return ast.fromList(matchReplace(match, to, filter));
-    });
+  astToRst.pattern(from, function(match, ast) {
+    return ast.fromList(matchReplace(match, to, filter));
+  });
 };
 astTransform = function(from, to, opts) {
-    rstToAstTransform(from, to);
-    astToRstTransform(to, from);
+  rstToAstTransform(from, to);
+  astToRstTransform(to, from);
 };
 // Commas and semicolons {{{4
 addCommas = function(ast) {
-    var lastchild;
-    var children;
-    var addlast;
-    var skipfirst;
-    var sep;
-    ast.children = ast.children.map(addCommas);
-    sep = undefined;
-    if(ast.isa("call", "*{}")) {
-        skipfirst = true;
-        addlast = true;
-        sep = new Ast("id", ";");
+  var lastchild;
+  var children;
+  var addlast;
+  var skipfirst;
+  var sep;
+  ast.children = ast.children.map(addCommas);
+  sep = undefined;
+  if(ast.isa("call", "*{}")) {
+    skipfirst = true;
+    addlast = true;
+    sep = new Ast("id", ";");
+  };
+  if(ast.isa("call", "*()")) {
+    skipfirst = true;
+    sep = new Ast("id", ",");
+  };
+  if(ast.isa("id", "[") || ast.isa("id", "{")) {
+    sep = new Ast("id", ",");
+  };
+  if(sep) {
+    children = [];
+    ast.children.forEach(function(child) {
+      children.push(child);
+      if(!skipfirst && child.kind !== "note") {
+        children.push(sep);
+      };
+      skipfirst = false;
+    });
+    lastchild = children[children.length - 1];
+    if(!addlast && lastchild === sep) {
+      children.pop();
     };
-    if(ast.isa("call", "*()")) {
-        skipfirst = true;
-        sep = new Ast("id", ",");
-    };
-    if(ast.isa("id", "[") || ast.isa("id", "{")) {
-        sep = new Ast("id", ",");
-    };
-    if(sep) {
-        children = [];
-        ast.children.forEach(function(child) {
-            children.push(child);
-            if(!skipfirst && child.kind !== "note") {
-                children.push(sep);
-            };
-            skipfirst = false;
-        });
-        lastchild = children[children.length - 1];
-        if(!addlast && lastchild === sep) {
-            children.pop();
-        };
-        ast.children = children;
-    };
-    return ast;
+    ast.children = children;
+  };
+  return ast;
 };
 // Add var definitions {{{4
 addVars = function(ast) {
-    var vars;
-    ast.children = ast.children.map(addVars);
-    if(ast.kind === "fn") {
-        vars = ast.opt["vars"];
-        if(!vars) {
-            ast.error("Trying to add var statements to function with out var-analysis data");
-        };
-        Object.keys(vars).forEach(function(id) {
-            if(!vars[id]["parent"] && vars[id]["assign"]) {
-                ast.children[1].children.unshift(ast.fromList(["call", "var", ["id", id]]));
-            };
-        });
+  var vars;
+  ast.children = ast.children.map(addVars);
+  if(ast.kind === "fn") {
+    vars = ast.opt["vars"];
+    if(!vars) {
+      ast.error("Trying to add var statements to function with out var-analysis data");
     };
-    return ast;
+    Object.keys(vars).forEach(function(id) {
+      if(!vars[id]["parent"] && vars[id]["assign"]) {
+        ast.children[1].children.unshift(ast.fromList(["call", "var", ["id", id]]));
+      };
+    });
+  };
+  return ast;
 };
 // transformations {{{4
 rstToAstTransform(["call", "*{}", ["id", "module"], "??body"], ["call", "*()", ["fn", "", ["block", ""], ["block", "", "??body"]]]);
@@ -959,262 +959,264 @@ rstToAstTransform(["call", "*()", ["call", ".", "?obj", ["str", "?method"]], "??
 rstToAstTransform(["call", "var", "?val"], "?val");
 rstToAstTransform(["id", "(", "?val"], "?val");
 rstToAst.pattern(["call", "+=", "?target", "?val"], function(match, ast) {
-    return rstToAst.match(ast.fromList(matchReplace(match, ["call", "=", "?target", ["call", "+", "?target", "?val"]])));
+  return rstToAst.match(ast.fromList(matchReplace(match, ["call", "=", "?target", ["call", "+", "?target", "?val"]])));
 });
 rstToAst.pattern(["call", "-=", "?target", "?val"], function(match, ast) {
-    return rstToAst.match(ast.fromList(matchReplace(match, ["call", "=", "?target", ["call", "-", "?target", "?val"]])));
+  return rstToAst.match(ast.fromList(matchReplace(match, ["call", "=", "?target", ["call", "-", "?target", "?val"]])));
 });
 rstToAst.pattern(["call", "++", "?target"], function(match, ast) {
-    return rstToAst.match(ast.fromList(matchReplace(match, ["call", "+=", "?target", ["num", "1"]])));
+  return rstToAst.match(ast.fromList(matchReplace(match, ["call", "+=", "?target", ["num", "1"]])));
 });
 rstToAst.pattern(["call", "--", "?target"], function(match, ast) {
-    return rstToAst.match(ast.fromList(matchReplace(match, ["call", "-=", "?target", ["num", "1"]])));
+  return rstToAst.match(ast.fromList(matchReplace(match, ["call", "-=", "?target", ["num", "1"]])));
 });
 astToRst.pattern(["call", "?method", "?obj", "??args"], function(match, ast) {
-    var result;
-    var prio;
-    prio = (table[match["method"]] || [])[0];
-    if(prio) {
-        result = undefined;
-    } else if(true) {
-        result = ast.fromList(matchReplace(match, ["call", "*()", ["call", ".", "?obj", ["id", "?method"]], "??args"], noSeps));
-    };
-    return result;
+  var result;
+  var prio;
+  prio = (table[match["method"]] || [])[0];
+  if(prio) {
+    result = undefined;
+  } else if(true) {
+    result = ast.fromList(matchReplace(match, ["call", "*()", ["call", ".", "?obj", ["id", "?method"]], "??args"], noSeps));
+  };
+  return result;
 });
 // Array and HashMap Literals {{{4
 rstToAstTransform(["id", "[", "??elems"], ["call", "new", ["id", "Vector"], "??elems"]);
 astToRst.pattern(["call", "new", ["id", "Vector"], "??elems"], function(match, ast) {
-    var elems;
-    elems = [];
-    match["elems"].forEach(function(elem) {
-        elems.push(elem);
-    });
-    return ast.fromList(["id", "["].concat(elems));
+  var elems;
+  elems = [];
+  match["elems"].forEach(function(elem) {
+    elems.push(elem);
+  });
+  return ast.fromList(["id", "["].concat(elems));
 });
 rstToAst.pattern(["id", "{", "??elems"], function(match, ast) {
-    var result;
-    var args;
-    var ok;
-    ok = true;
-    args = [];
-    match["elems"].forEach(function(child) {
-        if(child.isa("call", ":") && child.children.length === 2) {
-            args.push(child.children[0]);
-            args.push(child.children[1]);
-        } else if(notSep(child)) {
-            ok = false;
-        };
-    });
-    result = undefined;
-    if(ok) {
-        result = ast.fromList(["call", "new", ["id", "HashMap"]].concat(args));
+  var result;
+  var args;
+  var ok;
+  ok = true;
+  args = [];
+  match["elems"].forEach(function(child) {
+    if(child.isa("call", ":") && child.children.length === 2) {
+      args.push(child.children[0]);
+      args.push(child.children[1]);
+    } else if(notSep(child)) {
+      ok = false;
     };
-    return result;
+  });
+  result = undefined;
+  if(ok) {
+    result = ast.fromList(["call", "new", ["id", "HashMap"]].concat(args));
+  };
+  return result;
 });
 astToRst.pattern(["call", "new", ["id", "HashMap"], "??elems"], function(match, ast) {
-    var i;
-    var elems;
-    var list;
-    list = [];
-    elems = match["elems"];
-    i = 0;
-    while(i < elems.length) {
-        list.push(["call", ":", elems[i], elems[i + 1]]);
-        i = i + 2;
-    };
-    return ast.fromList(["id", "{"].concat(list));
+  var i;
+  var elems;
+  var list;
+  list = [];
+  elems = match["elems"];
+  i = 0;
+  while(i < elems.length) {
+    list.push(["call", ":", elems[i], elems[i + 1]]);
+    i = i + 2;
+  };
+  return ast.fromList(["id", "{"].concat(list));
 });
 // If-else {{{4
 rstToAst.pattern(["call", "*{}", ["call", "*()", ["id", "if"], "?p"], "??body"], function(match, ast) {
-    return ast.fromList(["branch", "cond", match["p"], ["block", ""].concat(match["body"].filter(notSep))]);
+  return ast.fromList(["branch", "cond", match["p"], ["block", ""].concat(match["body"].filter(notSep))]);
 });
 rstToAst.pattern(["call", "else", ["branch", "cond", "??cond1"], ["branch", "cond", "??cond2"]], function(match, ast) {
-    return ast.fromList(["branch", "cond"].concat(match["cond1"]).concat(match["cond2"]));
+  return ast.fromList(["branch", "cond"].concat(match["cond1"]).concat(match["cond2"]));
 });
 rstToAst.pattern(["call", "else", ["branch", "cond", "??cond"], ["id", "{", "??body"]], function(match, ast) {
-    return ast.fromList(["branch", "cond"].concat(match["cond"]).concat([["id", "true"], ["block", ""].concat(match["body"].filter(notSep))]));
+  return ast.fromList(["branch", "cond"].concat(match["cond"]).concat([["id", "true"], ["block", ""].concat(match["body"].filter(notSep))]));
 });
 astToRst.pattern(["branch", "cond", "??branches"], function(match, ast) {
-    var lhs;
-    var rhs;
-    var cond;
-    var body;
-    var branches;
-    branches = match["branches"];
+  var lhs;
+  var rhs;
+  var cond;
+  var body;
+  var branches;
+  branches = match["branches"];
+  body = branches.pop();
+  cond = branches.pop();
+  rhs = ["call", "*{}", ["call", "*()", ["id", "if"], cond]].concat(body.children);
+  while(branches.length > 0) {
     body = branches.pop();
     cond = branches.pop();
-    rhs = ["call", "*{}", ["call", "*()", ["id", "if"], cond]].concat(body.children);
-    while(branches.length > 0) {
-        body = branches.pop();
-        cond = branches.pop();
-        lhs = ["call", "*{}", ["call", "*()", ["id", "if"], cond]].concat(body.children);
-        rhs = ["call", "else", lhs, rhs];
-    };
-    return ast.fromList(rhs);
+    lhs = ["call", "*{}", ["call", "*()", ["id", "if"], cond]].concat(body.children);
+    rhs = ["call", "else", lhs, rhs];
+  };
+  return ast.fromList(rhs);
 });
 // Class {{{4
 astTransform(["call", "=", ["call", ".", ["call", ".", ["id", "?class"], ["str", "prototype"]], ["str", "?member"]], ["fn", "", ["block", "", "??args"], "?body"]], ["fn", "?member", ["block", "", ["call", ":", ["id", "this"], ["id", "?class"]], "??args"], "?body"]);
 uppercase = "QWERTYUIOPASDFGHJKLZXCVBNM";
 rstToAst.pattern(["call", "=", ["id", "?class"], ["fn", "", ["block", "", "??args"], "?body"]], function(match, ast) {
-    var result;
-    result = undefined;
-    if(uppercase.indexOf(match["class"][0]) !== - 1) {
-        result = ast.fromList(matchReplace(match, ["fn", "new", ["block", "", ["call", ":", ["id", "this"], ["id", "?class"]], "??args"], "?body"]));
-    };
-    return result;
+  var result;
+  result = undefined;
+  if(uppercase.indexOf(match["class"][0]) !== - 1) {
+    result = ast.fromList(matchReplace(match, ["fn", "new", ["block", "", ["call", ":", ["id", "this"], ["id", "?class"]], "??args"], "?body"]));
+  };
+  return result;
 });
 astToRstTransform(["fn", "new", ["block", "", ["call", ":", ["id", "this"], ["id", "?class"]], "??args"], "?body"], ["call", "=", ["id", "?class"], ["fn", "", ["block", "", "??args"], "?body"]]);
 // Analysis {{{3
 analyse = function(node) {
-    var subanalysis;
-    var parentFn;
-    var vars;
-    var fns;
-    // Accumulators {{{4
-    fns = [];
-    vars = {};
-    node.opt["vars"] = vars;
-    // arguments{{{4
-    parentFn = node.opt["parentFn"];
-    if(parentFn) {
-        Object.keys(parentFn.opt.vars).forEach(function(id) {
-            if(parentFn.opt.vars[id]["parent"] || parentFn.opt.vars[id]["assign"]) {
-                vars[id] = {parent : true};
-            };
-        });
-        node.children[0].children.forEach(function(id) {
-            if(id.isa("call", ":")) {
-                if(id.children[0].kind !== "id" || id.children[1].kind !== "id") {
-                    id.error("not typed id");
-                };
-                vars[id.children[0].val] = {arg : true, type : id.children[1].val};
-            } else if(id.kind === "id") {
-                vars[id.val] = {arg : true};
-            } else if(true) {
-                id.error("Analysis: id is not an \"id\"");
-            };
-        });
-    };
-    // Analyse subtree {{{4
-    subanalysis = function(node) {
-        node.children.forEach(function(child) {
-            child.parent = node;
-        });
-        if(node.kind === "fn") {
-            fns.push(node);
-        } else if(true) {
-            if(node.kind === "assign") {
-                vars[node.val] = vars[node.val] || {};
-                vars[node.val]["assign"] = true;
-            } else if(node.kind === "id") {
-                vars[node.val] = vars[node.val] || {};
-                vars[node.val]["access"] = true;
-            };
-            node.children.forEach(function(child) {
-                subanalysis(child);
-            });
+  var subanalysis;
+  var parentFn;
+  var vars;
+  var fns;
+  // Accumulators {{{4
+  fns = [];
+  vars = {};
+  node.opt["vars"] = vars;
+  // arguments{{{4
+  parentFn = node.opt["parentFn"];
+  if(parentFn) {
+    Object.keys(parentFn.opt.vars).forEach(function(id) {
+      if(parentFn.opt.vars[id]["parent"] || parentFn.opt.vars[id]["assign"]) {
+        vars[id] = {parent : true};
+      };
+    });
+    node.children[0].children.forEach(function(id) {
+      if(id.isa("call", ":")) {
+        if(id.children[0].kind !== "id" || id.children[1].kind !== "id") {
+          id.error("not typed id");
         };
-    };
-    subanalysis(node.children[1]);
-    node.children[1].children.forEach(function(child) {
+        vars[id.children[0].val] = {arg : true, type : id.children[1].val};
+      } else if(id.kind === "id") {
+        vars[id.val] = {arg : true};
+      } else if(true) {
+        id.error("Analysis: id is not an \"id\"");
+      };
+    });
+  };
+  // Analyse subtree {{{4
+  subanalysis = function(node) {
+    node.children.forEach(function(child) {
+      child.parent = node;
+    });
+    if(node.kind === "fn") {
+      fns.push(node);
+    } else if(true) {
+      if(node.kind === "assign") {
+        vars[node.val] = vars[node.val] || {};
+        vars[node.val]["assign"] = true;
+      } else if(node.kind === "id") {
+        vars[node.val] = vars[node.val] || {};
+        vars[node.val]["access"] = true;
+      };
+      node.children.forEach(function(child) {
         subanalysis(child);
-    });
-    // Analyse subfunctions {{{4
-    fns.forEach(function(childFn) {
-        childFn.opt["parentFn"] = node;
-        analyse(childFn);
-    });
+      });
+    };
+  };
+  subanalysis(node.children[1]);
+  node.children[1].children.forEach(function(child) {
+    subanalysis(child);
+  });
+  // Analyse subfunctions {{{4
+  fns.forEach(function(childFn) {
+    childFn.opt["parentFn"] = node;
+    analyse(childFn);
+  });
 };
 // API {{{2
 ls2ast = function(source) {
-    var ast;
-    var tokens;
-    var source;
-    source = "function(){" + source + "}";
-    tokens = tokenise(source);
-    ast = parse(tokens)[0];
-    ast = rstToAst.recursivePostTransform(ast);
-    return ast;
+  var ast;
+  var tokens;
+  var source;
+  source = "function(){" + source + "}";
+  tokens = tokenise(source);
+  ast = parse(tokens)[0];
+  ast = rstToAst.recursivePostTransform(ast);
+  return ast;
 };
 ast2js = function(ast) {
-    var pp;
-    var ast;
-    ast = ast.deepCopy();
-    analyse(ast);
-    ast = addVars(ast);
-    ast = astToRst.recursivePreTransform(ast);
-    ast = addCommas(ast);
-    pp = new PrettyPrinter();
-    pp.pp(ast);
-    return pp.acc.join("").split("\n").slice(1, - 1).join("\n") + "\n";
+  var pp;
+  var ast;
+  ast = ast.deepCopy();
+  analyse(ast);
+  ast = addVars(ast);
+  ast = astToRst.recursivePreTransform(ast);
+  ast = addCommas(ast);
+  pp = new PrettyPrinter();
+  pp.pp(ast);
+  return pp.acc.join("").split("\n").slice(1, - 1).join("\n") + "\n";
 };
 ast2ls = function(ast) {
-    var result;
-    var pp;
-    var ast;
-    ast = ast.deepCopy();
-    ast = astToRst.recursivePreTransform(ast);
-    ast = addCommas(ast);
-    pp = new PrettyPrinter();
-    pp.pp(ast);
-    result = pp.acc.join("").split("\n").slice(1, - 1).join("\n") + "\n";
-    return result;
+  var result;
+  var pp;
+  var ast;
+  ast = ast.deepCopy();
+  ast = astToRst.recursivePreTransform(ast);
+  ast = addCommas(ast);
+  pp = new PrettyPrinter();
+  pp.pp(ast);
+  result = pp.acc.join("").split("\n").slice(1, - 1).join("\n") + "\n";
+  return result;
 };
 // routes {{{2
 routes["compile"] = function() {
-    var fs;
-    var fname;
-    console.log("compiling");
-    fname = __dirname + "/solsort.ls";
-    fs = require("fs");
-    readFile(fname, "utf8", function(err, source) {
-        var ast;
-        ast = ls2ast(source);
-        fs.writeFile(fname + ".js", ast2js(ast));
-    });
+  var fs;
+  var fname;
+  console.log("compiling");
+  fname = __dirname + "/solsort.ls";
+  fs = require("fs");
+  readFile(fname, "utf8", function(err, source) {
+    var ast;
+    ast = ls2ast(source);
+    fs.writeFile(fname + ".js", ast2js(ast));
+  });
 };
 routes["prettyprint"] = function() {
-    var fname;
-    console.log("prettyprinting");
-    fname = __dirname + "/solsort.ls";
-    readFile(fname, "utf8", function(err, source) {
-        var ast;
-        ast = ls2ast(source);
-        writeFile(fname + ".pp", ast2ls(ast));
-    });
+  var fname;
+  console.log("prettyprinting");
+  fname = __dirname + "/solsort.ls";
+  readFile(fname, "utf8", function(err, source) {
+    var ast;
+    ast = ls2ast(source);
+    writeFile(fname + ".pp", ast2ls(ast));
+  });
 };
-// static content {{{1
+// web server {{{1
+// static content {{{2
 webpage = function(content, opt) {
-    var opt;
-    opt = opt || {};
-    return "<!DOCTYPE html>" + jsonml2xml(["html", ["head", ["meta", {"http-equiv" : "content-type", content : "text/html;charset=UTF-8"}], ["title", opt.title || "solsort.com"], ["link", {"rel" : "shortcut icon", href : opt.icon}]], ["body"].concat(content).concat([["script", {src : "/solsort.js"}, ""]])]);
+  var opt;
+  opt = opt || {};
+  return "<!DOCTYPE html>" + jsonml2xml(["html", ["head", ["meta", {"http-equiv" : "content-type", content : "text/html;charset=UTF-8"}], ["title", opt.title || "solsort.com"], ["link", {"rel" : "shortcut icon", href : opt.icon}]], ["body"].concat(content).concat([["script", {src : "/solsort.js"}, ""]])]);
+};
+// express handler {{{2
+handler = function(req, res, next) {
+  if(req.url === "/solsort.js") {
+    readFile(__dirname + "/solsort.ls.js", function(err, data) {
+      res.set("Content-Type", "application/javascript");
+      res.end(data);
+    });
+  } else if(req.url[1] === "_") {
+    res.end(webpage([["h1", "hello"]]));
+  } else if(true) {
+    next();
+  };
+};
+// routes {{{2
+routes["devserver"] = function(app) {
+  var port;
+  var server;
+  var express;
+  routes["gencontent"](app);
+  express = require("express");
+  server = express();
+  server.use(express.static(__dirname + "/static"));
+  server.use(handler);
+  port = 4444;
+  server.listen(port);
+  console.log("starting web server on port", port);
 };
 routes["gencontent"] = function(app) {
-    // TODO
-    };
-// web server {{{1
-handler = function(req, res, next) {
-    if(req.url === "/solsort.js") {
-        readFile(__dirname + "/solsort.ls.js", function(err, data) {
-            res.set("Content-Type", "application/javascript");
-            res.end(data);
-        });
-    } else if(req.url[1] === "_") {
-        res.end(webpage([["h1", "hello"]]));
-    } else if(true) {
-        next();
-    };
-};
-routes["devserver"] = function(app) {
-    var port;
-    var server;
-    var express;
-    routes["gencontent"](app);
-    express = require("express");
-    server = express();
-    server.use(express.static(__dirname + "/static"));
-    server.use(handler);
-    port = 4444;
-    server.listen(port);
-    console.log("starting web server on port", port);
-};
+  // TODO
+  };
