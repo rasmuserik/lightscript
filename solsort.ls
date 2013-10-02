@@ -1229,13 +1229,6 @@ routes["compile"] = function() {
     savefile("/solsort.js", ast2js(ast));
   });
 };
-routes["pp"] = function() {
-  console.log("prettyprinting");
-  loadfile("/solsort.ls", function(err, source) {
-    ast = ls2ast(source);
-    savefile("/../solsort.ls", ast2ls(ast));
-  });
-};
 routes["prettyprint"] = function() {
   console.log("prettyprinting");
   loadfile("/solsort.ls", function(err, source) {
@@ -1291,8 +1284,20 @@ routes["content"] = function(app) {
   // TODO
   };
 // Applications {{{1
+// pp - prepare route {{{2
+//
+// prettyprints file, and generates documentation.
+//
+routes["pp"] = function() {
+  console.log("prettyprinting");
+  gendoc();
+  loadfile("/solsort.ls", function(err, source) {
+    ast = ls2ast(source);
+    savefile("/../solsort.ls", ast2ls(ast));
+  });
+};
 // Documentation generation {{{2
-routes["gendoc"] = function(app) {
+gendoc = function() {
   console.log("generating docs");
   loadfile("/solsort.ls", function(err, source) {
     lines = [];

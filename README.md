@@ -2,7 +2,7 @@
 
 ![](https://ssl.solsort.com/_logo.png) [![ci](https://secure.travis-ci.org/rasmuserik/lightscript.png)](http://travis-ci.org/rasmuserik/lightscript)
 
-Warning: this is a personal project, look at it on own risk. Not intended for other to work with (but feel free to peek at it nontheless).
+Warning: this is a personal project, look at it on own risk. Not intended for other to work with (but feel free to peek at it nonetheless).
 
 This file contains
 
@@ -253,34 +253,29 @@ TODO: error handling
     };
 
 #LightScript Language 
-
 ## Notes
-This language is in development and heavy flux, no need to look at it yet.
 
-Code also interspersed with other projects.
+LightScript is a programming language designed for easy program transformation.
 
-# Why
+Code in the language maps to a simple AST, which contains both code and comments. 
+Then there is a reverse mapping that generate a canonical source code from the AST.
+This means that it is possible to edit source code, and apply transformations to the AST interchangeably.
 
-I want 
-- reusable code across different platforms: JavaScript, Java, embedded C, (Python, PHP, ...).
-- closures, first class functions, types, extensible syntax(operator overloading etc.) ...
-- treat code as data, staged computation, ...
+Currently it is just a JavaScript dialect (with inferred `var`-statements), 
+but it is intended to target other languages later on. (First Java, then C/llvm, and then maybe PHP or python).
 
-Design critierias:
+Language design criterias are
 - KISS - Keep It Simple
 - Friendly abstract syntax tree.
 - Minimal abstraction of host language.
 - Bijective mapping between AST and prettyprinted source.
 
-# Version 3
+### Roadmap / cross-platform notes
 
-Milestones:
-- Prettyprint itself (running on lightscript2)
-- Run itself on Java (running on lightscript2)
-- Run itself on JavaScript
-- Run itself on C
-
-Based on version 2, but limited to base library for compiler etc.
+The long time goal/requirements is
+- treat code as data, staged computation, ...
+- reusable code across different platforms: JavaScript, Java, C, (Python, PHP, .net, ...).
+- closures, first class functions, types, extensible syntax(operator overloading etc.) ...
 
 - Types
     - Dictionary (ie. Java Hashmap, Python Dict, JavaScript Object, ....)
@@ -294,7 +289,7 @@ Based on version 2, but limited to base library for compiler etc.
 - Library
     - file (filesystem)
     - net (a la socket.io, ...)
-    - storage (key-value-store)
+    - storage (key-value-store via levelup)
     - system (fork, webworker/cluster/..., ...)
     - http(s)-client+server
     - uuid
@@ -302,16 +297,14 @@ Based on version 2, but limited to base library for compiler etc.
     - RegExp
 - Platforms
     - prettyprint
-    - Java (source or bytecode)
-    - JavaScript (NB: generate as https://developer.mozilla.org/en-US/docs/SpiderMonkey/Parser_API via uglify2 or similar)
-    - C (or llvm)
+    - Java source
+    - JavaScript
+    - C(llvm)
     - Python
     - PHP
-    - ActionScript/Flash (for IE)
 - Language (restrictions from JavaScript, in initial version, waiting for other targets + macro system)
     - distinction between `foo.bar` as prototype-access (static), and `foo["bar"]` as dictionary/array-access.
     - class-patterns: `X = function(...}; X.prototype.foo = function...` is method definition and only allowed place for `this`. `X` must be static.
-    - module-pattern: `modulename = require("./modulename");` is only way to access modules.
     - only `"` for strings, `'` is going to be used for quote later on.
     - control-structures: if-else, while, `&&`, `||`
     - `return` only allowed in function-top-scope (to be implemented generally later OR be functional-like return last val)
@@ -322,8 +315,6 @@ Based on version 2, but limited to base library for compiler etc.
     - control: `|| p v`, `&& p v`, `?: p v v`, `if-else (p v)* v?`, `if-body v*` only in if-else-children, `while p v*`
     - assign: `val` is id as in id, child is value to assign
     - (unquote: val is optional compiletime result as json)
-
-# LightScript Language
 
 Intended Features:
 - C-family syntax, generalised
@@ -348,14 +339,16 @@ Intended backends / packaging:
     - (chrome-app)
     - (facebook-app)
 - Java
-    - application
+    - android
+    - (application)
+    - (gwt)
     - (servlet / google-appengine)
-    - (android)
     - (j2me, nokia store, getjar)
 - C
-    - unix
-    - TI-dev-board (embedded, limited to 64KB RAM)
-    - pebble
+    - OS-X
+    - (unix)
+    - (TI-dev-board (embedded, limited to 64KB RAM))
+    - (pebble)
     - (lego)
     - (arduino)
     - (iOS)
@@ -366,58 +359,7 @@ Intended backends / packaging:
 - (interpreted stack-language)
 - (php - drupal module)
 
-# Hacking notes
-Data layers
-- Raw syntax tree - generic syntax, both used for parsing, and also for generating code for c-like languages.
-    - `kind` required, kind of node: `str`, `note`, `num`, `id`/anything-else
-    - `val` required, data connected to the node, ie. identifier/symbol, string content, comment, or number value
-    - `pos` position in the source file of the node
-    - `children` required, array of child nodes
-- Abstract syntax tree 
-    - `kind`: `id`, `str`, `note`, `num`, `call`, `fn`, `branch`, `assign`, `block`
-    - `val`: method-name on `call`, number of args on `fn`, identifier-name on `assign`
-        branch-vals:`cond`, `?:`, `while`, `throw`, `return`, `||`, `&&`
-    - `children`
-    - `pos`
-
-# Libs
-- webapi-dispatch
-- sync'ed storage
-    - open(owner, storageName, mergeFn);
-    - get(key), set(key, val)
-## TODO
-- file upload
-- image catalog
-- content-editor
-    - content editing with mercury
-- update lightscript.net
-
-# Roadmap
-
-- change build to build for specific platforms with extra parameter
-- platform-specific code
-    - remove if, if already resolved to true/false/undefined;
-    - compile-time dest-platform information
-    - `if(``compiler.toNodejs) { ... }`
-- app-framework
-- port old apps
-    - timelogger
-    - notescore
-    - dkcities / europe version
-    - `tsar_tnoc` + cute-graphics
-- refactor, document and cleanup
-- outerscope global should have var, - like functions
-- js-codegen: make everything expression-like
-- simplify AST - less branch-nodes, always with return value, ie: `(branch:|| a b)` to `(branch:cond (assign:_tmpN a) a b)` etc.
-- Java backend
-- macro system
-- more tests and docs
-- Static type system / type inference - rework type inference (including boxing) (fix bug {var x{ { { x=...} } } })
-- sourcemaps
-- C backend
-
-##Notes 
-TODO:
+###TODO: 
 
 code analysis
 java-backend
@@ -426,21 +368,25 @@ generalise tree matcher
 - match filter
 refactor/cleanup, ie. id-function/filter/... in rst-ast-matcher
 
-
-Node types
-- call
-- fn
-- block
-- note
-- assign
-- branch
-- id
-- str
-- num
-
 ##Language implementation
 ###Ast 
 ####Constructor 
+
+Raw syntax tree - generic syntax, both used for parsing, and also for generating code for c-like languages.
+
+- `kind` required, kind of node: `str`, `note`, `num`, `id`/anything-else
+- `val` required, data connected to the node, ie. identifier/symbol, string content, comment, or number value
+- `pos` position in the source file of the node
+- `children` required, array of child nodes
+
+Abstract syntax tree 
+
+- `kind`: `id`, `str`, `note`, `num`, `call`, `fn`, `branch`, `assign`, `block`
+- `val`: method-name on `call`, number of args on `fn`, identifier-name on `assign`
+  branch-vals:`cond`, `?:`, `while`, `throw`, `return`, `||`, `&&`
+- `children`
+- `pos`
+
 
     Ast = function(kind, val, children, pos) {
       this.kind = kind;
@@ -1382,18 +1328,11 @@ this.buffer = buffer;
         savefile("/solsort.js", ast2js(ast));
       });
     };
-    routes["pp"] = function() {
-      console.log("prettyprinting");
-      loadfile("/solsort.ls", function(err, source) {
-        ast = ls2ast(source);
-        savefile("/../solsort.ls", ast2ls(ast));
-      });
-    };
     routes["prettyprint"] = function() {
       console.log("prettyprinting");
       loadfile("/solsort.ls", function(err, source) {
         ast = ls2ast(source);
-        savefile("/solsort.ls", ast2ls(ast));
+        savefile("/solsort.pp", ast2ls(ast));
       });
     };
 
@@ -1455,9 +1394,23 @@ TODO
       };
 
 #Applications 
+##pp - prepare route 
+
+prettyprints file, and generates documentation.
+
+
+    routes["pp"] = function() {
+      console.log("prettyprinting");
+      gendoc();
+      loadfile("/solsort.ls", function(err, source) {
+        ast = ls2ast(source);
+        savefile("/../solsort.ls", ast2ls(ast));
+      });
+    };
+
 ##Documentation generation 
 
-    routes["gendoc"] = function(app) {
+    gendoc = function() {
       console.log("generating docs");
       loadfile("/solsort.ls", function(err, source) {
         lines = [];
