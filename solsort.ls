@@ -1,40 +1,40 @@
 // Platform abstraction {{{1
-isNode = (typeof process === "object" && typeof process["versions"] === "object" && typeof process["versions"]["node"] === "string")
-isBrowser = (typeof navigator === "object" && typeof navigator["userAgent"] === "string" && navigator["userAgent"].indexOf("Mozilla") !== -1)
+isNode = typeof process === "object" && typeof process["versions"] === "object" && typeof process["versions"]["node"] === "string";
+isBrowser = typeof navigator === "object" && typeof navigator["userAgent"] === "string" && navigator["userAgent"].indexOf("Mozilla") !== - 1;
 // nextTick(fn) {{{2
 if(isNode) {
-    nextTick = process.nextTick
-} else {
+    nextTick = process.nextTick;
+} else if(true) {
     nextTick = function(fn) {
         setTimeout(fn, 0);
-    }
-}
+    };
+};
 // Main dispatch {{{2
-routes = {}
+routes = {};
 routes["default"] = function() {
     console.log("default route");
-}
+};
 // File IO {{{2
 if(isNode) {
     readFile = require("fs").readFile;
     writeFile = require("fs").writeFile;
-}
+};
 // actual dispatch {{{2
-nextTick(function(){
+nextTick(function() {
     if(isNode) {
-       args = process.argv.slice(2).filter(function(arg) { return arg[0] !== "-"; });
+        args = process.argv.slice(2).filter(function(arg) {
+            return arg[0] !== "-";
+        });
     } else if(isBrowser) {
-       args = (location.hash || location.pathname).slice(1).split("/");
-    }
-    app = new App({
-        args: args
-    });
-    (routes[args[0]]||routes["default"])(app)
+        args = (location.hash || location.pathname).slice(1).split("/");
+    };
+    app = new App({args : args});
+    (routes[args[0]] || routes["default"])(app);
 });
 // App {{{1
 App = function(opt) {
     this.args = opt.args;
-}
+};
 // Util {{{1
 // run(fn) call function {{{2
 run = function(fn) {
@@ -1070,13 +1070,13 @@ routes["compile"] = function() {
     readFile(fname, "utf8", function(err, source) {
         ast = ls2ast(source);
         fs.writeFile(fname + ".js", ast2js(ast));
-    })
-}
+    });
+};
 routes["prettyprint"] = function() {
     console.log("prettyprinting");
     fname = __dirname + "/solsort.ls";
     readFile(fname, "utf8", function(err, source) {
         ast = ls2ast(source);
         writeFile(fname + ".pp", ast2ls(ast));
-    })
-}
+    });
+};
