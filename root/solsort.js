@@ -1502,7 +1502,7 @@ routes["gendoc"] = function(app) {
         if(!wasCode) {
           lines.push("");
         };
-        lines.push("   " + line);
+        lines.push("    " + line);
         wasCode = true;
       };
     });
