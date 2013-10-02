@@ -1186,9 +1186,26 @@ routes["prettyprint"] = function() {
 // web server {{{1
 // static content {{{2
 webpage = function(content, opt) {
+  var head;
   var opt;
   opt = opt || {};
-  return "<!DOCTYPE html>" + jsonml2xml(["html", ["head", ["meta", {"http-equiv" : "content-type", content : "text/html;charset=UTF-8"}], ["title", opt.title || "solsort.com"], ["link", {"rel" : "shortcut icon", href : opt.icon}]], ["body"].concat(content).concat([["script", {src : "/solsort.js"}, ""]])]);
+  head = ["head"];
+  head.push(["title", opt.title || "solsort.com"]);
+  head.push(["meta", {"http-equiv" : "content-type", content : "text/html;charset=UTF-8"}]);
+  head.push(["meta", {"http-equiv" : "X-UA-Compatible", content : "IE=edge,chrome=1"}]);
+  head.push(["meta", {name : "HandheldFriendly", content : "True"}]);
+  head.push(["meta", {name : "viewport", content : "width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=0"}]);
+  head.push(["meta", {name : "format-detection", content : "telephone=no"}]);
+  /*
+  head.push(["meta", {name: "apple-mobile-web-app-capable", content : "yes"}]);
+  head.push(["meta", {name: "apple-mobile-web-app-status-bar-style", content : "black"}]);
+  */
+  if(opt.icon) {
+    head.push(["link", {rel : "icon", content : opt.icon}]);
+    head.push(["link", {rel : "shortcut-icon", content : opt.icon}]);
+    head.push(["link", {rel : "apple-touch-icon-precomposed", content : opt.icon}]);
+  };
+  return "<!DOCTYPE html>" + jsonml2xml(["html", head, ["body"].concat(content).concat([["script", {src : "/solsort.js"}, ""]])]);
 };
 // express handler {{{2
 handler = function(req, res, next) {
