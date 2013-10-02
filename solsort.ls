@@ -15,32 +15,32 @@ routes["default"] = function() {
   console.log("default route");
 };
 // loadfile {{{2
-  loadfile = function(filename, callback) {
-      if(isNode) {
-        require("fs").readFile(__dirname + filename, "utf8", callback);
-      } 
-      if(isBrowser) {
-        //TODO: error handling
-        xhr = new XMLHttpRequest();
-        xhr.onreadystatechange = function() {
-          if(xhr.readyState === 4) {
-            callback(null, xhr.responseText);
-          }
-        }
-        xhr.open("GET", filename, true);
-        xhr.send();
-      }
-  }
+loadfile = function(filename, callback) {
+  if(isNode) {
+    require("fs").readFile(__dirname + filename, "utf8", callback);
+  };
+  if(isBrowser) {
+    //TODO: error handling
+    xhr = new XMLHttpRequest();
+    xhr.onreadystatechange = function() {
+      if(xhr.readyState === 4) {
+        callback(null, xhr.responseText);
+      };
+    };
+    xhr.open("GET", filename, true);
+    xhr.send();
+  };
+};
 // savefile {{{2
-  savefile = function(filename, content, callback) {
-      if(isNode) {
-        require("fs").writeFile(__dirname + filename, content, callback);
-      } 
-      if(isBrowser) {
-        console.log("savefile", filename, content);
-        throw "not implemented"
-      }
-  }
+savefile = function(filename, content, callback) {
+  if(isNode) {
+    require("fs").writeFile(__dirname + filename, content, callback);
+  };
+  if(isBrowser) {
+    console.log("savefile", filename, content);
+    throw "not implemented";
+  };
+};
 // actual dispatch {{{2
 nextTick(function() {
   if(isNode) {
@@ -60,20 +60,20 @@ App = function(opt) {
 // Util {{{1
 // memoise {{{2
 memoise = function(fn) {
-    cache = {}
-    return function() {
-        args = toArray(arguments);
-        return cache[args] || (cache[args] = fn.apply(this, args));
-    }
-}
+  cache = {};
+  return function() {
+    args = toArray(arguments);
+    return cache[args] || (cache[args] = fn.apply(this, args));
+  };
+};
 // toArray {{{2
 toArray = function(args) {
-    return Array.prototype.slice.call(arguments, 0);
-}
+  return Array.prototype.slice.call(arguments, 0);
+};
 // normaliseString {{{2
 normaliseString = function(Str) {
-    return String(str).toLowerCase().replace("æ", "ae").replace("ø", "o").replace("å", "aa").replace(RegExp("[^a-zA-Z0-9]+", "g"), "-")
-}
+  return String(str).toLowerCase().replace("æ", "ae").replace("ø", "o").replace("å", "aa").replace(RegExp("[^a-zA-Z0-9]+", "g"), "-");
+};
 // foreach {{{2
 foreach = function(obj, fn) {
   Object.keys(obj).forEach(function(key) {
@@ -1112,4 +1112,4 @@ routes["devserver"] = function(app) {
 };
 routes["gencontent"] = function(app) {
   // TODO
-};
+  };
