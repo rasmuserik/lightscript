@@ -26,22 +26,24 @@ We need to distinguish between the different platforms:
 
 
 Implementation of try..catch as a library instead of a part of the language. 
-
-This also has the benefit that trycatch can be used in expressions.
+This also has the benefit that trycatch can be used in expressions:
 
     trycatch = Function("return function trycatch(fn,handle){try{return fn();}catch(e){return handle(e);}}")();
 
 
 ##Array utilities 
-
-###Create a new array, from something arraylike, also useful for turning `arguments` into a real array 
+###`arraycopy` 
+Sometimes we need to create a new array, from something arraylike. Especially for turning `arguments` into a real array.
 
     arraycopy = function(arr) {
       return Array.prototype.slice.call(arr, 0);
     };
 
 
-###Prettyprint a list 
+###List prettyprinter
+
+Show a list with neat linebreakins, - this is especially useful for dumping the listified abstract syntax tree.
+
 
     pplist = function(list, indent) {
       indent = indent || "  ";
@@ -68,15 +70,18 @@ This also has the benefit that trycatch can be used in expressions.
 
 
 ##Function utilities 
+###`id` 
+The identity function is sometimes neat to have around.
 
-###Identity function 
 
     id = function(x) {
       return x;
     };
 
 
-###Memoise a function 
+###`memoise` 
+Being able to memoise a function, can be very useful for performance, and also easy caching of data into memory.
+
 
     memoise = function(fn) {
       cache = {};
@@ -87,18 +92,23 @@ This also has the benefit that trycatch can be used in expressions.
     };
 
 
-###`nextTick` utility function  
+###`nextTick` 
+Optimised function on node.js can trivially be emulated in the browser.
+
 
     if(isNode) {
       nextTick = process.nextTick;
-    } else if(true) {
+    };
+    if(isBrowser) {
       nextTick = function(fn) {
         setTimeout(fn, 0);
       };
     };
 
 
-###`sleep` better syntax for setTimeout, with seconds instead of ms 
+###`sleep` 
+- a more readable version of setTimeout, with reversed parameters, and time in seconds instead of milliseconds.
+
 
     sleep = function(s, fn) {
       return setTimeout(fn, s * 1000);
@@ -106,8 +116,8 @@ This also has the benefit that trycatch can be used in expressions.
 
 
 ##String utilities 
-
-###Create a url-friendly string 
+###`normaliseString` 
+We need to cleanup and canonise strings, if they should be used in urls.
 
     normaliseString = function(Str) {
       return String(str).toLowerCase().replace("æ", "ae").replace("ø", "o").replace("å", "aa").replace(RegExp("[^a-zA-Z0-9]+", "g"), "-");

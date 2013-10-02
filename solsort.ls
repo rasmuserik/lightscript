@@ -24,18 +24,20 @@ isNode = typeof process === "object" && typeof process["versions"] === "object" 
 isBrowser = typeof navigator === "object" && typeof navigator["userAgent"] === "string" && navigator["userAgent"].indexOf("Mozilla") !== - 1;
 //
 // Implementation of try..catch as a library instead of a part of the language. 
-//
-// This also has the benefit that trycatch can be used in expressions.
+// This also has the benefit that trycatch can be used in expressions:
 trycatch = Function("return function trycatch(fn,handle){try{return fn();}catch(e){return handle(e);}}")();
 //
 // Array utilities {{{2
-//
-// Create a new array, from something arraylike, also useful for turning `arguments` into a real array {{{3
+// `arraycopy` {{{3
+// Sometimes we need to create a new array, from something arraylike. Especially for turning `arguments` into a real array.
 arraycopy = function(arr) {
   return Array.prototype.slice.call(arr, 0);
 };
 // 
-// Prettyprint a list {{{3
+// List prettyprinter{{{3
+//
+// Show a list with neat linebreakins, - this is especially useful for dumping the listified abstract syntax tree.
+//
 pplist = function(list, indent) {
   indent = indent || "  ";
   if(!Array.isArray(list)) {
@@ -60,13 +62,16 @@ pplist = function(list, indent) {
 };
 //
 // Function utilities {{{2
+// `id` {{{3
+// The identity function is sometimes neat to have around.
 //
-// Identity function {{{3
 id = function(x) {
   return x;
 };
 //
-// Memoise a function {{{3
+// `memoise` {{{3
+// Being able to memoise a function, can be very useful for performance, and also easy caching of data into memory.
+//
 memoise = function(fn) {
   cache = {};
   return function() {
@@ -75,23 +80,28 @@ memoise = function(fn) {
   };
 };
 //
-// `nextTick` utility function  {{{3
+// `nextTick` {{{3
+// Optimised function on node.js can trivially be emulated in the browser.
+//
 if(isNode) {
   nextTick = process.nextTick;
-} else if(true) {
+};
+if(isBrowser) {
   nextTick = function(fn) {
     setTimeout(fn, 0);
   };
 };
 // 
-// `sleep` better syntax for setTimeout, with seconds instead of ms {{{3
+// `sleep` {{{3
+// - a more readable version of setTimeout, with reversed parameters, and time in seconds instead of milliseconds.
+//
 sleep = function(s, fn) {
   return setTimeout(fn, s * 1000);
 };
 //
 // String utilities {{{2
-//
-// Create a url-friendly string {{{3
+// `normaliseString` {{{3
+// We need to cleanup and canonise strings, if they should be used in urls.
 normaliseString = function(Str) {
   return String(str).toLowerCase().replace("æ", "ae").replace("ø", "o").replace("å", "aa").replace(RegExp("[^a-zA-Z0-9]+", "g"), "-");
 };
