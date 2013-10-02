@@ -18,7 +18,7 @@
     "express-logger": "*"
   },
   "scripts": {
-      "test": "node root/solsort.js compile && node root/solsort.js prettyprint && diff solsort.ls root/solsort.ls.pp && node root/solsort.js test"
+      "test": "node root/solsort.js compile && node root/solsort.js prettyprint && diff solsort.ls root/solsort.pp && node root/solsort.js test"
   },
   "engines": {"node": "*"}
 }
