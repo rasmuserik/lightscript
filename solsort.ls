@@ -690,7 +690,7 @@ table = {
     "propertyIsEnumerable" : [],
     "default:" : []
 };
-// rst to ast {{{3
+// Transformations of syntax tree (RST to/from AST) {{{3
 // Setup {{{4
 notSep = function(ast) {
     return ast.kind !== "id" || (ast.val !== ";" && ast.val !== ",");
@@ -896,89 +896,6 @@ rstToAst.pattern(["call", "=", ["id", "?class"], ["fn", "", ["block", "", "??arg
 });
 astToRstTransform(["fn", "new", ["block", "", ["call", ":", ["id", "this"], ["id", "?class"]], "??args"], "?body"], ["call", "=", ["id", "?class"], ["fn", "", ["block", "", "??args"], "?body"]]);
 // Analysis {{{3
-// Scope object {{{4
-Scope = function() {
-    this.write = {};
-    this.read = {};
-    this.arg = {};
-    this.vars = {};
-    this.childVars = {};
-    this.local = {};
-    this.parent = undefined;
-    this.children = [];
-    this.fn = undefined;
-};
-Scope.prototype.inScope = function(name) {
-    result = false;
-    if(this.vars[name]) {
-        result = true;
-    } else if(this.parent) {
-        result = this.parent.inScope(name);
-    };
-    return result;
-};
-// Extract data {{{4
-childrenExtractData = function(ast, scope) {
-    ast.children.forEach(function(child) {
-        extractData(child, scope);
-    });
-};
-extractDataTable = {
-    id : function(ast, scope) {
-        scope.read[ast.val] = {};
-    },
-    assign : function(ast, scope) {
-        scope.write[ast.val] = {};
-    },
-    block : childrenExtractData,
-    call : childrenExtractData,
-    fn : function(ast, scope) {
-        parent = scope;
-        scope = new Scope();
-        scope.parent = parent;
-        //scope.fn = ast;
-        parent.children.push(scope);
-        ast.children[0].children.forEach(function(arg) {
-            if(arg.isa("call", ":")) {
-                scope.arg[arg.children[0].val] = {type : arg.children[1].val};
-            } else if(true) {
-                scope.arg[arg.val] = {};
-            };
-        });
-        childrenExtractData(ast.children[1], scope);
-    },
-    note : id,
-    num : id,
-    str : id,
-    branch : childrenExtractData
-};
-extractData = function(ast, scope) {
-    extractDataTable[ast.kind](ast, scope);
-    return scope;
-};
-// Analysis child access {{{4
-Scope.prototype.childAccess = function() {
-    self = this;
-    extend(extend(extend(self.vars, self.read), self.write), self.arg);
-    extend(self.local, self.arg);
-    Object.keys(self.write).forEach(function(name) {
-        if(!self.parent || !self.parent.inScope(name)) {
-            self.local[name] = self.write[name];
-        };
-    });
-    self.children.forEach(function(child) {
-        child.childAccess();
-        extendExcept(self.childVars, child.vars, child.local);
-        extendExcept(self.childVars, child.childVars, child.local);
-    });
-};
-// analyse main {{{4
-analyse = function(ast) {
-    scope = extractData(ast, new Scope());
-    scope.childAccess();
-    return scope;
-};
-// Analysis2 {{{3
 analyse = function(node) {
     // Accumulators {{{4
     fns = [];
@@ -1062,7 +979,7 @@ ast2ls = function(ast) {
     result = pp.acc.join("").split("\n").slice(1, - 1).join("\n") + "\n";
     return result;
 };
-// Main for testing {{{1
+// routes {{{2
 routes["compile"] = function() {
     console.log("compiling");
     fname = __dirname + "/solsort.ls";
@@ -1080,3 +997,5 @@ routes["prettyprint"] = function() {
         writeFile(fname + ".pp", ast2ls(ast));
     });
 };
+// web server {{{1
+routes["webserver"] = function() {};
