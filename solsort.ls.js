@@ -33,8 +33,11 @@ var extend;
 var id;
 var run;
 var foreach;
-var writeFile;
-var readFile;
+var normaliseString;
+var toArray;
+var memoise;
+var savefile;
+var loadfile;
 var routes;
 var nextTick;
 var isBrowser;
@@ -55,10 +58,33 @@ routes = {};
 routes["default"] = function() {
   console.log("default route");
 };
-// File IO {{{2
-if(isNode) {
-  readFile = require("fs").readFile;
-  writeFile = require("fs").writeFile;
+// loadfile {{{2
+loadfile = function(filename, callback) {
+  var xhr;
+  if(isNode) {
+    require("fs").readFile(__dirname + filename, "utf8", callback);
+  };
+  if(isBrowser) {
+    //TODO: error handling
+    xhr = new XMLHttpRequest();
+    xhr.onreadystatechange = function() {
+      if(xhr.readyState === 4) {
+        callback(null, xhr.responseText);
+      };
+    };
+    xhr.open("GET", filename, true);
+    xhr.send();
+  };
+};
+// savefile {{{2
+savefile = function(filename, content, callback) {
+  if(isNode) {
+    require("fs").writeFile(__dirname + filename, content, callback);
+  };
+  if(isBrowser) {
+    console.log("savefile", filename, content);
+    throw "not implemented";
+  };
 };
 // actual dispatch {{{2
 nextTick(function() {
@@ -79,6 +105,24 @@ App = function(opt) {
   this.args = opt.args;
 };
 // Util {{{1
+// memoise {{{2
+memoise = function(fn) {
+  var cache;
+  cache = {};
+  return function() {
+    var args;
+    args = toArray(arguments);
+    return cache[args] || (cache[args] = fn.apply(this, args));
+  };
+};
+// toArray {{{2
+toArray = function(args) {
+  return Array.prototype.slice.call(arguments, 0);
+};
+// normaliseString {{{2
+normaliseString = function(Str) {
+  return String(str).toLowerCase().replace("æ", "ae").replace("ø", "o").replace("å", "aa").replace(RegExp("[^a-zA-Z0-9]+", "g"), "-");
+};
 // foreach {{{2
 foreach = function(obj, fn) {
   Object.keys(obj).forEach(function(key) {
@@ -1162,25 +1206,23 @@ ast2ls = function(ast) {
 };
 // routes {{{2
 routes["compile"] = function() {
-  var fs;
   var fname;
   console.log("compiling");
-  fname = __dirname + "/solsort.ls";
-  fs = require("fs");
-  readFile(fname, "utf8", function(err, source) {
+  fname = "/solsort.ls";
+  loadfile(fname, function(err, source) {
     var ast;
     ast = ls2ast(source);
-    fs.writeFile(fname + ".js", ast2js(ast));
+    savefile(fname + ".js", ast2js(ast));
   });
 };
 routes["prettyprint"] = function() {
   var fname;
   console.log("prettyprinting");
-  fname = __dirname + "/solsort.ls";
-  readFile(fname, "utf8", function(err, source) {
+  fname = "/solsort.ls";
+  loadfile(fname, function(err, source) {
     var ast;
     ast = ls2ast(source);
-    writeFile(fname + ".pp", ast2ls(ast));
+    savefile(fname + ".pp", ast2ls(ast));
   });
 };
 // web server {{{1
@@ -1210,7 +1252,7 @@ webpage = function(content, opt) {
 // express handler {{{2
 handler = function(req, res, next) {
   if(req.url === "/solsort.js") {
-    readFile(__dirname + "/solsort.ls.js", function(err, data) {
+    require("fs").readFile(__dirname + "/solsort.ls.js", function(err, data) {
       res.set("Content-Type", "application/javascript");
       res.end(data);
     });
