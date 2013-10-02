@@ -1428,35 +1428,35 @@ TODO
    routes["gendoc"] = function(app) {
      console.log("generating docs");
      loadfile("/solsort.ls", function(err, source) {
-       lines = []
+       lines = [];
        commentRE = RegExp("^ *// ");
        wasCode = false;
-       source.split("\n").forEach(function(line){
+       source.split("\n").forEach(function(line) {
          if(line.match(commentRE)) {
            line = line.replace(commentRE, "");
-           line = line.replace(RegExp("(.*){{{([0-9])(.*)"), function(_,pre,header,post) {
-             result = pre + post
-             header = (+ header)
-             while(header>0) {
+           line = line.replace(RegExp("(.*){{{([0-9])(.*)"), function(_, pre, header, post) {
+             result = pre + post;
+             header = + header;
+             while(header > 0) {
                result = "#" + result;
-               --header;
-             }
-             return result
+               header = header - 1;
+             };
+             return result;
            });
            if(wasCode) {
              lines.push("");
-           }
+           };
            lines.push(line);
            wasCode = false;
-         } else {
+         } else if(true) {
            if(!wasCode) {
              lines.push("");
-           }
+           };
            lines.push("   " + line);
            wasCode = true;
-         }
+         };
        });
        savefile("/../README.md", lines.join("\n"));
-     })
-   }
+     });
+   };
    
