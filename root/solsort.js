@@ -36,17 +36,236 @@ var foreach;
 var extendExcept;
 var extend;
 var normaliseString;
+var sleep;
 var nextTick;
 var memoise;
 var id;
 var pplist;
-var toArray;
+var arraycopy;
 var trycatch;
 var isBrowser;
 var isNode;
-// {{{1 LightScript - not really publishable / worth looking at for others at the moment.
-// ![logo](https://ssl.solsort.com/_logo.png) [![ci](https://secure.travis-ci.org/rasmuserik/lightscript.png)](http://travis-ci.org/rasmuserik/lightscript)
+// {{{1 Personal language, scripts and content
+//
+// ![](https://ssl.solsort.com/_logo.png) [![ci](https://secure.travis-ci.org/rasmuserik/lightscript.png)](http://travis-ci.org/rasmuserik/lightscript)
+//
+// Warning: this is a personal project, look at it on own risk. Not intended for other to work with (but feel free to peek at it nontheless).
+//
+// This file contains
 // 
+// - Utility library + platform abstraction
+// - LightScript personal scripting language
+// - solsort.com website
+// - notes (textual content for the solsort.com website)
+// - Applications
+// 
+// and is written in the LightScript language itself, using a literate programming style. 
+// This text is both documentation and source code.
+// 
+// Utility library {{{1
+//
+// System utilities {{{2
+//
+// We need to distinguish between the different platforms:
+isNode = typeof process === "object" && typeof process["versions"] === "object" && typeof process["versions"]["node"] === "string";
+isBrowser = typeof navigator === "object" && typeof navigator["userAgent"] === "string" && navigator["userAgent"].indexOf("Mozilla") !== - 1;
+//
+// Implementation of try..catch as a library instead of a part of the language. 
+//
+// This also has the benefit that trycatch can be used in expressions.
+trycatch = Function("return function trycatch(fn,handle){try{return fn();}catch(e){return handle(e);}}")();
+//
+// Array utilities {{{2
+//
+// Create a new array, from something arraylike, also useful for turning `arguments` into a real array {{{3
+arraycopy = function(arr) {
+  return Array.prototype.slice.call(arr, 0);
+};
+// 
+// Prettyprint a list {{{3
+pplist = function(list, indent) {
+  var len;
+  var result;
+  var indent;
+  indent = indent || "  ";
+  if(!Array.isArray(list)) {
+    return list;
+  };
+  result = list.map(function(elem) {
+    return pplist(elem, indent + "  ");
+  });
+  len = 0;
+  result.forEach(function(elem) {
+    len = len + (elem.length + 1);
+  });
+  if(result[1] !== undefined) {
+    result[1] = result[0] + " " + JSON.stringify(result[1]).slice(1, - 1);
+    result.shift();
+  };
+  if(len < 72) {
+    return "[" + result.join(" ") + "]";
+  } else if(true) {
+    return "[" + result.join("\n" + indent) + "]";
+  };
+};
+//
+// Function utilities {{{2
+//
+// Identity function {{{3
+id = function(x) {
+  return x;
+};
+//
+// Memoise a function {{{3
+memoise = function(fn) {
+  var cache;
+  cache = {};
+  return function() {
+    var args;
+    args = arraycopy(arguments);
+    return cache[args] || (cache[args] = fn.apply(this, args));
+  };
+};
+//
+// `nextTick` utility function  {{{3
+if(isNode) {
+  nextTick = process.nextTick;
+} else if(true) {
+  nextTick = function(fn) {
+    setTimeout(fn, 0);
+  };
+};
+// 
+// `sleep` better syntax for setTimeout, with seconds instead of ms {{{3
+sleep = function(s, fn) {
+  return setTimeout(fn, s * 1000);
+};
+//
+// String utilities {{{2
+//
+// Create a url-friendly string {{{3
+normaliseString = function(Str) {
+  return String(str).toLowerCase().replace("æ", "ae").replace("ø", "o").replace("å", "aa").replace(RegExp("[^a-zA-Z0-9]+", "g"), "-");
+};
+// Object utilities {{{2
+// extend(dst, src) {{{3
+extend = function(dst, src) {
+  Object.keys(src).forEach(function(key) {
+    dst[key] = src[key];
+  });
+  return dst;
+};
+// extendExcept(dst, src, ignore) {{{3
+extendExcept = function(dst, src, except) {
+  Object.keys(src).forEach(function(key) {
+    if(!except[key]) {
+      dst[key] = src[key];
+    };
+  });
+  return dst;
+};
+// foreach {{{2
+foreach = function(obj, fn) {
+  Object.keys(obj).forEach(function(key) {
+    fn(key, obj[key]);
+  });
+};
+// files {{{2
+// mtime {{{3
+if(isNode) {
+  mtime = function(fname) {
+    return trycatch(function() {
+      return require("fs").statSync(__dirname + fname).mtime.getTime();
+    }, function() {
+      return 0;
+    });
+  };
+};
+// loadfile {{{3
+loadfile = function(filename, callback) {
+  var xhr;
+  if(isNode) {
+    require("fs").readFile(__dirname + filename, "utf8", callback);
+  };
+  if(isBrowser) {
+    //TODO: error handling
+    xhr = new XMLHttpRequest();
+    xhr.onreadystatechange = function() {
+      if(xhr.readyState === 4) {
+        callback(null, xhr.responseText);
+      };
+    };
+    xhr.open("GET", filename, true);
+    xhr.send();
+  };
+};
+// savefile {{{3
+savefile = function(filename, content, callback) {
+  if(isNode) {
+    require("fs").writeFile(__dirname + filename, content, callback);
+  };
+  if(isBrowser) {
+    console.log("savefile", filename, content);
+    throw "not implemented";
+  };
+};
+// XML {{{2
+xmlEscape = function(str) {
+  return str.replace(RegExp("&", "g"), "&amp;").replace(RegExp("<", "g"), "&lt;");
+};
+jsonml2xml = function(jsonml) {
+  var pos;
+  var result;
+  if(typeof jsonml === "string") {
+    return xmlEscape(jsonml);
+  };
+  if(typeof jsonml === "number") {
+    return String(jsonml);
+  };
+  result = "<" + jsonml[0];
+  pos = 2;
+  if(jsonml[1] && jsonml[1].constructor === Object) {
+    console.log("HERE", jsonml[1]);
+    foreach(jsonml[1], function(key, val) {
+      result = result + (" " + key + "=\"" + val + "\"");
+    });
+  } else if(true) {
+    pos = 1;
+  };
+  if(pos === jsonml.length) {
+    return result + "/>";
+  };
+  result = result + ">";
+  while(pos < jsonml.length) {
+    result = result + jsonml2xml(jsonml[pos]);
+    pos = pos + 1;
+  };
+  return result + ("</" + jsonml[0] + ">");
+};
+// App Dispatch {{{1
+routes = {};
+routes["default"] = function() {
+  console.log("default route");
+};
+nextTick(function() {
+  var app;
+  var args;
+  if(isNode) {
+    args = process.argv.slice(2).filter(function(arg) {
+      return arg[0] !== "-";
+    });
+  } else if(isBrowser) {
+    args = (location.hash || location.pathname).slice(1).split("/");
+  };
+  app = new App({args : args});
+  (routes[args[0]] || routes["default"])(app);
+});
+App = function(opt) {
+  this.args = opt.args;
+};
+// LightScript Language {{{1
+//
+// {{{2 Notes
 // This language is in development and heavy flux, no need to look at it yet.
 // 
 // Code also interspersed with other projects.
@@ -208,206 +427,6 @@ var isNode;
 // - sourcemaps
 // - C backend
 // 
-// # Changelog
-// 
-// - 2012-10-20 firefox-plugins as target
-// - 2012-10-18 small touch-based game-engine-prototype: massdrive
-// - 2012-10-11 staged execution: backping'ed code is run at compiletime
-// - 2012-10-11 refactor ast2js/ast2rst
-// - 2012-10-02 change module-system to be similar to commonjs + code refactoring
-// - 2012-10-01 public github repository + travis-ci
-// - 2012-10-01 first version of storage up and running
-// - 2012-09-30 update test-framework to new build system
-// - 2012-09-28 rest-api
-// - 2012-09-27 build system + split up in several files + fully bootstrapped (ie. syntax may now start to diverge from JS)
-// - 2012-09-26 working transformation from AST to LightScript RST/source code
-// - 2012-09-25 working JavaScript backend / code generation via RST
-// - 2012-09-24 working transformation from RST to AST
-// - 2012-09-21 merged and refactored prettyprinting into the syntax module, killing hundreds of lines of code
-// - 2012-09-18 app: ported code for website from JavaScript to LightScript
-// - 2012-09-10 working prettyprinting of RST(Raw Syntax Tree)
-// 
-// Util {{{1
-// System {{{2
-isNode = typeof process === "object" && typeof process["versions"] === "object" && typeof process["versions"]["node"] === "string";
-isBrowser = typeof navigator === "object" && typeof navigator["userAgent"] === "string" && navigator["userAgent"].indexOf("Mozilla") !== - 1;
-trycatch = Function("return function trycatch(fn,handle){try{return fn();}catch(e){return handle(e);}}")();
-// array {{{2
-// toArray {{{3
-toArray = function(args) {
-  return Array.prototype.slice.call(arguments, 0);
-};
-// pplist(list, [indent]) - prettyprint a list {{{3
-pplist = function(list, indent) {
-  var len;
-  var result;
-  var indent;
-  indent = indent || "  ";
-  if(!Array.isArray(list)) {
-    return list;
-  };
-  result = list.map(function(elem) {
-    return pplist(elem, indent + "  ");
-  });
-  len = 0;
-  result.forEach(function(elem) {
-    len = len + (elem.length + 1);
-  });
-  if(result[1] !== undefined) {
-    result[1] = result[0] + " " + JSON.stringify(result[1]).slice(1, - 1);
-    result.shift();
-  };
-  if(len < 72) {
-    return "[" + result.join(" ") + "]";
-  } else if(true) {
-    return "[" + result.join("\n" + indent) + "]";
-  };
-};
-// function {{{2
-// id(x) identity function {{{3
-id = function(x) {
-  return x;
-};
-// memoise {{{3
-memoise = function(fn) {
-  var cache;
-  cache = {};
-  return function() {
-    var args;
-    args = toArray(arguments);
-    return cache[args] || (cache[args] = fn.apply(this, args));
-  };
-};
-// nextTick(fn) {{{3
-if(isNode) {
-  nextTick = process.nextTick;
-} else if(true) {
-  nextTick = function(fn) {
-    setTimeout(fn, 0);
-  };
-};
-// string {{{2
-// normaliseString {{{3
-normaliseString = function(Str) {
-  return String(str).toLowerCase().replace("æ", "ae").replace("ø", "o").replace("å", "aa").replace(RegExp("[^a-zA-Z0-9]+", "g"), "-");
-};
-// object {{{2
-// extend(dst, src) {{{3
-extend = function(dst, src) {
-  Object.keys(src).forEach(function(key) {
-    dst[key] = src[key];
-  });
-  return dst;
-};
-// extendExcept(dst, src, ignore) {{{3
-extendExcept = function(dst, src, except) {
-  Object.keys(src).forEach(function(key) {
-    if(!except[key]) {
-      dst[key] = src[key];
-    };
-  });
-  return dst;
-};
-// foreach {{{2
-foreach = function(obj, fn) {
-  Object.keys(obj).forEach(function(key) {
-    fn(key, obj[key]);
-  });
-};
-// files {{{2
-// mtime {{{3
-if(isNode) {
-  mtime = function(fname) {
-    return trycatch(function() {
-      return require("fs").statSync(__dirname + fname).mtime.getTime();
-    }, function() {
-      return 0;
-    });
-  };
-};
-// loadfile {{{3
-loadfile = function(filename, callback) {
-  var xhr;
-  if(isNode) {
-    require("fs").readFile(__dirname + filename, "utf8", callback);
-  };
-  if(isBrowser) {
-    //TODO: error handling
-    xhr = new XMLHttpRequest();
-    xhr.onreadystatechange = function() {
-      if(xhr.readyState === 4) {
-        callback(null, xhr.responseText);
-      };
-    };
-    xhr.open("GET", filename, true);
-    xhr.send();
-  };
-};
-// savefile {{{3
-savefile = function(filename, content, callback) {
-  if(isNode) {
-    require("fs").writeFile(__dirname + filename, content, callback);
-  };
-  if(isBrowser) {
-    console.log("savefile", filename, content);
-    throw "not implemented";
-  };
-};
-// XML {{{2
-xmlEscape = function(str) {
-  return str.replace(RegExp("&", "g"), "&amp;").replace(RegExp("<", "g"), "&lt;");
-};
-jsonml2xml = function(jsonml) {
-  var pos;
-  var result;
-  if(typeof jsonml === "string") {
-    return xmlEscape(jsonml);
-  };
-  if(typeof jsonml === "number") {
-    return String(jsonml);
-  };
-  result = "<" + jsonml[0];
-  pos = 2;
-  if(jsonml[1] && jsonml[1].constructor === Object) {
-    console.log("HERE", jsonml[1]);
-    foreach(jsonml[1], function(key, val) {
-      result = result + (" " + key + "=\"" + val + "\"");
-    });
-  } else if(true) {
-    pos = 1;
-  };
-  if(pos === jsonml.length) {
-    return result + "/>";
-  };
-  result = result + ">";
-  while(pos < jsonml.length) {
-    result = result + jsonml2xml(jsonml[pos]);
-    pos = pos + 1;
-  };
-  return result + ("</" + jsonml[0] + ">");
-};
-// App Dispatch {{{1
-routes = {};
-routes["default"] = function() {
-  console.log("default route");
-};
-nextTick(function() {
-  var app;
-  var args;
-  if(isNode) {
-    args = process.argv.slice(2).filter(function(arg) {
-      return arg[0] !== "-";
-    });
-  } else if(isBrowser) {
-    args = (location.hash || location.pathname).slice(1).split("/");
-  };
-  app = new App({args : args});
-  (routes[args[0]] || routes["default"])(app);
-});
-App = function(opt) {
-  this.args = opt.args;
-};
-// LightScript Language {{{1
 // Notes {{{2
 // TODO:
 //
@@ -1408,15 +1427,23 @@ routes["compile"] = function() {
     savefile("/solsort.js", ast2js(ast));
   });
 };
+routes["pp"] = function() {
+  console.log("prettyprinting");
+  loadfile("/solsort.ls", function(err, source) {
+    var ast;
+    ast = ls2ast(source);
+    savefile("/../solsort.ls", ast2ls(ast));
+  });
+};
 routes["prettyprint"] = function() {
   console.log("prettyprinting");
   loadfile("/solsort.ls", function(err, source) {
     var ast;
     ast = ls2ast(source);
-    savefile("/solsort.pp", ast2ls(ast));
+    savefile("/solsort.ls", ast2ls(ast));
   });
 };
-// web server {{{1
+// Solsort website / server {{{1
 // html template {{{2
 webpage = function(content, opt) {
   var head;
@@ -1468,7 +1495,8 @@ routes["content"] = function(app) {
   console.log(mtime("/solsort.ls"));
   // TODO
   };
-// doc {{{1
+// Applications {{{1
+// Documentation generation {{{2
 routes["gendoc"] = function(app) {
   console.log("generating docs");
   loadfile("/solsort.ls", function(err, source) {
