@@ -1476,7 +1476,7 @@ routes["gendoc"] = function(app) {
     var commentRE;
     var lines;
     lines = [];
-    commentRE = RegExp("^ *// ");
+    commentRE = RegExp("^ *// ?");
     wasCode = false;
     source.split("\n").forEach(function(line) {
       var line;

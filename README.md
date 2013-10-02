@@ -303,7 +303,9 @@ Data layers
         require("fs").readFile(__dirname + filename, "utf8", callback);
       };
       if(isBrowser) {
-        //TODO: error handling
+
+TODO: error handling
+
         xhr = new XMLHttpRequest();
         xhr.onreadystatechange = function() {
           if(xhr.readyState === 4) {
@@ -385,8 +387,6 @@ Data layers
 ##Notes 
 TODO:
 
-    //
-
 code analysis
 java-backend
 generalise tree matcher 
@@ -394,8 +394,6 @@ generalise tree matcher
 - match filter
 refactor/cleanup, ie. id-function/filter/... in rst-ast-matcher
 
-    //
-    //
 
 Node types
 - call
@@ -407,8 +405,6 @@ Node types
 - id
 - str
 - num
-
-    //
 
 ##Language implementation
 ###Ast 
@@ -493,18 +489,12 @@ matcher.pattern(["id", "var", "?val"]: function(match, ast) {
      return match["val"];
 }); 
 
-    //
-
 matcher.pattern(["id:=", ["id:.", ["id:.", ["id:?class"] [id:prototype]] ["id:?member"]] "?value"], function(match) {
 })
-
-    //
 
 matcher function
 parameter: match object with bound vars, and match.ast = full node, match.parent = parent node
 try most specific match first. If result is undefined, try next match
-
-    //
 
 ####MatcherPattern 
 
@@ -643,7 +633,9 @@ try most specific match first. If result is undefined, try next match
     TokenPos = function(start, end, buffer) {
       this.start = start;
       this.end = end;
-      //this.buffer = buffer;
+
+this.buffer = buffer;
+
       };
     tokenise = function(buffer, filename) {
       pos = 0;
@@ -1429,7 +1421,7 @@ TODO
       console.log("generating docs");
       loadfile("/solsort.ls", function(err, source) {
         lines = [];
-        commentRE = RegExp("^ *// ");
+        commentRE = RegExp("^ *// ?");
         wasCode = false;
         source.split("\n").forEach(function(line) {
           if(line.match(commentRE)) {

@@ -1314,7 +1314,7 @@ routes["gendoc"] = function(app) {
   console.log("generating docs");
   loadfile("/solsort.ls", function(err, source) {
     lines = [];
-    commentRE = RegExp("^ *// ");
+    commentRE = RegExp("^ *// ?");
     wasCode = false;
     source.split("\n").forEach(function(line) {
       if(line.match(commentRE)) {
