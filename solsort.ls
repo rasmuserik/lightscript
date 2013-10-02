@@ -1,20 +1,57 @@
+// Platform abstraction {{{1
+isNode = (typeof process === "object" && typeof process["versions"] === "object" && typeof process["versions"]["node"] === "string")
+isBrowser = (typeof navigator === "object" && typeof navigator["userAgent"] === "string" && navigator["userAgent"].indexOf("Mozilla") !== -1)
+// nextTick(fn) {{{2
+if(isNode) {
+    nextTick = process.nextTick
+} else {
+    nextTick = function(fn) {
+        setTimeout(fn, 0);
+    }
+}
+// Main dispatch {{{2
+routes = {}
+routes["default"] = function() {
+    console.log("default route");
+}
+// File IO {{{2
+if(isNode) {
+    readFile = require("fs").readFile;
+    writeFile = require("fs").writeFile;
+}
+// actual dispatch {{{2
+nextTick(function(){
+    if(isNode) {
+       args = process.argv.slice(2).filter(function(arg) { return arg[0] !== "-"; });
+    } else if(isBrowser) {
+       args = (location.hash || location.pathname).slice(1).split("/");
+    }
+    app = new App({
+        args: args
+    });
+    (routes[args[0]]||routes["default"])(app)
+});
+// App {{{1
+App = function(opt) {
+    this.args = opt.args;
+}
 // Util {{{1
-// (call function) {{{2
+// run(fn) call function {{{2
 run = function(fn) {
     fn();
 };
-// id identity function {{{2
+// id(x) identity function {{{2
 id = function(x) {
     return x;
 };
-// extend {{{2
+// extend(dst, src) {{{2
 extend = function(dst, src) {
     Object.keys(src).forEach(function(key) {
         dst[key] = src[key];
     });
     return dst;
 };
-// extendExcept {{{2
+// extendExcept(dst, src, ignore) {{{2
 extendExcept = function(dst, src, except) {
     Object.keys(src).forEach(function(key) {
         if(!except[key]) {
@@ -23,7 +60,7 @@ extendExcept = function(dst, src, except) {
     });
     return dst;
 };
-// pplist - prettyprint a list {{{2
+// pplist(list, [indent]) - prettyprint a list {{{2
 pplist = function(list, indent) {
     indent = indent || "  ";
     if(!Array.isArray(list)) {
@@ -1002,11 +1039,8 @@ analyse = function(node) {
 ls2ast = function(source) {
     source = "function(){" + source + "}";
     tokens = tokenise(source);
-    time("tokenise");
     ast = parse(tokens)[0];
-    time("parse");
     ast = rstToAst.recursivePostTransform(ast);
-    time("transform");
     return ast;
 };
 ast2js = function(ast) {
@@ -1021,33 +1055,28 @@ ast2js = function(ast) {
 };
 ast2ls = function(ast) {
     ast = ast.deepCopy();
-    time("deepcopy");
     ast = astToRst.recursivePreTransform(ast);
-    time("transform");
     ast = addCommas(ast);
-    time("commas");
     pp = new PrettyPrinter();
     pp.pp(ast);
-    time("prettyprint");
     result = pp.acc.join("").split("\n").slice(1, - 1).join("\n") + "\n";
-    time("pp.join");
     return result;
 };
-t0 = Date.now();
-time = function(str) {
-    console.log(str, Date.now() - t0);
-    t0 = Date.now();
-};
 // Main for testing {{{1
-run(function() {
+routes["compile"] = function() {
+    console.log("compiling");
     fname = __dirname + "/solsort.ls";
     fs = require("fs");
-    source = fs.readFileSync(fname, "utf8");
-    time("read file");
-    ast = ls2ast(source);
-    time("parse / compile to ast");
-    fs.writeFile(fname + ".pp", ast2ls(ast));
-    time("write pp");
-    fs.writeFile(fname + ".js", ast2js(ast));
-    time("write js");
-});
+    readFile(fname, "utf8", function(err, source) {
+        ast = ls2ast(source);
+        fs.writeFile(fname + ".js", ast2js(ast));
+    })
+}
+routes["prettyprint"] = function() {
+    console.log("prettyprinting");
+    fname = __dirname + "/solsort.ls";
+    readFile(fname, "utf8", function(err, source) {
+        ast = ls2ast(source);
+        writeFile(fname + ".pp", ast2ls(ast));
+    })
+}
