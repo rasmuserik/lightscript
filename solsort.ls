@@ -1294,7 +1294,7 @@ routes["prettyprint"] = function() {
   console.log("prettyprinting");
   loadfile("/solsort.ls", function(err, source) {
     ast = ls2ast(source);
-    savefile("/solsort.ls", ast2ls(ast));
+    savefile("/solsort.pp", ast2ls(ast));
   });
 };
 // Solsort website / server {{{1
