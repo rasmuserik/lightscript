@@ -1,1 +1,1 @@
-node build/nodejs/main.js build && node build/nodejs/main.js $*
+node root/solsort.js compile && node root/solsort.js $*

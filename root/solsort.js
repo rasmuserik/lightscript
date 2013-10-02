@@ -1,3 +1,4 @@
+var files;
 var handler;
 var webpage;
 var ast2ls;
@@ -25,135 +26,35 @@ var nextToken;
 var token;
 var readList;
 var tokenise;
+var routes;
 var jsonml2xml;
 var xmlEscape;
-var pplist;
-var extendExcept;
-var extend;
-var id;
-var run;
-var foreach;
-var normaliseString;
-var toArray;
-var memoise;
 var savefile;
 var loadfile;
-var routes;
+var mtime;
+var foreach;
+var extendExcept;
+var extend;
+var normaliseString;
 var nextTick;
+var memoise;
+var id;
+var pplist;
+var toArray;
+var trycatch;
 var isBrowser;
 var isNode;
-// Platform abstraction {{{1
+// Util {{{1
+// System {{{2
 isNode = typeof process === "object" && typeof process["versions"] === "object" && typeof process["versions"]["node"] === "string";
 isBrowser = typeof navigator === "object" && typeof navigator["userAgent"] === "string" && navigator["userAgent"].indexOf("Mozilla") !== - 1;
-// nextTick(fn) {{{2
-if(isNode) {
-  nextTick = process.nextTick;
-} else if(true) {
-  nextTick = function(fn) {
-    setTimeout(fn, 0);
-  };
-};
-// Main dispatch {{{2
-routes = {};
-routes["default"] = function() {
-  console.log("default route");
-};
-// loadfile {{{2
-loadfile = function(filename, callback) {
-  var xhr;
-  if(isNode) {
-    require("fs").readFile(__dirname + filename, "utf8", callback);
-  };
-  if(isBrowser) {
-    //TODO: error handling
-    xhr = new XMLHttpRequest();
-    xhr.onreadystatechange = function() {
-      if(xhr.readyState === 4) {
-        callback(null, xhr.responseText);
-      };
-    };
-    xhr.open("GET", filename, true);
-    xhr.send();
-  };
-};
-// savefile {{{2
-savefile = function(filename, content, callback) {
-  if(isNode) {
-    require("fs").writeFile(__dirname + filename, content, callback);
-  };
-  if(isBrowser) {
-    console.log("savefile", filename, content);
-    throw "not implemented";
-  };
-};
-// actual dispatch {{{2
-nextTick(function() {
-  var app;
-  var args;
-  if(isNode) {
-    args = process.argv.slice(2).filter(function(arg) {
-      return arg[0] !== "-";
-    });
-  } else if(isBrowser) {
-    args = (location.hash || location.pathname).slice(1).split("/");
-  };
-  app = new App({args : args});
-  (routes[args[0]] || routes["default"])(app);
-});
-// App {{{1
-App = function(opt) {
-  this.args = opt.args;
-};
-// Util {{{1
-// memoise {{{2
-memoise = function(fn) {
-  var cache;
-  cache = {};
-  return function() {
-    var args;
-    args = toArray(arguments);
-    return cache[args] || (cache[args] = fn.apply(this, args));
-  };
-};
-// toArray {{{2
+trycatch = Function("return function trycatch(fn,handle){try{return fn();}catch(e){return handle(e);}}")();
+// array {{{2
+// toArray {{{3
 toArray = function(args) {
   return Array.prototype.slice.call(arguments, 0);
 };
-// normaliseString {{{2
-normaliseString = function(Str) {
-  return String(str).toLowerCase().replace("æ", "ae").replace("ø", "o").replace("å", "aa").replace(RegExp("[^a-zA-Z0-9]+", "g"), "-");
-};
-// foreach {{{2
-foreach = function(obj, fn) {
-  Object.keys(obj).forEach(function(key) {
-    fn(key, obj[key]);
-  });
-};
-// run(fn) call function {{{2
-run = function(fn) {
-  fn();
-};
-// id(x) identity function {{{2
-id = function(x) {
-  return x;
-};
-// extend(dst, src) {{{2
-extend = function(dst, src) {
-  Object.keys(src).forEach(function(key) {
-    dst[key] = src[key];
-  });
-  return dst;
-};
-// extendExcept(dst, src, ignore) {{{2
-extendExcept = function(dst, src, except) {
-  Object.keys(src).forEach(function(key) {
-    if(!except[key]) {
-      dst[key] = src[key];
-    };
-  });
-  return dst;
-};
-// pplist(list, [indent]) - prettyprint a list {{{2
+// pplist(list, [indent]) - prettyprint a list {{{3
 pplist = function(list, indent) {
   var len;
   var result;
@@ -179,7 +80,97 @@ pplist = function(list, indent) {
     return "[" + result.join("\n" + indent) + "]";
   };
 };
-// XML {{{1
+// function {{{2
+// id(x) identity function {{{3
+id = function(x) {
+  return x;
+};
+// memoise {{{3
+memoise = function(fn) {
+  var cache;
+  cache = {};
+  return function() {
+    var args;
+    args = toArray(arguments);
+    return cache[args] || (cache[args] = fn.apply(this, args));
+  };
+};
+// nextTick(fn) {{{3
+if(isNode) {
+  nextTick = process.nextTick;
+} else if(true) {
+  nextTick = function(fn) {
+    setTimeout(fn, 0);
+  };
+};
+// string {{{2
+// normaliseString {{{3
+normaliseString = function(Str) {
+  return String(str).toLowerCase().replace("æ", "ae").replace("ø", "o").replace("å", "aa").replace(RegExp("[^a-zA-Z0-9]+", "g"), "-");
+};
+// object {{{2
+// extend(dst, src) {{{3
+extend = function(dst, src) {
+  Object.keys(src).forEach(function(key) {
+    dst[key] = src[key];
+  });
+  return dst;
+};
+// extendExcept(dst, src, ignore) {{{3
+extendExcept = function(dst, src, except) {
+  Object.keys(src).forEach(function(key) {
+    if(!except[key]) {
+      dst[key] = src[key];
+    };
+  });
+  return dst;
+};
+// foreach {{{2
+foreach = function(obj, fn) {
+  Object.keys(obj).forEach(function(key) {
+    fn(key, obj[key]);
+  });
+};
+// files {{{2
+// mtime {{{3
+if(isNode) {
+  mtime = function(fname) {
+    return trycatch(function() {
+      return require("fs").statSync(__dirname + fname).mtime.getTime();
+    }, function() {
+      return 0;
+    });
+  };
+};
+// loadfile {{{3
+loadfile = function(filename, callback) {
+  var xhr;
+  if(isNode) {
+    require("fs").readFile(__dirname + filename, "utf8", callback);
+  };
+  if(isBrowser) {
+    //TODO: error handling
+    xhr = new XMLHttpRequest();
+    xhr.onreadystatechange = function() {
+      if(xhr.readyState === 4) {
+        callback(null, xhr.responseText);
+      };
+    };
+    xhr.open("GET", filename, true);
+    xhr.send();
+  };
+};
+// savefile {{{3
+savefile = function(filename, content, callback) {
+  if(isNode) {
+    require("fs").writeFile(__dirname + filename, content, callback);
+  };
+  if(isBrowser) {
+    console.log("savefile", filename, content);
+    throw "not implemented";
+  };
+};
+// XML {{{2
 xmlEscape = function(str) {
   return str.replace(RegExp("&", "g"), "&amp;").replace(RegExp("<", "g"), "&lt;");
 };
@@ -211,6 +202,27 @@ jsonml2xml = function(jsonml) {
     pos = pos + 1;
   };
   return result + ("</" + jsonml[0] + ">");
+};
+// App Dispatch {{{1
+routes = {};
+routes["default"] = function() {
+  console.log("default route");
+};
+nextTick(function() {
+  var app;
+  var args;
+  if(isNode) {
+    args = process.argv.slice(2).filter(function(arg) {
+      return arg[0] !== "-";
+    });
+  } else if(isBrowser) {
+    args = (location.hash || location.pathname).slice(1).split("/");
+  };
+  app = new App({args : args});
+  (routes[args[0]] || routes["default"])(app);
+});
+App = function(opt) {
+  this.args = opt.args;
 };
 // LightScript Language {{{1
 // Notes {{{2
@@ -1218,11 +1230,11 @@ routes["prettyprint"] = function() {
   loadfile("/solsort.ls", function(err, source) {
     var ast;
     ast = ls2ast(source);
-    savefile("/solsort.ls.pp", ast2ls(ast));
+    savefile("/solsort.pp", ast2ls(ast));
   });
 };
 // web server {{{1
-// static content {{{2
+// html template {{{2
 webpage = function(content, opt) {
   var head;
   var opt;
@@ -1253,12 +1265,14 @@ handler = function(req, res, next) {
     next();
   };
 };
+// static data {{{2
+files = {};
 // routes {{{2
 routes["devserver"] = function(app) {
   var port;
   var server;
   var express;
-  routes["gencontent"](app);
+  routes["content"](app);
   express = require("express");
   server = express();
   server.use(express.static(__dirname));
@@ -1267,6 +1281,7 @@ routes["devserver"] = function(app) {
   server.listen(port);
   console.log("starting web server on port", port);
 };
-routes["gencontent"] = function(app) {
+routes["content"] = function(app) {
+  console.log(mtime("/solsort.ls"));
   // TODO
   };
