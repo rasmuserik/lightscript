@@ -84,9 +84,13 @@ foreach = function(obj, fn) {
 // mtime {{{3
 if(isNode) {
   mtime = function(fname) {
-    return trycatch(function() { return require("fs").statSync(__dirname + fname).mtime.getTime();}, function() { return 0;})
-  }
-}
+    return trycatch(function() {
+      return require("fs").statSync(__dirname + fname).mtime.getTime();
+    }, function() {
+      return 0;
+    });
+  };
+};
 // loadfile {{{3
 loadfile = function(filename, callback) {
   if(isNode) {
@@ -1106,8 +1110,7 @@ handler = function(req, res, next) {
   };
 };
 // static data {{{2
-files = {
-};
+files = {};
 // routes {{{2
 routes["devserver"] = function(app) {
   routes["content"](app);
@@ -1120,6 +1123,6 @@ routes["devserver"] = function(app) {
   console.log("starting web server on port", port);
 };
 routes["content"] = function(app) {
-  console.log(mtime("/solsort.ls"))
+  console.log(mtime("/solsort.ls"));
   // TODO
-};
+  };
