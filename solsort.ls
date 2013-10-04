@@ -26,7 +26,6 @@ isBrowser = typeof navigator === "object" && typeof navigator["userAgent"] === "
 // Implementation of try..catch as a library instead of a part of the language. 
 // This also has the benefit that trycatch can be used in expressions:
 trycatch = Function("return function trycatch(fn,handle){try{return fn();}catch(e){return handle(e);}}")();
-//
 // Array utilities {{{2
 // `arraycopy` {{{3
 // Sometimes we need to create a new array, from something arraylike. Especially for turning `arguments` into a real array.
@@ -103,7 +102,7 @@ sleep = function(s, fn) {
 // `normaliseString` {{{3
 // We need to cleanup and canonise strings, if they should be used in urls.
 normaliseString = function(Str) {
-  return String(str).toLowerCase().replace("æ", "ae").replace("ø", "o").replace("å", "aa").replace(RegExp("[^a-zA-Z0-9]+", "g"), "-");
+  return String(str).toLowerCase().replace("æ", "ae").replace("ø", "o").replace("å", "aa").replace(RegExp("[^a-zA-Z0-9_]+", "g"), "-");
 };
 // Object utilities {{{2
 // extend(dst, src) {{{3
@@ -197,26 +196,9 @@ jsonml2xml = function(jsonml) {
   };
   return result + ("</" + jsonml[0] + ">");
 };
-// App Dispatch {{{1
-routes = {};
-routes["default"] = function() {
-  console.log("default route");
-};
-nextTick(function() {
-  if(isNode) {
-    args = process.argv.slice(2).filter(function(arg) {
-      return arg[0] !== "-";
-    });
-  } else if(isBrowser) {
-    args = (location.hash || location.pathname).slice(1).split("/");
-  };
-  app = new App({args : args});
-  (routes[args[0]] || routes["default"])(app);
-});
-App = function(opt) {
-  this.args = opt.args;
-};
 // LightScript Language {{{1
+ls2ast = ast2ls = ast2js = undefined;
+nextTick(function() {
 // {{{2 Notes
 //
 // LightScript is a programming language designed for easy program transformation.
@@ -1225,20 +1207,27 @@ ast2ls = function(ast) {
   result = pp.acc.join("").split("\n").slice(1, - 1).join("\n") + "\n";
   return result;
 };
-// routes {{{2
-routes["compile"] = function() {
-  console.log("compiling...");
-  loadfile("/solsort.ls", function(err, source) {
-    ast = ls2ast(source);
-    savefile("/solsort.js", ast2js(ast));
-  });
+});
+// App Dispatch {{{1
+routes = {};
+routes["default"] = function() {
+  console.log("default route");
 };
-routes["prettyprint"] = function() {
-  console.log("prettyprinting");
-  loadfile("/solsort.ls", function(err, source) {
-    ast = ls2ast(source);
-    savefile("/solsort.pp", ast2ls(ast));
-  });
+nextTick(function() {
+  if(isNode) {
+    args = process.argv.slice(2).filter(function(arg) {
+      return arg[0] !== "-";
+    });
+  } else if(isBrowser) {
+    args = (location.hash || location.pathname).slice(1).split("/");
+  };
+  app = new App({args : args});
+  //name = normaliseString(args[0]);
+  name = args[0];
+  (routes[name] || routes["default"])(app);
+});
+App = function(opt) {
+  this.args = opt.args;
 };
 // Solsort website / server {{{1
 // html template {{{2
@@ -1272,9 +1261,9 @@ handler = function(req, res, next) {
 };
 // static data {{{2
 files = {};
-// routes {{{2
+// devserver {{{2
 routes["devserver"] = function(app) {
-  routes["content"](app);
+  routes["gencontent"](app);
   express = require("express");
   server = express();
   server.use(express.static(__dirname));
@@ -1283,12 +1272,13 @@ routes["devserver"] = function(app) {
   server.listen(port);
   console.log("starting web server on port", port);
 };
-routes["content"] = function(app) {
+// gencontent
+routes["gencontent"] = function(app) {
   console.log(mtime("/solsort.ls"));
   // TODO
   };
 // Applications {{{1
-// pp - prepare route {{{2
+// pp - prepare (prettyprint+gendoc) route {{{2
 //
 // prettyprints file, and generates documentation.
 //
@@ -1300,7 +1290,22 @@ routes["pp"] = function() {
     savefile("/../solsort.ls", ast2ls(ast));
   });
 };
-// Documentation generation {{{2
+// compile and prettyprint {{{2
+routes["compile"] = function() {
+  console.log("compiling...");
+  loadfile("/solsort.ls", function(err, source) {
+    ast = ls2ast(source);
+    savefile("/solsort.js", ast2js(ast));
+  });
+};
+routes["prettyprint"] = function() {
+  console.log("prettyprinting");
+  loadfile("/solsort.ls", function(err, source) {
+    ast = ls2ast(source);
+    savefile("/solsort.pp", ast2ls(ast));
+  });
+};
+// gendoc - Documentation generation {{{2
 gendoc = function() {
   console.log("generating docs");
   loadfile("/solsort.ls", function(err, source) {
