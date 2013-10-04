@@ -3,6 +3,7 @@ var files;
 var handler;
 var webpage;
 var routes;
+var cmdApp;
 var ast2js;
 var ast2ls;
 var ls2ast;
@@ -1361,8 +1362,6 @@ nextTick(function() {
   };
 });
 // {{{1 Applications
-//
-//
 // {{{2 Routing
 //
 // There are different routes
@@ -1386,11 +1385,11 @@ nextTick(function() {
 //   - (general browser api)
 //   - (webgl/opengl-es)
 //
-//     route("foo", function(app, args..) {
+//     route("foo", function(app) {
 //       if(app.param["bar"]) {
-//         app.done("hey " + name);
+//         app.done("hey " + app.args[1]);
 //       } else {
-//         app.done("hello " + name);
+//         app.done("hello " + app.args[1]);
 //       }
 //     });
 //
@@ -1408,13 +1407,15 @@ nextTick(function() {
 //     http://localhost:4444/#foo/world?bar=true
 //
 // {{{2 App-class
+// {{{3 Notes
 //
 // - methods
 //   - clientId
 //   - param
+//   - args
 //   - log(args...)
 //   - error(args...)
-//   - send(content) - text appends, dom/json replaces
+//   - send(content) - text appends, dom/json replaces, (^L texts replaces)
 //   - canvas([w, h]) - return canvas to draw on
 //   - done([content])
 // - base class
@@ -1428,6 +1429,59 @@ nextTick(function() {
 // - browser-url dynamic interacting with dom
 // - rpc static returning json (both as http-rest, functioncalls, and later ipc)
 //
+// {{{3 App
+App = function(args, param) {
+  this.clientId = String(Math.random()).slice(2);
+  this.args = args || [];
+  this.param = param || {};
+};
+App.prototype.log = function() {
+  var args;
+  args = arraycopy(arguments);
+  // TODO: write log to file
+  args.unshift(Date.now());
+  console.log.apply(console, args);
+};
+// {{{3 CmdApp
+CmdApp = function() {
+  var param;
+  this.param = param = {};
+  this.args = process.argv.slice(2).filter(function(s) {
+    var val;
+    var keyval;
+    var s;
+    if(s[0] === "-") {
+      s = s.slice(1);
+      if(s[0] === "-") {
+        s = s.slice(1);
+      };
+      keyval = s.split("=");
+      val = keyval.slice(1).join("=") || true;
+      param[keyval[0]] = val;
+      return false;
+    } else if(true) {
+      return true;
+    };
+  });
+};
+CmdApp.prototype = Object.create(App.prototype);
+CmdApp.prototype.error = function(args) {
+  throw arraycopy(args);
+};
+CmdApp.prototype.send = function(content) {
+  console.log(content);
+};
+CmdApp.prototype.canvas = function(w, h) {
+  throw "not implemented";
+};
+CmdApp.prototype.done = function(result) {
+  if(result) {
+    this.send(result);
+  };
+};
+if(isNode) {
+  cmdApp = new CmdApp();
+};
 // App Dispatch {{{2
 routes = {};
 routes["default"] = function() {
@@ -1437,6 +1491,7 @@ nextTick(function() {
   var name;
   var app;
   var args;
+  console.log("HERE");
   if(isNode) {
     args = process.argv.slice(2).filter(function(arg) {
       return arg[0] !== "-";
@@ -1444,14 +1499,12 @@ nextTick(function() {
   } else if(isBrowser) {
     args = (location.hash || location.pathname).slice(1).split("/");
   };
-  app = new App({args : args});
+  app = new App(args);
   //name = normaliseString(args[0]);
   name = args[0];
   (routes[name] || routes["default"])(app);
 });
-App = function(opt) {
-  this.args = opt.args;
-};
+cmdApp = new CmdApp();
 // Solsort website / server {{{2
 // html template {{{3
 webpage = function(content, opt) {
