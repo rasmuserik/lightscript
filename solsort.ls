@@ -1208,7 +1208,75 @@ nextTick(function() {
     return result;
   };
 });
-// App Dispatch {{{1
+// {{{1 Applications
+//
+//
+// {{{2 Routing
+//
+// There are different routes
+//
+// - kinds of dispatch/platforms
+//   - process.argv
+//   - http-req.url
+//   - function call
+//   - browser.location
+//   - (browser-js-api)
+//   - (deployment ie. phonegap, browser-plugin, ...)
+//   - (other platforms)
+// - kinds of interaction
+//   - static delivery
+//   - dynamic interaction
+// - kinds of content
+//   - text
+//   - DOM/html/xml + evt. styling
+//   - json
+//   - canvas/image
+//   - (general browser api)
+//   - (webgl/opengl-es)
+//
+//     route("foo", function(app, args..) {
+//       if(app.param["bar"]) {
+//         app.done("hey " + name);
+//       } else {
+//         app.done("hello " + name);
+//       }
+//     });
+//
+//     call("foo", "world", function(err, data) {
+//     });
+//     call("foo", "world", {bar: true}, function(err, data) {
+//     });
+//
+//     HTTP/GET /foo/world
+//     HTTP/GET /foo/world?bar=true
+//     HTTP/GET /foo/world?callback=blah
+//
+//     ./run.sh foo --bar=true world
+//
+//     http://localhost:4444/#foo/world?bar=true
+//
+// {{{2 App-class
+//
+// - methods
+//   - clientId
+//   - param
+//   - log(args...)
+//   - error(args...)
+//   - send(content) - text appends, dom/json replaces
+//   - canvas([w, h]) - return canvas to draw on
+//   - done([content])
+// - base class
+//   - cmd disptach
+//   - fncall
+//
+// - kinds of functionality
+//   - generate static html/dom
+// - command-line dynamic writing to stdout
+// - http-requests static generating pages
+// - browser-url dynamic interacting with dom
+// - rpc static returning json (both as http-rest, functioncalls, and later ipc)
+//
+// App Dispatch {{{2
 routes = {};
 routes["default"] = function() {
   console.log("default route");
@@ -1229,8 +1297,8 @@ nextTick(function() {
 App = function(opt) {
   this.args = opt.args;
 };
-// Solsort website / server {{{1
-// html template {{{2
+// Solsort website / server {{{2
+// html template {{{3
 webpage = function(content, opt) {
   opt = opt || {};
   head = ["head"];
@@ -1251,7 +1319,7 @@ webpage = function(content, opt) {
   };
   return "<!DOCTYPE html>" + jsonml2xml(["html", head, ["body"].concat(content).concat([["script", {src : "/solsort.js"}, ""]])]);
 };
-// express handler {{{2
+// express handler {{{3
 handler = function(req, res, next) {
   if(req.url[1] === "_") {
     res.end(webpage([["h1", "hello"]]));
@@ -1259,9 +1327,9 @@ handler = function(req, res, next) {
     next();
   };
 };
-// static data {{{2
+// static data {{{3
 files = {};
-// devserver {{{2
+// devserver {{{3
 routes["devserver"] = function(app) {
   routes["gencontent"](app);
   express = require("express");
@@ -1277,8 +1345,8 @@ routes["gencontent"] = function(app) {
   console.log(mtime("/solsort.ls"));
   // TODO
   };
-// Applications {{{1
-// pp - prepare (prettyprint+gendoc) route {{{2
+// Applications {{{2
+// pp - prepare (prettyprint+gendoc) route {{{3
 //
 // prettyprints file, and generates documentation.
 //
@@ -1290,7 +1358,7 @@ routes["pp"] = function() {
     savefile("/../solsort.ls", ast2ls(ast));
   });
 };
-// compile and prettyprint {{{2
+// compile and prettyprint {{{3
 routes["compile"] = function() {
   console.log("compiling...");
   loadfile("/solsort.ls", function(err, source) {
@@ -1305,7 +1373,7 @@ routes["prettyprint"] = function() {
     savefile("/solsort.pp", ast2ls(ast));
   });
 };
-// gendoc - Documentation generation {{{2
+// gendoc - Documentation generation {{{3
 gendoc = function() {
   console.log("generating docs");
   loadfile("/solsort.ls", function(err, source) {

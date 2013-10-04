@@ -1306,7 +1306,78 @@ this.buffer = buffer;
       };
     });
 
-#App Dispatch 
+# Applications
+
+
+## Routing
+
+There are different routes
+
+- kinds of dispatch/platforms
+  - process.argv
+  - http-req.url
+  - function call
+  - browser.location
+  - (browser-js-api)
+  - (deployment ie. phonegap, browser-plugin, ...)
+  - (other platforms)
+- kinds of interaction
+  - static delivery
+  - dynamic interaction
+- kinds of content
+  - text
+  - DOM/html/xml + evt. styling
+  - json
+  - canvas/image
+  - (general browser api)
+  - (webgl/opengl-es)
+
+    route("foo", function(app, args..) {
+      if(app.param["bar"]) {
+        app.done("hey " + name);
+      } else {
+        app.done("hello " + name);
+      }
+    });
+
+    call("foo", "world", function(err, data) {
+    });
+    call("foo", "world", {bar: true}, function(err, data) {
+    });
+
+    HTTP/GET /foo/world
+    HTTP/GET /foo/world?bar=true
+    HTTP/GET /foo/world?callback=blah
+
+    ./run.sh foo --bar=true world
+
+    http://localhost:4444/#foo/world?bar=true
+
+## App-class
+
+- methods
+  - clientId
+  - param
+  - log(args...)
+  - error(args...)
+  - send(content) - text appends, dom/json replaces
+  - canvas([w, h]) - return canvas to draw on
+  - done([content])
+- base class
+  - cmd disptach
+  - fncall
+
+- kinds of functionality
+  - generate static html/dom
+- command-line dynamic writing to stdout
+- http-requests static generating pages
+- browser-url dynamic interacting with dom
+- rpc static returning json (both as http-rest, functioncalls, and later ipc)
+
+
+    
+
+##App Dispatch 
 
     routes = {};
     routes["default"] = function() {
@@ -1331,8 +1402,8 @@ name = normaliseString(args[0]);
       this.args = opt.args;
     };
 
-#Solsort website / server 
-##html template 
+##Solsort website / server 
+###html template 
 
     webpage = function(content, opt) {
       opt = opt || {};
@@ -1355,7 +1426,7 @@ name = normaliseString(args[0]);
       return "<!DOCTYPE html>" + jsonml2xml(["html", head, ["body"].concat(content).concat([["script", {src : "/solsort.js"}, ""]])]);
     };
 
-##express handler 
+###express handler 
 
     handler = function(req, res, next) {
       if(req.url[1] === "_") {
@@ -1365,11 +1436,11 @@ name = normaliseString(args[0]);
       };
     };
 
-##static data 
+###static data 
 
     files = {};
 
-##devserver 
+###devserver 
 
     routes["devserver"] = function(app) {
       routes["gencontent"](app);
@@ -1391,8 +1462,8 @@ TODO
 
       };
 
-#Applications 
-##pp - prepare (prettyprint+gendoc) route 
+##Applications 
+###pp - prepare (prettyprint+gendoc) route 
 
 prettyprints file, and generates documentation.
 
@@ -1406,7 +1477,7 @@ prettyprints file, and generates documentation.
       });
     };
 
-##compile and prettyprint 
+###compile and prettyprint 
 
     routes["compile"] = function() {
       console.log("compiling...");
@@ -1423,7 +1494,7 @@ prettyprints file, and generates documentation.
       });
     };
 
-##gendoc - Documentation generation 
+###gendoc - Documentation generation 
 
     gendoc = function() {
       console.log("generating docs");
