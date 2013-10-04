@@ -1287,33 +1287,39 @@ App.prototype.log = function() {
   // TODO: write log to file
   args.unshift(Date.now());
   console.log.apply(console, args);
-}
+};
 // {{{3 CmdApp
 CmdApp = function() {
-  this.param = param = {}
+  this.param = param = {};
   this.args = process.argv.slice(2).filter(function(s) {
     if(s[0] === "-") {
       s = s.slice(1);
       if(s[0] === "-") {
         s = s.slice(1);
-      }
+      };
       keyval = s.split("=");
       val = keyval.slice(1).join("=") || true;
       param[keyval[0]] = val;
       return false;
-    } else {
+    } else if(true) {
       return true;
-    }
+    };
   });
-}
+};
 CmdApp.prototype = Object.create(App.prototype);
-CmdApp.prototype.error = function(args) { throw arraycopy(args) };
-CmdApp.prototype.send = function(content) { console.log(content)};
-CmdApp.prototype.canvas = function(w, h) { throw "not implemented" };
+CmdApp.prototype.error = function(args) {
+  throw arraycopy(args);
+};
+CmdApp.prototype.send = function(content) {
+  console.log(content);
+};
+CmdApp.prototype.canvas = function(w, h) {
+  throw "not implemented";
+};
 CmdApp.prototype.done = function(result) {
   if(result) {
     this.send(result);
-  }
+  };
 };
 if(isNode) {
   cmdApp = new CmdApp();
