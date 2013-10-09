@@ -3,7 +3,6 @@ var files;
 var handler;
 var webpage;
 var routes;
-var cmdApp;
 var ast2js;
 var ast2ls;
 var ls2ast;
@@ -1363,6 +1362,7 @@ nextTick(function() {
 });
 // {{{1 Applications
 // {{{2 Routing
+// {{{3 Notes
 //
 // There are different routes
 //
@@ -1406,18 +1406,43 @@ nextTick(function() {
 //
 //     http://localhost:4444/#foo/world?bar=true
 //
+// App Dispatch {{{3
+routes = {};
+routes["default"] = function() {
+  console.log("default route");
+};
+/*
+nextTick(function() {
+  if(isNode) {
+    args = process.argv.slice(2).filter(function(arg) {
+      return arg[0] !== "-";
+    });
+  } else if(isBrowser) {
+    args = (location.hash || location.pathname).slice(1).split("/");
+  };
+  //app = new App(args);
+  //name = normaliseString(args[0]);
+  name = args[0];
+  //(routes[name] || routes["default"])(app);
+});
+cmdApp = new CmdApp();
+*/
 // {{{2 App-class
 // {{{3 Notes
 //
 // - methods
-//   - clientId
-//   - param
-//   - args
-//   - log(args...)
-//   - error(args...)
-//   - send(content) - text appends, dom/json replaces, (^L texts replaces)
-//   - canvas([w, h]) - return canvas to draw on
-//   - done([content])
+//   - User related
+//     - clientId
+//     - param
+//     - args
+//     - log(args...)
+//     - error(args...)
+//     - send(content) - text appends, dom/json replaces, (^L texts replaces)
+//     - canvas2d([w, h]) - return canvas to draw on
+//     - done([content])
+//   - router-related
+//     - routeName
+//     - dispatch()
 // - base class
 //   - cmd disptach
 //   - fncall
@@ -1441,6 +1466,9 @@ App.prototype.log = function() {
   // TODO: write log to file
   args.unshift(Date.now());
   console.log.apply(console, args);
+};
+App.prototype.dispatch = function() {
+  (routes[this.args[0]] || routes["default"])(this);
 };
 // {{{3 CmdApp
 CmdApp = function() {
@@ -1471,7 +1499,7 @@ CmdApp.prototype.error = function(args) {
 CmdApp.prototype.send = function(content) {
   console.log(content);
 };
-CmdApp.prototype.canvas = function(w, h) {
+CmdApp.prototype.canvas2d = function(w, h) {
   throw "not implemented";
 };
 CmdApp.prototype.done = function(result) {
@@ -1480,31 +1508,59 @@ CmdApp.prototype.done = function(result) {
   };
 };
 if(isNode) {
-  cmdApp = new CmdApp();
+  nextTick(function() {
+    new CmdApp().dispatch();
+  });
 };
-// App Dispatch {{{2
-routes = {};
-routes["default"] = function() {
-  console.log("default route");
-};
-nextTick(function() {
-  var name;
-  var app;
-  var args;
-  console.log("HERE");
-  if(isNode) {
-    args = process.argv.slice(2).filter(function(arg) {
-      return arg[0] !== "-";
+// {{{3 WebApp
+WebApp = function() {
+  var paramString;
+  var param;
+  this.param = param = {};
+  paramString = location.href.split("?")[1];
+  if(paramString) {
+    paramString.split("&").forEach(function(singleParam) {
+      var paramArgs;
+      paramArgs = singleParam.split("=");
+      if(paramArgs.length > 1) {
+        param[paramArgs[0]] = paramArgs.slice(1).join("=");
+      } else if(true) {
+        param[singleParam] = true;
+      };
     });
-  } else if(isBrowser) {
-    args = (location.hash || location.pathname).slice(1).split("/");
   };
-  app = new App(args);
-  //name = normaliseString(args[0]);
-  name = args[0];
-  (routes[name] || routes["default"])(app);
-});
-cmdApp = new CmdApp();
+  this.args = (location.hash || location.pathname).slice(1).split("/");
+};
+WebApp.prototype = Object.create(App.prototype);
+WebApp.prototype.error = function(args) {
+  throw arraycopy(args);
+};
+WebApp.prototype.send = function(content) {
+  // TODO
+  document.body.innerHTML = content;
+};
+WebApp.prototype.canvas2d = function(w, h) {
+  var h;
+  var w;
+  h = h || innerHeight;
+  w = w || innerHeight;
+  // TODO
+  if(this._canvas) {
+    return this._canvas;
+  };
+  document.body.innerHTML = "<canvas id=canvas height=" + h + " width=" + w + "></canvas>";
+  return this._canvas = document.getElementById("canvas").getContext("2d");
+};
+CmdApp.prototype.done = function(result) {
+  if(result) {
+    this.send(result);
+  };
+};
+if(isBrowser) {
+  nextTick(function() {
+    new WebApp().dispatch();
+  });
+};
 // Solsort website / server {{{2
 // html template {{{3
 webpage = function(content, opt) {
@@ -1531,6 +1587,7 @@ webpage = function(content, opt) {
 };
 // express handler {{{3
 handler = function(req, res, next) {
+  console.log("HERE");
   if(req.url[1] === "_") {
     res.end(webpage([["h1", "hello"]]));
   } else if(true) {
