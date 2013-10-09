@@ -70,7 +70,7 @@ addTest = function(name, fn) {
 };
 // {{{2 Class
 isClass = function(obj, cls) {
-  return typeof obj === "obj" && obj.constructor === cls;
+  return typeof obj === "object" && obj.constructor === cls;
 };
 // System utilities {{{2
 //
@@ -160,6 +160,10 @@ normaliseString = function(Str) {
   return String(str).toLowerCase().replace("æ", "ae").replace("ø", "o").replace("å", "aa").replace(RegExp("[^a-zA-Z0-9_]+", "g"), "-");
 };
 // Object utilities {{{2
+// {{{3 isObject
+isObject = function(obj) {
+  return isClass(obj, Object);
+};
 // extend(dst, src) {{{3
 extend = function(dst, src) {
   Object.keys(src).forEach(function(key) {
@@ -230,9 +234,13 @@ LsXml = function(obj) {
   } else if(true) {
     this._jsonml = obj;
   };
-};
+  //this._jsonml.forEach(canoniseJsonml);
+  };
 LsXml.prototype.jsonml = function() {
-  return this._jsonmls;
+  return this._jsonml;
+};
+LsXml.prototype.toString = function() {
+  return this._jsonml.map(jsonml2xml).join("");
 };
 // {{{3 xml2jsonml
 //
@@ -376,6 +384,21 @@ xml2jsonml = function(xml) {
   };
   return tag;
 };
+// {{{3 canoniseJsonml
+/*
+canoniseJsonml = function(jsonml) {
+  if(Array.isArray(jsonml) && !isObject(jsonml[1])) {
+    console.log("HERE", jsonml);
+    jsonml.unshift(jsonml[0]);
+    jsonml[1] = {};
+    i = 2;
+    while(i < jsonml.length) {
+      canoniseJsonml(jsonml[i]);
+      ++i;
+    }
+  }
+}
+*/
 // {{{3 jsonml2xml
 jsonml2xml = function(jsonml) {
   acc = [];
@@ -1575,9 +1598,6 @@ _routes = {};
 route = function(name, fn) {
   _routes[name] = fn;
 };
-route("default", function(app) {
-  app.done("default route");
-});
 // {{{2 App
 App = function(args, param) {
   this.clientId = String(Math.random()).slice(2);
@@ -1699,7 +1719,6 @@ HttpApp.prototype.error = function(args) {
   this.res.end("Error: " + JSON.stringify(arraycopy(args)));
 };
 HttpApp.prototype.send = function(content) {
-  this.content = content;
   if(typeof content === "string") {
     if(this.headers["Content-Type"] === "text/plain") {
       this.content = this.content + content;
@@ -1771,6 +1790,18 @@ call = function() {
   app.dispatch();
 };
 // {{{1 Applications
+// {{{2 Default
+route("default", function(app) {
+  if(isNode) {
+    app.done(webpage([["h1", "hello"]]));
+  } else if(isBrowser) {
+    app.done("hi");
+  };
+});
+route("text", function(app) {
+  app.send("Hello\n");
+  app.done("world");
+});
 // Solsort website / server {{{2
 // express handler {{{3
 handler = function(req, res, next) {

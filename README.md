@@ -85,8 +85,8 @@ This text is both documentation and source code.
 ## Class
 
     isClass = function(obj, cls) {
-      return typeof obj === "obj" && obj.constructor === cls;
-    }
+      return typeof obj === "object" && obj.constructor === cls;
+    };
 
 ##System utilities 
 
@@ -194,6 +194,12 @@ We need to cleanup and canonise strings, if they should be used in urls.
     };
 
 ##Object utilities 
+### isObject
+
+    isObject = function(obj) {
+      return isClass(obj, Object);
+    }
+
 ###extend(dst, src) 
 
     extend = function(dst, src) {
@@ -275,14 +281,20 @@ TODO: error handling
       if(typeof obj === "string") {
         this._jsonml = xml2jsonml(obj);
       } else if(Array.isArray(obj) && typeof obj[0] === "string") {
-        this._jsonml = [obj]
-      } else {
+        this._jsonml = [obj];
+      } else if(true) {
         this._jsonml = obj;
-      }
-    }
+      };
+
+this._jsonml.forEach(canoniseJsonml);
+
+    };
     LsXml.prototype.jsonml = function() {
-      return this._jsonmls;
-    }
+      return this._jsonml;
+    };
+    LsXml.prototype.toString = function() {
+      return this._jsonml.map(jsonml2xml).join("");
+    };
 
 ### xml2jsonml
 
@@ -459,6 +471,23 @@ actual content / data between tags
       };
       return tag;
     };
+
+### canoniseJsonml
+
+    /*
+    canoniseJsonml = function(jsonml) {
+      if(Array.isArray(jsonml) && !isObject(jsonml[1])) {
+        console.log("HERE", jsonml);
+        jsonml.unshift(jsonml[0]);
+        jsonml[1] = {};
+        i = 2;
+        while(i < jsonml.length) {
+          canoniseJsonml(jsonml[i]);
+          ++i;
+        }
+      }
+    }
+    */
 
 ### jsonml2xml
 
@@ -1739,13 +1768,9 @@ There are different routes
 ###App Dispatch 
 
     _routes = {};
-    route = function(name,fn) {
+    route = function(name, fn) {
       _routes[name] = fn;
-    }
-    route("default", function(app) {
-      app.done("default route");
-    });
-    
+    };
 
 ## App
 
@@ -1766,8 +1791,7 @@ TODO: write log to file
       routeName = this.args[0].split(".")[0];
       if(routeName[0] === "_") {
         routeName = "_";
-      }
-      (_routes[routeName] || _routes["default"])(this);
+      }(_routes[routeName] || _routes["default"])(this);
     };
 
 ## CmdApp
@@ -1870,11 +1894,11 @@ TODO
       this.param = req.query;
       this.headers = {};
       this.args = req.url.slice(1).split("?")[0].split("/");
-      clientId = ((req.headers.cookie||"").match(RegExp("Xz=([0-9][0-9][0-9][0-9][0-9]*)"))||[])[1];
+      clientId = ((req.headers.cookie || "").match(RegExp("Xz=([0-9][0-9][0-9][0-9][0-9]*)")) || [])[1];
       if(!clientId) {
-        clientId = (""+Math.random()).slice(2);
+        clientId = ("" + Math.random()).slice(2);
         this.headers["Set-Cookie"] = "Xz=" + clientId;
-      }
+      };
       this.clientId = clientId;
     };
     HttpApp.prototype = Object.create(App.prototype);
@@ -1882,20 +1906,19 @@ TODO
       this.res.end("Error: " + JSON.stringify(arraycopy(args)));
     };
     HttpApp.prototype.send = function(content) {
-      this.content = content;
       if(typeof content === "string") {
         if(this.headers["Content-Type"] === "text/plain") {
-          this.content += content;
-        } else {
+          this.content = this.content + content;
+        } else if(true) {
           this.content = content;
           this.headers["Content-Type"] = "text/plain";
-        }
+        };
       } else if(isClass(content, LsXml)) {
         this.content = "<!DOCTYPE html>" + content.toString();
         this.headers["Content-Type"] = "text/html";
-      } else {
+      } else if(true) {
         this.content = content;
-      }
+      };
     };
     HttpApp.prototype.canvas2d = function(w, h) {
       this.error("not implemented");
@@ -1924,7 +1947,7 @@ TODO
 ## CallApp TODO
 
     CallApp = function(args) {
-      this.app = args[0]
+      this.app = args[0];
       this.callback = args[args.length - 1];
       if(typeof args[args.length - 2] === "object") {
         this.param = args[args.length - 2];
@@ -1957,6 +1980,20 @@ TODO
     };
 
 # Applications
+## Default
+
+    route("default", function(app) {
+      if(isNode) {
+        app.done(webpage([["h1", "hello"]]));
+      } else if(isBrowser) {
+        app.done("hi");
+      }
+    });
+    route("text", function(app) {
+      app.send("Hello\n");
+      app.done("world");
+    });
+
 ##Solsort website / server 
 ###express handler 
 
