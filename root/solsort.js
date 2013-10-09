@@ -7,14 +7,11 @@ var routes;
 var ast2js;
 var ast2ls;
 var ls2ast;
-var jsonml2xml;
-var addprop;
-var toObjectInner;
-var childReduce;
 var xmlEscape;
-var xmlReventities;
+var xmlEntitiesReverse;
 var xmlEntities;
 var jsonml2XmlAcc;
+var jsonml2xml;
 var xml2jsonml;
 var savefile;
 var loadfile;
@@ -32,6 +29,8 @@ var arraycopy;
 var trycatch;
 var isBrowser;
 var isNode;
+var addTest;
+var _testcases;
 // {{{1 Personal language, scripts and content
 //
 // ![](https://ssl.solsort.com/_logo.png) [![ci](https://secure.travis-ci.org/rasmuserik/lightscript.png)](http://travis-ci.org/rasmuserik/lightscript)
@@ -50,7 +49,60 @@ var isNode;
 // This text is both documentation and source code.
 // 
 // Utility library {{{1
-//
+// {{{2 Test
+// {{{3 Constructor
+Tester = function(name) {
+  var self;
+  var timeout;
+  timeout = 5;
+  this.testCount = 0;
+  this.errors = [];
+  this.name = name;
+  self = this;
+  this.timeout = sleep(timeout, function() {
+    self.error("timeout after " + timeout + "s");
+    self.done();
+  });
+};
+// {{{3 done
+Tester.prototype.done = function() {
+  clearTimeout(this.timeout);
+  if(this.errors.length) {
+    console.log(this.errors);
+  };
+  console.log(this.name + ": " + this.errors.length + " errors out of " + this.testCount + " tests");
+  if(this.errors.length) {
+    throw this.errors;
+  };
+};
+// {{{3 equals
+Tester.prototype.equals = function(a, b, msg) {
+  this.testCount = this.testCount + 1;
+  if(a !== b) {
+    this.errors.push({
+      val : a,
+      expected : b,
+      msg : msg || "equals error"
+    });
+  };
+};
+// {{{3 deepEquals
+Tester.prototype.deepEquals = function(a, b, msg) {
+  this.equals(JSON.stringify(a), JSON.stringify(b), msg || "deepEquals error");
+};
+// {{{3 assert
+Tester.prototype.assert = function(bool, msg) {
+  this.equals(bool, true, msg || "assert error");
+};
+// {{{3 error
+Tester.prototype.error = function(msg) {
+  this.assert(false, msg || "error");
+};
+// {{{3 addTest
+_testcases = {};
+addTest = function(name, fn) {
+  _testcases[name] = fn;
+};
 // System utilities {{{2
 //
 // We need to distinguish between the different platforms:
@@ -206,7 +258,7 @@ savefile = function(filename, content, callback) {
   };
 };
 // XML / HTML {{{2
-// {{{3 xml parser generating json
+// {{{3 xml2jsonml
 //
 // Parse an XML-string.
 // Actually this is not a full implementation, but just
@@ -364,27 +416,23 @@ xml2jsonml = function(xml) {
   };
   return tag;
 };
-// ## XML generation
-// Convert jsonml in array form to xml.
-exports.toXml = function(jsonml) {
+// {{{3 Convert jsonml in array form to xml.
+jsonml2xml = function(jsonml) {
   var acc;
   acc = [];
   toXmlAcc(jsonml, acc);
   return acc.join("");
 };
-/*
-
 // The actual implementation. As the XML-string is built by appending to the
 // `acc`umulator.
-*/
 jsonml2XmlAcc = function(jsonml, acc) {
   var attributes;
   var pos;
   if(Array.isArray(jsonml)) {
     acc.push("<");
     acc.push(jsonml[0]);
-    var pos = 1;
-    var attributes = jsonml[1];
+    pos = 1;
+    attributes = jsonml[1];
     if(attributes && !Array.isArray(attributes) && typeof attributes !== "string") {
       Object.keys(attributes).forEach(function(key) {
         acc.push(" ");
@@ -411,7 +459,7 @@ jsonml2XmlAcc = function(jsonml, acc) {
     acc.push(xmlEscape(String(jsonml)));
   };
 };
-// XML escaped entity table
+// {{{3 xmlEntities XML escaped entity table
 xmlEntities = {
   quot : "\"",
   amp : "&",
@@ -419,28 +467,29 @@ xmlEntities = {
   lt : "<",
   gt : ">"
 };
+// {{{3 xmlEntitiesReverse
 // Generate a reverse xml entity table.
-xmlReventities = function() {
+xmlEntitiesReverse = function() {
   var result;
-  var result = {};
+  result = {};
   Object.keys(xmlEntities).forEach(function(key) {
     result[xmlEntities[key]] = key;
   });
   return result;
 }();
-// Append the characters of `str`, or the xml-entity they map to, to the `acc`umulator array.
-var xmlEscape = function(str) {
+// {{{3 xmlEscape - escape xml string
+xmlEscape = function(str) {
   var s;
   var code;
   var c;
   var result;
   var i;
-  var i = 0;
+  i = 0;
   result = "";
   while(i < str.length) {
-    var c = str[i];
-    var code = c.charCodeAt(0);
-    var s = xmlReventities[c];
+    c = str[i];
+    code = c.charCodeAt(0);
+    s = xmlEntitiesReverse[c];
     if(s) {
       result = result + ("&" + s + ";");
     } else if(code >= 128) {
@@ -452,93 +501,8 @@ var xmlEscape = function(str) {
   };
   return result;
 };
-// ## Utility functions
-// Apply a function to all the child elements of a given jsonml array.
-var childReduce = exports.childReduce = function(jsonml, fn, acc) {
-  var pos;
-  var first;
-  var acc;
-  var first = jsonml[1];
-  if(typeof first !== "object" || Array.isArray(first)) {
-    acc = fn(acc, first);
-  };
-  var pos = 2;
-  while(pos < jsonml.length) {
-    acc = fn(acc, jsonml[pos]);
-    pos = pos + 1;
-  };
-  return acc;
-};
-// - `jsonml.ensureAttributeObject(jsonml_array)` changes an jsonml array such that it has a (possibly empty) attribute object at position 1
-exports.ensureAttributeObject = function(jsonml) {
-  if(typeof jsonml[1] !== "object" || jsonml[1].constructor === Array) {
-    jsonml.unshift(jsonml[0]);
-    jsonml[1] = {};
-  };
-};
-exports.getAttr = function(jsonml, attribute) {
-  if(typeof jsonml[1] !== "object" || jsonml[1].constructor === Array) {
-    return undefined;
-  } else if(true) {
-    return jsonml[1][attribute];
-  };
-};
-// Convert jsonml into an easier subscriptable json structure, not preserving
-// the order of the elements
-exports.toObject = function(jsonml) {
-  var result;
-  var result = {};
-  result[jsonml[0]] = toObjectInner(jsonml);
-  return result;
-};
-// Internal function called by toObject. Return an object corresponding to
-// the child nodes of the `jsonml`-parameter
-var toObjectInner = function(jsonml) {
-  var current;
-  var pos;
-  var attr;
-  var result;
-  var result = {};
-  var attr = jsonml[1];
-  pos;
-  if(typeof attr === "object" && !Array.isArray(attr)) {
-    Object.keys(attr).forEach(function(key) {
-      result["@" + key] = attr[key];
-    });
-    var pos = 2;
-  } else if(true) {
-    pos = 1;
-    if(jsonml.length === 2 && !Array.isArray(attr)) {
-      return attr;
-    };
-  };
-  while(pos < jsonml.length) {
-    var current = jsonml[pos];
-    if(Array.isArray(current)) {
-      addprop(result, current[0], toObjectInner(current));
-    } else if(true) {
-      addprop(result, "_", current);
-    };
-    pos = pos + 1;
-  };
-  return result;
-};
-// Add a property to the object. If the property is already there, append
-// the `val`ue to an array at the key instead, possibly putting existing
-// object in front of such array, if that is not an array yet.
-var addprop = function(obj, key, val) {
-  if(obj[key]) {
-    if(Array.isArray(obj[key])) {
-      obj[key].push(val);
-    } else if(true) {
-      obj[key] = [obj[key], val];
-    };
-  } else if(true) {
-    obj[key] = val;
-  };
-};
-// Error handler
-var JsonML_Error = function(desc) {
+// {{{3 xml Error handler
+JsonML_Error = function(desc) {
   throw desc;
 };
 // jsonml2xml {{{3
@@ -571,6 +535,11 @@ jsonml2xml = function(jsonml) {
   };
   return result + ("</" + jsonml[0] + ">");
 };
+// {{{3 test
+addTest("xml", function(test) {
+  test.equals(xmlEscape("foo<bar> me & blah 'helo …æøå"), "foo&lt;bar&gt; me &amp; blah &apos;helo &#8230;&#230;&#248;&#229;", "escape");
+  test.done();
+});
 // LightScript Language {{{1
 ls2ast = ast2ls = ast2js = undefined;
 nextTick(function() {
@@ -2018,8 +1987,13 @@ routes["gencontent"] = function(app) {
   console.log(mtime("/solsort.ls"));
   // TODO
   };
-// Applications {{{2
-// pp - prepare (prettyprint+gendoc) route {{{3
+// {{{2 test
+routes["test"] = function(app) {
+  foreach(_testcases, function(name, fn) {
+    fn(new Tester(name));
+  });
+};
+// pp - prepare (prettyprint+gendoc) route {{{2
 //
 // prettyprints file, and generates documentation.
 //
@@ -2033,7 +2007,7 @@ routes["pp"] = function(app) {
     app.done();
   });
 };
-// compile and prettyprint {{{3
+// compile and prettyprint {{{2
 routes["compile"] = function(app) {
   app.log("compiling...");
   loadfile("/solsort.ls", function(err, source) {
@@ -2052,7 +2026,7 @@ routes["prettyprint"] = function(app) {
     app.done();
   });
 };
-// gendoc - Documentation generation {{{3
+// gendoc - Documentation generation {{{2
 gendoc = function() {
   console.log("generating docs");
   loadfile("/solsort.ls", function(err, source) {

@@ -16,6 +16,44 @@ and is written in the LightScript language itself, using a literate programming 
 This text is both documentation and source code.
 
 #Utility library 
+## Test
+
+    Tester = function(name) {
+      this.testCount = 0;
+      this.errors = [];
+      self = this;
+      this.timeout = sleep(timeout, function() {
+        self.error("timeout after " + timeout + "s");
+        self.done();
+      });
+    };
+    Tester.prototype.done = function() {
+      clearTimeout(this.timeout);
+      console.log(this.errors.length + " errors out of " + this.testCount + " testcases");
+    };
+    Tester.prototype.equals = function(a, b, msg) {
+      this.testCount = this.testCount + 1;
+      if(a !== b) {
+        this.errors.push({
+          val : bool,
+          expected : b,
+          msg : msg || "equals error"
+        });
+      };
+    };
+    Tester.prototype.deepEquals = function(a, b, msg) {
+      this.equals(JSON.stringify(a), JSON.stringify(b), msg || "deepEquals error");
+    };
+    Tester.prototype.assert = function(bool, msg) {
+      this.equals(bool, true, msg || "assert error");
+    };
+    Tester.prototype.error = function(msg) {
+      this.assert(false, msg || "error");
+    };
+    _testcases = [];
+    addTest = function(name, fn) {
+      testcases[name] = fn;
+    };
 
 ##System utilities 
 
@@ -1990,6 +2028,10 @@ TODO
       };
 
 ##Applications 
+{{{ test
+
+    routes["test"] = function(app) {};
+
 ###pp - prepare (prettyprint+gendoc) route 
 
 prettyprints file, and generates documentation.
