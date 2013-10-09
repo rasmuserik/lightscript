@@ -1306,9 +1306,9 @@ this.buffer = buffer;
       };
     });
 
-# Applications
-## Routing
-### Notes
+# App Router
+## Notes
+### Router
 
 There are different routes
 
@@ -1331,13 +1331,13 @@ There are different routes
   - (general browser api)
   - (webgl/opengl-es)
 
-    route("foo", function(app) {
+    routes["foo"] =  function(app) {
       if(app.param["bar"]) {
         app.done("hey " + app.args[1]);
       } else {
         app.done("hello " + app.args[1]);
       }
-    });
+    };
 
     call("foo", "world", function(err, data) {
     });
@@ -1352,15 +1352,7 @@ There are different routes
 
     http://localhost:4444/#foo/world?bar=true
 
-###App Dispatch 
-
-    routes = {};
-    routes["default"] = function(app) {
-      app.done("default route");
-    };
-
-## App-class
-### Notes
+### App class
 
 - methods
   - User related
@@ -1386,7 +1378,15 @@ There are different routes
 - browser-url dynamic interacting with dom
 - rpc static returning json (both as http-rest, functioncalls, and later ipc)
 
-### App
+## Routing
+###App Dispatch 
+
+    routes = {};
+    routes["default"] = function(app) {
+      app.done("default route");
+    };
+
+## App
 
     App = function(args, param) {
       this.clientId = String(Math.random()).slice(2);
@@ -1405,7 +1405,7 @@ TODO: write log to file
       (routes[this.args[0]] || routes["default"])(this);
     };
 
-### CmdApp
+## CmdApp
 
     CmdApp = function() {
       this.param = param = {};
@@ -1425,14 +1425,14 @@ TODO: write log to file
       });
     };
     CmdApp.prototype = Object.create(App.prototype);
-    CmdApp.prototype.error = function(args) {
-      throw arraycopy(args);
+    CmdApp.prototype.error = function(msg) {
+      throw msg
     };
     CmdApp.prototype.send = function(content) {
-      console.log(content);
+      this.log(content);
     };
     CmdApp.prototype.canvas2d = function(w, h) {
-      throw "not implemented";
+      this.err("canvas not supported in CmdApp");
     };
     CmdApp.prototype.done = function(result) {
       if(result) {
@@ -1446,7 +1446,7 @@ TODO: write log to file
       });
     };
 
-### WebApp
+## WebApp
 
     WebApp = function() {
       this.param = param = {};
@@ -1464,8 +1464,8 @@ TODO: write log to file
       this.args = (location.hash || location.pathname).slice(1).split("?")[0].split("/");
     };
     WebApp.prototype = Object.create(App.prototype);
-    WebApp.prototype.error = function(args) {
-      throw arraycopy(args);
+    WebApp.prototype.error = function(msg) {
+      throw(msg);
     };
     WebApp.prototype.send = function(content) {
 
@@ -1497,14 +1497,14 @@ TODO
       });
     };
 
-### HttpApp
+## HttpApp
 
     HttpApp = function(req, res) {
       this.req = req;
       this.res = res;
       console.log(req, res);
-      this.param = req.query
-      this.args = req.url.slice(1).split("?")[0].split("/")
+      this.param = req.query;
+      this.args = req.url.slice(1).split("?")[0].split("/");
     };
     HttpApp.prototype = Object.create(App.prototype);
     HttpApp.prototype.error = function(args) {
@@ -1538,6 +1538,41 @@ TODO
       console.log("starting web server on port", port);
     };
 
+## CallApp
+
+    CallApp = function(args) {
+      this.callback = args[args.length - 1];
+      if(typeof(args[args.length - 2]) === "object") {
+        this.param = args[args.length - 2];
+        this.args = args.slice(0, -2);
+      } else {
+        this.param = {};
+        this.args = args.slice(0, -1);
+      }
+    };
+    CallApp.prototype = Object.create(App.prototype);
+    CallApp.prototype.error = function(err) {
+      this.callback(err, this.content)
+    };
+    CallApp.prototype.send = function(content) {
+      this.content = content;
+    };
+    CallApp.prototype.canvas2d = function(w, h) {
+      this.err("canvas not supported in CallApp");
+    };
+    CallApp.prototype.done = function(result) {
+      if(result) {
+        this.callback(undefined, result);
+      } else {
+        this.callback(undefined, this.content);
+      }; 
+    };
+    call = function() {
+      app = new CallApp(arraycopy(arguments));
+      app.dispatch();
+    }
+
+# Applications
 ##Solsort website / server 
 ###html template 
 
@@ -1629,7 +1664,7 @@ prettyprints file, and generates documentation.
       loadfile("/solsort.ls", function(err, source) {
         ast = ls2ast(source);
         savefile("/solsort.pp", ast2ls(ast));
-        app.done()
+        app.done();
       });
     };
 

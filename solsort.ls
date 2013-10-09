@@ -1321,7 +1321,7 @@ CmdApp = function() {
 };
 CmdApp.prototype = Object.create(App.prototype);
 CmdApp.prototype.error = function(msg) {
-  throw msg
+  throw msg;
 };
 CmdApp.prototype.send = function(content) {
   this.log(content);
@@ -1358,7 +1358,7 @@ WebApp = function() {
 };
 WebApp.prototype = Object.create(App.prototype);
 WebApp.prototype.error = function(msg) {
-  throw(msg);
+  throw msg;
 };
 WebApp.prototype.send = function(content) {
   // TODO
@@ -1425,17 +1425,17 @@ routes["httpapp"] = function(app) {
 // {{{2 CallApp
 CallApp = function(args) {
   this.callback = args[args.length - 1];
-  if(typeof(args[args.length - 2]) === "object") {
+  if(typeof args[args.length - 2] === "object") {
     this.param = args[args.length - 2];
-    this.args = args.slice(0, -2);
-  } else {
+    this.args = args.slice(0, - 2);
+  } else if(true) {
     this.param = {};
-    this.args = args.slice(0, -1);
-  }
+    this.args = args.slice(0, - 1);
+  };
 };
 CallApp.prototype = Object.create(App.prototype);
 CallApp.prototype.error = function(err) {
-  this.callback(err, this.content)
+  this.callback(err, this.content);
 };
 CallApp.prototype.send = function(content) {
   this.content = content;
@@ -1446,14 +1446,14 @@ CallApp.prototype.canvas2d = function(w, h) {
 CallApp.prototype.done = function(result) {
   if(result) {
     this.callback(undefined, result);
-  } else {
+  } else if(true) {
     this.callback(undefined, this.content);
-  }; 
+  };
 };
 call = function() {
   app = new CallApp(arraycopy(arguments));
   app.dispatch();
-}
+};
 // {{{1 Applications
 // Solsort website / server {{{2
 // html template {{{3
