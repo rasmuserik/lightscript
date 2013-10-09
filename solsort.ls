@@ -1399,7 +1399,7 @@ HttpApp.prototype.error = function(args) {
 };
 HttpApp.prototype.send = function(content) {
   // TODO
-  this.content = content
+  this.content = content;
 };
 HttpApp.prototype.canvas2d = function(w, h) {
   this.error("not implemented");
@@ -1410,7 +1410,7 @@ HttpApp.prototype.done = function(result) {
   };
   this.res.end(this.content);
 };
-routes["httpapp"] =  function(app) {
+routes["httpapp"] = function(app) {
   express = require("express");
   server = express();
   server.use(express.static(__dirname));

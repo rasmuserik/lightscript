@@ -1355,29 +1355,9 @@ There are different routes
 ###App Dispatch 
 
     routes = {};
-    routes["default"] = function() {
-      console.log("default route");
+    routes["default"] = function(app) {
+      app.done("default route");
     };
-    /*
-    nextTick(function() {
-      if(isNode) {
-        args = process.argv.slice(2).filter(function(arg) {
-          return arg[0] !== "-";
-        });
-      } else if(isBrowser) {
-        args = (location.hash || location.pathname).slice(1).split("/");
-      };
-
-app = new App(args);
-name = normaliseString(args[0]);
-
-      name = args[0];
-
-(routes[name] || routes["default"])(app);
-
-    });
-    cmdApp = new CmdApp();
-    */
 
 ## App-class
 ### Notes
@@ -1481,7 +1461,7 @@ TODO: write log to file
           };
         });
       };
-      this.args = (location.hash || location.pathname).slice(1).split("/");
+      this.args = (location.hash || location.pathname).slice(1).split("?")[0].split("/");
     };
     WebApp.prototype = Object.create(App.prototype);
     WebApp.prototype.error = function(args) {
@@ -1505,7 +1485,7 @@ TODO
       document.body.innerHTML = "<canvas id=canvas height=" + h + " width=" + w + "></canvas>";
       return this._canvas = document.getElementById("canvas").getContext("2d");
     };
-    CmdApp.prototype.done = function(result) {
+    WebApp.prototype.done = function(result) {
       if(result) {
         this.send(result);
       };
@@ -1515,6 +1495,47 @@ TODO
         app = new WebApp();
         app.dispatch();
       });
+    };
+
+### HttpApp
+
+    HttpApp = function(req, res) {
+      this.req = req;
+      this.res = res;
+      console.log(req, res);
+      this.param = param = {};
+      this.args = req.url.split("/").slice(3);
+    };
+    HttpApp.prototype = Object.create(App.prototype);
+    HttpApp.prototype.error = function(args) {
+      this.res.end("Error: " + JSON.stringify(arraycopy(args)));
+    };
+    HttpApp.prototype.send = function(content) {
+
+TODO
+
+      this.content = content
+    };
+    HttpApp.prototype.canvas2d = function(w, h) {
+      this.error("not implemented");
+    };
+    HttpApp.prototype.done = function(result) {
+      if(result) {
+        this.send(result);
+      };
+      this.res.end(this.content);
+    };
+    routes["httpapp"] =  function(app) {
+      express = require("express");
+      server = express();
+      server.use(express.static(__dirname));
+      server.use(function(req, res, next) {
+        httpApp = new HttpApp(req, res);
+        httpApp.dispatch();
+      });
+      port = 4444;
+      server.listen(port);
+      console.log("starting web server on port", port);
     };
 
 ##Solsort website / server 

@@ -1411,22 +1411,6 @@ routes = {};
 routes["default"] = function(app) {
   app.done("default route");
 };
-/*
-nextTick(function() {
-  if(isNode) {
-    args = process.argv.slice(2).filter(function(arg) {
-      return arg[0] !== "-";
-    });
-  } else if(isBrowser) {
-    args = (location.hash || location.pathname).slice(1).split("/");
-  };
-  //app = new App(args);
-  //name = normaliseString(args[0]);
-  name = args[0];
-  //(routes[name] || routes["default"])(app);
-});
-cmdApp = new CmdApp();
-*/
 // {{{2 App-class
 // {{{3 Notes
 //
