@@ -359,9 +359,9 @@ xml2jsonml = function(xml) {
   };
   if(tag.length === 1) {
     return tag[0];
-  } else {
+  } else if(true) {
     return tag;
-  }
+  };
 };
 // {{{3 Convert jsonml in array form to xml.
 jsonml2xml = function(jsonml) {
@@ -474,7 +474,7 @@ jsonml2xml = function(jsonml) {
 // {{{3 test
 addTest("xml", function(test) {
   test.equals(xmlEscape("foo<bar> me & blah 'helo …æøå"), "foo&lt;bar&gt; me &amp; blah &apos;helo &#8230;&#230;&#248;&#229;", "escape");
-  test.deepEquals(xml2jsonml("<foo bar=\"baz\">blah<boo/><me></me></foo>"), ["foo", {bar:"baz"}, "blah", ["boo"], ["me", ""]], "parse xml");
+  test.deepEquals(xml2jsonml("<foo bar=\"baz\">blah<boo/><me></me></foo>"), ["foo", {bar : "baz"}, "blah", ["boo"], ["me", ""]], "parse xml");
   test.done();
 });
 // LightScript Language {{{1

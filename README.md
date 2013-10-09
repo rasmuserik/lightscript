@@ -37,12 +37,12 @@ This text is both documentation and source code.
       clearTimeout(this.timeout);
       if(this.errors.length) {
         console.log(this.errors);
-      }
+      };
       console.log(this.name + ": " + this.errors.length + " errors out of " + this.testCount + " tests");
       if(this.errors.length) {
         throw this.errors;
-      }
-    }
+      };
+    };
 
 ### equals
 
@@ -50,37 +50,37 @@ This text is both documentation and source code.
       this.testCount = this.testCount + 1;
       if(a !== b) {
         this.errors.push({
-          val: a,
-          expected: b,
-          msg: msg || "equals error"
+          val : a,
+          expected : b,
+          msg : msg || "equals error"
         });
-      }
-    }
+      };
+    };
 
 ### deepEquals
 
     Tester.prototype.deepEquals = function(a, b, msg) {
       this.equals(JSON.stringify(a), JSON.stringify(b), msg || "deepEquals error");
-    }
+    };
 
 ### assert
 
     Tester.prototype.assert = function(bool, msg) {
       this.equals(bool, true, msg || "assert error");
-    }
+    };
 
 ### error
 
     Tester.prototype.error = function(msg) {
       this.assert(false, msg || "error");
-    }
+    };
 
 ### addTest
 
     _testcases = {};
     addTest = function(name, fn) {
       _testcases[name] = fn;
-    }
+    };
 
 ##System utilities 
 
@@ -436,7 +436,11 @@ actual content / data between tags
           tag.push(read_until("<"));
         };
       };
-      return tag;
+      if(tag.length === 1) {
+        return tag[0];
+      } else {
+        return tag;
+      }
     };
 
 ### Convert jsonml in array form to xml.
@@ -565,6 +569,7 @@ Generate a reverse xml entity table.
 
     addTest("xml", function(test) {
       test.equals(xmlEscape("foo<bar> me & blah 'helo …æøå"), "foo&lt;bar&gt; me &amp; blah &apos;helo &#8230;&#230;&#248;&#229;", "escape");
+      test.deepEquals(xml2jsonml("<foo bar=\"baz\">blah<boo/><me></me></foo>"), ["foo", {bar:"baz"}, "blah", ["boo"], ["me", ""]], "parse xml");
       test.done();
     });
 
