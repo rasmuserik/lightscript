@@ -17,43 +17,70 @@ This text is both documentation and source code.
 
 #Utility library 
 ## Test
+### Constructor
 
     Tester = function(name) {
+      timeout = 5;
       this.testCount = 0;
       this.errors = [];
+      this.name = name;
       self = this;
       this.timeout = sleep(timeout, function() {
         self.error("timeout after " + timeout + "s");
         self.done();
       });
     };
+
+### done
+
     Tester.prototype.done = function() {
       clearTimeout(this.timeout);
-      console.log(this.errors.length + " errors out of " + this.testCount + " testcases");
-    };
+      if(this.errors.length) {
+        console.log(this.errors);
+      }
+      console.log(this.name + ": " + this.errors.length + " errors out of " + this.testCount + " tests");
+      if(this.errors.length) {
+        throw this.errors;
+      }
+    }
+
+### equals
+
     Tester.prototype.equals = function(a, b, msg) {
       this.testCount = this.testCount + 1;
       if(a !== b) {
         this.errors.push({
-          val : bool,
-          expected : b,
-          msg : msg || "equals error"
+          val: a,
+          expected: b,
+          msg: msg || "equals error"
         });
-      };
-    };
+      }
+    }
+
+### deepEquals
+
     Tester.prototype.deepEquals = function(a, b, msg) {
       this.equals(JSON.stringify(a), JSON.stringify(b), msg || "deepEquals error");
-    };
+    }
+
+### assert
+
     Tester.prototype.assert = function(bool, msg) {
       this.equals(bool, true, msg || "assert error");
-    };
+    }
+
+### error
+
     Tester.prototype.error = function(msg) {
       this.assert(false, msg || "error");
-    };
-    _testcases = [];
+    }
+
+### addTest
+
+    _testcases = {};
     addTest = function(name, fn) {
-      testcases[name] = fn;
-    };
+      _testcases[name] = fn;
+    }
 
 ##System utilities 
 
@@ -236,7 +263,7 @@ TODO: error handling
     };
 
 ##XML / HTML 
-### xml parser generating json
+### xml2jsonml
 
 Parse an XML-string.
 Actually this is not a full implementation, but just
@@ -412,27 +439,23 @@ actual content / data between tags
       return tag;
     };
 
-## XML generation
-Convert jsonml in array form to xml.
+### Convert jsonml in array form to xml.
 
-    exports.toXml = function(jsonml) {
+    jsonml2xml = function(jsonml) {
       acc = [];
       toXmlAcc(jsonml, acc);
       return acc.join("");
     };
-    /*
-    
 
 The actual implementation. As the XML-string is built by appending to the
 `acc`umulator.
 
-    */
     jsonml2XmlAcc = function(jsonml, acc) {
       if(Array.isArray(jsonml)) {
         acc.push("<");
         acc.push(jsonml[0]);
-        var pos = 1;
-        var attributes = jsonml[1];
+        pos = 1;
+        attributes = jsonml[1];
         if(attributes && !Array.isArray(attributes) && typeof attributes !== "string") {
           Object.keys(attributes).forEach(function(key) {
             acc.push(" ");
@@ -460,7 +483,7 @@ The actual implementation. As the XML-string is built by appending to the
       };
     };
 
-XML escaped entity table
+### xmlEntities XML escaped entity table
 
     xmlEntities = {
       quot : "\"",
@@ -470,25 +493,26 @@ XML escaped entity table
       gt : ">"
     };
 
+### xmlEntitiesReverse
 Generate a reverse xml entity table.
 
-    xmlReventities = function() {
-      var result = {};
+    xmlEntitiesReverse = function() {
+      result = {};
       Object.keys(xmlEntities).forEach(function(key) {
         result[xmlEntities[key]] = key;
       });
       return result;
     }();
 
-Append the characters of `str`, or the xml-entity they map to, to the `acc`umulator array.
+### xmlEscape - escape xml string
 
-    var xmlEscape = function(str) {
-      var i = 0;
+    xmlEscape = function(str) {
+      i = 0;
       result = "";
       while(i < str.length) {
-        var c = str[i];
-        var code = c.charCodeAt(0);
-        var s = xmlReventities[c];
+        c = str[i];
+        code = c.charCodeAt(0);
+        s = xmlEntitiesReverse[c];
         if(s) {
           result = result + ("&" + s + ";");
         } else if(code >= 128) {
@@ -501,96 +525,9 @@ Append the characters of `str`, or the xml-entity they map to, to the `acc`umula
       return result;
     };
 
-## Utility functions
-Apply a function to all the child elements of a given jsonml array.
+### xml Error handler
 
-    var childReduce = exports.childReduce = function(jsonml, fn, acc) {
-      var first = jsonml[1];
-      if(typeof first !== "object" || Array.isArray(first)) {
-        acc = fn(acc, first);
-      };
-      var pos = 2;
-      while(pos < jsonml.length) {
-        acc = fn(acc, jsonml[pos]);
-        pos = pos + 1;
-      };
-      return acc;
-    };
-
-- `jsonml.ensureAttributeObject(jsonml_array)` changes an jsonml array such that it has a (possibly empty) attribute object at position 1
-
-    exports.ensureAttributeObject = function(jsonml) {
-      if(typeof jsonml[1] !== "object" || jsonml[1].constructor === Array) {
-        jsonml.unshift(jsonml[0]);
-        jsonml[1] = {};
-      };
-    };
-    exports.getAttr = function(jsonml, attribute) {
-      if(typeof jsonml[1] !== "object" || jsonml[1].constructor === Array) {
-        return undefined;
-      } else if(true) {
-        return jsonml[1][attribute];
-      };
-    };
-
-Convert jsonml into an easier subscriptable json structure, not preserving
-the order of the elements
-
-    exports.toObject = function(jsonml) {
-      var result = {};
-      result[jsonml[0]] = toObjectInner(jsonml);
-      return result;
-    };
-
-Internal function called by toObject. Return an object corresponding to
-the child nodes of the `jsonml`-parameter
-
-    var toObjectInner = function(jsonml) {
-      var result = {};
-      var attr = jsonml[1];
-      pos;
-      if(typeof attr === "object" && !Array.isArray(attr)) {
-        Object.keys(attr).forEach(function(key) {
-          result["@" + key] = attr[key];
-        });
-        var pos = 2;
-      } else if(true) {
-        pos = 1;
-        if(jsonml.length === 2 && !Array.isArray(attr)) {
-          return attr;
-        };
-      };
-      while(pos < jsonml.length) {
-        var current = jsonml[pos];
-        if(Array.isArray(current)) {
-          addprop(result, current[0], toObjectInner(current));
-        } else if(true) {
-          addprop(result, "_", current);
-        };
-        pos = pos + 1;
-      };
-      return result;
-    };
-
-Add a property to the object. If the property is already there, append
-the `val`ue to an array at the key instead, possibly putting existing
-object in front of such array, if that is not an array yet.
-
-    var addprop = function(obj, key, val) {
-      if(obj[key]) {
-        if(Array.isArray(obj[key])) {
-          obj[key].push(val);
-        } else if(true) {
-          obj[key] = [obj[key], val];
-        };
-      } else if(true) {
-        obj[key] = val;
-      };
-    };
-
-Error handler
-
-    var JsonML_Error = function(desc) {
+    JsonML_Error = function(desc) {
       throw desc;
     };
 
@@ -623,6 +560,13 @@ Error handler
       };
       return result + ("</" + jsonml[0] + ">");
     };
+
+### test
+
+    addTest("xml", function(test) {
+      test.equals(xmlEscape("foo<bar> me & blah 'helo …æøå"), "foo&lt;bar&gt; me &amp; blah &apos;helo &#8230;&#230;&#248;&#229;", "escape");
+      test.done();
+    });
 
 #LightScript Language 
 
@@ -2027,12 +1971,15 @@ TODO
 
       };
 
-##Applications 
-{{{ test
+## test
 
-    routes["test"] = function(app) {};
+    routes["test"] = function(app) {
+      foreach(_testcases, function(name, fn) {
+        fn(new Tester(name));
+      });
+    };
 
-###pp - prepare (prettyprint+gendoc) route 
+##pp - prepare (prettyprint+gendoc) route 
 
 prettyprints file, and generates documentation.
 
@@ -2047,7 +1994,7 @@ prettyprints file, and generates documentation.
       });
     };
 
-###compile and prettyprint 
+##compile and prettyprint 
 
     routes["compile"] = function(app) {
       app.log("compiling...");
@@ -2066,7 +2013,7 @@ prettyprints file, and generates documentation.
       });
     };
 
-###gendoc - Documentation generation 
+##gendoc - Documentation generation 
 
     gendoc = function() {
       console.log("generating docs");

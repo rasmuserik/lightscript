@@ -34,40 +34,40 @@ Tester.prototype.done = function() {
   clearTimeout(this.timeout);
   if(this.errors.length) {
     console.log(this.errors);
-  }
+  };
   console.log(this.name + ": " + this.errors.length + " errors out of " + this.testCount + " tests");
   if(this.errors.length) {
     throw this.errors;
-  }
-}
+  };
+};
 // {{{3 equals
 Tester.prototype.equals = function(a, b, msg) {
   this.testCount = this.testCount + 1;
   if(a !== b) {
     this.errors.push({
-      val: a,
-      expected: b,
-      msg: msg || "equals error"
+      val : a,
+      expected : b,
+      msg : msg || "equals error"
     });
-  }
-}
+  };
+};
 // {{{3 deepEquals
 Tester.prototype.deepEquals = function(a, b, msg) {
   this.equals(JSON.stringify(a), JSON.stringify(b), msg || "deepEquals error");
-}
+};
 // {{{3 assert
 Tester.prototype.assert = function(bool, msg) {
   this.equals(bool, true, msg || "assert error");
-}
+};
 // {{{3 error
 Tester.prototype.error = function(msg) {
   this.assert(false, msg || "error");
-}
+};
 // {{{3 addTest
 _testcases = {};
 addTest = function(name, fn) {
   _testcases[name] = fn;
-}
+};
 // System utilities {{{2
 //
 // We need to distinguish between the different platforms:
