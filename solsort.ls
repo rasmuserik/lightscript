@@ -71,7 +71,7 @@ addTest = function(name, fn) {
 // {{{2 Class
 isClass = function(obj, cls) {
   return typeof obj === "obj" && obj.constructor === cls;
-}
+};
 // System utilities {{{2
 //
 // We need to distinguish between the different platforms:
@@ -226,14 +226,14 @@ LsXml = function(obj) {
   if(typeof obj === "string") {
     this._jsonml = xml2jsonml(obj);
   } else if(Array.isArray(obj) && typeof obj[0] === "string") {
-    this._jsonml = [obj]
-  } else {
+    this._jsonml = [obj];
+  } else if(true) {
     this._jsonml = obj;
-  }
-}
+  };
+};
 LsXml.prototype.jsonml = function() {
   return this._jsonmls;
-}
+};
 // {{{3 xml2jsonml
 //
 // Parse an XML-string.
@@ -1572,13 +1572,12 @@ nextTick(function() {
 // {{{2 Routing
 // App Dispatch {{{3
 _routes = {};
-route = function(name,fn) {
+route = function(name, fn) {
   _routes[name] = fn;
-}
+};
 route("default", function(app) {
   app.done("default route");
 });
-
 // {{{2 App
 App = function(args, param) {
   this.clientId = String(Math.random()).slice(2);
@@ -1595,8 +1594,7 @@ App.prototype.dispatch = function() {
   routeName = this.args[0].split(".")[0];
   if(routeName[0] === "_") {
     routeName = "_";
-  }
-  (_routes[routeName] || _routes["default"])(this);
+  }(_routes[routeName] || _routes["default"])(this);
 };
 // {{{2 CmdApp
 CmdApp = function() {
@@ -1689,11 +1687,11 @@ HttpApp = function(req, res) {
   this.param = req.query;
   this.headers = {};
   this.args = req.url.slice(1).split("?")[0].split("/");
-  clientId = ((req.headers.cookie||"").match(RegExp("Xz=([0-9][0-9][0-9][0-9][0-9]*)"))||[])[1];
+  clientId = ((req.headers.cookie || "").match(RegExp("Xz=([0-9][0-9][0-9][0-9][0-9]*)")) || [])[1];
   if(!clientId) {
-    clientId = (""+Math.random()).slice(2);
+    clientId = ("" + Math.random()).slice(2);
     this.headers["Set-Cookie"] = "Xz=" + clientId;
-  }
+  };
   this.clientId = clientId;
 };
 HttpApp.prototype = Object.create(App.prototype);
@@ -1704,17 +1702,17 @@ HttpApp.prototype.send = function(content) {
   this.content = content;
   if(typeof content === "string") {
     if(this.headers["Content-Type"] === "text/plain") {
-      this.content += content;
-    } else {
+      this.content = this.content + content;
+    } else if(true) {
       this.content = content;
       this.headers["Content-Type"] = "text/plain";
-    }
+    };
   } else if(isClass(content, LsXml)) {
     this.content = "<!DOCTYPE html>" + content.toString();
     this.headers["Content-Type"] = "text/html";
-  } else {
+  } else if(true) {
     this.content = content;
-  }
+  };
 };
 HttpApp.prototype.canvas2d = function(w, h) {
   this.error("not implemented");
@@ -1741,7 +1739,7 @@ route("httpapp", function(app) {
 });
 // {{{2 CallApp TODO
 CallApp = function(args) {
-  this.app = args[0]
+  this.app = args[0];
   this.callback = args[args.length - 1];
   if(typeof args[args.length - 2] === "object") {
     this.param = args[args.length - 2];
