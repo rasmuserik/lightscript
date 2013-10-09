@@ -1509,7 +1509,9 @@ CmdApp.prototype.done = function(result) {
 };
 if(isNode) {
   nextTick(function() {
-    new CmdApp().dispatch();
+    var app;
+    app = new CmdApp();
+    app.dispatch();
   });
 };
 // {{{3 WebApp
@@ -1558,7 +1560,9 @@ CmdApp.prototype.done = function(result) {
 };
 if(isBrowser) {
   nextTick(function() {
-    new WebApp().dispatch();
+    var app;
+    app = new WebApp();
+    app.dispatch();
   });
 };
 // Solsort website / server {{{2

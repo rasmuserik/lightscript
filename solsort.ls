@@ -1352,7 +1352,8 @@ CmdApp.prototype.done = function(result) {
 };
 if(isNode) {
   nextTick(function() {
-    new CmdApp().dispatch();
+    app = new CmdApp();
+    app.dispatch();
   });
 };
 // {{{3 WebApp
@@ -1396,7 +1397,8 @@ CmdApp.prototype.done = function(result) {
 };
 if(isBrowser) {
   nextTick(function() {
-    new WebApp().dispatch();
+    app = new WebApp();
+    app.dispatch();
   });
 };
 // Solsort website / server {{{2
