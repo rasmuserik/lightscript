@@ -1587,7 +1587,6 @@ webpage = function(content, opt) {
 };
 // express handler {{{3
 handler = function(req, res, next) {
-  console.log("HERE");
   if(req.url[1] === "_") {
     res.end(webpage([["h1", "hello"]]));
   } else if(true) {

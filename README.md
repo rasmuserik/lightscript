@@ -1308,6 +1308,7 @@ this.buffer = buffer;
 
 # Applications
 ## Routing
+### Notes
 
 There are different routes
 
@@ -1351,18 +1352,49 @@ There are different routes
 
     http://localhost:4444/#foo/world?bar=true
 
+###App Dispatch 
+
+    routes = {};
+    routes["default"] = function() {
+      console.log("default route");
+    };
+    /*
+    nextTick(function() {
+      if(isNode) {
+        args = process.argv.slice(2).filter(function(arg) {
+          return arg[0] !== "-";
+        });
+      } else if(isBrowser) {
+        args = (location.hash || location.pathname).slice(1).split("/");
+      };
+
+app = new App(args);
+name = normaliseString(args[0]);
+
+      name = args[0];
+
+(routes[name] || routes["default"])(app);
+
+    });
+    cmdApp = new CmdApp();
+    */
+
 ## App-class
 ### Notes
 
 - methods
-  - clientId
-  - param
-  - args
-  - log(args...)
-  - error(args...)
-  - send(content) - text appends, dom/json replaces, (^L texts replaces)
-  - canvas([w, h]) - return canvas to draw on
-  - done([content])
+  - User related
+    - clientId
+    - param
+    - args
+    - log(args...)
+    - error(args...)
+    - send(content) - text appends, dom/json replaces, (^L texts replaces)
+    - canvas2d([w, h]) - return canvas to draw on
+    - done([content])
+  - router-related
+    - routeName
+    - dispatch()
 - base class
   - cmd disptach
   - fncall
@@ -1388,6 +1420,9 @@ TODO: write log to file
 
       args.unshift(Date.now());
       console.log.apply(console, args);
+    };
+    App.prototype.dispatch = function() {
+      (routes[this.args[0]] || routes["default"])(this);
     };
 
 ### CmdApp
@@ -1416,7 +1451,7 @@ TODO: write log to file
     CmdApp.prototype.send = function(content) {
       console.log(content);
     };
-    CmdApp.prototype.canvas = function(w, h) {
+    CmdApp.prototype.canvas2d = function(w, h) {
       throw "not implemented";
     };
     CmdApp.prototype.done = function(result) {
@@ -1425,32 +1460,56 @@ TODO: write log to file
       };
     };
     if(isNode) {
-      cmdApp = new CmdApp();
+      nextTick(function() {(new CmdApp()).dispatch();});
     };
 
-##App Dispatch 
+### WebApp
 
-    routes = {};
-    routes["default"] = function() {
-      console.log("default route");
-    };
-    nextTick(function() {
-      console.log("HERE");
-      if(isNode) {
-        args = process.argv.slice(2).filter(function(arg) {
-          return arg[0] !== "-";
+    WebApp = function() {
+      this.param = param = {};
+      paramString = location.href.split("?")[1];
+      if(paramString) {
+        paramString.split("&").forEach(function(singleParam) {
+          paramArgs = singleParam.split("=")
+          if(paramArgs.length > 1) {
+            param[paramArgs[0]] = paramArgs.slice(1).join("=");
+          } else {
+            param[singleParam] = true;
+          }
         });
-      } else if(isBrowser) {
-        args = (location.hash || location.pathname).slice(1).split("/");
+      }
+      this.args = (location.hash || location.pathname).slice(1).split("/");
+    };
+    WebApp.prototype = Object.create(App.prototype);
+    WebApp.prototype.error = function(args) {
+      throw arraycopy(args);
+    };
+    WebApp.prototype.send = function(content) {
+
+TODO
+
+      document.body.innerHTML = content;
+    };
+    WebApp.prototype.canvas2d = function(w, h) {
+      h = h || innerHeight;
+      w = w || innerHeight;
+
+TODO
+
+      if(this._canvas) {
+        return this._canvas;
+      }
+      document.body.innerHTML = "<canvas id=canvas height=" + h + " width=" + w + "></canvas>";
+      return this._canvas = document.getElementById("canvas").getContext("2d");
+    };
+    CmdApp.prototype.done = function(result) {
+      if(result) {
+        this.send(result);
       };
-      app = new App(args);
-
-name = normaliseString(args[0]);
-
-      name = args[0];
-      (routes[name] || routes["default"])(app);
-    });
-    cmdApp = new CmdApp();
+    };
+    if(isBrowser) {
+      nextTick(function() {(new WebApp()).dispatch();});
+    };
 
 ##Solsort website / server 
 ###html template 

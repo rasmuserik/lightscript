@@ -1351,7 +1351,9 @@ CmdApp.prototype.done = function(result) {
   };
 };
 if(isNode) {
-  nextTick(function() {(new CmdApp()).dispatch();});
+  nextTick(function() {
+    new CmdApp().dispatch();
+  });
 };
 // {{{3 WebApp
 WebApp = function() {
@@ -1359,14 +1361,14 @@ WebApp = function() {
   paramString = location.href.split("?")[1];
   if(paramString) {
     paramString.split("&").forEach(function(singleParam) {
-      paramArgs = singleParam.split("=")
+      paramArgs = singleParam.split("=");
       if(paramArgs.length > 1) {
         param[paramArgs[0]] = paramArgs.slice(1).join("=");
-      } else {
+      } else if(true) {
         param[singleParam] = true;
-      }
+      };
     });
-  }
+  };
   this.args = (location.hash || location.pathname).slice(1).split("/");
 };
 WebApp.prototype = Object.create(App.prototype);
@@ -1383,7 +1385,7 @@ WebApp.prototype.canvas2d = function(w, h) {
   // TODO
   if(this._canvas) {
     return this._canvas;
-  }
+  };
   document.body.innerHTML = "<canvas id=canvas height=" + h + " width=" + w + "></canvas>";
   return this._canvas = document.getElementById("canvas").getContext("2d");
 };
@@ -1393,7 +1395,9 @@ CmdApp.prototype.done = function(result) {
   };
 };
 if(isBrowser) {
-  nextTick(function() {(new WebApp()).dispatch();});
+  nextTick(function() {
+    new WebApp().dispatch();
+  });
 };
 // Solsort website / server {{{2
 // html template {{{3
