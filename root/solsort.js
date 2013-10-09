@@ -8,7 +8,14 @@ var ast2js;
 var ast2ls;
 var ls2ast;
 var jsonml2xml;
+var addprop;
+var toObjectInner;
+var childReduce;
 var xmlEscape;
+var xmlReventities;
+var xmlEntities;
+var jsonml2XmlAcc;
+var xml2jsonml;
 var savefile;
 var loadfile;
 var mtime;
@@ -198,10 +205,343 @@ savefile = function(filename, content, callback) {
     throw "not implemented";
   };
 };
-// XML {{{2
-xmlEscape = function(str) {
-  return str.replace(RegExp("&", "g"), "&amp;").replace(RegExp("<", "g"), "&lt;");
+// XML / HTML {{{2
+// {{{3 xml parser generating json
+//
+// Parse an XML-string.
+// Actually this is not a full implementation, but just
+// the basic parts to get it up running.
+// Nonetheless it is Good Enough(tm) for most uses.
+//
+// Known deficiencies: CDATA is not supported, will accept even
+// non-well-formed documents, <?... > <!... > are not really handled, ...
+xml2jsonml = function(xml) {
+  var parent_tag;
+  var value_terminator;
+  var attr;
+  var has_attributes;
+  var attributes;
+  var newtag;
+  var read_until;
+  var is_a;
+  var next_char;
+  var tag;
+  var stack;
+  var pos;
+  var c;
+  var whitespace;
+  if(typeof xml !== "string") {
+    JsonML_Error("Error: jsonml.parseXML didn't receive a string as parameter");
+  };
+  // white space definition
+  whitespace = " \n\r\t";
+  // the current char in the string that is being parsed
+  c = xml[0];
+  // the position in the string
+  pos = 0;
+  // stack for handling nested tags
+  stack = [];
+  // current tag being parsed
+  tag = [];
+  // read the next char from the string
+  next_char = function() {
+    c = (pos = pos + 1) < xml.length ? xml[pos] : undefined;
+  };
+  // check if the current char is one of those in the string parameter
+  is_a = function(str) {
+    return str.indexOf(c) !== - 1;
+  };
+  // return the string from the current position to right before the first
+  // occurence of any of symb. Translate escaped xml entities to their value
+  // on the fly.
+  read_until = function(symb) {
+    var entity;
+    var buffer;
+    buffer = [];
+    while(c && !is_a(symb)) {
+      if(c === "&") {
+        next_char();
+        entity = read_until(";");
+        if(entity[0] === "#") {
+          if(entity[1] === "x") {
+            c = String.fromCharCode(parseInt(entity.slice(2), 16));
+          } else if(true) {
+            c = String.fromCharCode(parseInt(entity.slice(1), 10));
+          };
+        } else if(true) {
+          c = xmlEntities[entity];
+          if(!c) {
+            JsonML_Error("error: unrecognisable xml entity: " + entity);
+          };
+        };
+      };
+      buffer.push(c);
+      next_char();
+    };
+    return buffer.join("");
+  };
+  // The actual parsing
+  while(is_a(whitespace)) {
+    next_char();
+  };
+  while(c) {
+    if(is_a("<")) {
+      next_char();
+      // `<?xml ... >`, `<!-- -->` or similar - skip these
+      if(is_a("?!")) {
+        if(xml.slice(pos, pos + 3) === "!--") {
+          pos = pos + 3;
+          while(xml.slice(pos, pos + 2) !== "--") {
+            pos = pos + 1;
+          };
+        };
+        read_until(">");
+        next_char();
+        // `<sometag ...>` - handle begin tag
+        } else if(!is_a("/")) {
+        // read tag name
+        newtag = [read_until(whitespace + ">/")];
+        // read attributes
+        attributes = {};
+        has_attributes = 0;
+        while(c && is_a(whitespace)) {
+          next_char();
+        };
+        while(c && !is_a(">/")) {
+          has_attributes = 1;
+          attr = read_until(whitespace + "=>");
+          if(c === "=") {
+            next_char();
+            value_terminator = whitespace + ">/";
+            if(is_a("\"'")) {
+              value_terminator = c;
+              next_char();
+            };
+            attributes[attr] = read_until(value_terminator);
+            if(is_a("\"'")) {
+              next_char();
+            };
+          } else if(true) {
+            JsonML_Error("something not attribute in tag");
+          };
+          while(c && is_a(whitespace)) {
+            next_char();
+          };
+        };
+        if(has_attributes) {
+          newtag.push(attributes);
+        };
+        // end of tag, is it `<.../>` or `<...>`
+        if(is_a("/")) {
+          next_char();
+          if(!is_a(">")) {
+            JsonML_Error("expected \">\" after \"/\" within tag");
+          };
+          tag.push(newtag);
+        } else if(true) {
+          stack.push(tag);
+          tag = newtag;
+        };
+        next_char();
+        // `</something>` - handle end tag
+        } else if(true) {
+        next_char();
+        if(read_until(">") !== tag[0]) {
+          JsonML_Error("end tag not matching: " + tag[0]);
+        };
+        next_char();
+        parent_tag = stack.pop();
+        if(tag.length <= 2 && !Array.isArray(tag[1]) && typeof tag[1] !== "string") {
+          tag.push("");
+        };
+        parent_tag.push(tag);
+        tag = parent_tag;
+      };
+      // actual content / data between tags
+      } else if(true) {
+      tag.push(read_until("<"));
+    };
+  };
+  return tag;
 };
+// ## XML generation
+// Convert jsonml in array form to xml.
+exports.toXml = function(jsonml) {
+  var acc;
+  acc = [];
+  toXmlAcc(jsonml, acc);
+  return acc.join("");
+};
+/*
+
+// The actual implementation. As the XML-string is built by appending to the
+// `acc`umulator.
+*/
+jsonml2XmlAcc = function(jsonml, acc) {
+  var attributes;
+  var pos;
+  if(Array.isArray(jsonml)) {
+    acc.push("<");
+    acc.push(jsonml[0]);
+    var pos = 1;
+    var attributes = jsonml[1];
+    if(attributes && !Array.isArray(attributes) && typeof attributes !== "string") {
+      Object.keys(attributes).forEach(function(key) {
+        acc.push(" ");
+        acc.push(key);
+        acc.push("=\"");
+        acc.push(xmlEscape(attributes[key]));
+        acc.push("\"");
+      });
+      pos = pos + 1;
+    };
+    if(pos < jsonml.length) {
+      acc.push(">");
+      while(pos < jsonml.length) {
+        toXmlAcc(jsonml[pos], acc);
+        pos = pos + 1;
+      };
+      acc.push("</");
+      acc.push(jsonml[0]);
+      acc.push(">");
+    } else if(true) {
+      acc.push(" />");
+    };
+  } else if(true) {
+    acc.push(xmlEscape(String(jsonml)));
+  };
+};
+// XML escaped entity table
+xmlEntities = {
+  quot : "\"",
+  amp : "&",
+  apos : "'",
+  lt : "<",
+  gt : ">"
+};
+// Generate a reverse xml entity table.
+xmlReventities = function() {
+  var result;
+  var result = {};
+  Object.keys(xmlEntities).forEach(function(key) {
+    result[xmlEntities[key]] = key;
+  });
+  return result;
+}();
+// Append the characters of `str`, or the xml-entity they map to, to the `acc`umulator array.
+var xmlEscape = function(str) {
+  var s;
+  var code;
+  var c;
+  var result;
+  var i;
+  var i = 0;
+  result = "";
+  while(i < str.length) {
+    var c = str[i];
+    var code = c.charCodeAt(0);
+    var s = xmlReventities[c];
+    if(s) {
+      result = result + ("&" + s + ";");
+    } else if(code >= 128) {
+      result = result + ("&#" + code + ";");
+    } else if(true) {
+      result = result + c;
+    };
+    i = i + 1;
+  };
+  return result;
+};
+// ## Utility functions
+// Apply a function to all the child elements of a given jsonml array.
+var childReduce = exports.childReduce = function(jsonml, fn, acc) {
+  var pos;
+  var first;
+  var acc;
+  var first = jsonml[1];
+  if(typeof first !== "object" || Array.isArray(first)) {
+    acc = fn(acc, first);
+  };
+  var pos = 2;
+  while(pos < jsonml.length) {
+    acc = fn(acc, jsonml[pos]);
+    pos = pos + 1;
+  };
+  return acc;
+};
+// - `jsonml.ensureAttributeObject(jsonml_array)` changes an jsonml array such that it has a (possibly empty) attribute object at position 1
+exports.ensureAttributeObject = function(jsonml) {
+  if(typeof jsonml[1] !== "object" || jsonml[1].constructor === Array) {
+    jsonml.unshift(jsonml[0]);
+    jsonml[1] = {};
+  };
+};
+exports.getAttr = function(jsonml, attribute) {
+  if(typeof jsonml[1] !== "object" || jsonml[1].constructor === Array) {
+    return undefined;
+  } else if(true) {
+    return jsonml[1][attribute];
+  };
+};
+// Convert jsonml into an easier subscriptable json structure, not preserving
+// the order of the elements
+exports.toObject = function(jsonml) {
+  var result;
+  var result = {};
+  result[jsonml[0]] = toObjectInner(jsonml);
+  return result;
+};
+// Internal function called by toObject. Return an object corresponding to
+// the child nodes of the `jsonml`-parameter
+var toObjectInner = function(jsonml) {
+  var current;
+  var pos;
+  var attr;
+  var result;
+  var result = {};
+  var attr = jsonml[1];
+  pos;
+  if(typeof attr === "object" && !Array.isArray(attr)) {
+    Object.keys(attr).forEach(function(key) {
+      result["@" + key] = attr[key];
+    });
+    var pos = 2;
+  } else if(true) {
+    pos = 1;
+    if(jsonml.length === 2 && !Array.isArray(attr)) {
+      return attr;
+    };
+  };
+  while(pos < jsonml.length) {
+    var current = jsonml[pos];
+    if(Array.isArray(current)) {
+      addprop(result, current[0], toObjectInner(current));
+    } else if(true) {
+      addprop(result, "_", current);
+    };
+    pos = pos + 1;
+  };
+  return result;
+};
+// Add a property to the object. If the property is already there, append
+// the `val`ue to an array at the key instead, possibly putting existing
+// object in front of such array, if that is not an array yet.
+var addprop = function(obj, key, val) {
+  if(obj[key]) {
+    if(Array.isArray(obj[key])) {
+      obj[key].push(val);
+    } else if(true) {
+      obj[key] = [obj[key], val];
+    };
+  } else if(true) {
+    obj[key] = val;
+  };
+};
+// Error handler
+var JsonML_Error = function(desc) {
+  throw desc;
+};
+// jsonml2xml {{{3
 jsonml2xml = function(jsonml) {
   var pos;
   var result;
