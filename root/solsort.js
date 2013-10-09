@@ -1551,12 +1551,11 @@ if(isBrowser) {
 };
 // {{{3 HttpApp
 HttpApp = function(req, res) {
-  var param;
   this.req = req;
   this.res = res;
   console.log(req, res);
-  this.param = param = {};
-  this.args = req.url.split("/").slice(3);
+  this.param = req.query;
+  this.args = req.url.slice(1).split("?")[0].split("/");
 };
 HttpApp.prototype = Object.create(App.prototype);
 HttpApp.prototype.error = function(args) {
@@ -1649,30 +1648,33 @@ routes["gencontent"] = function(app) {
 //
 // prettyprints file, and generates documentation.
 //
-routes["pp"] = function() {
-  console.log("prettyprinting");
+routes["pp"] = function(app) {
+  app.log("prettyprinting");
   gendoc();
   loadfile("/solsort.ls", function(err, source) {
     var ast;
     ast = ls2ast(source);
     savefile("/../solsort.ls", ast2ls(ast));
+    app.done();
   });
 };
 // compile and prettyprint {{{3
-routes["compile"] = function() {
-  console.log("compiling...");
+routes["compile"] = function(app) {
+  app.log("compiling...");
   loadfile("/solsort.ls", function(err, source) {
     var ast;
     ast = ls2ast(source);
     savefile("/solsort.js", ast2js(ast));
+    app.done();
   });
 };
-routes["prettyprint"] = function() {
-  console.log("prettyprinting");
+routes["prettyprint"] = function(app) {
+  app.log("prettyprinting");
   loadfile("/solsort.ls", function(err, source) {
     var ast;
     ast = ls2ast(source);
     savefile("/solsort.pp", ast2ls(ast));
+    app.done();
   });
 };
 // gendoc - Documentation generation {{{3
