@@ -1208,9 +1208,9 @@ nextTick(function() {
     return result;
   };
 });
-// {{{1 Applications
-// {{{2 Routing
-// {{{3 Notes
+// {{{1 App Router
+// {{{2 Notes
+// {{{3 Router
 //
 // There are different routes
 //
@@ -1233,13 +1233,13 @@ nextTick(function() {
 //   - (general browser api)
 //   - (webgl/opengl-es)
 //
-//     route("foo", function(app) {
+//     routes["foo"] =  function(app) {
 //       if(app.param["bar"]) {
 //         app.done("hey " + app.args[1]);
 //       } else {
 //         app.done("hello " + app.args[1]);
 //       }
-//     });
+//     };
 //
 //     call("foo", "world", function(err, data) {
 //     });
@@ -1254,13 +1254,7 @@ nextTick(function() {
 //
 //     http://localhost:4444/#foo/world?bar=true
 //
-// App Dispatch {{{3
-routes = {};
-routes["default"] = function(app) {
-  app.done("default route");
-};
-// {{{2 App-class
-// {{{3 Notes
+// {{{3 App class
 //
 // - methods
 //   - User related
@@ -1286,7 +1280,13 @@ routes["default"] = function(app) {
 // - browser-url dynamic interacting with dom
 // - rpc static returning json (both as http-rest, functioncalls, and later ipc)
 //
-// {{{3 App
+// {{{2 Routing
+// App Dispatch {{{3
+routes = {};
+routes["default"] = function(app) {
+  app.done("default route");
+};
+// {{{2 App
 App = function(args, param) {
   this.clientId = String(Math.random()).slice(2);
   this.args = args || [];
@@ -1301,7 +1301,7 @@ App.prototype.log = function() {
 App.prototype.dispatch = function() {
   (routes[this.args[0]] || routes["default"])(this);
 };
-// {{{3 CmdApp
+// {{{2 CmdApp
 CmdApp = function() {
   this.param = param = {};
   this.args = process.argv.slice(2).filter(function(s) {
@@ -1320,14 +1320,14 @@ CmdApp = function() {
   });
 };
 CmdApp.prototype = Object.create(App.prototype);
-CmdApp.prototype.error = function(args) {
-  throw arraycopy(args);
+CmdApp.prototype.error = function(msg) {
+  throw msg
 };
 CmdApp.prototype.send = function(content) {
-  console.log(content);
+  this.log(content);
 };
 CmdApp.prototype.canvas2d = function(w, h) {
-  throw "not implemented";
+  this.err("canvas not supported in CmdApp");
 };
 CmdApp.prototype.done = function(result) {
   if(result) {
@@ -1340,7 +1340,7 @@ if(isNode) {
     app.dispatch();
   });
 };
-// {{{3 WebApp
+// {{{2 WebApp
 WebApp = function() {
   this.param = param = {};
   paramString = location.href.split("?")[1];
@@ -1357,8 +1357,8 @@ WebApp = function() {
   this.args = (location.hash || location.pathname).slice(1).split("?")[0].split("/");
 };
 WebApp.prototype = Object.create(App.prototype);
-WebApp.prototype.error = function(args) {
-  throw arraycopy(args);
+WebApp.prototype.error = function(msg) {
+  throw(msg);
 };
 WebApp.prototype.send = function(content) {
   // TODO
@@ -1385,7 +1385,7 @@ if(isBrowser) {
     app.dispatch();
   });
 };
-// {{{3 HttpApp
+// {{{2 HttpApp
 HttpApp = function(req, res) {
   this.req = req;
   this.res = res;
@@ -1422,6 +1422,39 @@ routes["httpapp"] = function(app) {
   server.listen(port);
   console.log("starting web server on port", port);
 };
+// {{{2 CallApp
+CallApp = function(args) {
+  this.callback = args[args.length - 1];
+  if(typeof(args[args.length - 2]) === "object") {
+    this.param = args[args.length - 2];
+    this.args = args.slice(0, -2);
+  } else {
+    this.param = {};
+    this.args = args.slice(0, -1);
+  }
+};
+CallApp.prototype = Object.create(App.prototype);
+CallApp.prototype.error = function(err) {
+  this.callback(err, this.content)
+};
+CallApp.prototype.send = function(content) {
+  this.content = content;
+};
+CallApp.prototype.canvas2d = function(w, h) {
+  this.err("canvas not supported in CallApp");
+};
+CallApp.prototype.done = function(result) {
+  if(result) {
+    this.callback(undefined, result);
+  } else {
+    this.callback(undefined, this.content);
+  }; 
+};
+call = function() {
+  app = new CallApp(arraycopy(arguments));
+  app.dispatch();
+}
+// {{{1 Applications
 // Solsort website / server {{{2
 // html template {{{3
 webpage = function(content, opt) {
