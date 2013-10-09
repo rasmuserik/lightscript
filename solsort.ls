@@ -363,10 +363,10 @@ xml2jsonml = function(xml) {
     return tag;
   };
 };
-// {{{3 Convert jsonml in array form to xml.
+// {{{3 jsonml2xml
 jsonml2xml = function(jsonml) {
   acc = [];
-  toXmlAcc(jsonml, acc);
+  jsonml2XmlAcc(jsonml, acc);
   return acc.join("");
 };
 // The actual implementation. As the XML-string is built by appending to the
@@ -390,7 +390,7 @@ jsonml2XmlAcc = function(jsonml, acc) {
     if(pos < jsonml.length) {
       acc.push(">");
       while(pos < jsonml.length) {
-        toXmlAcc(jsonml[pos], acc);
+        jsonml2XmlAcc(jsonml[pos], acc);
         pos = pos + 1;
       };
       acc.push("</");
@@ -443,38 +443,11 @@ xmlEscape = function(str) {
 JsonML_Error = function(desc) {
   throw desc;
 };
-// jsonml2xml {{{3
-jsonml2xml = function(jsonml) {
-  if(typeof jsonml === "string") {
-    return xmlEscape(jsonml);
-  };
-  if(typeof jsonml === "number") {
-    return String(jsonml);
-  };
-  result = "<" + jsonml[0];
-  pos = 2;
-  if(jsonml[1] && jsonml[1].constructor === Object) {
-    console.log("HERE", jsonml[1]);
-    foreach(jsonml[1], function(key, val) {
-      result = result + (" " + key + "=\"" + val + "\"");
-    });
-  } else if(true) {
-    pos = 1;
-  };
-  if(pos === jsonml.length) {
-    return result + "/>";
-  };
-  result = result + ">";
-  while(pos < jsonml.length) {
-    result = result + jsonml2xml(jsonml[pos]);
-    pos = pos + 1;
-  };
-  return result + ("</" + jsonml[0] + ">");
-};
 // {{{3 test
 addTest("xml", function(test) {
   test.equals(xmlEscape("foo<bar> me & blah 'helo …æøå"), "foo&lt;bar&gt; me &amp; blah &apos;helo &#8230;&#230;&#248;&#229;", "escape");
   test.deepEquals(xml2jsonml("<foo bar=\"baz\">blah<boo/><me></me></foo>"), ["foo", {bar : "baz"}, "blah", ["boo"], ["me", ""]], "parse xml");
+  test.equals(jsonml2xml(["body", ["h1", "hello"], ["br", ""], ["img", {src : "a.png"}]]), "<body><h1>hello</h1><br></br><img src=\"a.png\" /></body>", "jsonml2xml");
   test.done();
 });
 // LightScript Language {{{1
