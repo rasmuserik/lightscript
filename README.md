@@ -16,6 +16,12 @@ and is written in the LightScript language itself, using a literate programming 
 This text is both documentation and source code.
 
 #Utility library 
+## Class
+
+    isClass = function(obj, cls) {
+      return typeof obj === "object" && obj.constructor === cls;
+    };
+
 ##System utilities 
 
 We need to distinguish between the different platforms:
@@ -122,6 +128,12 @@ We need to cleanup and canonise strings, if they should be used in urls.
     };
 
 ##Object utilities 
+### isObject
+
+    isObject = function(obj) {
+      return isClass(obj, Object);
+    };
+
 ###extend(dst, src) 
 
     extend = function(dst, src) {
@@ -263,6 +275,27 @@ TODO: error handling
     };
 
 #XML / HTML 
+###LsXml class 
+
+    LsXml = function(obj) {
+      if(typeof obj === "string") {
+        this._jsonml = xml2jsonml(obj);
+      } else if(Array.isArray(obj) && typeof obj[0] === "string") {
+        this._jsonml = [obj];
+      } else if(true) {
+        this._jsonml = obj;
+      };
+
+this._jsonml.forEach(canoniseJsonml);
+
+      };
+    LsXml.prototype.jsonml = function() {
+      return this._jsonml;
+    };
+    LsXml.prototype.toString = function() {
+      return this._jsonml.map(jsonml2xml).join("");
+    };
+
 ### xml2jsonml
 
 Parse an XML-string.
@@ -436,12 +469,25 @@ actual content / data between tags
           tag.push(read_until("<"));
         };
       };
-      if(tag.length === 1) {
-        return tag[0];
-      } else if(true) {
-        return tag;
-      };
+      return tag;
     };
+
+### canoniseJsonml
+
+    /*
+    canoniseJsonml = function(jsonml) {
+      if(Array.isArray(jsonml) && !isObject(jsonml[1])) {
+        console.log("HERE", jsonml);
+        jsonml.unshift(jsonml[0]);
+        jsonml[1] = {};
+        i = 2;
+        while(i < jsonml.length) {
+          canoniseJsonml(jsonml[i]);
+          ++i;
+        }
+      }
+    }
+    */
 
 ### jsonml2xml
 
@@ -535,11 +581,37 @@ Generate a reverse xml entity table.
       throw desc;
     };
 
+###html template 
+
+    webpage = function(content, opt) {
+
+TODO: refactor/remove this function when Xml-class done
+
+      opt = opt || {};
+      head = ["head"];
+      head.push(["title", opt.title || "solsort.com"]);
+      head.push(["meta", {"http-equiv" : "content-type", content : "text/html;charset=UTF-8"}]);
+      head.push(["meta", {"http-equiv" : "X-UA-Compatible", content : "IE=edge,chrome=1"}]);
+      head.push(["meta", {name : "HandheldFriendly", content : "True"}]);
+      head.push(["meta", {name : "viewport", content : "width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=0"}]);
+      head.push(["meta", {name : "format-detection", content : "telephone=no"}]);
+      /*
+      head.push(["meta", {name: "apple-mobile-web-app-capable", content : "yes"}]);
+      head.push(["meta", {name: "apple-mobile-web-app-status-bar-style", content : "black"}]);
+      */
+      if(opt.icon) {
+        head.push(["link", {rel : "icon", content : opt.icon}]);
+        head.push(["link", {rel : "shortcut-icon", content : opt.icon}]);
+        head.push(["link", {rel : "apple-touch-icon-precomposed", content : opt.icon}]);
+      };
+      return new LsXml(["html", head, ["body"].concat(content).concat([["script", {src : "/solsort.js"}, ""]])]);
+    };
+
 ### test
 
     addTest("xml", function(test) {
       test.equals(xmlEscape("foo<bar> me & blah 'helo …æøå"), "foo&lt;bar&gt; me &amp; blah &apos;helo &#8230;&#230;&#248;&#229;", "escape");
-      test.deepEquals(xml2jsonml("<foo bar=\"baz\">blah<boo/><me></me></foo>"), ["foo", {bar : "baz"}, "blah", ["boo"], ["me", ""]], "parse xml");
+      test.deepEquals(xml2jsonml("<foo bar=\"baz\">blah<boo/><me></me></foo>"), [["foo", {bar : "baz"}, "blah", ["boo"], ["me", ""]]], "parse xml");
       test.equals(jsonml2xml(["body", ["h1", "hello"], ["br", ""], ["img", {src : "a.png"}]]), "<body><h1>hello</h1><br></br><img src=\"a.png\" /></body>", "jsonml2xml");
       test.done();
     });
@@ -1695,9 +1767,9 @@ There are different routes
 ## Routing
 ###App Dispatch 
 
-    routes = {};
-    routes["default"] = function(app) {
-      app.done("default route");
+    _routes = {};
+    route = function(name, fn) {
+      _routes[name] = fn;
     };
 
 ## App
@@ -1716,7 +1788,10 @@ TODO: write log to file
       console.log.apply(console, args);
     };
     App.prototype.dispatch = function() {
-      (routes[this.args[0]] || routes["default"])(this);
+      routeName = this.args[0].split(".")[0];
+      if(routeName[0] === "_") {
+        routeName = "_";
+      }(_routes[routeName] || _routes["default"])(this);
     };
 
 ## CmdApp
@@ -1816,19 +1891,34 @@ TODO
     HttpApp = function(req, res) {
       this.req = req;
       this.res = res;
-      console.log(req, res);
       this.param = req.query;
+      this.headers = {};
       this.args = req.url.slice(1).split("?")[0].split("/");
+      clientId = ((req.headers.cookie || "").match(RegExp("Xz=([0-9][0-9][0-9][0-9][0-9]*)")) || [])[1];
+      if(!clientId) {
+        clientId = ("" + Math.random()).slice(2);
+        this.headers["Set-Cookie"] = "Xz=" + clientId;
+      };
+      this.clientId = clientId;
     };
     HttpApp.prototype = Object.create(App.prototype);
     HttpApp.prototype.error = function(args) {
       this.res.end("Error: " + JSON.stringify(arraycopy(args)));
     };
     HttpApp.prototype.send = function(content) {
-
-TODO
-
-      this.content = content;
+      if(typeof content === "string") {
+        if(this.headers["Content-Type"] === "text/plain") {
+          this.content = this.content + content;
+        } else if(true) {
+          this.content = content;
+          this.headers["Content-Type"] = "text/plain";
+        };
+      } else if(isClass(content, LsXml)) {
+        this.content = "<!DOCTYPE html>" + content.toString();
+        this.headers["Content-Type"] = "text/html";
+      } else if(true) {
+        this.content = content;
+      };
     };
     HttpApp.prototype.canvas2d = function(w, h) {
       this.error("not implemented");
@@ -1837,9 +1927,11 @@ TODO
       if(result) {
         this.send(result);
       };
+      resultCode = 200;
+      this.res.writeHead(resultCode, this.headers);
       this.res.end(this.content);
     };
-    routes["httpapp"] = function(app) {
+    route("httpapp", function(app) {
       express = require("express");
       server = express();
       server.use(express.static(__dirname));
@@ -1850,11 +1942,12 @@ TODO
       port = 4444;
       server.listen(port);
       console.log("starting web server on port", port);
-    };
+    });
 
-## CallApp
+## CallApp TODO
 
     CallApp = function(args) {
+      this.app = args[0];
       this.callback = args[args.length - 1];
       if(typeof args[args.length - 2] === "object") {
         this.param = args[args.length - 2];
@@ -1887,30 +1980,21 @@ TODO
     };
 
 # Applications
-##Solsort website / server 
-###html template 
+## Default
 
-    webpage = function(content, opt) {
-      opt = opt || {};
-      head = ["head"];
-      head.push(["title", opt.title || "solsort.com"]);
-      head.push(["meta", {"http-equiv" : "content-type", content : "text/html;charset=UTF-8"}]);
-      head.push(["meta", {"http-equiv" : "X-UA-Compatible", content : "IE=edge,chrome=1"}]);
-      head.push(["meta", {name : "HandheldFriendly", content : "True"}]);
-      head.push(["meta", {name : "viewport", content : "width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=0"}]);
-      head.push(["meta", {name : "format-detection", content : "telephone=no"}]);
-      /*
-      head.push(["meta", {name: "apple-mobile-web-app-capable", content : "yes"}]);
-      head.push(["meta", {name: "apple-mobile-web-app-status-bar-style", content : "black"}]);
-      */
-      if(opt.icon) {
-        head.push(["link", {rel : "icon", content : opt.icon}]);
-        head.push(["link", {rel : "shortcut-icon", content : opt.icon}]);
-        head.push(["link", {rel : "apple-touch-icon-precomposed", content : opt.icon}]);
+    route("default", function(app) {
+      if(isNode) {
+        app.done(webpage([["h1", "hello"]]));
+      } else if(isBrowser) {
+        app.done("hi");
       };
-      return "<!DOCTYPE html>" + jsonml2xml(["html", head, ["body"].concat(content).concat([["script", {src : "/solsort.js"}, ""]])]);
-    };
+    });
+    route("text", function(app) {
+      app.send("Hello\n");
+      app.done("world");
+    });
 
+##Solsort website / server 
 ###express handler 
 
     handler = function(req, res, next) {
@@ -1927,8 +2011,8 @@ TODO
 
 ###devserver 
 
-    routes["devserver"] = function(app) {
-      routes["gencontent"](app);
+    route("devserver", function(app) {
+      call(app, "gencontent");
       express = require("express");
       server = express();
       server.use(express.static(__dirname));
@@ -1936,31 +2020,31 @@ TODO
       port = 4444;
       server.listen(port);
       console.log("starting web server on port", port);
-    };
+    });
 
 gencontent
 
-    routes["gencontent"] = function(app) {
-      console.log(mtime("/solsort.ls"));
+    route("gencontent", function(app) {
 
 TODO
 
-      };
+      console.log(mtime("/solsort.ls"));
+    });
 
 ## test
 
-    routes["test"] = function(app) {
+    route("test", function(app) {
       foreach(_testcases, function(name, fn) {
         fn(new Tester(name));
       });
-    };
+    });
 
 ##pp - prepare (prettyprint+gendoc) route 
 
 prettyprints file, and generates documentation.
 
 
-    routes["pp"] = function(app) {
+    route("pp", function(app) {
       app.log("prettyprinting");
       gendoc();
       loadfile("/solsort.ls", function(err, source) {
@@ -1968,26 +2052,26 @@ prettyprints file, and generates documentation.
         savefile("/../solsort.ls", ast2ls(ast));
         app.done();
       });
-    };
+    });
 
 ##compile and prettyprint 
 
-    routes["compile"] = function(app) {
+    route("compile", function(app) {
       app.log("compiling...");
       loadfile("/solsort.ls", function(err, source) {
         ast = ls2ast(source);
         savefile("/solsort.js", ast2js(ast));
         app.done();
       });
-    };
-    routes["prettyprint"] = function(app) {
+    });
+    route("prettyprint", function(app) {
       app.log("prettyprinting");
       loadfile("/solsort.ls", function(err, source) {
         ast = ls2ast(source);
         savefile("/solsort.pp", ast2ls(ast));
         app.done();
       });
-    };
+    });
 
 ##gendoc - Documentation generation 
 
