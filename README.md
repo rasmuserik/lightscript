@@ -1980,7 +1980,7 @@ TODO
     };
 
 # Applications
-## Default
+## Default + test+experiment
 
     route("default", function(app) {
       if(isNode) {
@@ -1993,37 +1993,14 @@ TODO
       app.send("Hello\n");
       app.done("world");
     });
-
-##Solsort website / server 
-###express handler 
-
-    handler = function(req, res, next) {
-      if(req.url[1] === "_") {
-        res.end(webpage([["h1", "hello"]]));
-      } else if(true) {
-        next();
-      };
-    };
-
-###static data 
-
-    files = {};
-
-###devserver 
-
-    route("devserver", function(app) {
-      call(app, "gencontent");
-      express = require("express");
-      server = express();
-      server.use(express.static(__dirname));
-      server.use(handler);
-      port = 4444;
-      server.listen(port);
-      console.log("starting web server on port", port);
+    route("_", function(app) {
+      app.done(webpage(["in route _", ["p", "args[0]:", app.args[0]]]));
     });
 
-gencontent
+##Solsort website / server 
+## gencontent / generate static data
 
+    files = {};
     route("gencontent", function(app) {
 
 TODO
