@@ -1744,7 +1744,7 @@ HttpApp.prototype.done = function(result) {
   this.res.writeHead(resultCode, this.headers);
   this.res.end(this.content);
 };
-route("httpapp", function(app) {
+route("devserver", function(app) {
   express = require("express");
   server = express();
   server.use(express.static(__dirname));
