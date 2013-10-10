@@ -18,7 +18,6 @@
 // {{{1 TODO
 //
 // - load/parse notes
-//   - load file/http
 // - logwriter
 // - `_`-route with forward, including serving .png|.gif|.js
 //   - NB: raw url-arg
@@ -1819,6 +1818,48 @@ route("gencontent", function(app) {
   // TODO
   console.log(mtime("/solsort.ls"));
 });
+// {{{2 notes
+posts = undefined;
+route("notes", function(app) {
+  if(!posts) {
+    loadPosts(app);
+  } else if(true) {
+    renderPost(app);
+  };
+});
+_jsCache = {};
+loadjs = function(modulename, callback) {
+  if(_jsCache[modulename]) {
+    return callback(null, _jsCache[modulename]);
+  };
+  loadfile("/" + modulename + ".js", function(err, src) {
+    if(err) {
+      throw err;
+    };
+    fn = new Function("exports", src);
+    console.log(fn);
+    result = {};
+    fn(result);
+    _jsCache[modulename] = callback;
+    callback(null, result);
+  });
+};
+markdown2jsonml = function(md, callback) {
+  loadjs("markdown", function(err, markdown) {
+    console.log(markdown);
+    console.log(markdown.toHTMLTree(md));
+    callback(null, undefined);
+  });
+};
+loadPosts = function(app) {
+  gendoc(function(err, markdownString) {
+    markdownString = markdownString.replace(new RegExp("^[\\s\\S]*\n# Posts[^#]*"), "");
+    markdown2jsonml(markdownString, function(err, result) {
+      app.done(webpage([["pre", markdownString]]));
+    });
+  });
+};
+renderPost = function(app) {};
 // {{{2 test
 route("test", function(app) {
   foreach(_testcases, function(name, fn) {
@@ -1831,7 +1872,12 @@ route("test", function(app) {
 //
 route("pp", function(app) {
   app.log("prettyprinting");
-  gendoc();
+  gendoc(function(err, markdownString) {
+    if(err) {
+      return app.error(err);
+    };
+    savefile("/../README.md", markdownString);
+  });
   loadfile("/solsort.ls", function(err, source) {
     ast = ls2ast(source);
     savefile("/../solsort.ls", ast2ls(ast));
@@ -1856,7 +1902,7 @@ route("prettyprint", function(app) {
   });
 });
 // gendoc - Documentation generation {{{2
-gendoc = function() {
+gendoc = function(callback) {
   console.log("generating docs");
   loadfile("/solsort.ls", function(err, source) {
     lines = [];
@@ -1887,6 +1933,7 @@ gendoc = function() {
         wasCode = true;
       };
     });
+    callback(false, lines.join("\n"));
     savefile("/../README.md", lines.join("\n"));
   });
 };
