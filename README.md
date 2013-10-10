@@ -2036,7 +2036,7 @@ TODO
         fn = new Function("exports", src);
         result = {};
         fn(result);
-        _jsCache[modulename] = callback;
+        _jsCache[modulename] = result;
         callback(null, result);
       });
     };
@@ -2047,7 +2047,7 @@ TODO
     };
     loadPosts = function(app) {
       gendoc(function(err, markdownString) {
-        markdownString = markdownString.replace(new RegExp("^[\\s\\S]*\n# Posts[^#]*"), "");
+        markdownString = markdownString.replace(new RegExp("^[\\s\\S]*\n# Posts[^#]*"), "\n");
         posts = {}
         markdownString.replace(new RegExp("\n(##[^#](.*)[\\S\\s]*?)($|\n##[^#])", "g"), function(_, markdown, title) {
           title = normaliseString(title.trim())
@@ -2057,7 +2057,8 @@ TODO
       });
     };
     renderPost = function(app) {
-      title = normaliseString(app.args[1].trim());
+      title = normaliseString((app.args[1]||"").trim());
+      console.log(title, posts)
       markdown2html(posts[title] || "", function(err, result) {
         app.done(webpage([result]));
       });
@@ -2144,7 +2145,6 @@ prettyprints file, and generates documentation.
           };
         });
         callback(false, lines.join("\n"));
-        savefile("/../README.md", lines.join("\n"));
       });
     };
 

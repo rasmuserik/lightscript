@@ -1843,7 +1843,7 @@ loadjs = function(modulename, callback) {
     callback(null, result);
   });
 };
-markdown2html= function(md, callback) {
+markdown2html = function(md, callback) {
   loadjs("markdown", function(err, markdown) {
     callback(null, markdown.toHTMLTree(md));
   });
@@ -1851,17 +1851,17 @@ markdown2html= function(md, callback) {
 loadPosts = function(app) {
   gendoc(function(err, markdownString) {
     markdownString = markdownString.replace(new RegExp("^[\\s\\S]*\n# Posts[^#]*"), "\n");
-    posts = {}
+    posts = {};
     markdownString.replace(new RegExp("\n(##[^#](.*)[\\S\\s]*?)($|\n##[^#])", "g"), function(_, markdown, title) {
-      title = normaliseString(title.trim())
+      title = normaliseString(title.trim());
       posts[title] = markdown;
     });
     renderPost(app);
   });
 };
 renderPost = function(app) {
-  title = normaliseString((app.args[1]||"").trim());
-  console.log(title, posts)
+  title = normaliseString((app.args[1] || "").trim());
+  console.log(title, posts);
   markdown2html(posts[title] || "", function(err, result) {
     app.done(webpage([result]));
   });
