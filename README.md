@@ -129,7 +129,7 @@ Optimised function on node.js can trivially be emulated in the browser.
 ###`normaliseString` 
 We need to cleanup and canonise strings, if they should be used in urls.
 
-    normaliseString = function(Str) {
+    normaliseString = function(str) {
       return String(str).toLowerCase().replace("æ", "ae").replace("ø", "o").replace("å", "aa").replace(RegExp("[^a-zA-Z0-9_]+", "g"), "-");
     };
 
@@ -2026,37 +2026,42 @@ TODO
     });
     _jsCache = {};
     loadjs = function(modulename, callback) {
-        if(_jsCache[modulename]) {
-          return callback(null, _jsCache[modulename]);
-        }
-        loadfile("/" + modulename + ".js", function(err, src) {
-          if(err) {
-            throw err;
-          }
-          fn = new Function("exports", src);
-          console.log(fn);
-          result = {};
-          fn(result);
-          _jsCache[modulename] = callback
-          callback(null, result);
-        });
-    }
-    markdown2jsonml = function(md, callback) {
-      loadjs("markdown", function(err, markdown) {
-        console.log(markdown);
-        console.log(markdown.toHTMLTree(md));
-        callback(null, undefined);
+      if(_jsCache[modulename]) {
+        return callback(null, _jsCache[modulename]);
+      };
+      loadfile("/" + modulename + ".js", function(err, src) {
+        if(err) {
+          throw err;
+        };
+        fn = new Function("exports", src);
+        result = {};
+        fn(result);
+        _jsCache[modulename] = callback;
+        callback(null, result);
       });
-    }
+    };
+    markdown2html= function(md, callback) {
+      loadjs("markdown", function(err, markdown) {
+        callback(null, markdown.toHTMLTree(md));
+      });
+    };
     loadPosts = function(app) {
       gendoc(function(err, markdownString) {
         markdownString = markdownString.replace(new RegExp("^[\\s\\S]*\n# Posts[^#]*"), "");
-        markdown2jsonml(markdownString, function(err, result) {
-          app.done(webpage([["pre", markdownString]]));
+        posts = {}
+        markdownString.replace(new RegExp("\n(##[^#](.*)[\\S\\s]*?)($|\n##[^#])", "g"), function(_, markdown, title) {
+          title = normaliseString(title.trim())
+          posts[title] = markdown;
         });
+        renderPost(app);
       });
     };
-    renderPost = function(app) {};
+    renderPost = function(app) {
+      title = normaliseString(app.args[1].trim());
+      markdown2html(posts[title] || "", function(err, result) {
+        app.done(webpage([result]));
+      });
+    };
 
 ## test
 

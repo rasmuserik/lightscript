@@ -110,7 +110,7 @@ sleep = function(s, fn) {
 // String utilities {{{2
 // `normaliseString` {{{3
 // We need to cleanup and canonise strings, if they should be used in urls.
-normaliseString = function(Str) {
+normaliseString = function(str) {
   return String(str).toLowerCase().replace("æ", "ae").replace("ø", "o").replace("å", "aa").replace(RegExp("[^a-zA-Z0-9_]+", "g"), "-");
 };
 // Object utilities {{{2
@@ -1837,29 +1837,35 @@ loadjs = function(modulename, callback) {
       throw err;
     };
     fn = new Function("exports", src);
-    console.log(fn);
     result = {};
     fn(result);
-    _jsCache[modulename] = callback;
+    _jsCache[modulename] = result;
     callback(null, result);
   });
 };
-markdown2jsonml = function(md, callback) {
+markdown2html= function(md, callback) {
   loadjs("markdown", function(err, markdown) {
-    console.log(markdown);
-    console.log(markdown.toHTMLTree(md));
-    callback(null, undefined);
+    callback(null, markdown.toHTMLTree(md));
   });
 };
 loadPosts = function(app) {
   gendoc(function(err, markdownString) {
-    markdownString = markdownString.replace(new RegExp("^[\\s\\S]*\n# Posts[^#]*"), "");
-    markdown2jsonml(markdownString, function(err, result) {
-      app.done(webpage([["pre", markdownString]]));
+    markdownString = markdownString.replace(new RegExp("^[\\s\\S]*\n# Posts[^#]*"), "\n");
+    posts = {}
+    markdownString.replace(new RegExp("\n(##[^#](.*)[\\S\\s]*?)($|\n##[^#])", "g"), function(_, markdown, title) {
+      title = normaliseString(title.trim())
+      posts[title] = markdown;
     });
+    renderPost(app);
   });
 };
-renderPost = function(app) {};
+renderPost = function(app) {
+  title = normaliseString((app.args[1]||"").trim());
+  console.log(title, posts)
+  markdown2html(posts[title] || "", function(err, result) {
+    app.done(webpage([result]));
+  });
+};
 // {{{2 test
 route("test", function(app) {
   foreach(_testcases, function(name, fn) {
@@ -1934,7 +1940,6 @@ gendoc = function(callback) {
       };
     });
     callback(false, lines.join("\n"));
-    savefile("/../README.md", lines.join("\n"));
   });
 };
 // {{{1 Posts
