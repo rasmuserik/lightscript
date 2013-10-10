@@ -50,6 +50,13 @@ var isClass;
 // and is written in the LightScript language itself, using a literate programming style. 
 // This text is both documentation and source code.
 // 
+// {{{1 TODO
+//
+// - load/parse notes
+//   - load file/http
+// - logwriter
+// - `_`-route with forward, including serving .png|.gif|.js
+//   - NB: raw url-arg
 // Utility library {{{1
 // {{{2 Class
 isClass = function(obj, cls) {
@@ -1947,7 +1954,7 @@ HttpApp.prototype.done = function(result) {
   this.res.writeHead(resultCode, this.headers);
   this.res.end(this.content);
 };
-route("httpapp", function(app) {
+route("devserver", function(app) {
   var port;
   var server;
   var express;
@@ -2100,7 +2107,7 @@ gendoc = function() {
     savefile("/../README.md", lines.join("\n"));
   });
 };
-// {{{1 Notes
+// {{{1 Posts
 // 
 // These notes are articles, that will automatically be convereted to articles on the solsort.com website.
 //

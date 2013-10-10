@@ -15,6 +15,13 @@ This file contains
 and is written in the LightScript language itself, using a literate programming style. 
 This text is both documentation and source code.
 
+# TODO
+
+- load/parse notes
+  - load file/http
+- logwriter
+- `_`-route with forward, including serving .png|.gif|.js
+  - NB: raw url-arg
 #Utility library 
 ## Class
 
@@ -1931,7 +1938,7 @@ TODO
       this.res.writeHead(resultCode, this.headers);
       this.res.end(this.content);
     };
-    route("httpapp", function(app) {
+    route("devserver", function(app) {
       express = require("express");
       server = express();
       server.use(express.static(__dirname));
@@ -2087,7 +2094,7 @@ prettyprints file, and generates documentation.
       });
     };
 
-# Notes
+# Posts
 
 These notes are articles, that will automatically be convereted to articles on the solsort.com website.
 

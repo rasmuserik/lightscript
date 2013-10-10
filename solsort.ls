@@ -15,6 +15,13 @@
 // and is written in the LightScript language itself, using a literate programming style. 
 // This text is both documentation and source code.
 // 
+// {{{1 TODO
+//
+// - load/parse notes
+//   - load file/http
+// - logwriter
+// - `_`-route with forward, including serving .png|.gif|.js
+//   - NB: raw url-arg
 // Utility library {{{1
 // {{{2 Class
 isClass = function(obj, cls) {
@@ -1883,7 +1890,7 @@ gendoc = function() {
     savefile("/../README.md", lines.join("\n"));
   });
 };
-// {{{1 Notes
+// {{{1 Posts
 // 
 // These notes are articles, that will automatically be convereted to articles on the solsort.com website.
 //
