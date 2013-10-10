@@ -16,72 +16,6 @@ and is written in the LightScript language itself, using a literate programming 
 This text is both documentation and source code.
 
 #Utility library 
-## Test
-### Constructor
-
-    Tester = function(name) {
-      timeout = 5;
-      this.testCount = 0;
-      this.errors = [];
-      this.name = name;
-      self = this;
-      this.timeout = sleep(timeout, function() {
-        self.error("timeout after " + timeout + "s");
-        self.done();
-      });
-    };
-
-### done
-
-    Tester.prototype.done = function() {
-      clearTimeout(this.timeout);
-      if(this.errors.length) {
-        console.log(this.errors);
-      };
-      console.log(this.name + ": " + this.errors.length + " errors out of " + this.testCount + " tests");
-      if(this.errors.length) {
-        throw this.errors;
-      };
-    };
-
-### equals
-
-    Tester.prototype.equals = function(a, b, msg) {
-      this.testCount = this.testCount + 1;
-      if(a !== b) {
-        this.errors.push({
-          val : a,
-          expected : b,
-          msg : msg || "equals error"
-        });
-      };
-    };
-
-### deepEquals
-
-    Tester.prototype.deepEquals = function(a, b, msg) {
-      this.equals(JSON.stringify(a), JSON.stringify(b), msg || "deepEquals error");
-    };
-
-### assert
-
-    Tester.prototype.assert = function(bool, msg) {
-      this.equals(bool, true, msg || "assert error");
-    };
-
-### error
-
-    Tester.prototype.error = function(msg) {
-      this.assert(false, msg || "error");
-    };
-
-### addTest
-
-    _testcases = {};
-    addTest = function(name, fn) {
-      _testcases[name] = fn;
-    };
-
 ## Class
 
     isClass = function(obj, cls) {
@@ -198,7 +132,7 @@ We need to cleanup and canonise strings, if they should be used in urls.
 
     isObject = function(obj) {
       return isClass(obj, Object);
-    }
+    };
 
 ###extend(dst, src) 
 
@@ -220,7 +154,7 @@ We need to cleanup and canonise strings, if they should be used in urls.
       return dst;
     };
 
-##foreach 
+###foreach 
 
     foreach = function(obj, fn) {
       Object.keys(obj).forEach(function(key) {
@@ -274,7 +208,73 @@ TODO: error handling
       };
     };
 
-##XML / HTML 
+# Testing
+## Constructor
+
+    Tester = function(name) {
+      timeout = 5;
+      this.testCount = 0;
+      this.errors = [];
+      this.name = name;
+      self = this;
+      this.timeout = sleep(timeout, function() {
+        self.error("timeout after " + timeout + "s");
+        self.done();
+      });
+    };
+
+## done
+
+    Tester.prototype.done = function() {
+      clearTimeout(this.timeout);
+      if(this.errors.length) {
+        console.log(this.errors);
+      };
+      console.log(this.name + ": " + this.errors.length + " errors out of " + this.testCount + " tests");
+      if(this.errors.length) {
+        throw this.errors;
+      };
+    };
+
+## equals
+
+    Tester.prototype.equals = function(a, b, msg) {
+      this.testCount = this.testCount + 1;
+      if(a !== b) {
+        this.errors.push({
+          val : a,
+          expected : b,
+          msg : msg || "equals error"
+        });
+      };
+    };
+
+## deepEquals
+
+    Tester.prototype.deepEquals = function(a, b, msg) {
+      this.equals(JSON.stringify(a), JSON.stringify(b), msg || "deepEquals error");
+    };
+
+## assert
+
+    Tester.prototype.assert = function(bool, msg) {
+      this.equals(bool, true, msg || "assert error");
+    };
+
+## error
+
+    Tester.prototype.error = function(msg) {
+      this.assert(false, msg || "error");
+    };
+
+## addTest
+
+    _testcases = {};
+    addTest = function(name, fn) {
+      _testcases[name] = fn;
+    };
+
+#XML / HTML 
 ###LsXml class 
 
     LsXml = function(obj) {
@@ -288,7 +288,7 @@ TODO: error handling
 
 this._jsonml.forEach(canoniseJsonml);
 
-    };
+      };
     LsXml.prototype.jsonml = function() {
       return this._jsonml;
     };
@@ -1987,7 +1987,7 @@ TODO
         app.done(webpage([["h1", "hello"]]));
       } else if(isBrowser) {
         app.done("hi");
-      }
+      };
     });
     route("text", function(app) {
       app.send("Hello\n");

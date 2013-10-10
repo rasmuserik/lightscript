@@ -16,58 +16,6 @@
 // This text is both documentation and source code.
 // 
 // Utility library {{{1
-// {{{2 Test
-// {{{3 Constructor
-Tester = function(name) {
-  timeout = 5;
-  this.testCount = 0;
-  this.errors = [];
-  this.name = name;
-  self = this;
-  this.timeout = sleep(timeout, function() {
-    self.error("timeout after " + timeout + "s");
-    self.done();
-  });
-};
-// {{{3 done
-Tester.prototype.done = function() {
-  clearTimeout(this.timeout);
-  if(this.errors.length) {
-    console.log(this.errors);
-  };
-  console.log(this.name + ": " + this.errors.length + " errors out of " + this.testCount + " tests");
-  if(this.errors.length) {
-    throw this.errors;
-  };
-};
-// {{{3 equals
-Tester.prototype.equals = function(a, b, msg) {
-  this.testCount = this.testCount + 1;
-  if(a !== b) {
-    this.errors.push({
-      val : a,
-      expected : b,
-      msg : msg || "equals error"
-    });
-  };
-};
-// {{{3 deepEquals
-Tester.prototype.deepEquals = function(a, b, msg) {
-  this.equals(JSON.stringify(a), JSON.stringify(b), msg || "deepEquals error");
-};
-// {{{3 assert
-Tester.prototype.assert = function(bool, msg) {
-  this.equals(bool, true, msg || "assert error");
-};
-// {{{3 error
-Tester.prototype.error = function(msg) {
-  this.assert(false, msg || "error");
-};
-// {{{3 addTest
-_testcases = {};
-addTest = function(name, fn) {
-  _testcases[name] = fn;
-};
 // {{{2 Class
 isClass = function(obj, cls) {
   return typeof obj === "object" && obj.constructor === cls;
@@ -180,7 +128,7 @@ extendExcept = function(dst, src, except) {
   });
   return dst;
 };
-// foreach {{{2
+// foreach {{{3
 foreach = function(obj, fn) {
   Object.keys(obj).forEach(function(key) {
     fn(key, obj[key]);
@@ -224,7 +172,59 @@ savefile = function(filename, content, callback) {
     throw "not implemented";
   };
 };
-// XML / HTML {{{2
+// {{{1 Testing
+// {{{2 Constructor
+Tester = function(name) {
+  timeout = 5;
+  this.testCount = 0;
+  this.errors = [];
+  this.name = name;
+  self = this;
+  this.timeout = sleep(timeout, function() {
+    self.error("timeout after " + timeout + "s");
+    self.done();
+  });
+};
+// {{{2 done
+Tester.prototype.done = function() {
+  clearTimeout(this.timeout);
+  if(this.errors.length) {
+    console.log(this.errors);
+  };
+  console.log(this.name + ": " + this.errors.length + " errors out of " + this.testCount + " tests");
+  if(this.errors.length) {
+    throw this.errors;
+  };
+};
+// {{{2 equals
+Tester.prototype.equals = function(a, b, msg) {
+  this.testCount = this.testCount + 1;
+  if(a !== b) {
+    this.errors.push({
+      val : a,
+      expected : b,
+      msg : msg || "equals error"
+    });
+  };
+};
+// {{{2 deepEquals
+Tester.prototype.deepEquals = function(a, b, msg) {
+  this.equals(JSON.stringify(a), JSON.stringify(b), msg || "deepEquals error");
+};
+// {{{2 assert
+Tester.prototype.assert = function(bool, msg) {
+  this.equals(bool, true, msg || "assert error");
+};
+// {{{2 error
+Tester.prototype.error = function(msg) {
+  this.assert(false, msg || "error");
+};
+// {{{2 addTest
+_testcases = {};
+addTest = function(name, fn) {
+  _testcases[name] = fn;
+};
+// XML / HTML {{{1
 // LsXml class {{{3
 LsXml = function(obj) {
   if(typeof obj === "string") {
