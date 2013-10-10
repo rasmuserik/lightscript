@@ -1,6 +1,5 @@
 var gendoc;
 var files;
-var handler;
 var call;
 var route;
 var _routes;
@@ -1999,7 +1998,7 @@ call = function() {
   app.dispatch();
 };
 // {{{1 Applications
-// {{{2 Default
+// {{{2 Default + test+experiment
 route("default", function(app) {
   if(isNode) {
     app.done(webpage([["h1", "hello"]]));
@@ -2011,32 +2010,12 @@ route("text", function(app) {
   app.send("Hello\n");
   app.done("world");
 });
-// Solsort website / server {{{2
-// express handler {{{3
-handler = function(req, res, next) {
-  if(req.url[1] === "_") {
-    res.end(webpage([["h1", "hello"]]));
-  } else if(true) {
-    next();
-  };
-};
-// static data {{{3
-files = {};
-// devserver {{{3
-route("devserver", function(app) {
-  var port;
-  var server;
-  var express;
-  call(app, "gencontent");
-  express = require("express");
-  server = express();
-  server.use(express.static(__dirname));
-  server.use(handler);
-  port = 4444;
-  server.listen(port);
-  console.log("starting web server on port", port);
+route("_", function(app) {
+  app.done(webpage(["in route _", ["p", "args[0]:", app.args[0]]]));
 });
-// gencontent
+// Solsort website / server {{{2
+// {{{2 gencontent / generate static data
+files = {};
 route("gencontent", function(app) {
   // TODO
   console.log(mtime("/solsort.ls"));
