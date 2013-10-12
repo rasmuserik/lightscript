@@ -5,7 +5,6 @@ var markdown2html;
 var loadjs;
 var _jsCache;
 var posts;
-var files;
 var call;
 var route;
 var _routes;
@@ -572,21 +571,6 @@ xml2jsonml = function(xml) {
   };
   return tag;
 };
-// {{{3 canoniseJsonml
-/*
-canoniseJsonml = function(jsonml) {
-  if(Array.isArray(jsonml) && !isObject(jsonml[1])) {
-    console.log("HERE", jsonml);
-    jsonml.unshift(jsonml[0]);
-    jsonml[1] = {};
-    i = 2;
-    while(i < jsonml.length) {
-      canoniseJsonml(jsonml[i]);
-      ++i;
-    }
-  }
-}
-*/
 // {{{3 jsonml2xml
 jsonml2xml = function(jsonml) {
   var acc;
@@ -2085,21 +2069,6 @@ HttpApp.prototype.done = function(result) {
   this.res.end(this.content);
   this.log("done", this.req.url);
 };
-route("devserver", function(app) {
-  var port;
-  var server;
-  var express;
-  express = require("express");
-  server = express();
-  server.use(express.static(__dirname));
-  server.use(function(req, res, next) {
-    var httpApp;
-    httpApp = new HttpApp(req, res);
-    httpApp.dispatch();
-  });
-  port = 4444;
-  server.listen(port);
-});
 // {{{2 CallApp TODO
 CallApp = function(args) {
   this.clientId = newId();
@@ -2138,6 +2107,24 @@ call = function() {
   app.dispatch();
 };
 // {{{1 Applications
+//{{{2 devserver
+route("devserver", function(app) {
+  var port;
+  var server;
+  var express;
+  express = require("express");
+  server = express();
+  server.use(express.static(__dirname));
+  server.use(express.static(__dirname + "/../../oldweb"));
+  server.use(function(req, res, next) {
+    var httpApp;
+    httpApp = new HttpApp(req, res);
+    httpApp.dispatch();
+  });
+  port = app.param["port"] || 4444;
+  server.listen(port);
+  app.log("starting devserver on port " + port);
+});
 // {{{2 Default + test+experiment
 route("default", function(app) {
   if(isNode) {
@@ -2146,20 +2133,10 @@ route("default", function(app) {
     app.done("hi");
   };
 });
-route("text", function(app) {
-  app.send("Hello\n");
-  app.done("world");
-});
 route("_", function(app) {
   app.done(webpage(["in route _", ["p", "args[0]:", app.args[0]]]));
 });
 // Solsort website / server {{{2
-// {{{2 gencontent / generate static data
-files = {};
-route("gencontent", function(app) {
-  // TODO
-  console.log(mtime("/solsort.ls"));
-});
 // {{{2 notes
 posts = undefined;
 route("notes", function(app) {
@@ -2208,7 +2185,6 @@ loadPosts = function(app) {
 renderPost = function(app) {
   var title;
   title = normaliseString((app.args[1] || "").trim());
-  console.log(title, posts);
   markdown2html(posts[title] || "", function(err, result) {
     app.done(webpage([result]));
   });
@@ -2259,7 +2235,6 @@ route("prettyprint", function(app) {
 });
 // gendoc - Documentation generation {{{2
 gendoc = function(callback) {
-  console.log("generating docs");
   loadfile("/solsort.ls", function(err, source) {
     var wasCode;
     var commentRE;
