@@ -111,12 +111,13 @@ isClass = function(obj, cls) {
 isNode = typeof process === "object" && typeof process["versions"] === "object" && typeof process["versions"]["node"] === "string";
 isBrowser = typeof navigator === "object" && typeof navigator["userAgent"] === "string" && navigator["userAgent"].indexOf("Mozilla") !== - 1;
 newId = function() {
+  len = 9;
   if(isNode) {
-    buf = require("crypto").randomBytes(12);
+    buf = require("crypto").randomBytes(len);
   } else if(true) {
     buf = [];
     i = 0;
-    while(i < 12) {
+    while(i < len) {
       buf.push(Date.now() * Math.random() & 255);
       i = i + 1;
     };
@@ -1849,7 +1850,7 @@ HttpApp.prototype.done = function(result) {
   };
   this.res.writeHead(this.resultCode, this.headers);
   this.res.end(this.content);
-  this.log("done", this.req.url);
+  this.log("done", this.req.url, this.req.headers);
 };
 // {{{2 CallApp TODO
 CallApp = function(args) {
