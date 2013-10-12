@@ -2101,7 +2101,10 @@ TODO
 ## Default + test+experiment
 
     route("default", function(app) {
-      if(isNode) {
+      if(app.appType === "http") {
+        app.redirect("http://www.solsort.com/");
+        app.done();
+      } else if(isNode) {
         app.done(webpage([["h1", "hello"]]));
       } else if(isBrowser) {
         app.done("hi");
