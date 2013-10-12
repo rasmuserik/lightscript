@@ -4,7 +4,103 @@
 // - logwriter
 // - `_`-route with forward, including serving .png|.gif|.js
 //   - NB: raw url-arg
+// {{{1 Testing
+// {{{2 Constructor
+Tester = function(name) {
+  timeout = 5;
+  this.testCount = 0;
+  this.errors = [];
+  this.name = name;
+  self = this;
+  this.timeout = sleep(timeout, function() {
+    self.error("timeout after " + timeout + "s");
+    self.done();
+  });
+};
+// {{{2 done
+Tester.prototype.done = function() {
+  clearTimeout(this.timeout);
+  if(this.errors.length) {
+    console.log(this.errors);
+  };
+  console.log(this.name + ": " + this.errors.length + " errors out of " + this.testCount + " tests");
+  if(this.errors.length) {
+    throw this.errors;
+  };
+};
+// {{{2 equals
+Tester.prototype.equals = function(a, b, msg) {
+  this.testCount = this.testCount + 1;
+  if(a !== b) {
+    this.errors.push({
+      val : a,
+      expected : b,
+      msg : msg || "equals error"
+    });
+  };
+};
+// {{{2 deepEquals
+Tester.prototype.deepEquals = function(a, b, msg) {
+  this.equals(JSON.stringify(a), JSON.stringify(b), msg || "deepEquals error");
+};
+// {{{2 assert
+Tester.prototype.assert = function(bool, msg) {
+  this.equals(bool, true, msg || "assert error");
+};
+// {{{2 error
+Tester.prototype.error = function(msg) {
+  this.assert(false, msg || "error");
+};
+// {{{2 addTest
+_testcases = {};
+addTest = function(name, fn) {
+  _testcases[name] = fn;
+};
 // Utility library {{{1
+// {{{2 base64 encode/decode
+base64dict = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/="
+base64encode = function(buf) {
+  if(typeof buf === "string") {
+    str = buf;
+    buf = new Uint8Array(str.length);
+    pos = 0;
+    while(pos < str.length) {
+      buf[pos] = str.charCodeAt(pos);
+      ++pos;
+    }
+  }
+  dict = dict || base64dict;
+  pos = 0;
+  result = ""
+  while(pos < buf.length) {
+    num = buf[pos];
+    ++pos;
+    num = num << 8;
+    if(pos < buf.length) {
+      num += buf[pos];
+    };
+    ++pos;
+    num = num << 8;
+    if(pos < buf.length) {
+      num += buf[pos];
+    };
+    ++pos;
+    result += dict[(num>>18) &63] + dict[(num>>12)&63] + dict[(num>>6)&63] + dict[(num)&63];
+  }
+  if(pos == buf.length + 1) {
+    result = result.slice(0,-1) + dict[64];
+  }
+  if(pos == buf.length + 2) {
+    result = result.slice(0,-2) + dict[64] + dict[64];
+  }
+  return result;
+}
+addTest("base64", function(test) {
+  test.equals(base64encode("any carnal pleasure."), "YW55IGNhcm5hbCBwbGVhc3VyZS4=");
+  test.equals(base64encode("any carnal pleasure"), "YW55IGNhcm5hbCBwbGVhc3VyZQ==");
+  test.equals(base64encode("any carnal pleasur"), "YW55IGNhcm5hbCBwbGVhc3Vy");
+  test.done();
+});
 // {{{2 Class
 isClass = function(obj, cls) {
   return typeof obj === "object" && obj.constructor === cls;
@@ -14,18 +110,20 @@ isClass = function(obj, cls) {
 // We need to distinguish between the different platforms:
 isNode = typeof process === "object" && typeof process["versions"] === "object" && typeof process["versions"]["node"] === "string";
 isBrowser = typeof navigator === "object" && typeof navigator["userAgent"] === "string" && navigator["userAgent"].indexOf("Mozilla") !== - 1;
-if(isNode) {
   newId = function() {
-    buf = require("crypto").randomBytes(12);
-    return "" + buf.readUInt32LE(0) + buf.readUInt32LE(4) + buf.readUInt32LE(8);
+    if(isNode) {
+      buf = require("crypto").randomBytes(12);
+    } else {
+      buf = [];
+      i = 0;
+      while(i < 12) {
+        buf.push(Date.now() * Math.random() & 255);
+        ++i;
+      }
+    }
+    return base64encode(buf);
   };
-} else if(true) {
-  newId = function() {
-    return ("" + Date.now() % 100000000 * Math.random()).replace(".", "");
-  };
-};
 PID = newId();
-//
 // Implementation of try..catch as a library instead of a part of the language. 
 // This also has the benefit that trycatch can be used in expressions:
 trycatch = Function("return function trycatch(fn,handle){try{return fn();}catch(e){return handle(e);}}")();
@@ -175,60 +273,15 @@ savefile = function(filename, content, callback) {
     throw "not implemented";
   };
 };
-// {{{1 Testing
-// {{{2 Constructor
-Tester = function(name) {
-  timeout = 5;
-  this.testCount = 0;
-  this.errors = [];
-  this.name = name;
-  self = this;
-  this.timeout = sleep(timeout, function() {
-    self.error("timeout after " + timeout + "s");
-    self.done();
-  });
-};
-// {{{2 done
-Tester.prototype.done = function() {
-  clearTimeout(this.timeout);
-  if(this.errors.length) {
-    console.log(this.errors);
-  };
-  console.log(this.name + ": " + this.errors.length + " errors out of " + this.testCount + " tests");
-  if(this.errors.length) {
-    throw this.errors;
-  };
-};
-// {{{2 equals
-Tester.prototype.equals = function(a, b, msg) {
-  this.testCount = this.testCount + 1;
-  if(a !== b) {
-    this.errors.push({
-      val : a,
-      expected : b,
-      msg : msg || "equals error"
-    });
-  };
-};
-// {{{2 deepEquals
-Tester.prototype.deepEquals = function(a, b, msg) {
-  this.equals(JSON.stringify(a), JSON.stringify(b), msg || "deepEquals error");
-};
-// {{{2 assert
-Tester.prototype.assert = function(bool, msg) {
-  this.equals(bool, true, msg || "assert error");
-};
-// {{{2 error
-Tester.prototype.error = function(msg) {
-  this.assert(false, msg || "error");
-};
-// {{{2 addTest
-_testcases = {};
-addTest = function(name, fn) {
-  _testcases[name] = fn;
-};
 // {{{1 Log writer
-log = undefined;
+log = function() {
+      logObject({
+        log : arraycopy(arguments),
+        type : "nodejs",
+        pid : PID
+      });
+    };
+
 logObject = undefined;
 if(isNode) {
   thisTick(function() {
@@ -241,13 +294,6 @@ if(isNode) {
     writeStream = undefined;
     if(!fs.existsSync(logDir)) {
       fs.mkdirSync(logDir);
-    };
-    log = function() {
-      logObject({
-        log : arraycopy(arguments),
-        type : "nodejs",
-        pid : PID
-      });
     };
     logObject = function(obj) {
       now = new Date();
@@ -267,10 +313,15 @@ if(isNode) {
         writeStream = fs.createWriteStream(name, {flags : "a"});
         fname = name;
       };
+      console.log(JSON.stringify(obj));
       writeStream.write(JSON.stringify(obj) + "\n");
     };
-    console.log(logObject, writeStream);
   });
+} else {
+  // TODO
+  logObject = function(obj) {
+    console.log(obj);
+  }
 };
 // XML / HTML {{{1
 // LsXml class {{{3
@@ -1392,6 +1443,9 @@ nextTick(function() {
   rstToAstTransform(["call", "*()", ["call", ".", "?obj", ["str", "?method"]], "??args"], ["call", "?method", "?obj", "??args"]);
   rstToAstTransform(["call", "var", "?val"], "?val");
   rstToAstTransform(["id", "(", "?val"], "?val");
+  rstToAst.pattern(["call", "*=", "?target", "?val"], function(match, ast) {
+    return rstToAst.match(ast.fromList(matchReplace(match, ["call", "=", "?target", ["call", "*", "?target", "?val"]])));
+  });
   rstToAst.pattern(["call", "+=", "?target", "?val"], function(match, ast) {
     return rstToAst.match(ast.fromList(matchReplace(match, ["call", "=", "?target", ["call", "+", "?target", "?val"]])));
   });
@@ -1641,36 +1695,38 @@ nextTick(function() {
 // - rpc static returning json (both as http-rest, functioncalls, and later ipc)
 //
 // {{{2 Routing
-// App Dispatch {{{3
 _routes = {};
 route = function(name, fn) {
   _routes[name] = fn;
 };
 // {{{2 App
 App = function(args, param) {
-  this.clientId = newId();
-  this.args = args || [];
-  this.param = param || {};
+  this.clientId = this.clientId || newId();
+  this.args = this.args || args || [];
+  this.param = this.param || param || {};
+};
+App.prototype.log = function() {
+  logObject({
+    log : arraycopy(arguments),
+    appType : this.appType,
+    pid : PID,
+    clientId : this.clientId
+  });
 };
 App.prototype.error = function(msg) {
   this.log({error : msg});
   throw msg;
 };
-App.prototype.log = function() {
-  args = arraycopy(arguments);
-  // TODO: write log to file
-  args.unshift(Date.now());
-  console.log.apply(console, args);
-};
 App.prototype.dispatch = function() {
+  this.log("dispatch", this.args, this.param);
   routeName = this.args[0].split(".")[0];
   if(routeName[0] === "_") {
     routeName = "_";
   }(_routes[routeName] || _routes["default"])(this);
-  this.log("dispatch");
 };
 // {{{2 CmdApp
 CmdApp = function() {
+  this.clientId = newId();
   this.param = param = {};
   this.args = process.argv.slice(2).filter(function(s) {
     if(s[0] === "-") {
@@ -1688,6 +1744,7 @@ CmdApp = function() {
   });
 };
 CmdApp.prototype = Object.create(App.prototype);
+CmdApp.prototype.appType = "cmd";
 CmdApp.prototype.send = function(content) {
   this.log(content);
 };
@@ -1707,6 +1764,7 @@ if(isNode) {
 };
 // {{{2 WebApp
 WebApp = function() {
+  this.clientId = newId();
   this.param = param = {};
   paramString = location.href.split("?")[1];
   if(paramString) {
@@ -1722,6 +1780,7 @@ WebApp = function() {
   this.args = (location.hash || location.pathname).slice(1).split("?")[0].split("/");
 };
 WebApp.prototype = Object.create(App.prototype);
+WebApp.prototype.appType = "web";
 WebApp.prototype.send = function(content) {
   // TODO
   document.body.innerHTML = content;
@@ -1754,14 +1813,15 @@ HttpApp = function(req, res) {
   this.param = req.query;
   this.headers = {};
   this.args = req.url.slice(1).split("?")[0].split("/");
-  clientId = ((req.headers.cookie || "").match(RegExp("Xz=([0-9][0-9][0-9][0-9][0-9]*)")) || [])[1];
+  clientId = ((req.headers.cookie || "").match(RegExp("Xz=([a-zA-Z0-9+/=]+)")) || [])[1];
   if(!clientId) {
-    clientId = ("" + Math.random()).slice(2);
+    clientId = newId();
     this.headers["Set-Cookie"] = "Xz=" + clientId;
   };
   this.clientId = clientId;
 };
 HttpApp.prototype = Object.create(App.prototype);
+HttpApp.prototype.appType = "http";
 HttpApp.prototype.error = function(args) {
   this.log({error : args, url : this.req.url});
   this.res.end("Error: " + JSON.stringify(args));
@@ -1780,14 +1840,6 @@ HttpApp.prototype.send = function(content) {
   } else if(true) {
     this.content = content;
   };
-};
-HttpApp.prototype.log = function() {
-  logObject({
-    log : arraycopy(arguments),
-    type : "httpapp",
-    pid : PID,
-    clientId : this.clientId
-  });
 };
 HttpApp.prototype.canvas2d = function(w, h) {
   this.error("not implemented");
@@ -1814,6 +1866,7 @@ route("devserver", function(app) {
 });
 // {{{2 CallApp TODO
 CallApp = function(args) {
+  this.clientId = newId();
   this.app = args[0];
   this.callback = args[args.length - 1];
   if(typeof args[args.length - 2] === "object") {
@@ -1825,16 +1878,10 @@ CallApp = function(args) {
   };
 };
 CallApp.prototype = Object.create(App.prototype);
+CallApp.prototype.appType = "call";
 CallApp.prototype.error = function(err) {
   this.log({error : err});
   this.callback(err, this.content);
-};
-CallApp.prototype.log = function() {
-  logObject({
-    log : arraycopy(arguments),
-    type : "callapp",
-    pid : PID
-  });
 };
 CallApp.prototype.send = function(content) {
   this.content = content;
