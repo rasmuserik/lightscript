@@ -1767,6 +1767,9 @@ WebApp.prototype = Object.create(App.prototype);
 WebApp.prototype.appType = "web";
 WebApp.prototype.send = function(content) {
   // TODO
+  content = content.toString().replace(new RegExp(" href=\"http(s?)://", "g"), function(_, secure) {
+    return " href=\"/_" + secure + "/";
+  });
   document.body.innerHTML = content;
 };
 WebApp.prototype.canvas2d = function(w, h) {
@@ -1822,6 +1825,9 @@ HttpApp.prototype.send = function(content) {
   } else if(isClass(content, LsXml)) {
     this.content = "<!DOCTYPE html>" + content.toString();
     this.headers["Content-Type"] = "text/html";
+    this.content = this.content.replace(new RegExp(" href=\"http(s?)://", "g"), function(_, secure) {
+      return " href=\"/_" + secure + "/";
+    });
   } else if(true) {
     this.content = content;
   };
