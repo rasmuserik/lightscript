@@ -15,15 +15,15 @@ isClass = function(obj, cls) {
 isNode = typeof process === "object" && typeof process["versions"] === "object" && typeof process["versions"]["node"] === "string";
 isBrowser = typeof navigator === "object" && typeof navigator["userAgent"] === "string" && navigator["userAgent"].indexOf("Mozilla") !== - 1;
 if(isNode) {
-newId = function() { 
-  buf = require("crypto").randomBytes(12);
-  return "" + buf.readUInt32LE(0) + buf.readUInt32LE(4)+ buf.readUInt32LE(8);
-}
-} else {
-newId = function() { 
-    return ("" + (Date.now() % 100000000) * Math.random()).replace(".", ""); 
-}
-}
+  newId = function() {
+    buf = require("crypto").randomBytes(12);
+    return "" + buf.readUInt32LE(0) + buf.readUInt32LE(4) + buf.readUInt32LE(8);
+  };
+} else if(true) {
+  newId = function() {
+    return ("" + Date.now() % 100000000 * Math.random()).replace(".", "");
+  };
+};
 PID = newId();
 //
 // Implementation of try..catch as a library instead of a part of the language. 
@@ -96,7 +96,7 @@ if(isBrowser) {
 // {{{3 thisTick
 thisTick = function(fn) {
   fn();
-}
+};
 // `sleep` {{{3
 // - a more readable version of setTimeout, with reversed parameters, and time in seconds instead of milliseconds.
 //
@@ -241,17 +241,21 @@ if(isNode) {
     writeStream = undefined;
     if(!fs.existsSync(logDir)) {
       fs.mkdirSync(logDir);
-    }
+    };
     log = function() {
-      logObject ({log: arraycopy(arguments), type: "nodejs", pid: PID});
-    }
+      logObject({
+        log : arraycopy(arguments),
+        type : "nodejs",
+        pid : PID
+      });
+    };
     logObject = function(obj) {
       now = new Date();
       obj.date = Number(now);
       name = logDir + "/";
-      name += now.getUTCFullYear() + "-";
-      name += ("" + (now.getUTCMonth()+101)).slice(1) + "-";
-      name += ("0" + now.getUTCDate()).slice(-2) + ".log";
+      name = name + (now.getUTCFullYear() + "-");
+      name = name + (("" + (now.getUTCMonth() + 101)).slice(1) + "-");
+      name = name + (("0" + now.getUTCDate()).slice(- 2) + ".log");
       if(fname !== name) {
         if(fname) {
           oldname = fname;
@@ -259,15 +263,15 @@ if(isNode) {
             child_process.exec("bzip2 " + oldname);
           });
           writeStream.end();
-        }
-        writeStream = fs.createWriteStream(name, {flags: "a"});
+        };
+        writeStream = fs.createWriteStream(name, {flags : "a"});
         fname = name;
-      }
+      };
       writeStream.write(JSON.stringify(obj) + "\n");
     };
     console.log(logObject, writeStream);
   });
-}
+};
 // XML / HTML {{{1
 // LsXml class {{{3
 LsXml = function(obj) {
@@ -1649,9 +1653,9 @@ App = function(args, param) {
   this.param = param || {};
 };
 App.prototype.error = function(msg) {
-  this.log({error: msg});
+  this.log({error : msg});
   throw msg;
-}
+};
 App.prototype.log = function() {
   args = arraycopy(arguments);
   // TODO: write log to file
@@ -1759,7 +1763,7 @@ HttpApp = function(req, res) {
 };
 HttpApp.prototype = Object.create(App.prototype);
 HttpApp.prototype.error = function(args) {
-  this.log({error: args, url: this.req.url});
+  this.log({error : args, url : this.req.url});
   this.res.end("Error: " + JSON.stringify(args));
 };
 HttpApp.prototype.send = function(content) {
@@ -1778,8 +1782,13 @@ HttpApp.prototype.send = function(content) {
   };
 };
 HttpApp.prototype.log = function() {
-  logObject ({log: arraycopy(arguments), type: "httpapp", pid: PID, clientId: this.clientId});
-}
+  logObject({
+    log : arraycopy(arguments),
+    type : "httpapp",
+    pid : PID,
+    clientId : this.clientId
+  });
+};
 HttpApp.prototype.canvas2d = function(w, h) {
   this.error("not implemented");
 };
@@ -1817,12 +1826,16 @@ CallApp = function(args) {
 };
 CallApp.prototype = Object.create(App.prototype);
 CallApp.prototype.error = function(err) {
-  this.log({error: err});
+  this.log({error : err});
   this.callback(err, this.content);
 };
 CallApp.prototype.log = function() {
-  logObject({log: arraycopy(arguments), type: "callapp", pid: PID});
-}
+  logObject({
+    log : arraycopy(arguments),
+    type : "callapp",
+    pid : PID
+  });
+};
 CallApp.prototype.send = function(content) {
   this.content = content;
 };
