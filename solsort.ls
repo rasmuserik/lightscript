@@ -1,20 +1,3 @@
-// {{{1 Personal language, scripts and content
-//
-// ![](https://ssl.solsort.com/_logo.png) [![ci](https://secure.travis-ci.org/rasmuserik/lightscript.png)](http://travis-ci.org/rasmuserik/lightscript)
-//
-// Warning: this is a personal project, look at it on own risk. Not intended for other to work with (but feel free to peek at it nonetheless).
-//
-// This file contains
-// 
-// - Utility library + platform abstraction
-// - LightScript personal scripting language
-// - solsort.com website
-// - notes (textual content for the solsort.com website)
-// - Applications
-// 
-// and is written in the LightScript language itself, using a literate programming style. 
-// This text is both documentation and source code.
-// 
 // {{{1 TODO
 //
 // - load/parse notes
@@ -31,6 +14,17 @@ isClass = function(obj, cls) {
 // We need to distinguish between the different platforms:
 isNode = typeof process === "object" && typeof process["versions"] === "object" && typeof process["versions"]["node"] === "string";
 isBrowser = typeof navigator === "object" && typeof navigator["userAgent"] === "string" && navigator["userAgent"].indexOf("Mozilla") !== - 1;
+if(isNode) {
+newId = function() { 
+  buf = require("crypto").randomBytes(12);
+  return "" + buf.readUInt32LE(0) + buf.readUInt32LE(4)+ buf.readUInt32LE(8);
+}
+} else {
+newId = function() { 
+    return ("" + (Date.now() % 100000000) * Math.random()).replace(".", ""); 
+}
+}
+PID = newId();
 //
 // Implementation of try..catch as a library instead of a part of the language. 
 // This also has the benefit that trycatch can be used in expressions:
@@ -99,7 +93,10 @@ if(isBrowser) {
     setTimeout(fn, 0);
   };
 };
-// 
+// {{{3 thisTick
+thisTick = function(fn) {
+  fn();
+}
 // `sleep` {{{3
 // - a more readable version of setTimeout, with reversed parameters, and time in seconds instead of milliseconds.
 //
@@ -230,6 +227,47 @@ _testcases = {};
 addTest = function(name, fn) {
   _testcases[name] = fn;
 };
+// {{{1 Log writer
+log = undefined;
+logObject = undefined;
+if(isNode) {
+  thisTick(function() {
+    fs = require("fs");
+    child_process = require("child_process");
+    prevTime = 0;
+    writeLog = undefined;
+    logDir = __dirname + "/../logs";
+    fname = undefined;
+    writeStream = undefined;
+    if(!fs.existsSync(logDir)) {
+      fs.mkdirSync(logDir);
+    }
+    log = function() {
+      logObject ({log: arraycopy(arguments), type: "nodejs", pid: PID});
+    }
+    logObject = function(obj) {
+      now = new Date();
+      obj.date = Number(now);
+      name = logDir + "/";
+      name += now.getUTCFullYear() + "-";
+      name += ("" + (now.getUTCMonth()+101)).slice(1) + "-";
+      name += ("0" + now.getUTCDate()).slice(-2) + ".log";
+      if(fname !== name) {
+        if(fname) {
+          oldname = fname;
+          writeStream.on("close", function() {
+            child_process.exec("bzip2 " + oldname);
+          });
+          writeStream.end();
+        }
+        writeStream = fs.createWriteStream(name, {flags: "a"});
+        fname = name;
+      }
+      writeStream.write(JSON.stringify(obj) + "\n");
+    };
+    console.log(logObject, writeStream);
+  });
+}
 // XML / HTML {{{1
 // LsXml class {{{3
 LsXml = function(obj) {
@@ -1606,10 +1644,14 @@ route = function(name, fn) {
 };
 // {{{2 App
 App = function(args, param) {
-  this.clientId = String(Math.random()).slice(2);
+  this.clientId = newId();
   this.args = args || [];
   this.param = param || {};
 };
+App.prototype.error = function(msg) {
+  this.log({error: msg});
+  throw msg;
+}
 App.prototype.log = function() {
   args = arraycopy(arguments);
   // TODO: write log to file
@@ -1621,6 +1663,7 @@ App.prototype.dispatch = function() {
   if(routeName[0] === "_") {
     routeName = "_";
   }(_routes[routeName] || _routes["default"])(this);
+  this.log("dispatch");
 };
 // {{{2 CmdApp
 CmdApp = function() {
@@ -1641,14 +1684,11 @@ CmdApp = function() {
   });
 };
 CmdApp.prototype = Object.create(App.prototype);
-CmdApp.prototype.error = function(msg) {
-  throw msg;
-};
 CmdApp.prototype.send = function(content) {
   this.log(content);
 };
 CmdApp.prototype.canvas2d = function(w, h) {
-  this.err("canvas not supported in CmdApp");
+  this.error("canvas not supported in CmdApp");
 };
 CmdApp.prototype.done = function(result) {
   if(result) {
@@ -1678,9 +1718,6 @@ WebApp = function() {
   this.args = (location.hash || location.pathname).slice(1).split("?")[0].split("/");
 };
 WebApp.prototype = Object.create(App.prototype);
-WebApp.prototype.error = function(msg) {
-  throw msg;
-};
 WebApp.prototype.send = function(content) {
   // TODO
   document.body.innerHTML = content;
@@ -1722,7 +1759,8 @@ HttpApp = function(req, res) {
 };
 HttpApp.prototype = Object.create(App.prototype);
 HttpApp.prototype.error = function(args) {
-  this.res.end("Error: " + JSON.stringify(arraycopy(args)));
+  this.log({error: args, url: this.req.url});
+  this.res.end("Error: " + JSON.stringify(args));
 };
 HttpApp.prototype.send = function(content) {
   if(typeof content === "string") {
@@ -1739,6 +1777,9 @@ HttpApp.prototype.send = function(content) {
     this.content = content;
   };
 };
+HttpApp.prototype.log = function() {
+  logObject ({log: arraycopy(arguments), type: "httpapp", pid: PID, clientId: this.clientId});
+}
 HttpApp.prototype.canvas2d = function(w, h) {
   this.error("not implemented");
 };
@@ -1749,6 +1790,7 @@ HttpApp.prototype.done = function(result) {
   resultCode = 200;
   this.res.writeHead(resultCode, this.headers);
   this.res.end(this.content);
+  this.log("done", this.req.url);
 };
 route("devserver", function(app) {
   express = require("express");
@@ -1760,7 +1802,6 @@ route("devserver", function(app) {
   });
   port = 4444;
   server.listen(port);
-  console.log("starting web server on port", port);
 });
 // {{{2 CallApp TODO
 CallApp = function(args) {
@@ -1776,8 +1817,12 @@ CallApp = function(args) {
 };
 CallApp.prototype = Object.create(App.prototype);
 CallApp.prototype.error = function(err) {
+  this.log({error: err});
   this.callback(err, this.content);
 };
+CallApp.prototype.log = function() {
+  logObject({log: arraycopy(arguments), type: "callapp", pid: PID});
+}
 CallApp.prototype.send = function(content) {
   this.content = content;
 };
