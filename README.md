@@ -73,7 +73,7 @@
 #Utility library 
 ## base64 encode/decode
 
-    base64dict = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/="
+    base64dict = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
     base64encode = function(buf) {
       if(typeof buf === "string") {
         str = buf;
@@ -81,35 +81,35 @@
         pos = 0;
         while(pos < str.length) {
           buf[pos] = str.charCodeAt(pos);
-          ++pos;
-        }
-      }
+          pos = pos + 1;
+        };
+      };
       dict = dict || base64dict;
       pos = 0;
-      result = ""
+      result = "";
       while(pos < buf.length) {
         num = buf[pos];
-        ++pos;
+        pos = pos + 1;
         num = num << 8;
         if(pos < buf.length) {
-          num += buf[pos];
+          num = num + buf[pos];
         };
-        ++pos;
+        pos = pos + 1;
         num = num << 8;
         if(pos < buf.length) {
-          num += buf[pos];
+          num = num + buf[pos];
         };
-        ++pos;
-        result += dict[(num>>18) &63] + dict[(num>>12)&63] + dict[(num>>6)&63] + dict[(num)&63];
-      }
+        pos = pos + 1;
+        result = result + (dict[num >> 18 & 63] + dict[num >> 12 & 63] + dict[num >> 6 & 63] + dict[num & 63]);
+      };
       if(pos == buf.length + 1) {
-        result = result.slice(0,-1) + dict[64];
-      }
+        result = result.slice(0, - 1) + dict[64];
+      };
       if(pos == buf.length + 2) {
-        result = result.slice(0,-2) + dict[64] + dict[64];
-      }
+        result = result.slice(0, - 2) + dict[64] + dict[64];
+      };
       return result;
-    }
+    };
     addTest("base64", function(test) {
       test.equals(base64encode("any carnal pleasure."), "YW55IGNhcm5hbCBwbGVhc3VyZS4=");
       test.equals(base64encode("any carnal pleasure"), "YW55IGNhcm5hbCBwbGVhc3VyZQ==");
@@ -129,19 +129,19 @@ We need to distinguish between the different platforms:
 
     isNode = typeof process === "object" && typeof process["versions"] === "object" && typeof process["versions"]["node"] === "string";
     isBrowser = typeof navigator === "object" && typeof navigator["userAgent"] === "string" && navigator["userAgent"].indexOf("Mozilla") !== - 1;
-      newId = function() {
-        if(isNode) {
-          buf = require("crypto").randomBytes(12);
-        } else {
-          buf = [];
-          i = 0;
-          while(i < 12) {
-            buf.push(Date.now() * Math.random() & 255);
-            ++i;
-          }
-        }
-        return base64encode(buf);
+    newId = function() {
+      if(isNode) {
+        buf = require("crypto").randomBytes(12);
+      } else if(true) {
+        buf = [];
+        i = 0;
+        while(i < 12) {
+          buf.push(Date.now() * Math.random() & 255);
+          i = i + 1;
+        };
       };
+      return base64encode(buf);
+    };
     PID = newId();
 
 Implementation of try..catch as a library instead of a part of the language. 
@@ -330,13 +330,12 @@ TODO: error handling
 # Log writer
 
     log = function() {
-          logObject({
-            log : arraycopy(arguments),
-            type : "nodejs",
-            pid : PID
-          });
-        };
-    
+      logObject({
+        log : arraycopy(arguments),
+        type : "nodejs",
+        pid : PID
+      });
+    };
     logObject = undefined;
     if(isNode) {
       thisTick(function() {
@@ -372,13 +371,13 @@ TODO: error handling
           writeStream.write(JSON.stringify(obj) + "\n");
         };
       });
-    } else {
+    } else if(true) {
 
 TODO
 
       logObject = function(obj) {
         console.log(obj);
-      }
+      };
     };
 
 #XML / HTML 
@@ -578,23 +577,6 @@ actual content / data between tags
       };
       return tag;
     };
-
-### canoniseJsonml
-
-    /*
-    canoniseJsonml = function(jsonml) {
-      if(Array.isArray(jsonml) && !isObject(jsonml[1])) {
-        console.log("HERE", jsonml);
-        jsonml.unshift(jsonml[0]);
-        jsonml[1] = {};
-        i = 2;
-        while(i < jsonml.length) {
-          canoniseJsonml(jsonml[i]);
-          ++i;
-        }
-      }
-    }
-    */
 
 ### jsonml2xml
 
@@ -2046,17 +2028,6 @@ TODO
       this.res.end(this.content);
       this.log("done", this.req.url);
     };
-    route("devserver", function(app) {
-      express = require("express");
-      server = express();
-      server.use(express.static(__dirname));
-      server.use(function(req, res, next) {
-        httpApp = new HttpApp(req, res);
-        httpApp.dispatch();
-      });
-      port = 4444;
-      server.listen(port);
-    });
 
 ## CallApp TODO
 
@@ -2097,6 +2068,22 @@ TODO
     };
 
 # Applications
+## devserver
+
+    route("devserver", function(app) {
+      express = require("express");
+      server = express();
+      server.use(express.static(__dirname));
+      server.use(express.static(__dirname + "/../../oldweb"));
+      server.use(function(req, res, next) {
+        httpApp = new HttpApp(req, res);
+        httpApp.dispatch();
+      });
+      port = app.param["port"] || 4444;
+      server.listen(port);
+      app.log("starting devserver on port " + port);
+    });
+
 ## Default + test+experiment
 
     route("default", function(app) {
@@ -2106,25 +2093,11 @@ TODO
         app.done("hi");
       };
     });
-    route("text", function(app) {
-      app.send("Hello\n");
-      app.done("world");
-    });
     route("_", function(app) {
       app.done(webpage(["in route _", ["p", "args[0]:", app.args[0]]]));
     });
 
 ##Solsort website / server 
-## gencontent / generate static data
-
-    files = {};
-    route("gencontent", function(app) {
-
-TODO
-
-      console.log(mtime("/solsort.ls"));
-    });
-
 ## notes
 
     posts = undefined;
@@ -2169,7 +2142,6 @@ TODO
     };
     renderPost = function(app) {
       title = normaliseString((app.args[1] || "").trim());
-      console.log(title, posts);
       markdown2html(posts[title] || "", function(err, result) {
         app.done(webpage([result]));
       });
@@ -2225,7 +2197,6 @@ prettyprints file, and generates documentation.
 ##gendoc - Documentation generation 
 
     gendoc = function(callback) {
-      console.log("generating docs");
       loadfile("/solsort.ls", function(err, source) {
         lines = [];
         commentRE = RegExp("^ *// ?");
