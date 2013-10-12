@@ -1921,8 +1921,8 @@ App.prototype.error = function(msg) {
 };
 App.prototype.dispatch = function() {
   var routeName;
-  this.log("dispatch", this.args, this.param);
   routeName = this.args[0].split(".")[0];
+  this.log("dispatch", routeName, this.args, this.param);
   if(routeName[0] === "_") {
     routeName = "_";
   }(_routes[routeName] || _routes["default"])(this);
@@ -2023,6 +2023,7 @@ if(isBrowser) {
 // {{{2 HttpApp
 HttpApp = function(req, res) {
   var clientId;
+  this.resultCode = 200;
   this.req = req;
   this.res = res;
   this.param = req.query;
@@ -2059,13 +2060,19 @@ HttpApp.prototype.send = function(content) {
 HttpApp.prototype.canvas2d = function(w, h) {
   this.error("not implemented");
 };
+HttpApp.prototype.redirect = function(url) {
+  this.resultCode = 307;
+  this.headers["Location"] = url;
+};
+HttpApp.prototype.raw = function(mimetype, data) {
+  this.headers["Content-Type"] = mimetype;
+  this.content = data;
+};
 HttpApp.prototype.done = function(result) {
-  var resultCode;
   if(result) {
     this.send(result);
   };
-  resultCode = 200;
-  this.res.writeHead(resultCode, this.headers);
+  this.res.writeHead(this.resultCode, this.headers);
   this.res.end(this.content);
   this.log("done", this.req.url);
 };
@@ -2133,10 +2140,37 @@ route("default", function(app) {
     app.done("hi");
   };
 });
+//{{{2 _
 route("_", function(app) {
-  app.done(webpage(["in route _", ["p", "args[0]:", app.args[0]]]));
+  var url;
+  var type;
+  type = app.args[app.args.length - 1].split(".").slice(- 1)[0];
+  app.log(type);
+  if(type === "gif") {
+    require("fs").readFile(__dirname + "/../../oldweb/img/webbug.gif", function(err, data) {
+      if(err) {
+        return app.error(err);
+      };
+      app.raw("image/gif", data);
+      app.done();
+    });
+  } else if(type === "png") {
+    require("fs").readFile(__dirname + "/../../oldweb/img/logicon.png", function(err, data) {
+      if(err) {
+        return app.error(err);
+      };
+      app.raw("image/png", data);
+      app.done();
+    });
+  } else if(app.args[0] === "_" || app.args[0] === "_s") {
+    url = "http" + (app.args[0][1] || "") + "://";
+    url = url + app.args.slice(1).join("/");
+    app.redirect(url);
+    app.done();
+  } else if(true) {
+    app.done(webpage(["in route _", ["p", "args[0]:", app.args[0]]]));
+  };
 });
-// Solsort website / server {{{2
 // {{{2 notes
 posts = undefined;
 route("notes", function(app) {
