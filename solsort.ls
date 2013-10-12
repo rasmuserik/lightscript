@@ -58,7 +58,7 @@ addTest = function(name, fn) {
 };
 // Utility library {{{1
 // {{{2 base64 encode/decode
-base64dict = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/="
+base64dict = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
 base64encode = function(buf) {
   if(typeof buf === "string") {
     str = buf;
@@ -66,35 +66,35 @@ base64encode = function(buf) {
     pos = 0;
     while(pos < str.length) {
       buf[pos] = str.charCodeAt(pos);
-      ++pos;
-    }
-  }
+      pos = pos + 1;
+    };
+  };
   dict = dict || base64dict;
   pos = 0;
-  result = ""
+  result = "";
   while(pos < buf.length) {
     num = buf[pos];
-    ++pos;
+    pos = pos + 1;
     num = num << 8;
     if(pos < buf.length) {
-      num += buf[pos];
+      num = num + buf[pos];
     };
-    ++pos;
+    pos = pos + 1;
     num = num << 8;
     if(pos < buf.length) {
-      num += buf[pos];
+      num = num + buf[pos];
     };
-    ++pos;
-    result += dict[(num>>18) &63] + dict[(num>>12)&63] + dict[(num>>6)&63] + dict[(num)&63];
-  }
+    pos = pos + 1;
+    result = result + (dict[num >> 18 & 63] + dict[num >> 12 & 63] + dict[num >> 6 & 63] + dict[num & 63]);
+  };
   if(pos == buf.length + 1) {
-    result = result.slice(0,-1) + dict[64];
-  }
+    result = result.slice(0, - 1) + dict[64];
+  };
   if(pos == buf.length + 2) {
-    result = result.slice(0,-2) + dict[64] + dict[64];
-  }
+    result = result.slice(0, - 2) + dict[64] + dict[64];
+  };
   return result;
-}
+};
 addTest("base64", function(test) {
   test.equals(base64encode("any carnal pleasure."), "YW55IGNhcm5hbCBwbGVhc3VyZS4=");
   test.equals(base64encode("any carnal pleasure"), "YW55IGNhcm5hbCBwbGVhc3VyZQ==");
@@ -110,19 +110,19 @@ isClass = function(obj, cls) {
 // We need to distinguish between the different platforms:
 isNode = typeof process === "object" && typeof process["versions"] === "object" && typeof process["versions"]["node"] === "string";
 isBrowser = typeof navigator === "object" && typeof navigator["userAgent"] === "string" && navigator["userAgent"].indexOf("Mozilla") !== - 1;
-  newId = function() {
-    if(isNode) {
-      buf = require("crypto").randomBytes(12);
-    } else {
-      buf = [];
-      i = 0;
-      while(i < 12) {
-        buf.push(Date.now() * Math.random() & 255);
-        ++i;
-      }
-    }
-    return base64encode(buf);
+newId = function() {
+  if(isNode) {
+    buf = require("crypto").randomBytes(12);
+  } else if(true) {
+    buf = [];
+    i = 0;
+    while(i < 12) {
+      buf.push(Date.now() * Math.random() & 255);
+      i = i + 1;
+    };
   };
+  return base64encode(buf);
+};
 PID = newId();
 // Implementation of try..catch as a library instead of a part of the language. 
 // This also has the benefit that trycatch can be used in expressions:
@@ -275,13 +275,12 @@ savefile = function(filename, content, callback) {
 };
 // {{{1 Log writer
 log = function() {
-      logObject({
-        log : arraycopy(arguments),
-        type : "nodejs",
-        pid : PID
-      });
-    };
-
+  logObject({
+    log : arraycopy(arguments),
+    type : "nodejs",
+    pid : PID
+  });
+};
 logObject = undefined;
 if(isNode) {
   thisTick(function() {
@@ -317,11 +316,11 @@ if(isNode) {
       writeStream.write(JSON.stringify(obj) + "\n");
     };
   });
-} else {
+} else if(true) {
   // TODO
   logObject = function(obj) {
     console.log(obj);
-  }
+  };
 };
 // XML / HTML {{{1
 // LsXml class {{{3
