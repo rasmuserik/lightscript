@@ -350,7 +350,13 @@ if(isNode) {
         writeStream = fs.createWriteStream(name, {flags : "a"});
         fname = name;
       };
-      console.log(JSON.stringify(obj.log));
+      console.log((obj.log || []).map(function(elem) {
+        if(typeof elem === "string") {
+          return elem;
+        } else if(true) {
+          return JSON.stringify(elem);
+        };
+      }).join(" "));
       writeStream.write(JSON.stringify(obj) + "\n");
     };
   });

@@ -230,22 +230,22 @@ Being able to memoise a function, can be very useful for performance, and also e
 memoiseAsync
 
     memoiseAsync = function(fn) {
-      cache = {}
+      cache = {};
       return function() {
         args = arraycopy(arguments);
-        argsKey = String(args.slice(-1));
+        argsKey = String(args.slice(- 1));
         callback = args[args.length - 1];
         if(cache[argsKey] !== undefined) {
           callback(null, cache[argsKey]);
-        } else {
-          args[args.length-1] = function(err, result) {
+        } else if(true) {
+          args[args.length - 1] = function(err, result) {
             if(!err) {
               cache[argsKey] = result;
-            }
+            };
             callback(err, result);
           };
           fn.apply(this, args);
-        }
+        };
       };
     };
 
@@ -407,7 +407,13 @@ TODO: error handling
             writeStream = fs.createWriteStream(name, {flags : "a"});
             fname = name;
           };
-          console.log(JSON.stringify(obj.log));
+          console.log((obj.log || []).map(function(elem) {
+            if(typeof elem === "string") {
+              return elem;
+            } else if(true) {
+              return JSON.stringify(elem);
+            };
+          }).join(" "));
           writeStream.write(JSON.stringify(obj) + "\n");
         };
       });
