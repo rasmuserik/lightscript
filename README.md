@@ -1711,6 +1711,7 @@ Generate a reverse xml entity table.
 ### xmlEscape - escape xml string
 
     xmlEscape = function(str) {
+      str = String(str);
       i = 0;
       result = "";
       while(i < str.length) {
@@ -2153,11 +2154,18 @@ TODO
         "desc" : "Contact info, and more about the creator of these things"
       },
       {
+        "name" : "Hack4dk",
+        "date" : "2013-09-??",
+        "tags" : "",
+        "link" : "/hack4dk",
+        "desc" : "Hack4dk hackathon hacks: graph visualisation from wikipedia, image recognition, and art quiz"
+      },
+      {
         "name" : "Summer Hacks",
         "title" : "Slides: Summer Hacks",
         "date" : "2013-08-14",
         "tags" : "copenhagenjs, talk, presentation, bibgraph, skolevej",
-        "link" : "http://solsort.com/summerhacks",
+        "link" : "/summerhacks",
         "desc" : "Slides for presentation at CopenhagenJS on various summer hacks: BibGraph and Skolevej"
       },
       {
@@ -2171,7 +2179,7 @@ TODO
         "name" : "Skolevej",
         "date" : "2013-07-08",
         "tags" : "coffeescript, hammertime, gis, leaflet, openstreetmap",
-        "link" : "http://solsort.com:8080/",
+        "link" : "http://skolevej.solsort.com/",
         "source" : "https://github.com/rasmuserik/app-skolevej",
         "desc" : "Demo/frontend of editor for safe school routes - made for Hammertime / Odense Kommune",
         "time" : "24 hrs"
@@ -2181,7 +2189,7 @@ TODO
         "title" : "Slides: HTML5",
         "date" : "2013-05-22",
         "tags" : "presentation, html5, cnug",
-        "link" : "http://rasmuserik.com/html5/cnug2013-slides.html",
+        "link" : "/html5/cnug2013-slides.html",
         "source" : "https://github.com/rasmuserik/app-speeding",
         "desc" : "Slides for presentation done at CNUG.dk",
         "time" : "3 days study/preparation for presentation, 1 hour presentation"
@@ -2206,13 +2214,13 @@ TODO
       },
       {
         "name" : "CombiGame",
-        "link" : "http://solsort.com/_/combigame.com",
+        "link" : "http://combigame.com",
         "desc" : "Logical game, inspired by a card game",
         "date" : "2012-03-26"
       },
       {
         "name" : "Tsar Tnoc",
-        "link" : "http://tsartnoc.solsort.com",
+        "link" : "/tsartnoc",
         "desc" : "Result of a ludum dare hackathon.",
         "date" : "2012-07-15"
       },
@@ -2225,7 +2233,7 @@ TODO
       {
         "name" : "NoteScore",
         "desc" : "Note learning app",
-        "link" : "http://old.solsort.com/#notescore",
+        "link" : "/notescore",
         "Android App" : "https://market.android.com/details?id=dk.solsort.notescore",
         "Source" : "https://github.com/rasmuserik/notescore",
         "date" : "2011-08"
@@ -2233,14 +2241,14 @@ TODO
       {
         "name" : "dkcities",
         "title" : "Danske Byer",
-        "link" : "http://old.solsort.com/#dkcities",
+        "link" : "/danske-byer",
         "source" : "https://github.com/rasmuserik/dkcities",
         "desc" : "Learning \"game\" for the geography of Denmark.",
         "date" : "2011-08"
       },
       {
         "name" : "CuteEngine",
-        "link" : "http://solsort.com/_/solsort.dk/planetcute",
+        "link" : "/cute-engine",
         "Source" : "https://github.com/rasmuserik/planetcute",
         "desc" : "Game engine experiment",
         "date" : "2011-08",
@@ -2248,11 +2256,13 @@ TODO
       },
       {
         "name" : "Productivity Hacks",
+        "link" : "/notes/productivity-hacks",
         "desc" : "Notes for a presentation on productivity hacks. Keywords of my aproaches to handle the world.",
         "date" : "2013-04-30"
       },
       {
         "name" : "EuroCards",
+        "link" : "/notes/eurocards",
         "tags" : "card game",
         "link" : "http://solsort.com/_/www.thegamecrafter.com/games/EuroCards",
         "desc" : "top-trump like card game for learning facts about european countries",
@@ -2260,20 +2270,20 @@ TODO
       },
       {
         "name" : "Pricing scale",
-        "link" : "solsort.com/pricing-scale",
+        "link" : "/notes/pricing-scale",
         "desc" : "Tool for pricing and estimating cost.",
         "date" : "2013"
       },
       {
         "name" : "Skrivetips",
         "lang" : "da",
-        "link" : "/text/skrivetips",
+        "link" : "/notes/skrivetips",
         "desc" : "Tips / noter om skrivning, herunder også struktur for videnskabelige rapporter. Tips for effective writing (in Danish).",
         "date" : "2005"
       },
       {
         "name" : "Presentation evaluation notes",
-        "link" : "/text/presentation-evaluation-notes",
+        "link" : "/notes/presentation-evaluation",
         "desc" : "Checklist / notes for giving feedback on presentations. Useful for Toastmasters and similar.",
         "date" : "2012-03-18"
       }
@@ -2282,23 +2292,27 @@ TODO
 ### render entry
 
     renderEntry = function(entry) {
-      return ["a", {class : "entry", href : entry.link}, ["div", {class : "header"}, entry.title], ["img", {src : entry.src}], ["div", {class : "desc"}, entry.desc]];
+      return ["a", {class : "entry", href : entry.link}, ["h3", {class : "header"}, entry.title || entry.name], ["img", {src : "/icons/app-" + normaliseString(entry.name) + ".png"}], ["div", {class : "desc"}, entry.desc]];
     };
 
 ### default route
 
     route("default", function(app) {
+      html = index.map(renderEntry);
+      app.done(webpage(index.map(renderEntry)));
+      /*
       if(app.appType === "http") {
 
 app.redirect("http://www.solsort.com/");
 app.done();
 
-        } else if(isNode) {
+      } else if(isNode) {
         app.done(webpage([["h1", "hello"]]));
       } else if(isBrowser) {
         app.done("hi");
       };
-    });
+      */
+      });
 
 ## _
 
@@ -2470,6 +2484,10 @@ prettyprints file, and generates documentation.
 
 These notes are articles, that will automatically be convereted to articles on the solsort.com website.
 
+## Productivity hacks
+TODO - merge from old site
+## Pricing scale
+TODO - merge from old site
 ## EuroCards
 
 ![EuroCards](/img/IMG_2596-eurocards.jpg)

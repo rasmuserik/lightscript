@@ -1550,7 +1550,7 @@ xmlEntitiesReverse = function() {
 }();
 // {{{3 xmlEscape - escape xml string
 xmlEscape = function(str) {
-  str = String(str)
+  str = String(str);
   i = 0;
   result = "";
   while(i < str.length) {
@@ -2089,8 +2089,8 @@ index = [
 ];
 // {{{3 render entry
 renderEntry = function(entry) {
-  return ["a", {class:"entry", href: entry.link}, ["h3", {class: "header"}, entry.title || entry.name], ["img", {src: "/icons/app-" + normaliseString(entry.name) + ".png"}], ["div", {class: "desc"}, entry.desc]];
-}
+  return ["a", {class : "entry", href : entry.link}, ["h3", {class : "header"}, entry.title || entry.name], ["img", {src : "/icons/app-" + normaliseString(entry.name) + ".png"}], ["div", {class : "desc"}, entry.desc]];
+};
 // {{{3 default route
 route("default", function(app) {
   html = index.map(renderEntry);
@@ -2105,7 +2105,7 @@ route("default", function(app) {
     app.done("hi");
   };
   */
-});
+  });
 //{{{2 _
 if(isNode) {
   cachedRead = memoiseAsync(require("fs").readFile);
