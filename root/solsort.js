@@ -45,6 +45,23 @@ var base64encode;
 var base64dict;
 var addTest;
 var _testcases;
+// {{{1 Personal language, scripts and content
+//
+// ![](https://ssl.solsort.com/_logo.png) [![ci](https://secure.travis-ci.org/rasmuserik/lightscript.png)](http://travis-ci.org/rasmuserik/lightscript)
+//
+// Warning: this is a personal project, look at it on own risk. Not intended for other to work with (but feel free to peek at it nonetheless).
+//
+// This file contains
+//
+// - Utility library + platform abstraction
+// - LightScript personal scripting language
+// - solsort.com website
+// - notes (textual content for the solsort.com website)
+// - Applications
+//
+// and is written in the LightScript language itself, using a literate programming style.
+// This text is both documentation and source code.
+// 
 // {{{1 TODO
 //
 // - load/parse notes
@@ -387,7 +404,7 @@ if(isNode) {
         writeStream = fs.createWriteStream(name, {flags : "a"});
         fname = name;
       };
-      console.log(JSON.stringify(obj));
+      console.log(JSON.stringify(obj.log));
       writeStream.write(JSON.stringify(obj) + "\n");
     };
   });
