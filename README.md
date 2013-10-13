@@ -15,71 +15,7 @@ This file contains
 and is written in the LightScript language itself, using a literate programming style.
 This text is both documentation and source code.
 
-# TODO
-
-- load/parse notes
-- logwriter
-- `_`-route with forward, including serving .png|.gif|.js
-  - NB: raw url-arg
-# Testing
-## Constructor
-
-    Tester = function(name) {
-      timeout = 5;
-      this.testCount = 0;
-      this.errors = [];
-      this.name = name;
-      self = this;
-      this.timeout = sleep(timeout, function() {
-        self.error("timeout after " + timeout + "s");
-        self.done();
-      });
-    };
-
-## done
-
-    Tester.prototype.done = function() {
-      clearTimeout(this.timeout);
-      if(this.errors.length) {
-        console.log(this.errors);
-      };
-      console.log(this.name + ": " + this.errors.length + " errors out of " + this.testCount + " tests");
-      if(this.errors.length) {
-        throw this.errors;
-      };
-    };
-
-## equals
-
-    Tester.prototype.equals = function(a, b, msg) {
-      this.testCount = this.testCount + 1;
-      if(a !== b) {
-        this.errors.push({
-          val : a,
-          expected : b,
-          msg : msg || "equals error"
-        });
-      };
-    };
-
-## deepEquals
-
-    Tester.prototype.deepEquals = function(a, b, msg) {
-      this.equals(JSON.stringify(a), JSON.stringify(b), msg || "deepEquals error");
-    };
-
-## assert
-
-    Tester.prototype.assert = function(bool, msg) {
-      this.equals(bool, true, msg || "assert error");
-    };
-
-## error
-
-    Tester.prototype.error = function(msg) {
-      this.assert(false, msg || "error");
-    };
-
+# System
 ## addTest
 
     _testcases = {};
@@ -87,8 +23,7 @@ This text is both documentation and source code.
       _testcases[name] = fn;
     };
 
-#Utility library 
-## base64 encode/decode
+## base64 encode
 
     base64dict = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
     base64encode = function(buf) {
@@ -134,18 +69,15 @@ This text is both documentation and source code.
       test.done();
     });
 
-## Class
-
-    isClass = function(obj, cls) {
-      return typeof obj === "object" && obj.constructor === cls;
-    };
-
-##System utilities 
+##platform 
 
 We need to distinguish between the different platforms:
 
     isNode = typeof process === "object" && typeof process["versions"] === "object" && typeof process["versions"]["node"] === "string";
     isBrowser = typeof navigator === "object" && typeof navigator["userAgent"] === "string" && navigator["userAgent"].indexOf("Mozilla") !== - 1;
+
+## Identifier
+
     newId = function() {
       len = 9;
       if(isNode) {
@@ -162,95 +94,13 @@ We need to distinguish between the different platforms:
     };
     PID = newId();
 
+## try-catch
 Implementation of try..catch as a library instead of a part of the language. 
 This also has the benefit that trycatch can be used in expressions:
 
     trycatch = Function("return function trycatch(fn,handle){try{return fn();}catch(e){return handle(e);}}")();
 
-##Array utilities 
-###`arraycopy` 
-Sometimes we need to create a new array, from something arraylike. Especially for turning `arguments` into a real array.
-
-    arraycopy = function(arr) {
-      return Array.prototype.slice.call(arr, 0);
-    };
-
-
-###List prettyprinter
-
-Show a list with neat linebreakins, - this is especially useful for dumping the listified abstract syntax tree.
-
-
-    pplist = function(list, indent) {
-      indent = indent || "  ";
-      if(!Array.isArray(list)) {
-        return list;
-      };
-      result = list.map(function(elem) {
-        return pplist(elem, indent + "  ");
-      });
-      len = 0;
-      result.forEach(function(elem) {
-        len = len + (elem.length + 1);
-      });
-      if(result[1] !== undefined) {
-        result[1] = result[0] + " " + JSON.stringify(result[1]).slice(1, - 1);
-        result.shift();
-      };
-      if(len < 72) {
-        return "[" + result.join(" ") + "]";
-      } else if(true) {
-        return "[" + result.join("\n" + indent) + "]";
-      };
-    };
-
-
-##Function utilities 
-###`id` 
-The identity function is sometimes neat to have around.
-
-
-    id = function(x) {
-      return x;
-    };
-
-
-###`memoise` 
-Being able to memoise a function, can be very useful for performance, and also easy caching of data into memory.
-
-
-    memoise = function(fn) {
-      cache = {};
-      return function() {
-        args = arraycopy(arguments);
-        return cache[args] || (cache[args] = fn.apply(this, args));
-      };
-    };
-
-memoiseAsync
-
-    memoiseAsync = function(fn) {
-      cache = {};
-      return function() {
-        args = arraycopy(arguments);
-        argsKey = String(args.slice(- 1));
-        callback = args[args.length - 1];
-        if(cache[argsKey] !== undefined) {
-          callback(null, cache[argsKey]);
-        } else if(true) {
-          args[args.length - 1] = function(err, result) {
-            if(!err) {
-              cache[argsKey] = result;
-            };
-            callback(err, result);
-          };
-          fn.apply(this, args);
-        };
-      };
-    };
-
-
-###`nextTick` 
+##`nextTick` 
 Optimised function on node.js can trivially be emulated in the browser.
 
 
@@ -263,493 +113,11 @@ Optimised function on node.js can trivially be emulated in the browser.
       };
     };
 
-### thisTick
+## thisTick
 
     thisTick = function(fn) {
       fn();
     };
-
-###`sleep` 
-- a more readable version of setTimeout, with reversed parameters, and time in seconds instead of milliseconds.
-
-
-    sleep = function(s, fn) {
-      return setTimeout(fn, s * 1000);
-    };
-
-
-##String utilities 
-###`normaliseString` 
-We need to cleanup and canonise strings, if they should be used in urls.
-
-    normaliseString = function(str) {
-      return String(str).toLowerCase().replace("æ", "ae").replace("ø", "o").replace("å", "aa").replace(RegExp("[^a-zA-Z0-9_]+", "g"), "-");
-    };
-
-##Object utilities 
-### isObject
-
-    isObject = function(obj) {
-      return isClass(obj, Object);
-    };
-
-###extend(dst, src) 
-
-    extend = function(dst, src) {
-      Object.keys(src).forEach(function(key) {
-        dst[key] = src[key];
-      });
-      return dst;
-    };
-
-###extendExcept(dst, src, ignore) 
-
-    extendExcept = function(dst, src, except) {
-      Object.keys(src).forEach(function(key) {
-        if(!except[key]) {
-          dst[key] = src[key];
-        };
-      });
-      return dst;
-    };
-
-###foreach 
-
-    foreach = function(obj, fn) {
-      Object.keys(obj).forEach(function(key) {
-        fn(key, obj[key]);
-      });
-    };
-
-##files 
-###mtime 
-
-    if(isNode) {
-      mtime = function(fname) {
-        return trycatch(function() {
-          return require("fs").statSync(__dirname + fname).mtime.getTime();
-        }, function() {
-          return 0;
-        });
-      };
-    };
-
-###loadfile 
-
-    loadfile = function(filename, callback) {
-      if(isNode) {
-        require("fs").readFile(__dirname + filename, "utf8", callback);
-      };
-      if(isBrowser) {
-
-TODO: error handling
-
-        xhr = new XMLHttpRequest();
-        xhr.onreadystatechange = function() {
-          if(xhr.readyState === 4) {
-            callback(null, xhr.responseText);
-          };
-        };
-        xhr.open("GET", filename, true);
-        xhr.send();
-      };
-    };
-
-###savefile 
-
-    savefile = function(filename, content, callback) {
-      if(isNode) {
-        require("fs").writeFile(__dirname + filename, content, callback);
-      };
-      if(isBrowser) {
-        console.log("savefile", filename, content);
-        throw "not implemented";
-      };
-    };
-
-# Log writer
-
-    log = function() {
-      logObject({
-        log : arraycopy(arguments),
-        type : "nodejs",
-        pid : PID
-      });
-    };
-    logObject = undefined;
-    if(isNode) {
-      thisTick(function() {
-        fs = require("fs");
-        child_process = require("child_process");
-        prevTime = 0;
-        writeLog = undefined;
-        logDir = __dirname + "/../logs";
-        fname = undefined;
-        writeStream = undefined;
-        if(!fs.existsSync(logDir)) {
-          fs.mkdirSync(logDir);
-        };
-        logObject = function(obj) {
-          now = new Date();
-          obj.date = Number(now);
-          name = logDir + "/";
-          name = name + (now.getUTCFullYear() + "-");
-          name = name + (("" + (now.getUTCMonth() + 101)).slice(1) + "-");
-          name = name + (("0" + now.getUTCDate()).slice(- 2) + ".log");
-          if(fname !== name) {
-            if(fname) {
-              oldname = fname;
-              writeStream.on("close", function() {
-                child_process.exec("bzip2 " + oldname);
-              });
-              writeStream.end();
-            };
-            writeStream = fs.createWriteStream(name, {flags : "a"});
-            fname = name;
-          };
-          console.log((obj.log || []).map(function(elem) {
-            if(typeof elem === "string") {
-              return elem;
-            } else if(true) {
-              return JSON.stringify(elem);
-            };
-          }).join(" "));
-          writeStream.write(JSON.stringify(obj) + "\n");
-        };
-      });
-    } else if(true) {
-
-TODO
-
-      logObject = function(obj) {
-        console.log(obj);
-      };
-    };
-
-#XML / HTML 
-###LsXml class 
-
-    LsXml = function(obj) {
-      if(typeof obj === "string") {
-        this._jsonml = xml2jsonml(obj);
-      } else if(Array.isArray(obj) && typeof obj[0] === "string") {
-        this._jsonml = [obj];
-      } else if(true) {
-        this._jsonml = obj;
-      };
-
-this._jsonml.forEach(canoniseJsonml);
-
-      };
-    LsXml.prototype.jsonml = function() {
-      return this._jsonml;
-    };
-    LsXml.prototype.toString = function() {
-      return this._jsonml.map(jsonml2xml).join("");
-    };
-
-### xml2jsonml
-
-Parse an XML-string.
-Actually this is not a full implementation, but just
-the basic parts to get it up running.
-Nonetheless it is Good Enough(tm) for most uses.
-
-Known deficiencies: CDATA is not supported, will accept even
-non-well-formed documents, <?... > <!... > are not really handled, ...
-
-    xml2jsonml = function(xml) {
-      if(typeof xml !== "string") {
-        JsonML_Error("Error: jsonml.parseXML didn't receive a string as parameter");
-      };
-
-white space definition
-
-      whitespace = " \n\r\t";
-
-the current char in the string that is being parsed
-
-      c = xml[0];
-
-the position in the string
-
-      pos = 0;
-
-stack for handling nested tags
-
-      stack = [];
-
-current tag being parsed
-
-      tag = [];
-
-read the next char from the string
-
-      next_char = function() {
-        c = (pos = pos + 1) < xml.length ? xml[pos] : undefined;
-      };
-
-check if the current char is one of those in the string parameter
-
-      is_a = function(str) {
-        return str.indexOf(c) !== - 1;
-      };
-
-return the string from the current position to right before the first
-occurence of any of symb. Translate escaped xml entities to their value
-on the fly.
-
-      read_until = function(symb) {
-        buffer = [];
-        while(c && !is_a(symb)) {
-          if(c === "&") {
-            next_char();
-            entity = read_until(";");
-            if(entity[0] === "#") {
-              if(entity[1] === "x") {
-                c = String.fromCharCode(parseInt(entity.slice(2), 16));
-              } else if(true) {
-                c = String.fromCharCode(parseInt(entity.slice(1), 10));
-              };
-            } else if(true) {
-              c = xmlEntities[entity];
-              if(!c) {
-                JsonML_Error("error: unrecognisable xml entity: " + entity);
-              };
-            };
-          };
-          buffer.push(c);
-          next_char();
-        };
-        return buffer.join("");
-      };
-
-The actual parsing
-
-      while(is_a(whitespace)) {
-        next_char();
-      };
-      while(c) {
-        if(is_a("<")) {
-          next_char();
-
-`<?xml ... >`, `<!-- -->` or similar - skip these
-
-          if(is_a("?!")) {
-            if(xml.slice(pos, pos + 3) === "!--") {
-              pos = pos + 3;
-              while(xml.slice(pos, pos + 2) !== "--") {
-                pos = pos + 1;
-              };
-            };
-            read_until(">");
-            next_char();
-
-`<sometag ...>` - handle begin tag
-
-            } else if(!is_a("/")) {
-
-read tag name
-
-            newtag = [read_until(whitespace + ">/")];
-
-read attributes
-
-            attributes = {};
-            has_attributes = 0;
-            while(c && is_a(whitespace)) {
-              next_char();
-            };
-            while(c && !is_a(">/")) {
-              has_attributes = 1;
-              attr = read_until(whitespace + "=>");
-              if(c === "=") {
-                next_char();
-                value_terminator = whitespace + ">/";
-                if(is_a("\"'")) {
-                  value_terminator = c;
-                  next_char();
-                };
-                attributes[attr] = read_until(value_terminator);
-                if(is_a("\"'")) {
-                  next_char();
-                };
-              } else if(true) {
-                JsonML_Error("something not attribute in tag");
-              };
-              while(c && is_a(whitespace)) {
-                next_char();
-              };
-            };
-            if(has_attributes) {
-              newtag.push(attributes);
-            };
-
-end of tag, is it `<.../>` or `<...>`
-
-            if(is_a("/")) {
-              next_char();
-              if(!is_a(">")) {
-                JsonML_Error("expected \">\" after \"/\" within tag");
-              };
-              tag.push(newtag);
-            } else if(true) {
-              stack.push(tag);
-              tag = newtag;
-            };
-            next_char();
-
-`</something>` - handle end tag
-
-            } else if(true) {
-            next_char();
-            if(read_until(">") !== tag[0]) {
-              JsonML_Error("end tag not matching: " + tag[0]);
-            };
-            next_char();
-            parent_tag = stack.pop();
-            if(tag.length <= 2 && !Array.isArray(tag[1]) && typeof tag[1] !== "string") {
-              tag.push("");
-            };
-            parent_tag.push(tag);
-            tag = parent_tag;
-          };
-
-actual content / data between tags
-
-          } else if(true) {
-          tag.push(read_until("<"));
-        };
-      };
-      return tag;
-    };
-
-### jsonml2xml
-
-    jsonml2xml = function(jsonml) {
-      acc = [];
-      jsonml2XmlAcc(jsonml, acc);
-      return acc.join("");
-    };
-
-The actual implementation. As the XML-string is built by appending to the
-`acc`umulator.
-
-    jsonml2XmlAcc = function(jsonml, acc) {
-      if(Array.isArray(jsonml)) {
-        acc.push("<");
-        acc.push(jsonml[0]);
-        pos = 1;
-        attributes = jsonml[1];
-        if(attributes && !Array.isArray(attributes) && typeof attributes !== "string") {
-          Object.keys(attributes).forEach(function(key) {
-            acc.push(" ");
-            acc.push(key);
-            acc.push("=\"");
-            acc.push(xmlEscape(attributes[key]));
-            acc.push("\"");
-          });
-          pos = pos + 1;
-        };
-        if(pos < jsonml.length) {
-          acc.push(">");
-          while(pos < jsonml.length) {
-            jsonml2XmlAcc(jsonml[pos], acc);
-            pos = pos + 1;
-          };
-          acc.push("</");
-          acc.push(jsonml[0]);
-          acc.push(">");
-        } else if(true) {
-          acc.push(" />");
-        };
-      } else if(true) {
-        acc.push(xmlEscape(String(jsonml)));
-      };
-    };
-
-### xmlEntities XML escaped entity table
-
-    xmlEntities = {
-      quot : "\"",
-      amp : "&",
-      apos : "'",
-      lt : "<",
-      gt : ">"
-    };
-
-### xmlEntitiesReverse
-Generate a reverse xml entity table.
-
-    xmlEntitiesReverse = function() {
-      result = {};
-      Object.keys(xmlEntities).forEach(function(key) {
-        result[xmlEntities[key]] = key;
-      });
-      return result;
-    }();
-
-### xmlEscape - escape xml string
-
-    xmlEscape = function(str) {
-      i = 0;
-      result = "";
-      while(i < str.length) {
-        c = str[i];
-        code = c.charCodeAt(0);
-        s = xmlEntitiesReverse[c];
-        if(s) {
-          result = result + ("&" + s + ";");
-        } else if(code >= 128) {
-          result = result + ("&#" + code + ";");
-        } else if(true) {
-          result = result + c;
-        };
-        i = i + 1;
-      };
-      return result;
-    };
-
-### xml Error handler
-
-    JsonML_Error = function(desc) {
-      throw desc;
-    };
-
-###html template 
-
-    webpage = function(content, opt) {
-
-TODO: refactor/remove this function when Xml-class done
-
-      opt = opt || {};
-      head = ["head"];
-      head.push(["title", opt.title || "solsort.com"]);
-      head.push(["meta", {"http-equiv" : "content-type", content : "text/html;charset=UTF-8"}]);
-      head.push(["meta", {"http-equiv" : "X-UA-Compatible", content : "IE=edge,chrome=1"}]);
-      head.push(["meta", {name : "HandheldFriendly", content : "True"}]);
-      head.push(["meta", {name : "viewport", content : "width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=0"}]);
-      head.push(["meta", {name : "format-detection", content : "telephone=no"}]);
-      /*
-      head.push(["meta", {name: "apple-mobile-web-app-capable", content : "yes"}]);
-      head.push(["meta", {name: "apple-mobile-web-app-status-bar-style", content : "black"}]);
-      */
-      if(opt.icon) {
-        head.push(["link", {rel : "icon", content : opt.icon}]);
-        head.push(["link", {rel : "shortcut-icon", content : opt.icon}]);
-        head.push(["link", {rel : "apple-touch-icon-precomposed", content : opt.icon}]);
-      };
-      return new LsXml(["html", head, ["body"].concat(content).concat([["script", {src : "/solsort.js"}, ""]])]);
-    };
-
-### test
-
-    addTest("xml", function(test) {
-      test.equals(xmlEscape("foo<bar> me & blah 'helo …æøå"), "foo&lt;bar&gt; me &amp; blah &apos;helo &#8230;&#230;&#248;&#229;", "escape");
-      test.deepEquals(xml2jsonml("<foo bar=\"baz\">blah<boo/><me></me></foo>"), [["foo", {bar : "baz"}, "blah", ["boo"], ["me", ""]]], "parse xml");
-      test.equals(jsonml2xml(["body", ["h1", "hello"], ["br", ""], ["img", {src : "a.png"}]]), "<body><h1>hello</h1><br></br><img src=\"a.png\" /></body>", "jsonml2xml");
-      test.done();
-    });
 
 #LightScript Language 
 
@@ -1829,6 +1197,637 @@ this.buffer = buffer;
         return result;
       };
     });
+
+#Utility library 
+## Class
+
+    isClass = function(obj, cls) {
+      return typeof obj === "object" && obj.constructor === cls;
+    };
+
+##Array utilities 
+###`arraycopy` 
+Sometimes we need to create a new array, from something arraylike. Especially for turning `arguments` into a real array.
+
+    arraycopy = function(arr) {
+      return Array.prototype.slice.call(arr, 0);
+    };
+
+
+###List prettyprinter
+
+Show a list with neat linebreakins, - this is especially useful for dumping the listified abstract syntax tree.
+
+
+    pplist = function(list, indent) {
+      indent = indent || "  ";
+      if(!Array.isArray(list)) {
+        return list;
+      };
+      result = list.map(function(elem) {
+        return pplist(elem, indent + "  ");
+      });
+      len = 0;
+      result.forEach(function(elem) {
+        len = len + (elem.length + 1);
+      });
+      if(result[1] !== undefined) {
+        result[1] = result[0] + " " + JSON.stringify(result[1]).slice(1, - 1);
+        result.shift();
+      };
+      if(len < 72) {
+        return "[" + result.join(" ") + "]";
+      } else if(true) {
+        return "[" + result.join("\n" + indent) + "]";
+      };
+    };
+
+
+##Function utilities 
+###`id` 
+The identity function is sometimes neat to have around.
+
+
+    id = function(x) {
+      return x;
+    };
+
+
+###`memoise` 
+Being able to memoise a function, can be very useful for performance, and also easy caching of data into memory.
+
+
+    memoise = function(fn) {
+      cache = {};
+      return function() {
+        args = arraycopy(arguments);
+        return cache[args] || (cache[args] = fn.apply(this, args));
+      };
+    };
+
+memoiseAsync
+
+    memoiseAsync = function(fn) {
+      cache = {};
+      return function() {
+        args = arraycopy(arguments);
+        argsKey = String(args.slice(- 1));
+        callback = args[args.length - 1];
+        if(cache[argsKey] !== undefined) {
+          callback(null, cache[argsKey]);
+        } else if(true) {
+          args[args.length - 1] = function(err, result) {
+            if(!err) {
+              cache[argsKey] = result;
+            };
+            callback(err, result);
+          };
+          fn.apply(this, args);
+        };
+      };
+    };
+
+
+###`sleep` 
+- a more readable version of setTimeout, with reversed parameters, and time in seconds instead of milliseconds.
+
+
+    sleep = function(s, fn) {
+      return setTimeout(fn, s * 1000);
+    };
+
+
+##String utilities 
+###`normaliseString` 
+We need to cleanup and canonise strings, if they should be used in urls.
+
+    normaliseString = function(str) {
+      return String(str).toLowerCase().replace("æ", "ae").replace("ø", "o").replace("å", "aa").replace(RegExp("[^a-zA-Z0-9_]+", "g"), "-");
+    };
+
+##Object utilities 
+### isObject
+
+    isObject = function(obj) {
+      return isClass(obj, Object);
+    };
+
+###extend(dst, src) 
+
+    extend = function(dst, src) {
+      Object.keys(src).forEach(function(key) {
+        dst[key] = src[key];
+      });
+      return dst;
+    };
+
+###extendExcept(dst, src, ignore) 
+
+    extendExcept = function(dst, src, except) {
+      Object.keys(src).forEach(function(key) {
+        if(!except[key]) {
+          dst[key] = src[key];
+        };
+      });
+      return dst;
+    };
+
+###foreach 
+
+    foreach = function(obj, fn) {
+      Object.keys(obj).forEach(function(key) {
+        fn(key, obj[key]);
+      });
+    };
+
+##files 
+###mtime 
+
+    if(isNode) {
+      mtime = function(fname) {
+        return trycatch(function() {
+          return require("fs").statSync(__dirname + fname).mtime.getTime();
+        }, function() {
+          return 0;
+        });
+      };
+    };
+
+###loadfile 
+
+    loadfile = function(filename, callback) {
+      if(isNode) {
+        require("fs").readFile(__dirname + filename, "utf8", callback);
+      };
+      if(isBrowser) {
+
+TODO: error handling
+
+        xhr = new XMLHttpRequest();
+        xhr.onreadystatechange = function() {
+          if(xhr.readyState === 4) {
+            callback(null, xhr.responseText);
+          };
+        };
+        xhr.open("GET", filename, true);
+        xhr.send();
+      };
+    };
+
+###savefile 
+
+    savefile = function(filename, content, callback) {
+      if(isNode) {
+        require("fs").writeFile(__dirname + filename, content, callback);
+      };
+      if(isBrowser) {
+        console.log("savefile", filename, content);
+        throw "not implemented";
+      };
+    };
+
+## Log writer
+
+    log = function() {
+      logObject({
+        log : arraycopy(arguments),
+        type : "nodejs",
+        pid : PID
+      });
+    };
+    logObject = undefined;
+    if(isNode) {
+      thisTick(function() {
+        fs = require("fs");
+        child_process = require("child_process");
+        prevTime = 0;
+        writeLog = undefined;
+        logDir = __dirname + "/../logs";
+        fname = undefined;
+        writeStream = undefined;
+        if(!fs.existsSync(logDir)) {
+          fs.mkdirSync(logDir);
+        };
+        logObject = function(obj) {
+          now = new Date();
+          obj.date = Number(now);
+          name = logDir + "/";
+          name = name + (now.getUTCFullYear() + "-");
+          name = name + (("" + (now.getUTCMonth() + 101)).slice(1) + "-");
+          name = name + (("0" + now.getUTCDate()).slice(- 2) + ".log");
+          if(fname !== name) {
+            if(fname) {
+              oldname = fname;
+              writeStream.on("close", function() {
+                child_process.exec("bzip2 " + oldname);
+              });
+              writeStream.end();
+            };
+            writeStream = fs.createWriteStream(name, {flags : "a"});
+            fname = name;
+          };
+          console.log((obj.log || []).map(function(elem) {
+            if(typeof elem === "string") {
+              return elem;
+            } else if(true) {
+              return JSON.stringify(elem);
+            };
+          }).join(" "));
+          writeStream.write(JSON.stringify(obj) + "\n");
+        };
+      });
+    } else if(true) {
+
+TODO
+
+      logObject = function(obj) {
+        console.log(obj);
+      };
+    };
+
+##XML / HTML 
+###LsXml class 
+
+    LsXml = function(obj) {
+      if(typeof obj === "string") {
+        this._jsonml = xml2jsonml(obj);
+      } else if(Array.isArray(obj) && typeof obj[0] === "string") {
+        this._jsonml = [obj];
+      } else if(true) {
+        this._jsonml = obj;
+      };
+
+this._jsonml.forEach(canoniseJsonml);
+
+      };
+    LsXml.prototype.jsonml = function() {
+      return this._jsonml;
+    };
+    LsXml.prototype.toString = function() {
+      return this._jsonml.map(jsonml2xml).join("");
+    };
+
+### xml2jsonml
+
+Parse an XML-string.
+Actually this is not a full implementation, but just
+the basic parts to get it up running.
+Nonetheless it is Good Enough(tm) for most uses.
+
+Known deficiencies: CDATA is not supported, will accept even
+non-well-formed documents, <?... > <!... > are not really handled, ...
+
+    xml2jsonml = function(xml) {
+      if(typeof xml !== "string") {
+        JsonML_Error("Error: jsonml.parseXML didn't receive a string as parameter");
+      };
+
+white space definition
+
+      whitespace = " \n\r\t";
+
+the current char in the string that is being parsed
+
+      c = xml[0];
+
+the position in the string
+
+      pos = 0;
+
+stack for handling nested tags
+
+      stack = [];
+
+current tag being parsed
+
+      tag = [];
+
+read the next char from the string
+
+      next_char = function() {
+        c = (pos = pos + 1) < xml.length ? xml[pos] : undefined;
+      };
+
+check if the current char is one of those in the string parameter
+
+      is_a = function(str) {
+        return str.indexOf(c) !== - 1;
+      };
+
+return the string from the current position to right before the first
+occurence of any of symb. Translate escaped xml entities to their value
+on the fly.
+
+      read_until = function(symb) {
+        buffer = [];
+        while(c && !is_a(symb)) {
+          if(c === "&") {
+            next_char();
+            entity = read_until(";");
+            if(entity[0] === "#") {
+              if(entity[1] === "x") {
+                c = String.fromCharCode(parseInt(entity.slice(2), 16));
+              } else if(true) {
+                c = String.fromCharCode(parseInt(entity.slice(1), 10));
+              };
+            } else if(true) {
+              c = xmlEntities[entity];
+              if(!c) {
+                JsonML_Error("error: unrecognisable xml entity: " + entity);
+              };
+            };
+          };
+          buffer.push(c);
+          next_char();
+        };
+        return buffer.join("");
+      };
+
+The actual parsing
+
+      while(is_a(whitespace)) {
+        next_char();
+      };
+      while(c) {
+        if(is_a("<")) {
+          next_char();
+
+`<?xml ... >`, `<!-- -->` or similar - skip these
+
+          if(is_a("?!")) {
+            if(xml.slice(pos, pos + 3) === "!--") {
+              pos = pos + 3;
+              while(xml.slice(pos, pos + 2) !== "--") {
+                pos = pos + 1;
+              };
+            };
+            read_until(">");
+            next_char();
+
+`<sometag ...>` - handle begin tag
+
+            } else if(!is_a("/")) {
+
+read tag name
+
+            newtag = [read_until(whitespace + ">/")];
+
+read attributes
+
+            attributes = {};
+            has_attributes = 0;
+            while(c && is_a(whitespace)) {
+              next_char();
+            };
+            while(c && !is_a(">/")) {
+              has_attributes = 1;
+              attr = read_until(whitespace + "=>");
+              if(c === "=") {
+                next_char();
+                value_terminator = whitespace + ">/";
+                if(is_a("\"'")) {
+                  value_terminator = c;
+                  next_char();
+                };
+                attributes[attr] = read_until(value_terminator);
+                if(is_a("\"'")) {
+                  next_char();
+                };
+              } else if(true) {
+                JsonML_Error("something not attribute in tag");
+              };
+              while(c && is_a(whitespace)) {
+                next_char();
+              };
+            };
+            if(has_attributes) {
+              newtag.push(attributes);
+            };
+
+end of tag, is it `<.../>` or `<...>`
+
+            if(is_a("/")) {
+              next_char();
+              if(!is_a(">")) {
+                JsonML_Error("expected \">\" after \"/\" within tag");
+              };
+              tag.push(newtag);
+            } else if(true) {
+              stack.push(tag);
+              tag = newtag;
+            };
+            next_char();
+
+`</something>` - handle end tag
+
+            } else if(true) {
+            next_char();
+            if(read_until(">") !== tag[0]) {
+              JsonML_Error("end tag not matching: " + tag[0]);
+            };
+            next_char();
+            parent_tag = stack.pop();
+            if(tag.length <= 2 && !Array.isArray(tag[1]) && typeof tag[1] !== "string") {
+              tag.push("");
+            };
+            parent_tag.push(tag);
+            tag = parent_tag;
+          };
+
+actual content / data between tags
+
+          } else if(true) {
+          tag.push(read_until("<"));
+        };
+      };
+      return tag;
+    };
+
+### jsonml2xml
+
+    jsonml2xml = function(jsonml) {
+      acc = [];
+      jsonml2XmlAcc(jsonml, acc);
+      return acc.join("");
+    };
+
+The actual implementation. As the XML-string is built by appending to the
+`acc`umulator.
+
+    jsonml2XmlAcc = function(jsonml, acc) {
+      if(Array.isArray(jsonml)) {
+        acc.push("<");
+        acc.push(jsonml[0]);
+        pos = 1;
+        attributes = jsonml[1];
+        if(attributes && !Array.isArray(attributes) && typeof attributes !== "string") {
+          Object.keys(attributes).forEach(function(key) {
+            acc.push(" ");
+            acc.push(key);
+            acc.push("=\"");
+            acc.push(xmlEscape(attributes[key]));
+            acc.push("\"");
+          });
+          pos = pos + 1;
+        };
+        if(pos < jsonml.length) {
+          acc.push(">");
+          while(pos < jsonml.length) {
+            jsonml2XmlAcc(jsonml[pos], acc);
+            pos = pos + 1;
+          };
+          acc.push("</");
+          acc.push(jsonml[0]);
+          acc.push(">");
+        } else if(true) {
+          acc.push(" />");
+        };
+      } else if(true) {
+        acc.push(xmlEscape(String(jsonml)));
+      };
+    };
+
+### xmlEntities XML escaped entity table
+
+    xmlEntities = {
+      quot : "\"",
+      amp : "&",
+      apos : "'",
+      lt : "<",
+      gt : ">"
+    };
+
+### xmlEntitiesReverse
+Generate a reverse xml entity table.
+
+    xmlEntitiesReverse = function() {
+      result = {};
+      Object.keys(xmlEntities).forEach(function(key) {
+        result[xmlEntities[key]] = key;
+      });
+      return result;
+    }();
+
+### xmlEscape - escape xml string
+
+    xmlEscape = function(str) {
+      i = 0;
+      result = "";
+      while(i < str.length) {
+        c = str[i];
+        code = c.charCodeAt(0);
+        s = xmlEntitiesReverse[c];
+        if(s) {
+          result = result + ("&" + s + ";");
+        } else if(code >= 128) {
+          result = result + ("&#" + code + ";");
+        } else if(true) {
+          result = result + c;
+        };
+        i = i + 1;
+      };
+      return result;
+    };
+
+### xml Error handler
+
+    JsonML_Error = function(desc) {
+      throw desc;
+    };
+
+###html template 
+
+    webpage = function(content, opt) {
+
+TODO: refactor/remove this function when Xml-class done
+
+      opt = opt || {};
+      head = ["head"];
+      head.push(["title", opt.title || "solsort.com"]);
+      head.push(["meta", {"http-equiv" : "content-type", content : "text/html;charset=UTF-8"}]);
+      head.push(["meta", {"http-equiv" : "X-UA-Compatible", content : "IE=edge,chrome=1"}]);
+      head.push(["meta", {name : "HandheldFriendly", content : "True"}]);
+      head.push(["meta", {name : "viewport", content : "width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=0"}]);
+      head.push(["meta", {name : "format-detection", content : "telephone=no"}]);
+      /*
+      head.push(["meta", {name: "apple-mobile-web-app-capable", content : "yes"}]);
+      head.push(["meta", {name: "apple-mobile-web-app-status-bar-style", content : "black"}]);
+      */
+      if(opt.icon) {
+        head.push(["link", {rel : "icon", content : opt.icon}]);
+        head.push(["link", {rel : "shortcut-icon", content : opt.icon}]);
+        head.push(["link", {rel : "apple-touch-icon-precomposed", content : opt.icon}]);
+      };
+      return new LsXml(["html", head, ["body"].concat(content).concat([["script", {src : "/solsort.js"}, ""]])]);
+    };
+
+### test
+
+    addTest("xml", function(test) {
+      test.equals(xmlEscape("foo<bar> me & blah 'helo …æøå"), "foo&lt;bar&gt; me &amp; blah &apos;helo &#8230;&#230;&#248;&#229;", "escape");
+      test.deepEquals(xml2jsonml("<foo bar=\"baz\">blah<boo/><me></me></foo>"), [["foo", {bar : "baz"}, "blah", ["boo"], ["me", ""]]], "parse xml");
+      test.equals(jsonml2xml(["body", ["h1", "hello"], ["br", ""], ["img", {src : "a.png"}]]), "<body><h1>hello</h1><br></br><img src=\"a.png\" /></body>", "jsonml2xml");
+      test.done();
+    });
+
+## Testing
+### Constructor
+
+    Tester = function(name) {
+      timeout = 5;
+      this.testCount = 0;
+      this.errors = [];
+      this.name = name;
+      self = this;
+      this.timeout = sleep(timeout, function() {
+        self.error("timeout after " + timeout + "s");
+        self.done();
+      });
+    };
+
+### done
+
+    Tester.prototype.done = function() {
+      clearTimeout(this.timeout);
+      if(this.errors.length) {
+        console.log(this.errors);
+      };
+      console.log(this.name + ": " + this.errors.length + " errors out of " + this.testCount + " tests");
+      if(this.errors.length) {
+        throw this.errors;
+      };
+    };
+
+### equals
+
+    Tester.prototype.equals = function(a, b, msg) {
+      this.testCount = this.testCount + 1;
+      if(a !== b) {
+        this.errors.push({
+          val : a,
+          expected : b,
+          msg : msg || "equals error"
+        });
+      };
+    };
+
+### deepEquals
+
+    Tester.prototype.deepEquals = function(a, b, msg) {
+      this.equals(JSON.stringify(a), JSON.stringify(b), msg || "deepEquals error");
+    };
+
+### assert
+
+    Tester.prototype.assert = function(bool, msg) {
+      this.equals(bool, true, msg || "assert error");
+    };
+
+#### error
+
+    Tester.prototype.error = function(msg) {
+      this.assert(false, msg || "error");
+    };
 
 # App Router
 ## Notes
