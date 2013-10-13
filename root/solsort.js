@@ -5,6 +5,7 @@ var markdown2html;
 var loadjs;
 var _jsCache;
 var posts;
+var cachedRead;
 var data;
 var call;
 var route;
@@ -2342,36 +2343,39 @@ route("default", function(app) {
   };
 });
 //{{{2 _
-route("_", function(app) {
-  var url;
-  var type;
-  type = app.args[app.args.length - 1].split(".").slice(- 1)[0];
-  app.log(type);
-  if(type === "gif") {
-    require("fs").readFile(__dirname + "/../../oldweb/img/webbug.gif", function(err, data) {
-      if(err) {
-        return app.error(err);
-      };
-      app.raw("image/gif", data);
+if(isNode) {
+  cachedRead = memoiseAsync(require("fs").readFile);
+  route("_", function(app) {
+    var url;
+    var type;
+    type = app.args[app.args.length - 1].split(".").slice(- 1)[0];
+    app.log(type);
+    if(type === "gif") {
+      cachedRead(__dirname + "/../../oldweb/img/webbug.gif", function(err, data) {
+        if(err) {
+          return app.error(err);
+        };
+        app.raw("image/gif", data);
+        app.done();
+      });
+    } else if(type === "png") {
+      cachedRead(__dirname + "/../../oldweb/img/logicon.png", function(err, data) {
+        if(err) {
+          return app.error(err);
+        };
+        app.raw("image/png", data);
+        app.done();
+      });
+    } else if(app.args[0] === "_" || app.args[0] === "_s") {
+      url = "http" + (app.args[0][1] || "") + "://";
+      url = url + app.args.slice(1).join("/");
+      app.redirect(url);
       app.done();
-    });
-  } else if(type === "png") {
-    require("fs").readFile(__dirname + "/../../oldweb/img/logicon.png", function(err, data) {
-      if(err) {
-        return app.error(err);
-      };
-      app.raw("image/png", data);
-      app.done();
-    });
-  } else if(app.args[0] === "_" || app.args[0] === "_s") {
-    url = "http" + (app.args[0][1] || "") + "://";
-    url = url + app.args.slice(1).join("/");
-    app.redirect(url);
-    app.done();
-  } else if(true) {
-    app.done(webpage(["in route _", ["p", "args[0]:", app.args[0]]]));
-  };
-});
+    } else if(true) {
+      app.done(webpage(["in route _", ["p", "args[0]:", app.args[0]]]));
+    };
+  });
+};
 // {{{2 notes
 posts = undefined;
 route("notes", function(app) {
