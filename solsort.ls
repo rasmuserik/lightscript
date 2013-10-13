@@ -1920,7 +1920,147 @@ route("devserver", function(app) {
   server.listen(port);
   app.log("starting devserver on port " + port);
 });
-// {{{2 Default + test+experiment
+// {{{2 Default / index
+data = {"content" : [
+  {
+    "name" : "Rasmus Erik",
+    "link" : "http://www.solsort.com/rasmuserik",
+    "desc" : "Contact info, and more about the creator of these things"
+  },
+  {
+    "name" : "Summer Hacks",
+    "title" : "Slides: Summer Hacks",
+    "date" : "2013-08-14",
+    "tags" : "copenhagenjs, talk, presentation, bibgraph, skolevej",
+    "link" : "http://solsort.com/summerhacks",
+    "desc" : "Slides for presentation at CopenhagenJS on various summer hacks: BibGraph and Skolevej"
+  },
+  {
+    "name" : "BibGraph",
+    "date" : "2013-08-02",
+    "tags" : "coffeescript, dbc, adhl, d3, visualisation, graph",
+    "link" : "http://bibgraph.solsort.com/",
+    "desc" : "Visualisation of relations between books and other library materials, generated from the ADHL statistics about danish co-loans"
+  },
+  {
+    "name" : "Skolevej",
+    "date" : "2013-07-08",
+    "tags" : "coffeescript, hammertime, gis, leaflet, openstreetmap",
+    "link" : "http://solsort.com:8080/",
+    "source" : "https://github.com/rasmuserik/app-skolevej",
+    "desc" : "Demo/frontend of editor for safe school routes - made for Hammertime / Odense Kommune",
+    "time" : "24 hrs"
+  },
+  {
+    "name" : "html5cnug",
+    "title" : "Slides: HTML5",
+    "date" : "2013-05-22",
+    "tags" : "presentation, html5, cnug",
+    "link" : "http://rasmuserik.com/html5/cnug2013-slides.html",
+    "source" : "https://github.com/rasmuserik/app-speeding",
+    "desc" : "Slides for presentation done at CNUG.dk",
+    "time" : "3 days study/preparation for presentation, 1 hour presentation"
+  },
+  {
+    "name" : "speeding",
+    "title" : "Speeding visualisation",
+    "tags" : "coffeescript, hammertime, visualisation",
+    "date" : "2013-05-15",
+    "link" : "http://speeding.solsort.com",
+    "source" : "https://github.com/rasmuserik/app-speeding",
+    "desc" : "Visualiseringskode for vejdirektoratet - layout baseret på tidligere udgave",
+    "time" : "5 hours trying to optimise original outsourced code, then 10 hours reimplementing it"
+  },
+  {
+    "name" : "Dragimation",
+    "date" : "2013-04-30",
+    "tags" : "coffeescript, hammertime, visualisation, html5",
+    "link" : "http://dragimation.solsort.com",
+    "source" : "https://github.com/rasmuserik/app-dragimation",
+    "desc" : "Dragging animation special effect - as requested for the development of legoland billund resort web page."
+  },
+  {
+    "name" : "CombiGame",
+    "link" : "http://solsort.com/_/combigame.com",
+    "desc" : "Logical game, inspired by a card game",
+    "date" : "2012-03-26"
+  },
+  {
+    "name" : "Tsar Tnoc",
+    "link" : "http://tsartnoc.solsort.com",
+    "desc" : "Result of a ludum dare hackathon.",
+    "date" : "2012-07-15"
+  },
+  {
+    "name" : "BlobShot",
+    "link" : "http://blobshot.solsort.com",
+    "desc" : "Result of the 5apps hackathon.",
+    "date" : "2012-05-06"
+  },
+  {
+    "name" : "NoteScore",
+    "desc" : "Note learning app",
+    "link" : "http://old.solsort.com/#notescore",
+    "Android App" : "https://market.android.com/details?id=dk.solsort.notescore",
+    "Source" : "https://github.com/rasmuserik/notescore",
+    "date" : "2011-08"
+  },
+  {
+    "name" : "dkcities",
+    "title" : "Danske Byer",
+    "link" : "http://old.solsort.com/#dkcities",
+    "source" : "https://github.com/rasmuserik/dkcities",
+    "desc" : "Learning \"game\" for the geography of Denmark.",
+    "date" : "2011-08"
+  },
+  {
+    "name" : "CuteEngine",
+    "link" : "http://solsort.com/_/solsort.dk/planetcute",
+    "Source" : "https://github.com/rasmuserik/planetcute",
+    "desc" : "Game engine experiment",
+    "date" : "2011-08",
+    "time" : "3 days"
+  },
+  {
+    "name" : "Productivity Hacks",
+    "desc" : "Notes for a presentation on productivity hacks. Keywords of my aproaches to handle the world.",
+    "date" : "2013-04-30"
+  },
+  {
+    "name" : "EuroCards",
+    "tags" : "card game",
+    "link" : "http://solsort.com/_/www.thegamecrafter.com/games/EuroCards",
+    "desc" : "top-trump like card game for learning facts about european countries",
+    "date" : "2012-06-20"
+  },
+  {
+    "name" : "Pricing scale",
+    "link" : "solsort.com/pricing-scale",
+    "desc" : "Tool for pricing and estimating cost.",
+    "date" : "2013"
+  },
+  {
+    "name" : "Skrivetips",
+    "lang" : "da",
+    "link" : "/text/skrivetips",
+    "desc" : "Tips / noter om skrivning, herunder også struktur for videnskabelige rapporter. Tips for effective writing (in Danish).",
+    "date" : "2005"
+  },
+  {
+    "name" : "Presentation evaluation notes",
+    "link" : "/text/presentation-evaluation-notes",
+    "desc" : "Checklist / notes for giving feedback on presentations. Useful for Toastmasters and similar.",
+    "date" : "2012-03-18"
+  }
+], "links" : [
+  "http://www.ted.com/talks/lang/en/nicholas_christakis_the_hidden_influence_of_social_networks.html",
+  "http://www.ted.com/talks/richard_st_john_s_8_secrets_of_success.html",
+  "http://www.ted.com/talks/susan_cain_the_power_of_introverts.html",
+  "http://www.ted.com/talks/hans_rosling_shows_the_best_stats_you_ve_ever_seen.html",
+  "http://www.ted.com/talks/seth_godin_on_the_tribes_we_lead.html",
+  "http://www.ted.com/talks/lang/en/derek_sivers_how_to_start_a_movement.html",
+  "http://www.ted.com/talks/matt_cutts_try_something_new_for_30_days.html"
+]};
 route("default", function(app) {
   if(app.appType === "http") {
     app.redirect("http://www.solsort.com/");
