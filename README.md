@@ -2144,8 +2144,9 @@ TODO
     });
 
 ## Default / index
+### Index as JSON
 
-    data = {"content" : [
+    index = [
       {
         "name" : "Rasmus Erik",
         "link" : "http://www.solsort.com/rasmuserik",
@@ -2276,20 +2277,23 @@ TODO
         "desc" : "Checklist / notes for giving feedback on presentations. Useful for Toastmasters and similar.",
         "date" : "2012-03-18"
       }
-    ], "links" : [
-      "http://www.ted.com/talks/lang/en/nicholas_christakis_the_hidden_influence_of_social_networks.html",
-      "http://www.ted.com/talks/richard_st_john_s_8_secrets_of_success.html",
-      "http://www.ted.com/talks/susan_cain_the_power_of_introverts.html",
-      "http://www.ted.com/talks/hans_rosling_shows_the_best_stats_you_ve_ever_seen.html",
-      "http://www.ted.com/talks/seth_godin_on_the_tribes_we_lead.html",
-      "http://www.ted.com/talks/lang/en/derek_sivers_how_to_start_a_movement.html",
-      "http://www.ted.com/talks/matt_cutts_try_something_new_for_30_days.html"
-    ]};
+    ];
+
+### render entry
+
+    renderEntry = function(entry) {
+      return ["a", {class : "entry", href : entry.link}, ["div", {class : "header"}, entry.title], ["img", {src : entry.src}], ["div", {class : "desc"}, entry.desc]];
+    };
+
+### default route
+
     route("default", function(app) {
       if(app.appType === "http") {
-        app.redirect("http://www.solsort.com/");
-        app.done();
-      } else if(isNode) {
+
+app.redirect("http://www.solsort.com/");
+app.done();
+
+        } else if(isNode) {
         app.done(webpage([["h1", "hello"]]));
       } else if(isBrowser) {
         app.done("hi");
