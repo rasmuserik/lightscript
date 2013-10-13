@@ -32,6 +32,7 @@ var normaliseString;
 var sleep;
 var thisTick;
 var nextTick;
+var memoiseAsync;
 var memoise;
 var id;
 var pplist;
@@ -259,6 +260,30 @@ memoise = function(fn) {
     var args;
     args = arraycopy(arguments);
     return cache[args] || (cache[args] = fn.apply(this, args));
+  };
+};
+// memoiseAsync
+memoiseAsync = function(fn) {
+  var cache;
+  cache = {};
+  return function() {
+    var callback;
+    var argsKey;
+    var args;
+    args = arraycopy(arguments);
+    argsKey = String(args.slice(- 1));
+    callback = args[args.length - 1];
+    if(cache[argsKey] !== undefined) {
+      callback(null, cache[argsKey]);
+    } else if(true) {
+      args[args.length - 1] = function(err, result) {
+        if(!err) {
+          cache[argsKey] = result;
+        };
+        callback(err, result);
+      };
+      fn.apply(this, args);
+    };
   };
 };
 //

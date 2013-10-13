@@ -197,6 +197,26 @@ memoise = function(fn) {
     return cache[args] || (cache[args] = fn.apply(this, args));
   };
 };
+// memoiseAsync
+memoiseAsync = function(fn) {
+  cache = {};
+  return function() {
+    args = arraycopy(arguments);
+    argsKey = String(args.slice(- 1));
+    callback = args[args.length - 1];
+    if(cache[argsKey] !== undefined) {
+      callback(null, cache[argsKey]);
+    } else if(true) {
+      args[args.length - 1] = function(err, result) {
+        if(!err) {
+          cache[argsKey] = result;
+        };
+        callback(err, result);
+      };
+      fn.apply(this, args);
+    };
+  };
+};
 //
 // `nextTick` {{{3
 // Optimised function on node.js can trivially be emulated in the browser.
