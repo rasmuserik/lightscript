@@ -1796,7 +1796,7 @@ Generate a reverse xml entity table.
         Object.keys(obj[selector]).forEach(function(prop) {
           str = str + (jsName2CssName(prop) + ":" + obj[selector][prop] + ";");
         });
-        str = str + "}\n";
+        str = str + "}";
       });
       return str;
     };
@@ -2256,7 +2256,7 @@ TODO
         "title" : "Slides: Summer Hacks",
         "date" : "2013-08-14",
         "tags" : "copenhagenjs, talk, presentation, bibgraph, skolevej",
-        "link" : "/summerhacks",
+        "link" : "/slides/cphjs2013-summer-hacks",
         "desc" : "Slides for presentation at CopenhagenJS on various summer hacks: BibGraph and Skolevej"
       },
       {
@@ -2280,7 +2280,7 @@ TODO
         "title" : "Slides: HTML5",
         "date" : "2013-05-22",
         "tags" : "presentation, html5, cnug",
-        "link" : "/html5/cnug2013-slides.html",
+        "link" : "/slides/cnug2013-html5/",
         "source" : "https://github.com/rasmuserik/app-speeding",
         "desc" : "Slides for presentation done at CNUG.dk",
         "time" : "3 days study/preparation for presentation, 1 hour presentation"
@@ -2305,7 +2305,7 @@ TODO
       },
       {
         "name" : "CombiGame",
-        "link" : "http://combigame.com",
+        "link" : "http://old.solsort.com/#combigame",
         "desc" : "Logical game, inspired by a card game",
         "date" : "2012-03-26"
       },
@@ -2353,9 +2353,8 @@ TODO
       },
       {
         "name" : "EuroCards",
-        "link" : "/notes/eurocards",
         "tags" : "card game",
-        "link" : "http://solsort.com/_/www.thegamecrafter.com/games/EuroCards",
+        "link" : "/notes/eurocards",
         "desc" : "top-trump like card game for learning facts about european countries",
         "date" : "2012-06-20"
       },
@@ -2391,6 +2390,7 @@ TODO
     route("default", function(app) {
       html = new HTML();
       html.addStyle({
+        h1 : {textAlign : "center"},
         ".entries" : {textAlign : "center"},
         ".entry" : {
           textAlign : "left",
@@ -2412,21 +2412,9 @@ TODO
           marginBottom : "20px"
         }
       });
-      html.content(["div", {class : "entries"}].concat(index.map(renderEntry)));
+      html.content(["h1", "solsort.com"], ["div", {class : "entries"}].concat(index.map(renderEntry)));
       app.done(html);
-      /*
-      if(app.appType === "http") {
-
-app.redirect("http://www.solsort.com/");
-app.done();
-
-      } else if(isNode) {
-        app.done((new HTML()).content([["h1", "hello"]]));
-      } else if(isBrowser) {
-        app.done("hi");
-      };
-      */
-      });
+    });
 
 ## _
 
@@ -2457,7 +2445,7 @@ app.done();
           app.redirect(url);
           app.done();
         } else if(true) {
-          app.done((new HTML()).content(["in route _", ["p", "args[0]:", app.args[0]]]));
+          app.done((new HTML()).content("in route _", ["p", "args[0]:", app.args[0]]));
         };
       });
     };
@@ -2507,7 +2495,7 @@ app.done();
     renderPost = function(app) {
       title = normaliseString((app.args[1] || "").trim());
       markdown2html(posts[title] || "", function(err, result) {
-        app.done((new HTML()).content([result]));
+        app.done((new HTML()).content(result));
       });
     };
 
@@ -2527,7 +2515,7 @@ prettyprints file, and generates documentation.
     route("pp", function(app) {
       app.log(app.appType);
       if(app.appType === "http") {
-        return app.done((new HTML()).content([]));
+        return app.done((new HTML()).content());
       };
       app.log("prettyprinting");
       gendoc(function(err, markdownString) {

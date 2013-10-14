@@ -2171,7 +2171,7 @@ renderEntry = function(entry) {
 route("default", function(app) {
   html = new HTML();
   html.addStyle({
-    h1: {textAlign: "center"}
+    h1 : {textAlign : "center"},
     ".entries" : {textAlign : "center"},
     ".entry" : {
       textAlign : "left",

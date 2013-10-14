@@ -2344,7 +2344,7 @@ index = [
   },
   {
     "name" : "CombiGame",
-    "link" : "http://combigame.com",
+    "link" : "http://old.solsort.com/#combigame",
     "desc" : "Logical game, inspired by a card game",
     "date" : "2012-03-26"
   },
@@ -2392,9 +2392,8 @@ index = [
   },
   {
     "name" : "EuroCards",
-    "link" : "/notes/eurocards",
     "tags" : "card game",
-    "link" : "http://solsort.com/_/www.thegamecrafter.com/games/EuroCards",
+    "link" : "/notes/eurocards",
     "desc" : "top-trump like card game for learning facts about european countries",
     "date" : "2012-06-20"
   },
