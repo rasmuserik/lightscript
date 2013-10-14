@@ -725,14 +725,14 @@ this.buffer = buffer;
         this.acc.push(str);
         this.prevWasNewline = false;
       };
-      PrettyPrinter.prototype.pp = function(ast, bp) {
+      PrettyPrinter.prototype.pp = function(ast, bp, isLeft) {
         bp = bp || 0;
         syn = new SyntaxObj(ast);
-        if(syn.bp && syn.bp < bp) {
+        if(syn.bp && syn.bp < bp || (isLeft && syn.opt["noinfix"] && syn.bp < bp)) {
           this.str("(");
         };
         syn.pp(this);
-        if(syn.bp && syn.bp < bp) {
+        if(syn.bp && syn.bp < bp || (isLeft && syn.opt["noinfix"] && syn.bp < bp)) {
           this.str(")");
         };
       };
@@ -800,7 +800,7 @@ this.buffer = buffer;
           pp.str(ast.val + space);
           pp.pp(children[0], this.bp);
         } else if(children.length === 2) {
-          pp.pp(children[0], this.bp);
+          pp.pp(children[0], this.bp, true);
           pp.str(space + ast.val + space);
           pp.pp(children[1], this.bp + 1 - (this.opt["dbp"] || 0));
         } else if(true) {
@@ -2449,11 +2449,18 @@ prettyprints file, and generates documentation.
 
     route("compile", function(app) {
       app.log("compiling...");
-      loadfile("/solsort.ls", function(err, source) {
-        ast = ls2ast(source);
-        savefile("/solsort.js", ast2js(ast));
-        app.done();
-      });
+      if(app.param["code"]) {
+        console.log(app.param["code"]);
+        ast = ls2ast(app.param["code"]);
+        app.send(pplist(ast.toList()));
+        app.done(ast2js(ast));
+      } else if(true) {
+        loadfile("/solsort.ls", function(err, source) {
+          ast = ls2ast(source);
+          savefile("/solsort.js", ast2js(ast));
+          app.done();
+        });
+      };
     });
     route("prettyprint", function(app) {
       app.log("prettyprinting");

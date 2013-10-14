@@ -1,1 +1,1 @@
-node root/solsort.js compile && node root/solsort.js $*
+node root/solsort.js compile && node root/solsort.js "$@"
