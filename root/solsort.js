@@ -1841,8 +1841,9 @@ HTML.prototype.toLsXml = function() {
   return new LsXml(["html", head, ["body"].concat(this._content).concat([["script", {src : "/solsort.js"}, ""]])]);
 };
 webpage = function(jsonmls) {
-  return new HTML();
-  .content(jsonmls).toLsXml();
+  var html;
+  html = new HTML();
+  return html.content(jsonmls).toLsXml();
 };
 // {{{2 Testing
 // {{{3 Constructor

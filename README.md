@@ -1445,7 +1445,7 @@ TODO
       };
     };
 
-##XML / HTML 
+##XML 
 ###LsXml class 
 
     LsXml = function(obj) {
@@ -1736,15 +1736,36 @@ Generate a reverse xml entity table.
       throw desc;
     };
 
-###html template 
+### test
 
-    webpage = function(content, opt) {
+    addTest("xml", function(test) {
+      test.equals(xmlEscape("foo<bar> me & blah 'helo …æøå"), "foo&lt;bar&gt; me &amp; blah &apos;helo &#8230;&#230;&#248;&#229;", "escape");
+      test.deepEquals(xml2jsonml("<foo bar=\"baz\">blah<boo/><me></me></foo>"), [["foo", {bar : "baz"}, "blah", ["boo"], ["me", ""]]], "parse xml");
+      test.equals(jsonml2xml(["body", ["h1", "hello"], ["br", ""], ["img", {src : "a.png"}]]), "<body><h1>hello</h1><br></br><img src=\"a.png\" /></body>", "jsonml2xml");
+      test.done();
+    });
+
+##HTML 
+### constructor
+
+    HTML = function() {
+      args = arraycopy(arguments);
+      this._content = [];
+      this._style = {};
+      this._title = "solsort.com";
+      this.icon = undefined;
+    };
+    HTML.prototype.content = function() {
+      this._content = arraycopy(arguments);
+      return this;
+    };
+    HTML.prototype.toLsXml = function() {
 
 TODO: refactor/remove this function when Xml-class done
 
       opt = opt || {};
       head = ["head"];
-      head.push(["title", opt.title || "solsort.com"]);
+      head.push(["title", this._title]);
       head.push(["meta", {"http-equiv" : "content-type", content : "text/html;charset=UTF-8"}]);
       head.push(["meta", {"http-equiv" : "X-UA-Compatible", content : "IE=edge,chrome=1"}]);
       head.push(["meta", {name : "HandheldFriendly", content : "True"}]);
@@ -1759,17 +1780,12 @@ TODO: refactor/remove this function when Xml-class done
         head.push(["link", {rel : "shortcut-icon", content : opt.icon}]);
         head.push(["link", {rel : "apple-touch-icon-precomposed", content : opt.icon}]);
       };
-      return new LsXml(["html", head, ["body"].concat(content).concat([["script", {src : "/solsort.js"}, ""]])]);
+      return new LsXml(["html", head, ["body"].concat(this._content).concat([["script", {src : "/solsort.js"}, ""]])]);
     };
-
-### test
-
-    addTest("xml", function(test) {
-      test.equals(xmlEscape("foo<bar> me & blah 'helo …æøå"), "foo&lt;bar&gt; me &amp; blah &apos;helo &#8230;&#230;&#248;&#229;", "escape");
-      test.deepEquals(xml2jsonml("<foo bar=\"baz\">blah<boo/><me></me></foo>"), [["foo", {bar : "baz"}, "blah", ["boo"], ["me", ""]]], "parse xml");
-      test.equals(jsonml2xml(["body", ["h1", "hello"], ["br", ""], ["img", {src : "a.png"}]]), "<body><h1>hello</h1><br></br><img src=\"a.png\" /></body>", "jsonml2xml");
-      test.done();
-    });
+    webpage = function(jsonmls) {
+      html = new HTML();
+      return html.content(jsonmls).toLsXml();
+    };
 
 ## Testing
 ### Constructor
@@ -2412,9 +2428,9 @@ prettyprints file, and generates documentation.
 
     route("pp", function(app) {
       app.log(app.appType);
-      if(app.appType === "html") {
+      if(app.appType === "http") {
         return app.done(webpage([]));
-      }
+      };
       app.log("prettyprinting");
       gendoc(function(err, markdownString) {
         if(err) {

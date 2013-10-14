@@ -1587,11 +1587,11 @@ HTML = function() {
   this._style = {};
   this._title = "solsort.com";
   this.icon = undefined;
-}
+};
 HTML.prototype.content = function() {
   this._content = arraycopy(arguments);
   return this;
-}
+};
 HTML.prototype.toLsXml = function() {
   // TODO: refactor/remove this function when Xml-class done
   opt = opt || {};
@@ -1616,7 +1616,7 @@ HTML.prototype.toLsXml = function() {
 webpage = function(jsonmls) {
   html = new HTML();
   return html.content(jsonmls).toLsXml();
-}
+};
 // {{{2 Testing
 // {{{3 Constructor
 Tester = function(name) {
@@ -2215,7 +2215,7 @@ route("pp", function(app) {
   app.log(app.appType);
   if(app.appType === "http") {
     return app.done(webpage([]));
-  }
+  };
   app.log("prettyprinting");
   gendoc(function(err, markdownString) {
     if(err) {
