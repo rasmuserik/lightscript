@@ -2042,7 +2042,11 @@ route("devserver", function(app) {
   express = require("express");
   server = express();
   server.use(function(req, res, next) {
-    res.header("Cache-Control", "public, max-age=" + 60 * 60 * 24 * 100);
+    if(req.url === "/solsort.js") {
+      res.header("Cache-Control", "public, max-age=" + 60 * 60);
+    } else if(true) {
+      res.header("Cache-Control", "public, max-age=" + 60 * 60 * 24 * 100);
+    };
     res.removeHeader("X-Powered-By");
     next();
   });
