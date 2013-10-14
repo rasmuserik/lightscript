@@ -573,7 +573,7 @@ this.buffer = buffer;
             };
             pop();
             result = newToken("str", s);
-          } else if(oneOf(digits) || (peek() === "." && digits.indexOf(peek(1, 1)) !== - 1)) {
+          } else if(oneOf(digits) || peek() === "." && digits.indexOf(peek(1, 1)) !== - 1) {
             s = pop();
             if(peek() !== "x") {
               while(peek() && oneOf(".e" + digits)) {
@@ -619,7 +619,7 @@ this.buffer = buffer;
 
       SyntaxObj = function(ast) {
         this.ast = ast;
-        syntaxData = table[ast.kind + ":"] || table[ast.val] || (ast.val && table[ast.val[ast.val.length - 1]]) || table["default:"];
+        syntaxData = table[ast.kind + ":"] || table[ast.val] || ast.val && table[ast.val[ast.val.length - 1]] || table["default:"];
         this.bp = syntaxData[0] || 0;
         this.opt = syntaxData[1] || {};
       };
@@ -728,11 +728,11 @@ this.buffer = buffer;
       PrettyPrinter.prototype.pp = function(ast, bp, isLeft) {
         bp = bp || 0;
         syn = new SyntaxObj(ast);
-        if(syn.bp && syn.bp < bp || (isLeft && syn.opt["noinfix"] && syn.bp < bp)) {
+        if(syn.bp && syn.bp < bp || isLeft && syn.opt["noinfix"] && syn.bp < bp) {
           this.str("(");
         };
         syn.pp(this);
-        if(syn.bp && syn.bp < bp || (isLeft && syn.opt["noinfix"] && syn.bp < bp)) {
+        if(syn.bp && syn.bp < bp || isLeft && syn.opt["noinfix"] && syn.bp < bp) {
           this.str(")");
         };
       };
@@ -847,10 +847,10 @@ this.buffer = buffer;
         "!=" : [500],
         "!==" : [500],
         "===" : [500],
-        "^" : [400],
+        "&" : [460],
+        "^" : [430],
         "|" : [400],
-        "&" : [400],
-        "&&" : [300],
+        "&&" : [350],
         "||" : [300],
         ":" : [200, {dbp : 1}],
         "?" : [200, {dbp : 1}],
@@ -883,7 +883,7 @@ this.buffer = buffer;
 ####Setup 
 
       notSep = function(ast) {
-        return ast.kind !== "id" || (ast.val !== ";" && ast.val !== ",");
+        return ast.kind !== "id" || ast.val !== ";" && ast.val !== ",";
       };
       noSeps = function(list) {
         return list.filter(notSep);

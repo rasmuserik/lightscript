@@ -658,7 +658,7 @@ nextTick(function() {
         };
         pop();
         result = newToken("str", s);
-      } else if(oneOf(digits) || (peek() === "." && digits.indexOf(peek(1, 1)) !== - 1)) {
+      } else if(oneOf(digits) || peek() === "." && digits.indexOf(peek(1, 1)) !== - 1) {
         s = pop();
         if(peek() !== "x") {
           while(peek() && oneOf(".e" + digits)) {
@@ -703,7 +703,7 @@ nextTick(function() {
   SyntaxObj = function(ast) {
     var syntaxData;
     this.ast = ast;
-    syntaxData = table[ast.kind + ":"] || table[ast.val] || (ast.val && table[ast.val[ast.val.length - 1]]) || table["default:"];
+    syntaxData = table[ast.kind + ":"] || table[ast.val] || ast.val && table[ast.val[ast.val.length - 1]] || table["default:"];
     this.bp = syntaxData[0] || 0;
     this.opt = syntaxData[1] || {};
   };
@@ -819,11 +819,11 @@ nextTick(function() {
     var bp;
     bp = bp || 0;
     syn = new SyntaxObj(ast);
-    if(syn.bp && syn.bp < bp || (isLeft && syn.opt["noinfix"] && syn.bp < bp)) {
+    if(syn.bp && syn.bp < bp || isLeft && syn.opt["noinfix"] && syn.bp < bp) {
       this.str("(");
     };
     syn.pp(this);
-    if(syn.bp && syn.bp < bp || (isLeft && syn.opt["noinfix"] && syn.bp < bp)) {
+    if(syn.bp && syn.bp < bp || isLeft && syn.opt["noinfix"] && syn.bp < bp) {
       this.str(")");
     };
   };
@@ -942,10 +942,10 @@ nextTick(function() {
     "!=" : [500],
     "!==" : [500],
     "===" : [500],
-    "^" : [400],
+    "&" : [460],
+    "^" : [430],
     "|" : [400],
-    "&" : [400],
-    "&&" : [300],
+    "&&" : [350],
     "||" : [300],
     ":" : [200, {dbp : 1}],
     "?" : [200, {dbp : 1}],
@@ -976,7 +976,7 @@ nextTick(function() {
   // Transformations of syntax tree (RST to/from AST) {{{3
   // Setup {{{4
   notSep = function(ast) {
-    return ast.kind !== "id" || (ast.val !== ";" && ast.val !== ",");
+    return ast.kind !== "id" || ast.val !== ";" && ast.val !== ",";
   };
   noSeps = function(list) {
     return list.filter(notSep);
