@@ -2520,8 +2520,7 @@ if(isNode) {
       app.redirect(url);
       app.done();
     } else if(true) {
-      app.raw("text/plain", "hello");
-      app.done();
+      app.done("");
     };
   });
 };
