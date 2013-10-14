@@ -2411,6 +2411,10 @@ prettyprints file, and generates documentation.
 
 
     route("pp", function(app) {
+      app.log(app.appType);
+      if(app.appType === "html") {
+        return app.done(webpage([]));
+      }
       app.log("prettyprinting");
       gendoc(function(err, markdownString) {
         if(err) {
