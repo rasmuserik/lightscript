@@ -1315,14 +1315,14 @@ xhrPost = function(url, obj, done) {
   xhr.open("POST", url, true);
   xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
   if(done) {
-    xhr.onload = function () {
+    xhr.onload = function() {
       done(null, this.responseText);
-    }
-  }
+    };
+  };
   xhr.send(Object.keys(obj).map(function(key) {
-    return key + "=" +  encodeURIComponent(JSON.stringify(obj[key]));
+    return key + "=" + encodeURIComponent(JSON.stringify(obj[key]));
   }).join("&"));
-}
+};
 // {{{2 Log writer
 log = function() {
   logObject({
@@ -1824,7 +1824,7 @@ route = function(name, fn) {
 // {{{2 App
 appSeq = 0;
 App = function(args, param) {
-  this.seq = ++appSeq;
+  this.seq = appSeq = appSeq + 1;
   this.clientId = this.clientId || newId();
   this.args = this.args || args || [];
   this.param = this.param || param || {};
@@ -1833,7 +1833,7 @@ App.prototype.log = function() {
   logObject({
     log : arraycopy(arguments),
     appType : this.appType,
-    seq: this.seq;
+    seq : this.seq,
     pid : PID,
     clientId : this.clientId
   });
@@ -1851,7 +1851,7 @@ App.prototype.dispatch = function() {
 };
 // {{{2 CmdApp
 CmdApp = function() {
-  this.seq = ++appSeq;
+  this.seq = appSeq = appSeq + 1;
   this.clientId = newId();
   this.param = param = {};
   this.args = process.argv.slice(2).filter(function(s) {
@@ -1909,12 +1909,7 @@ WebApp.prototype = Object.create(App.prototype);
 WebApp.prototype.appType = "web";
 WebApp.prototype.log = function() {
   args = arraycopy(arguments);
-  xhrPost("/_", {
-    data: {
-      log : args,
-      clientTime: Date.now();
-    }
-  })
+  xhrPost("/_", {data : {log : args, clientTime : Date.now()}});
   console.log.apply(console, args);
 };
 WebApp.prototype.send = function(content) {
@@ -1947,11 +1942,11 @@ if(isBrowser) {
 };
 // {{{2 HttpApp
 HttpApp = function(req, res) {
-  this.seq = ++appSeq;
+  this.seq = appSeq = appSeq + 1;
   this.resultCode = 200;
   this.req = req;
   this.res = res;
-  this.param = extend(extend({},req.query), req.body);
+  this.param = extend(extend({}, req.query), req.body);
   this.headers = {};
   this.args = req.url.slice(1).split("?")[0].split("/");
   clientId = ((req.headers.cookie || "").match(RegExp("Xz=([a-zA-Z0-9+/=]+)")) || [])[1];
@@ -2006,7 +2001,7 @@ HttpApp.prototype.done = function(result) {
 };
 // {{{2 CallApp TODO
 CallApp = function(args) {
-  this.seq = ++appSeq;
+  this.seq = appSeq = appSeq + 1;
   this.clientId = newId();
   this.app = args[0];
   this.callback = args[args.length - 1];
@@ -2047,7 +2042,7 @@ route("devserver", function(app) {
   express = require("express");
   server = express();
   server.use(function(req, res, next) {
-    res.header("Cache-Control", "public, max-age=" + 60*60*24*7);
+    res.header("Cache-Control", "public, max-age=" + 60 * 60 * 24 * 7);
     res.removeHeader("X-Powered-By");
     next();
   });
@@ -2258,7 +2253,7 @@ if(isNode) {
         app.raw("image/png", data);
         app.done();
       });
-    } else if((app.args[1]!==undefined) && (app.args[0] === "_" || app.args[0] === "_s")) {
+    } else if(app.args[1] !== undefined && (app.args[0] === "_" || app.args[0] === "_s")) {
       url = "http" + (app.args[0][1] || "") + "://";
       url = url + app.args.slice(1).join("/");
       app.redirect(url);

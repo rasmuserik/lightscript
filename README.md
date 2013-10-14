@@ -1377,7 +1377,7 @@ We need to cleanup and canonise strings, if they should be used in urls.
       return dst;
     };
 
-##files 
+##files I/O 
 ###mtime 
 
     if(isNode) {
@@ -1422,6 +1422,22 @@ TODO: error handling
         throw "not implemented";
       };
     };
+
+xhr post json object
+
+    xhrPost = function(url, obj, done) {
+      xhr = new XMLHttpRequest();
+      xhr.open("POST", url, true);
+      xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+      if(done) {
+        xhr.onload = function () {
+          done(null, this.responseText);
+        }
+      }
+      xhr.send(Object.keys(obj).map(function(key) {
+        return key + "=" +  encodeURIComponent(JSON.stringify(obj[key]));
+      }).join("&"));
+    }
 
 ## Log writer
 
@@ -2009,7 +2025,9 @@ There are different routes
 
 ## App
 
+    appSeq = 0;
     App = function(args, param) {
+      this.seq = ++appSeq;
       this.clientId = this.clientId || newId();
       this.args = this.args || args || [];
       this.param = this.param || param || {};
@@ -2018,6 +2036,7 @@ There are different routes
       logObject({
         log : arraycopy(arguments),
         appType : this.appType,
+        seq: this.seq;
         pid : PID,
         clientId : this.clientId
       });
@@ -2037,6 +2056,7 @@ There are different routes
 ## CmdApp
 
     CmdApp = function() {
+      this.seq = ++appSeq;
       this.clientId = newId();
       this.param = param = {};
       this.args = process.argv.slice(2).filter(function(s) {
@@ -2094,6 +2114,16 @@ There are different routes
     };
     WebApp.prototype = Object.create(App.prototype);
     WebApp.prototype.appType = "web";
+    WebApp.prototype.log = function() {
+      args = arraycopy(arguments);
+      xhrPost("/_", {
+        data: {
+          log : args,
+          clientTime: Date.now();
+        }
+      })
+      console.log.apply(console, args);
+    };
     WebApp.prototype.send = function(content) {
 
 TODO
@@ -2130,10 +2160,11 @@ TODO
 ## HttpApp
 
     HttpApp = function(req, res) {
+      this.seq = ++appSeq;
       this.resultCode = 200;
       this.req = req;
       this.res = res;
-      this.param = req.query;
+      this.param = extend(extend({},req.query), req.body);
       this.headers = {};
       this.args = req.url.slice(1).split("?")[0].split("/");
       clientId = ((req.headers.cookie || "").match(RegExp("Xz=([a-zA-Z0-9+/=]+)")) || [])[1];
@@ -2190,6 +2221,7 @@ TODO
 ## CallApp TODO
 
     CallApp = function(args) {
+      this.seq = ++appSeq;
       this.clientId = newId();
       this.app = args[0];
       this.callback = args[args.length - 1];
@@ -2231,8 +2263,14 @@ TODO
     route("devserver", function(app) {
       express = require("express");
       server = express();
+      server.use(function(req, res, next) {
+        res.header("Cache-Control", "public, max-age=" + 60*60*24*7);
+        res.removeHeader("X-Powered-By");
+        next();
+      });
       server.use(express.static(__dirname));
       server.use(express.static(__dirname + "/../../oldweb"));
+      server.use(express.bodyParser());
       server.use(function(req, res, next) {
         httpApp = new HttpApp(req, res);
         httpApp.dispatch();
@@ -2429,7 +2467,6 @@ TODO
       cachedRead = memoiseAsync(require("fs").readFile);
       route("_", function(app) {
         type = app.args[app.args.length - 1].split(".").slice(- 1)[0];
-        app.log(type);
         if(type === "gif") {
           cachedRead(__dirname + "/../../oldweb/img/webbug.gif", function(err, data) {
             if(err) {
@@ -2446,13 +2483,14 @@ TODO
             app.raw("image/png", data);
             app.done();
           });
-        } else if(app.args[0] === "_" || app.args[0] === "_s") {
+        } else if((app.args[1]!==undefined) && (app.args[0] === "_" || app.args[0] === "_s")) {
           url = "http" + (app.args[0][1] || "") + "://";
           url = url + app.args.slice(1).join("/");
           app.redirect(url);
           app.done();
         } else if(true) {
-          app.done((new HTML()).content("in route _", ["p", "args[0]:", app.args[0]]));
+          app.raw("text/plain", "hello");
+          app.done();
         };
       });
     };

@@ -2498,7 +2498,6 @@ if(isNode) {
     var url;
     var type;
     type = app.args[app.args.length - 1].split(".").slice(- 1)[0];
-    console.log("BLHA");
     if(type === "gif") {
       cachedRead(__dirname + "/../../oldweb/img/webbug.gif", function(err, data) {
         if(err) {
@@ -2516,13 +2515,11 @@ if(isNode) {
         app.done();
       });
     } else if(app.args[1] !== undefined && (app.args[0] === "_" || app.args[0] === "_s")) {
-      console.log("AV", typeof app.args[1], app.args[1] !== undefined);
       url = "http" + (app.args[0][1] || "") + "://";
       url = url + app.args.slice(1).join("/");
       app.redirect(url);
       app.done();
     } else if(true) {
-      console.log("HERE");
       app.raw("text/plain", "hello");
       app.done();
     };
