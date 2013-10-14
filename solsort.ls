@@ -1646,6 +1646,11 @@ HTML = function() {
 HTML.prototype.addStyle = function(obj) {
   deepExtend(this._style, obj);
 };
+// {{{3 title
+HTML.prototype.title= function(title) {
+  this._title = title;
+  return this;
+};
 // {{{3 content
 HTML.prototype.content = function() {
   this._content = arraycopy(arguments);
@@ -2255,16 +2260,20 @@ loadjs = function(modulename, callback) {
 };
 markdown2html = function(md, callback) {
   loadjs("markdown", function(err, markdown) {
-    callback(null, markdown.toHTMLTree(md));
+    console.log(1, md);
+    htmlTree = markdown.toHTMLTree(md);
+    console.log(2);
+    callback(null, htmlTree);
   });
 };
 loadPosts = function(app) {
   gendoc(function(err, markdownString) {
     markdownString = markdownString.replace(new RegExp("^[\\s\\S]*\n# Posts[^#]*"), "\n");
     posts = {};
-    markdownString.replace(new RegExp("\n(##[^#](.*)[\\S\\s]*?)($|\n##[^#])", "g"), function(_, markdown, title) {
-      title = normaliseString(title.trim());
-      posts[title] = markdown;
+    markdownString.split("\n## ").slice(1).forEach(function(post) {
+      title = post.split("\n")[0].trim();
+      post = "## " + post;
+      posts[normaliseString(title)] = post;
     });
     renderPost(app);
   });
@@ -2272,7 +2281,18 @@ loadPosts = function(app) {
 renderPost = function(app) {
   title = normaliseString((app.args[1] || "").trim());
   markdown2html(posts[title] || "", function(err, result) {
-    app.done((new HTML()).content(result));
+    result[0] = "div"
+    html = new HTML();
+    html.title(posts[title].split("\n")[0].replace("##", "").trim());
+    html.addStyle({
+      "body":{
+        margin:"1ex 10% 0 10%"},
+      ".solsortLogoText": {
+        textDecoration: "none"
+      }
+    });
+    html.content(["a", {class:"solsortLogoText", href: "/"}, ["img", {src:"/img/logicon.png"}], " solsort.com"], result);
+    app.done(html);
   });
 };
 // {{{2 test
@@ -2366,9 +2386,99 @@ gendoc = function(callback) {
 // These notes are articles, that will automatically be convereted to articles on the solsort.com website.
 //
 // {{{2 Productivity hacks
-// TODO - merge from old site
+//
+// Notes from presentation.
+//
+// {{{3 Tactical vs strategic thinking
+// Planning on different levels, frees up focus. Work more efficiently when not thinking about direction.
+//
+// {{{4 Daily review
+//
+// Review previous day • Think once a day • Choose tasks
+// 
+// {{{4 Exercise, food, sleep~dream
+//
+// Physical prerequisite for persistent performance
+//
+// {{{4 Gratitude, reiterate direction
+//
+// Daily reaffirm direction • Focus on gratitude
+// 
+// {{{4 Pomodoros
+//
+// 25 minute timebox • Atomic units • Task estimation • Record activity • Small, easy to start • Work fit allocated time (¿Parkinsons? law)
+//
+// {{{4 Empty inbox
+//
+// Frees mental space • clutter tolerance, same amount of work
+// 
+// {{{4 Daylog
+//
+// Todolist • getting things out of the head • moving to done
+// 
+// {{{4 Backlog
+//
+// Temporal backlog in daylog • Categorised backlog in separate file • Capture system
+// 
+// {{{4 Review Biweekly and Quarterly
+//
+// Overall direction • Look back • Review backlog and goals • Temporal backlog
+// 
+// {{{3 Sources
+// {{{4 Getting Things Done
+// Empty inbox • Capture system • Not keeping stuff in the head
+//
+// {{{4 Scrum (and Lean)
+// 14 day sprints • Retrospective • Daily Scrum • Kanban - daylog • Measure and optimise
+//
+// {{{4 Junto
+// Pomodoros • Network peering
 // {{{2 Pricing scale
-// TODO - merge from old site
+//
+//
+// Nice round numbers, both for Euros and DKK(Danish currency)
+//
+// Price doubles approximately per two steps
+//
+// Exponential scale, a la planning poker
+//
+// Useful tool for estimating/finding price without sweating the details
+//
+//        DKK         (+VAT)         Euro
+//     
+//         15            (3.75)         2
+//         30            (7.5)          4
+//         45           (11.25)         6
+//         60           (15)            8
+//         90           (22.5)         12
+//        120           (30)           16
+//        180           (45)           24
+//        240           (60)           32
+//        360           (90)           48
+//        480          (120)           64
+//        720          (180)           96
+//        960          (240)          128
+//       1440          (360)          192
+//       1920          (480)          256
+//       2880          (720)          384
+//       3600          (900)          480
+//       4800         (1200)          640
+//       7200         (1800)          960
+//       9600         (2400)         1280
+//      14400         (3600)         1920
+//      19200         (4800)         2560
+//      28800         (7200)         3840
+//      36000         (9000)         4800
+//      48000        (12000)         6400
+//      72000        (18000)         9600
+//      96000        (24000)        12800
+//     144000        (36000)        19200
+//     192000        (40800)        25600
+//     288000        (70200)        38400
+//     360000        (90000)        48000
+//     480000       (120000)        64000
+//     720000       (180000)        96000
+//
 // {{{2 EuroCards
 // 
 // ![EuroCards](/img/IMG_2596-eurocards.jpg)
