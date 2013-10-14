@@ -2299,7 +2299,7 @@ route("devserver", function(app) {
   express = require("express");
   server = express();
   server.use(function(req, res, next) {
-    res.header("Cache-Control", "public, max-age=" + 60 * 60 * 24 * 7);
+    res.header("Cache-Control", "public, max-age=" + 60 * 60 * 24 * 100);
     res.removeHeader("X-Powered-By");
     next();
   });
@@ -2308,6 +2308,7 @@ route("devserver", function(app) {
   server.use(express.bodyParser());
   server.use(function(req, res, next) {
     var httpApp;
+    res.header("Cache-Control", "public, max-age=" + 60 * 60);
     httpApp = new HttpApp(req, res);
     httpApp.dispatch();
   });
