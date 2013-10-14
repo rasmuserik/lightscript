@@ -2427,7 +2427,11 @@ TODO
 ### render entry
 
     renderEntry = function(entry) {
-      return ["a", {class : "entry", href : entry.link}, ["h2", {class : "header"}, entry.title || entry.name], ["img", {src : "/icons/app-" + normaliseString(entry.name) + ".png"}], ["div", {class : "desc"}, entry.desc]];
+      return ["a", {class : "entry", href : entry.link}, ["h2", {class : "header"}, entry.title || entry.name], ["img", {
+        src : "/icons/app-" + normaliseString(entry.name) + ".png",
+        width : "300",
+        height : "200"
+      }], ["div", {class : "desc"}, entry.desc]];
     };
 
 ### default route
