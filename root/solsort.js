@@ -2205,7 +2205,7 @@ HttpApp = function(req, res) {
   clientId = ((req.headers.cookie || "").match(RegExp("Xz=([a-zA-Z0-9+/=]+)")) || [])[1];
   if(!clientId) {
     clientId = newId();
-    this.headers["Set-Cookie"] = "Xz=" + clientId;
+    this.headers["Set-Cookie"] = "Xz=" + clientId + "; Max-Age=" + 60 * 60 * 24 * 200;
   };
   this.clientId = clientId;
 };
@@ -2465,9 +2465,9 @@ index = [
 // {{{3 render entry
 renderEntry = function(entry) {
   return ["a", {class : "entry", href : entry.link}, ["h2", {class : "header"}, entry.title || entry.name], ["img", {
-    src : "/icons/app-" + normaliseString(entry.name) + ".png",
     width : "300",
-    height : "200"
+    height : "200",
+    src : "/icons/app-" + normaliseString(entry.name) + ".png"
   }], ["div", {class : "desc"}, entry.desc]];
 };
 // {{{3 default route
