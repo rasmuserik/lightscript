@@ -9,6 +9,7 @@ var cachedRead;
 var renderEntry;
 var index;
 var call;
+var appSeq;
 var route;
 var _routes;
 var defaultStyle;
@@ -22,6 +23,7 @@ var jsonml2xml;
 var xml2jsonml;
 var logObject;
 var log;
+var xhrPost;
 var savefile;
 var loadfile;
 var mtime;
@@ -1463,7 +1465,7 @@ deepExtend = function(dst, src) {
   });
   return dst;
 };
-// files {{{2
+// files I/O {{{2
 // mtime {{{3
 if(isNode) {
   mtime = function(fname) {
@@ -1501,6 +1503,21 @@ savefile = function(filename, content, callback) {
     console.log("savefile", filename, content);
     throw "not implemented";
   };
+};
+// xhr post json object
+xhrPost = function(url, obj, done) {
+  var xhr;
+  xhr = new XMLHttpRequest();
+  xhr.open("POST", url, true);
+  xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+  if(done) {
+    xhr.onload = function() {
+      done(null, this.responseText);
+    };
+  };
+  xhr.send(Object.keys(obj).map(function(key) {
+    return key + "=" + encodeURIComponent(JSON.stringify(obj[key]));
+  }).join("&"));
 };
 // {{{2 Log writer
 log = function() {
@@ -2043,7 +2060,9 @@ route = function(name, fn) {
   _routes[name] = fn;
 };
 // {{{2 App
+appSeq = 0;
 App = function(args, param) {
+  this.seq = appSeq = appSeq + 1;
   this.clientId = this.clientId || newId();
   this.args = this.args || args || [];
   this.param = this.param || param || {};
@@ -2052,6 +2071,7 @@ App.prototype.log = function() {
   logObject({
     log : arraycopy(arguments),
     appType : this.appType,
+    seq : this.seq,
     pid : PID,
     clientId : this.clientId
   });
@@ -2071,6 +2091,7 @@ App.prototype.dispatch = function() {
 // {{{2 CmdApp
 CmdApp = function() {
   var param;
+  this.seq = appSeq = appSeq + 1;
   this.clientId = newId();
   this.param = param = {};
   this.args = process.argv.slice(2).filter(function(s) {
@@ -2133,6 +2154,12 @@ WebApp = function() {
 };
 WebApp.prototype = Object.create(App.prototype);
 WebApp.prototype.appType = "web";
+WebApp.prototype.log = function() {
+  var args;
+  args = arraycopy(arguments);
+  xhrPost("/_", {data : {log : args, clientTime : Date.now()}});
+  console.log.apply(console, args);
+};
 WebApp.prototype.send = function(content) {
   var content;
   // TODO
@@ -2168,10 +2195,11 @@ if(isBrowser) {
 // {{{2 HttpApp
 HttpApp = function(req, res) {
   var clientId;
+  this.seq = appSeq = appSeq + 1;
   this.resultCode = 200;
   this.req = req;
   this.res = res;
-  this.param = req.query;
+  this.param = extend(extend({}, req.query), req.body);
   this.headers = {};
   this.args = req.url.slice(1).split("?")[0].split("/");
   clientId = ((req.headers.cookie || "").match(RegExp("Xz=([a-zA-Z0-9+/=]+)")) || [])[1];
@@ -2226,6 +2254,7 @@ HttpApp.prototype.done = function(result) {
 };
 // {{{2 CallApp TODO
 CallApp = function(args) {
+  this.seq = appSeq = appSeq + 1;
   this.clientId = newId();
   this.app = args[0];
   this.callback = args[args.length - 1];
@@ -2269,8 +2298,14 @@ route("devserver", function(app) {
   var express;
   express = require("express");
   server = express();
+  server.use(function(req, res, next) {
+    res.header("Cache-Control", "public, max-age=" + 60 * 60 * 24 * 7);
+    res.removeHeader("X-Powered-By");
+    next();
+  });
   server.use(express.static(__dirname));
   server.use(express.static(__dirname + "/../../oldweb"));
+  server.use(express.bodyParser());
   server.use(function(req, res, next) {
     var httpApp;
     httpApp = new HttpApp(req, res);
@@ -2463,7 +2498,7 @@ if(isNode) {
     var url;
     var type;
     type = app.args[app.args.length - 1].split(".").slice(- 1)[0];
-    app.log(type);
+    console.log("BLHA");
     if(type === "gif") {
       cachedRead(__dirname + "/../../oldweb/img/webbug.gif", function(err, data) {
         if(err) {
@@ -2480,13 +2515,16 @@ if(isNode) {
         app.raw("image/png", data);
         app.done();
       });
-    } else if(app.args[0] === "_" || app.args[0] === "_s") {
+    } else if(app.args[1] !== undefined && (app.args[0] === "_" || app.args[0] === "_s")) {
+      console.log("AV", typeof app.args[1], app.args[1] !== undefined);
       url = "http" + (app.args[0][1] || "") + "://";
       url = url + app.args.slice(1).join("/");
       app.redirect(url);
       app.done();
     } else if(true) {
-      app.done((new HTML()).content("in route _", ["p", "args[0]:", app.args[0]]));
+      console.log("HERE");
+      app.raw("text/plain", "hello");
+      app.done();
     };
   });
 };
