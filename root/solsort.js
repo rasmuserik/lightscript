@@ -55,7 +55,7 @@ var addTest;
 var _testcases;
 // {{{1 Personal language, scripts and content
 //
-// ![](https://ssl.solsort.com/_logo.png) [![ci](https://secure.travis-ci.org/rasmuserik/lightscript.png)](http://travis-ci.org/rasmuserik/lightscript)
+// ![solsort](https://ssl.solsort.com/_logo.png) [![ci](https://secure.travis-ci.org/rasmuserik/lightscript.png)](http://travis-ci.org/rasmuserik/lightscript)
 //
 // Warning: this is a personal project, look at it on own risk. Not intended for other to work with (but feel free to peek at it nonetheless).
 //

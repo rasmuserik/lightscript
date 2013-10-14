@@ -1,6 +1,6 @@
 # Personal language, scripts and content
 
-![](https://ssl.solsort.com/_logo.png) [![ci](https://secure.travis-ci.org/rasmuserik/lightscript.png)](http://travis-ci.org/rasmuserik/lightscript)
+![solsort](https://ssl.solsort.com/_logo.png) [![ci](https://secure.travis-ci.org/rasmuserik/lightscript.png)](http://travis-ci.org/rasmuserik/lightscript)
 
 Warning: this is a personal project, look at it on own risk. Not intended for other to work with (but feel free to peek at it nonetheless).
 
@@ -1824,7 +1824,7 @@ Generate a reverse xml entity table.
 
 ### title
 
-    HTML.prototype.title= function(title) {
+    HTML.prototype.title = function(title) {
       this._title = title;
       return this;
     };
@@ -2506,17 +2506,11 @@ TODO
     renderPost = function(app) {
       title = normaliseString((app.args[1] || "").trim());
       markdown2html(posts[title] || "", function(err, result) {
-        result[0] = "div"
+        result[0] = "div";
         html = new HTML();
         html.title(posts[title].split("\n")[0].replace("##", "").trim());
-        html.addStyle({
-          "body":{
-            margin:"1ex 10% 0 10%"},
-          ".solsortLogoText": {
-            textDecoration: "none"
-          }
-        });
-        html.content(["a", {class:"solsortLogoText", href: "/"}, ["img", {src:"/img/logicon.png"}], " solsort.com"], result);
+        html.addStyle({"body" : {margin : "1ex 10% 0 10%"}, ".solsortLogoText" : {textDecoration : "none"}});
+        html.content(["a", {class : "solsortLogoText", href : "/"}, ["img", {src : "/img/logicon.png"}], " solsort.com"], result);
         app.done(html);
       });
     };
