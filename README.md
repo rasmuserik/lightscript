@@ -1340,6 +1340,43 @@ We need to cleanup and canonise strings, if they should be used in urls.
       });
     };
 
+### deepCopy
+
+    deepCopy = function(obj) {
+      if(isObject(obj)) {
+        result = {};
+        foreach(obj, function(key, val) {
+          result[key] = deepCopy(val);
+        });
+      } else if(Array.isArray(obj)) {
+        result = [];
+        obj.forEach(function(elem) {
+          result.push(deepCopy(elem));
+        });
+      } else if(typeof obj === "string" || typeof obj === "number" || typeof obj === "boolean" || typeof obj === "undefined") {
+        result = obj;
+      } else if(true) {
+        throw "unexpected type in deepcopy";
+      };
+      return result;
+    };
+
+{{{deepExtend 
+
+    deepExtend = function(dst, src) {
+      Object.keys(src).forEach(function(key) {
+        if(isObject(src[key])) {
+          if(!isObject(dst[key])) {
+            dst[key] = {};
+          };
+          deepExtend(dst[key], src[key]);
+        } else if(true) {
+          dst[key] = src[key];
+        };
+      });
+      return dst;
+    };
+
 ##files 
 ###mtime 
 
@@ -1746,19 +1783,54 @@ Generate a reverse xml entity table.
     });
 
 ##HTML 
+
+    jsName2CssName = function(str) {
+      return str.replace(RegExp("[A-Z]", "g"), function(c) {
+        return "-" + c.toLowerCase();
+      });
+    };
+    styleToText = function(obj) {
+      str = "";
+      Object.keys(obj).forEach(function(selector) {
+        str = str + (selector + "{");
+        Object.keys(obj[selector]).forEach(function(prop) {
+          str = str + (jsName2CssName(prop) + ":" + obj[selector][prop] + ";");
+        });
+        str = str + "}\n";
+      });
+      return str;
+    };
+    defaultStyle = {body : {
+      margin : "0",
+      padding : "0",
+      fontFamily : "sans-serif"
+    }};
+
 ### constructor
 
     HTML = function() {
       args = arraycopy(arguments);
       this._content = [];
-      this._style = {};
+      this._style = deepCopy(defaultStyle);
       this._title = "solsort.com";
       this.icon = undefined;
     };
+
+### addStyle
+
+    HTML.prototype.addStyle = function(obj) {
+      deepExtend(this._style, obj);
+    };
+
+### content
+
     HTML.prototype.content = function() {
       this._content = arraycopy(arguments);
       return this;
     };
+
+### toLsXml
+
     HTML.prototype.toLsXml = function() {
 
 TODO: refactor/remove this function when Xml-class done
@@ -1780,11 +1852,14 @@ TODO: refactor/remove this function when Xml-class done
         head.push(["link", {rel : "shortcut-icon", content : opt.icon}]);
         head.push(["link", {rel : "apple-touch-icon-precomposed", content : opt.icon}]);
       };
+      head.push(["style", styleToText(this._style)]);
       return new LsXml(["html", head, ["body"].concat(this._content).concat([["script", {src : "/solsort.js"}, ""]])]);
     };
-    webpage = function(jsonmls) {
-      html = new HTML();
-      return html.content(jsonmls).toLsXml();
+
+### toString
+
+    HTML.prototype.toString = function() {
+      return "<!DOCTYPE html>" + this.toLsXml().toString();
     };
 
 ## Testing
@@ -2075,8 +2150,8 @@ TODO
           this.content = content;
           this.headers["Content-Type"] = "text/plain";
         };
-      } else if(isClass(content, LsXml)) {
-        this.content = "<!DOCTYPE html>" + content.toString();
+      } else if(isClass(content, HTML)) {
+        this.content = content.toString();
         this.headers["Content-Type"] = "text/html";
         this.content = this.content.replace(new RegExp(" href=\"http(s?)://", "g"), function(_, secure) {
           return " href=\"/_" + secure + "/";
@@ -2308,14 +2383,37 @@ TODO
 ### render entry
 
     renderEntry = function(entry) {
-      return ["a", {class : "entry", href : entry.link}, ["h3", {class : "header"}, entry.title || entry.name], ["img", {src : "/icons/app-" + normaliseString(entry.name) + ".png"}], ["div", {class : "desc"}, entry.desc]];
+      return ["a", {class : "entry", href : entry.link}, ["h2", {class : "header"}, entry.title || entry.name], ["img", {src : "/icons/app-" + normaliseString(entry.name) + ".png"}], ["div", {class : "desc"}, entry.desc]];
     };
 
 ### default route
 
     route("default", function(app) {
-      html = index.map(renderEntry);
-      app.done(webpage(index.map(renderEntry)));
+      html = new HTML();
+      html.addStyle({
+        ".entries" : {textAlign : "center"},
+        ".entry" : {
+          textAlign : "left",
+          display : "inline-block",
+          width : "340px",
+          verticalAlign : "text-top",
+          color : "black",
+          textColor : "black",
+          textDecoration : "none",
+          margin : "10px",
+          padding : "0px 20px 40px 20px",
+          border : "1px solid #ccc",
+          borderRadius : "10px"
+        },
+        ".entry img" : {
+          border : "1px solid #ccc",
+          marginLeft : "20px",
+          marginRight : "20px",
+          marginBottom : "20px"
+        }
+      });
+      html.content(["div", {class : "entries"}].concat(index.map(renderEntry)));
+      app.done(html);
       /*
       if(app.appType === "http") {
 
@@ -2323,7 +2421,7 @@ app.redirect("http://www.solsort.com/");
 app.done();
 
       } else if(isNode) {
-        app.done(webpage([["h1", "hello"]]));
+        app.done((new HTML()).content([["h1", "hello"]]));
       } else if(isBrowser) {
         app.done("hi");
       };
@@ -2359,7 +2457,7 @@ app.done();
           app.redirect(url);
           app.done();
         } else if(true) {
-          app.done(webpage(["in route _", ["p", "args[0]:", app.args[0]]]));
+          app.done((new HTML()).content(["in route _", ["p", "args[0]:", app.args[0]]]));
         };
       });
     };
@@ -2409,7 +2507,7 @@ app.done();
     renderPost = function(app) {
       title = normaliseString((app.args[1] || "").trim());
       markdown2html(posts[title] || "", function(err, result) {
-        app.done(webpage([result]));
+        app.done((new HTML()).content([result]));
       });
     };
 
@@ -2429,7 +2527,7 @@ prettyprints file, and generates documentation.
     route("pp", function(app) {
       app.log(app.appType);
       if(app.appType === "http") {
-        return app.done(webpage([]));
+        return app.done((new HTML()).content([]));
       };
       app.log("prettyprinting");
       gendoc(function(err, markdownString) {
