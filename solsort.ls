@@ -1647,7 +1647,7 @@ HTML.prototype.addStyle = function(obj) {
   deepExtend(this._style, obj);
 };
 // {{{3 title
-HTML.prototype.title= function(title) {
+HTML.prototype.title = function(title) {
   this._title = title;
   return this;
 };
@@ -2281,17 +2281,11 @@ loadPosts = function(app) {
 renderPost = function(app) {
   title = normaliseString((app.args[1] || "").trim());
   markdown2html(posts[title] || "", function(err, result) {
-    result[0] = "div"
+    result[0] = "div";
     html = new HTML();
     html.title(posts[title].split("\n")[0].replace("##", "").trim());
-    html.addStyle({
-      "body":{
-        margin:"1ex 10% 0 10%"},
-      ".solsortLogoText": {
-        textDecoration: "none"
-      }
-    });
-    html.content(["a", {class:"solsortLogoText", href: "/"}, ["img", {src:"/img/logicon.png"}], " solsort.com"], result);
+    html.addStyle({"body" : {margin : "1ex 10% 0 10%"}, ".solsortLogoText" : {textDecoration : "none"}});
+    html.content(["a", {class : "solsortLogoText", href : "/"}, ["img", {src : "/img/logicon.png"}], " solsort.com"], result);
     app.done(html);
   });
 };
