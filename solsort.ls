@@ -1952,8 +1952,8 @@ HttpApp = function(req, res) {
   clientId = ((req.headers.cookie || "").match(RegExp("Xz=([a-zA-Z0-9+/=]+)")) || [])[1];
   if(!clientId) {
     clientId = newId();
-    this.headers["Set-Cookie"] = "Xz=" + clientId + "; Max-Age=" + 60 * 60 * 24 * 200;
   };
+  this.headers["Set-Cookie"] = "Xz=" + clientId + "; Max-Age=" + 60 * 60 * 24 * 200;
   this.clientId = clientId;
 };
 HttpApp.prototype = Object.create(App.prototype);
