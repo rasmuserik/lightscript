@@ -1345,19 +1345,19 @@ if(isNode) {
       server = net.createServer(function(con) {
         str = "";
         con.on("data", function(chunk) {
-          str += chunk;
+          str = str + chunk;
           arr = str.split("\n");
-          arr.slice(0, -1).forEach(logStringToFile);
-          str = arr[arr.length - 1] 
-        })
+          arr.slice(0, - 1).forEach(logStringToFile);
+          str = arr[arr.length - 1];
+        });
         con.on("end", function() {
           if(str.trim()) {
             logStringToFile(str);
-          }
-        })
+          };
+        });
       });
       server.listen(7096);
-    }
+    };
     //
     // log function
     logObject = function(obj) {
@@ -1381,13 +1381,13 @@ if(isNode) {
           startLogServer();
           connection = undefined;
         });
-      }
+      };
       if(isServer) {
         logStringToFile(JSON.stringify(obj));
-      } else {
+      } else if(true) {
         connection.write(JSON.stringify(obj) + "\n");
-      }
-    }
+      };
+    };
     //
     // log writer
     fs = require("fs");
@@ -2434,7 +2434,7 @@ route("prettyprint", function(app) {
   loadfile("/solsort.ls", function(err, source) {
     ast = ls2ast(source);
     savefile("/solsort.pp", ast2ls(ast), function() {
-    app.done();
+      app.done();
     });
   });
 });

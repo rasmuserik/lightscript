@@ -1419,6 +1419,7 @@ TODO: error handling
       };
       if(isBrowser) {
         console.log("savefile", filename, content);
+        callback();
         throw "not implemented";
       };
     };
@@ -1451,6 +1452,69 @@ xhr post json object
     logObject = undefined;
     if(isNode) {
       thisTick(function() {
+        net = require("net");
+        isServer = false;
+        connection = undefined;
+
+
+log server
+
+        startLogServer = function() {
+          isServer = true;
+          server = net.createServer(function(con) {
+            str = "";
+            con.on("data", function(chunk) {
+              str = str + chunk;
+              arr = str.split("\n");
+              arr.slice(0, - 1).forEach(logStringToFile);
+              str = arr[arr.length - 1];
+            });
+            con.on("end", function() {
+              if(str.trim()) {
+                logStringToFile(str);
+              };
+            });
+          });
+          server.listen(7096);
+        };
+
+
+log function
+
+        logObject = function(obj) {
+          obj.date = Date.now();
+          obj.pid = PID;
+          console.log((obj.log || []).map(function(elem) {
+            if(typeof elem === "string") {
+              return elem;
+            } else if(true) {
+              return JSON.stringify(elem);
+            };
+          }).join(" "));
+
+
+send to log server
+
+          if(!isServer && connection === undefined) {
+            connection = net.createConnection(7096);
+            connection.on("end", function() {
+              connection = undefined;
+            });
+            connection.on("error", function() {
+              startLogServer();
+              connection = undefined;
+            });
+          };
+          if(isServer) {
+            logStringToFile(JSON.stringify(obj));
+          } else if(true) {
+            connection.write(JSON.stringify(obj) + "\n");
+          };
+        };
+
+
+log writer
+
         fs = require("fs");
         child_process = require("child_process");
         prevTime = 0;
@@ -1461,9 +1525,9 @@ xhr post json object
         if(!fs.existsSync(logDir)) {
           fs.mkdirSync(logDir);
         };
-        logObject = function(obj) {
+        logStringToFile = function(str) {
+          console.log("logging:", str);
           now = new Date();
-          obj.date = Number(now);
           name = logDir + "/";
           name = name + (now.getUTCFullYear() + "-");
           name = name + (("" + (now.getUTCMonth() + 101)).slice(1) + "-");
@@ -1479,14 +1543,7 @@ xhr post json object
             writeStream = fs.createWriteStream(name, {flags : "a"});
             fname = name;
           };
-          console.log((obj.log || []).map(function(elem) {
-            if(typeof elem === "string") {
-              return elem;
-            } else if(true) {
-              return JSON.stringify(elem);
-            };
-          }).join(" "));
-          writeStream.write(JSON.stringify(obj) + "\n");
+          writeStream.write(str + "\n");
         };
       });
     } else if(true) {
@@ -2086,6 +2143,7 @@ There are different routes
       if(result) {
         this.send(result);
       };
+      process.exit();
     };
     if(isNode) {
       nextTick(function() {
@@ -2165,8 +2223,8 @@ TODO
       clientId = ((req.headers.cookie || "").match(RegExp("Xz=([a-zA-Z0-9+/=]+)")) || [])[1];
       if(!clientId) {
         clientId = newId();
-        this.headers["Set-Cookie"] = "Xz=" + clientId + "; Max-Age=" + 60 * 60 * 24 * 200;
       };
+      this.headers["Set-Cookie"] = "Xz=" + clientId + "; Max-Age=" + 60 * 60 * 24 * 200;
       this.clientId = clientId;
     };
     HttpApp.prototype = Object.create(App.prototype);
@@ -2562,6 +2620,12 @@ TODO
       foreach(_testcases, function(name, fn) {
         fn(new Tester(name));
       });
+      sleep(10, function() {
+
+TODO: app done on test done, or app.error on test error
+
+        app.done();
+      });
     });
 
 ##pp - prepare (prettyprint+gendoc) route 
@@ -2575,16 +2639,18 @@ prettyprints file, and generates documentation.
         return app.done((new HTML()).content());
       };
       app.log("prettyprinting");
-      gendoc(function(err, markdownString) {
-        if(err) {
-          return app.error(err);
-        };
-        savefile("/../README.md", markdownString);
-      });
       loadfile("/solsort.ls", function(err, source) {
         ast = ls2ast(source);
-        savefile("/../solsort.ls", ast2ls(ast));
-        app.done();
+        savefile("/../solsort.ls", ast2ls(ast), function() {
+          gendoc(function(err, markdownString) {
+            if(err) {
+              return app.error(err);
+            };
+            savefile("/../README.md", markdownString, function() {
+              app.done();
+            });
+          });
+        });
       });
     });
 
@@ -2600,8 +2666,9 @@ prettyprints file, and generates documentation.
       } else if(true) {
         loadfile("/solsort.ls", function(err, source) {
           ast = ls2ast(source);
-          savefile("/solsort.js", ast2js(ast));
-          app.done();
+          savefile("/solsort.js", ast2js(ast), function() {
+            app.done();
+          });
         });
       };
     });
@@ -2609,8 +2676,9 @@ prettyprints file, and generates documentation.
       app.log("prettyprinting");
       loadfile("/solsort.ls", function(err, source) {
         ast = ls2ast(source);
-        savefile("/solsort.pp", ast2ls(ast));
-        app.done();
+        savefile("/solsort.pp", ast2ls(ast), function() {
+          app.done();
+        });
       });
     });
 

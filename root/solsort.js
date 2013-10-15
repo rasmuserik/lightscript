@@ -2660,6 +2660,10 @@ route("test", function(app) {
   foreach(_testcases, function(name, fn) {
     fn(new Tester(name));
   });
+  sleep(10, function() {
+    // TODO: app done on test done, or app.error on test error
+    app.done();
+  });
 });
 // pp - prepare (prettyprint+gendoc) route {{{2
 //
