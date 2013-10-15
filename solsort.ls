@@ -1281,7 +1281,7 @@ if(isNode) {
   socket.on("serverPID", function(pid) {
     if(serverPID && serverPID !== pid) {
       location.reload();
-    }
+    };
     serverPID = pid;
   });
 };
@@ -2171,7 +2171,7 @@ route("devserver", function(app) {
         loadfile(src, function(err, source) {
           if(err) {
             throw err;
-          }
+          };
           ast = ls2ast(source);
           js = ast2js(ast);
           savefile(dst, js, function() {

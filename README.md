@@ -1384,6 +1384,13 @@ We need to cleanup and canonise strings, if they should be used in urls.
       socket = require("socket.io-client").connect("http://localhost:" + 4444);
     } else if(true) {
       socket = window.io.connect("/");
+      serverPID = undefined;
+      socket.on("serverPID", function(pid) {
+        if(serverPID && serverPID !== pid) {
+          location.reload();
+        };
+        serverPID = pid;
+      });
     };
 
 ###mtime 
@@ -1392,7 +1399,7 @@ We need to cleanup and canonise strings, if they should be used in urls.
       mtime = function(fname) {
         return trycatch(function() {
           return require("fs").statSync(__dirname + fname).mtime.getTime();
-        }, function() {
+        }, function(err) {
           return 0;
         });
       };
@@ -2333,15 +2340,15 @@ express setup
       express = require("express");
       server = express();
       server.use(function(req, res, next) {
-        if(req.url === "/solsort.js") {
-          res.header("Cache-Control", "public, max-age=" + 60 * 60);
-        } else if(true) {
-          res.header("Cache-Control", "public, max-age=" + 60 * 60 * 24 * 100);
-        };
+        res.header("Cache-Control", "public, max-age=" + 60 * 60 * 24 * 100);
         res.removeHeader("X-Powered-By");
         next();
       });
       server.use(express.static(__dirname));
+      server.use(function(req, res, next) {
+        res.header("Cache-Control", "public, max-age=0");
+        next();
+      });
       server.use(express.static(__dirname + "/../../oldweb"));
       server.use(express.bodyParser());
       server.use(function(req, res, next) {
@@ -2365,11 +2372,15 @@ socket.io
       io.set("log level", 1);
       io.sockets.on("connection", function(sock) {
         app.log("socket.io connect", sock.id, sock.handshake.headers);
+        sock.emit("serverPID", PID);
         sock.on("disconnect", function() {
           app.log("socket.io disconnect", sock.id);
         });
       });
     });
+
+## devserver
+
     route("devserver", function(app) {
       spawn = require("child_process").spawn;
       server = undefined;
@@ -2384,17 +2395,21 @@ socket.io
       compiling = false;
       require("fs").watch(__dirname + "/..", function() {
         if(compiling) {
-          return ;;
+          return undefined;
         };
         compiling = true;
-        src = __dirname + "/../solsort.ls";
-        dst = __dirname + "/solsort.js";
-        sleep(0.1, function() {
+        src = "/../solsort.ls";
+        dst = "/solsort.js";
+        sleep(0.3, function() {
           compiling = false;
           if(mtime(src) > mtime(dst)) {
-            loadfile("/solsort.ls", function(err, source) {
+            loadfile(src, function(err, source) {
+              if(err) {
+                throw err;
+              };
               ast = ls2ast(source);
-              savefile("/solsort.js", ast2js(ast), function() {
+              js = ast2js(ast);
+              savefile(dst, js, function() {
                 restartServer();
                 compiling = false;
               });
