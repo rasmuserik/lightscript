@@ -1501,6 +1501,7 @@ savefile = function(filename, content, callback) {
   };
   if(isBrowser) {
     console.log("savefile", filename, content);
+    callback();
     throw "not implemented";
   };
 };
@@ -1530,6 +1531,7 @@ log = function() {
 logObject = undefined;
 if(isNode) {
   thisTick(function() {
+    var logStringToFile;
     var writeStream;
     var fname;
     var logDir;
@@ -1537,6 +1539,68 @@ if(isNode) {
     var prevTime;
     var child_process;
     var fs;
+    var startLogServer;
+    var connection;
+    var isServer;
+    var net;
+    net = require("net");
+    isServer = false;
+    connection = undefined;
+    //
+    // log server
+    startLogServer = function() {
+      var server;
+      isServer = true;
+      server = net.createServer(function(con) {
+        var str;
+        str = "";
+        con.on("data", function(chunk) {
+          var arr;
+          str = str + chunk;
+          arr = str.split("\n");
+          arr.slice(0, - 1).forEach(logStringToFile);
+          str = arr[arr.length - 1];
+        });
+        con.on("end", function() {
+          if(str.trim()) {
+            logStringToFile(str);
+          };
+        });
+      });
+      server.listen(7096);
+    };
+    //
+    // log function
+    logObject = function(obj) {
+      obj.date = Date.now();
+      obj.pid = PID;
+      console.log((obj.log || []).map(function(elem) {
+        if(typeof elem === "string") {
+          return elem;
+        } else if(true) {
+          return JSON.stringify(elem);
+        };
+      }).join(" "));
+      //
+      // send to log server
+      if(!isServer && connection === undefined) {
+        connection = net.createConnection(7096);
+        connection.on("end", function() {
+          connection = undefined;
+        });
+        connection.on("error", function() {
+          startLogServer();
+          connection = undefined;
+        });
+      };
+      if(isServer) {
+        logStringToFile(JSON.stringify(obj));
+      } else if(true) {
+        connection.write(JSON.stringify(obj) + "\n");
+      };
+    };
+    //
+    // log writer
     fs = require("fs");
     child_process = require("child_process");
     prevTime = 0;
@@ -1547,12 +1611,12 @@ if(isNode) {
     if(!fs.existsSync(logDir)) {
       fs.mkdirSync(logDir);
     };
-    logObject = function(obj) {
+    logStringToFile = function(str) {
       var oldname;
       var name;
       var now;
+      console.log("logging:", str);
       now = new Date();
-      obj.date = Number(now);
       name = logDir + "/";
       name = name + (now.getUTCFullYear() + "-");
       name = name + (("" + (now.getUTCMonth() + 101)).slice(1) + "-");
@@ -1568,14 +1632,7 @@ if(isNode) {
         writeStream = fs.createWriteStream(name, {flags : "a"});
         fname = name;
       };
-      console.log((obj.log || []).map(function(elem) {
-        if(typeof elem === "string") {
-          return elem;
-        } else if(true) {
-          return JSON.stringify(elem);
-        };
-      }).join(" "));
-      writeStream.write(JSON.stringify(obj) + "\n");
+      writeStream.write(str + "\n");
     };
   });
 } else if(true) {
@@ -2124,6 +2181,7 @@ CmdApp.prototype.done = function(result) {
   if(result) {
     this.send(result);
   };
+  process.exit();
 };
 if(isNode) {
   nextTick(function() {
@@ -2205,8 +2263,8 @@ HttpApp = function(req, res) {
   clientId = ((req.headers.cookie || "").match(RegExp("Xz=([a-zA-Z0-9+/=]+)")) || [])[1];
   if(!clientId) {
     clientId = newId();
-    this.headers["Set-Cookie"] = "Xz=" + clientId + "; Max-Age=" + 60 * 60 * 24 * 200;
   };
+  this.headers["Set-Cookie"] = "Xz=" + clientId + "; Max-Age=" + 60 * 60 * 24 * 200;
   this.clientId = clientId;
 };
 HttpApp.prototype = Object.create(App.prototype);
@@ -2613,17 +2671,19 @@ route("pp", function(app) {
     return app.done((new HTML()).content());
   };
   app.log("prettyprinting");
-  gendoc(function(err, markdownString) {
-    if(err) {
-      return app.error(err);
-    };
-    savefile("/../README.md", markdownString);
-  });
   loadfile("/solsort.ls", function(err, source) {
     var ast;
     ast = ls2ast(source);
-    savefile("/../solsort.ls", ast2ls(ast));
-    app.done();
+    savefile("/../solsort.ls", ast2ls(ast), function() {
+      gendoc(function(err, markdownString) {
+        if(err) {
+          return app.error(err);
+        };
+        savefile("/../README.md", markdownString, function() {
+          app.done();
+        });
+      });
+    });
   });
 });
 // compile and prettyprint {{{2
@@ -2638,8 +2698,9 @@ route("compile", function(app) {
   } else if(true) {
     loadfile("/solsort.ls", function(err, source) {
       ast = ls2ast(source);
-      savefile("/solsort.js", ast2js(ast));
-      app.done();
+      savefile("/solsort.js", ast2js(ast), function() {
+        app.done();
+      });
     });
   };
 });
@@ -2648,8 +2709,9 @@ route("prettyprint", function(app) {
   loadfile("/solsort.ls", function(err, source) {
     var ast;
     ast = ls2ast(source);
-    savefile("/solsort.pp", ast2ls(ast));
-    app.done();
+    savefile("/solsort.pp", ast2ls(ast), function() {
+      app.done();
+    });
   });
 });
 // gendoc - Documentation generation {{{2
