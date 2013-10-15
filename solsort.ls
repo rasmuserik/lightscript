@@ -1275,10 +1275,9 @@ deepExtend = function(dst, src) {
 // {{{3 socket.io
 if(isNode) {
   socket = require("socket.io-client").connect("http://localhost:" + 4444);
-} else {
+} else if(true) {
   socket = window.io.connect("/");
-}
-
+};
 // mtime {{{3
 if(isNode) {
   mtime = function(fname) {
@@ -2138,7 +2137,6 @@ route("devserver", function(app) {
   port = app.param["port"] || 4444;
   httpServer.listen(port);
   app.log("starting devserver on port " + port);
-
 });
 // {{{2 Default / index
 // {{{3 Index as JSON
