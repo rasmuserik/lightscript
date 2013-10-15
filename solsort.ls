@@ -1277,13 +1277,20 @@ if(isNode) {
   socket = require("socket.io-client").connect("http://localhost:" + 4444);
 } else if(true) {
   socket = window.io.connect("/");
+  serverPID = undefined;
+  socket.on("serverPID", function(pid) {
+    if(serverPID && serverPID !== pid) {
+      location.reload();
+    }
+    serverPID = pid;
+  });
 };
 // mtime {{{3
 if(isNode) {
   mtime = function(fname) {
     return trycatch(function() {
       return require("fs").statSync(__dirname + fname).mtime.getTime();
-    }, function() {
+    }, function(err) {
       return 0;
     });
   };
@@ -2097,23 +2104,22 @@ call = function() {
   app.dispatch();
 };
 // {{{1 Applications
-//{{{2 devserver
-route("devserver", function(app) {
+//{{{2 server
+route("server", function(app) {
   //
   // express setup
   express = require("express");
   server = express();
-  //
   server.use(function(req, res, next) {
-    if(req.url === "/solsort.js") {
-      res.header("Cache-Control", "public, max-age=" + 60 * 60);
-    } else if(true) {
-      res.header("Cache-Control", "public, max-age=" + 60 * 60 * 24 * 100);
-    };
+    res.header("Cache-Control", "public, max-age=" + 60 * 60 * 24 * 100);
     res.removeHeader("X-Powered-By");
     next();
   });
   server.use(express.static(__dirname));
+  server.use(function(req, res, next) {
+    res.header("Cache-Control", "public, max-age=0");
+    next();
+  });
   server.use(express.static(__dirname + "/../../oldweb"));
   server.use(express.bodyParser());
   server.use(function(req, res, next) {
@@ -2122,21 +2128,60 @@ route("devserver", function(app) {
     httpApp.dispatch();
   });
   //
-  // socket.io
+  // http server
   httpServer = require("http").createServer(server);
+  port = app.param["port"] || 4444;
+  httpServer.listen(port);
+  app.log("starting devserver on port " + port);
+  //
+  // socket.io
   io = require("socket.io").listen(httpServer);
   io.set("log level", 1);
   io.sockets.on("connection", function(sock) {
     app.log("socket.io connect", sock.id, sock.handshake.headers);
+    sock.emit("serverPID", PID);
     sock.on("disconnect", function() {
       app.log("socket.io disconnect", sock.id);
     });
   });
-  //
-  // http server
-  port = app.param["port"] || 4444;
-  httpServer.listen(port);
-  app.log("starting devserver on port " + port);
+});
+// {{{2 devserver
+route("devserver", function(app) {
+  spawn = require("child_process").spawn;
+  server = undefined;
+  restartServer = function() {
+    if(server) {
+      server.kill();
+      server = undefined;
+    };
+    server = spawn("node", [__dirname + "/solsort.js", "server"]);
+  };
+  restartServer();
+  compiling = false;
+  require("fs").watch(__dirname + "/..", function() {
+    if(compiling) {
+      return undefined;
+    };
+    compiling = true;
+    src = "/../solsort.ls";
+    dst = "/solsort.js";
+    sleep(0.3, function() {
+      compiling = false;
+      if(mtime(src) > mtime(dst)) {
+        loadfile(src, function(err, source) {
+          if(err) {
+            throw err;
+          }
+          ast = ls2ast(source);
+          js = ast2js(ast);
+          savefile(dst, js, function() {
+            restartServer();
+            compiling = false;
+          });
+        });
+      };
+    });
+  });
 });
 // {{{2 Default / index
 // {{{3 Index as JSON

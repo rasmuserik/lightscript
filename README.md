@@ -2323,18 +2323,15 @@ TODO
     };
 
 # Applications
-## devserver
+## server
 
-    route("devserver", function(app) {
+    route("server", function(app) {
 
 
 express setup
 
       express = require("express");
       server = express();
-
-
-
       server.use(function(req, res, next) {
         if(req.url === "/solsort.js") {
           res.header("Cache-Control", "public, max-age=" + 60 * 60);
@@ -2354,9 +2351,16 @@ express setup
       });
 
 
-socket.io
+http server
 
       httpServer = require("http").createServer(server);
+      port = app.param["port"] || 4444;
+      httpServer.listen(port);
+      app.log("starting devserver on port " + port);
+
+
+socket.io
+
       io = require("socket.io").listen(httpServer);
       io.set("log level", 1);
       io.sockets.on("connection", function(sock) {
@@ -2365,13 +2369,39 @@ socket.io
           app.log("socket.io disconnect", sock.id);
         });
       });
-
-
-http server
-
-      port = app.param["port"] || 4444;
-      httpServer.listen(port);
-      app.log("starting devserver on port " + port);
+    });
+    route("devserver", function(app) {
+      spawn = require("child_process").spawn;
+      server = undefined;
+      restartServer = function() {
+        if(server) {
+          server.kill();
+          server = undefined;
+        };
+        server = spawn("node", [__dirname + "/solsort.js", "server"]);
+      };
+      restartServer();
+      compiling = false;
+      require("fs").watch(__dirname + "/..", function() {
+        if(compiling) {
+          return ;;
+        };
+        compiling = true;
+        src = __dirname + "/../solsort.ls";
+        dst = __dirname + "/solsort.js";
+        sleep(0.1, function() {
+          compiling = false;
+          if(mtime(src) > mtime(dst)) {
+            loadfile("/solsort.ls", function(err, source) {
+              ast = ls2ast(source);
+              savefile("/solsort.js", ast2js(ast), function() {
+                restartServer();
+                compiling = false;
+              });
+            });
+          };
+        });
+      });
     });
 
 ## Default / index
