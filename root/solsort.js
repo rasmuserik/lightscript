@@ -27,6 +27,7 @@ var xhrPost;
 var savefile;
 var loadfile;
 var mtime;
+var socket;
 var deepExtend;
 var deepCopy;
 var foreach;
@@ -1466,6 +1467,12 @@ deepExtend = function(dst, src) {
   return dst;
 };
 // files I/O {{{2
+// {{{3 socket.io
+if(isNode) {
+  socket = require("socket.io-client").connect("http://localhost:" + 4444);
+} else if(true) {
+  socket = window.io.connect("/");
+};
 // mtime {{{3
 if(isNode) {
   mtime = function(fname) {
@@ -1963,6 +1970,7 @@ HTML.prototype.content = function() {
 };
 // {{{3 toLsXml
 HTML.prototype.toLsXml = function() {
+  var body;
   var head;
   var opt;
   // TODO: refactor/remove this function when Xml-class done
@@ -1984,7 +1992,11 @@ HTML.prototype.toLsXml = function() {
     head.push(["link", {rel : "apple-touch-icon-precomposed", content : opt.icon}]);
   };
   head.push(["style", styleToText(this._style)]);
-  return new LsXml(["html", head, ["body"].concat(this._content).concat([["script", {src : "/solsort.js"}, ""]])]);
+  body = ["body"];
+  body = body.concat(this._content);
+  body.push(["script", {src : "/socket.io/socket.io.js"}, ""]);
+  body.push(["script", {src : "/solsort.js"}, ""]);
+  return new LsXml(["html", head, body]);
 };
 // {{{3 toString
 HTML.prototype.toString = function() {
@@ -2352,10 +2364,15 @@ call = function() {
 //{{{2 devserver
 route("devserver", function(app) {
   var port;
+  var io;
+  var httpServer;
   var server;
   var express;
+  //
+  // express setup
   express = require("express");
   server = express();
+  //
   server.use(function(req, res, next) {
     if(req.url === "/solsort.js") {
       res.header("Cache-Control", "public, max-age=" + 60 * 60);
@@ -2374,8 +2391,21 @@ route("devserver", function(app) {
     httpApp = new HttpApp(req, res);
     httpApp.dispatch();
   });
+  //
+  // socket.io
+  httpServer = require("http").createServer(server);
+  io = require("socket.io").listen(httpServer);
+  io.set("log level", 1);
+  io.sockets.on("connection", function(sock) {
+    app.log("socket.io connect", sock.id, sock.handshake.headers);
+    sock.on("disconnect", function() {
+      app.log("socket.io disconnect", sock.id);
+    });
+  });
+  //
+  // http server
   port = app.param["port"] || 4444;
-  server.listen(port);
+  httpServer.listen(port);
   app.log("starting devserver on port " + port);
 });
 // {{{2 Default / index
