@@ -1381,9 +1381,9 @@ We need to cleanup and canonise strings, if they should be used in urls.
 ### socket.io
 
     if(isNode) {
-      socket = require("socket.io-client").connect("http://localhost:" + 4444);
+      socket = require("socket.io-client").connect("http://localhost:9999");
     } else if(true) {
-      socket = window.io.connect("/");
+      socket = window.io.connect(location.hostname === "localhost" ? "/" : "//ssl.solsort.com/");
       serverPID = undefined;
       socket.on("serverPID", function(pid) {
         if(serverPID && serverPID !== pid) {
@@ -2064,7 +2064,7 @@ There are different routes
 
     ./run.sh foo --bar=true world
 
-    http://localhost:4444/#foo/world?bar=true
+    http://localhost:9999/#foo/world?bar=true
 
 ### App class
 
@@ -2250,7 +2250,7 @@ TODO
     HttpApp.prototype.appType = "http";
     HttpApp.prototype.error = function(args) {
       this.log({error : args, url : this.req.url});
-      this.res.end("Error: " + JSON.stringify(args));
+      this.res.end((new HTML()).content(["pre", "Error: " + JSON.stringify(args)]));
     };
     HttpApp.prototype.send = function(content) {
       if(typeof content === "string") {
@@ -2361,7 +2361,7 @@ express setup
 http server
 
       httpServer = require("http").createServer(server);
-      port = app.param["port"] || 4444;
+      port = app.param["port"] || 9999;
       httpServer.listen(port);
       app.log("starting devserver on port " + port);
 
@@ -2603,6 +2603,39 @@ socket.io
       html.content(["h1", "solsort.com"], ["div", {class : "entries"}].concat(index.map(renderEntry)));
       app.done(html);
     });
+    circles = function(app) {
+      w = window.innerWidth;
+      h = window.innerHeight;
+      size = 150;
+      html = new HTML();
+      html.addStyle({body : {backgroundColor : "#bad"}, ".circle" : {
+        borderRadius : "1000px",
+        position : "absolute",
+        border : "1px solid black"
+      }});
+      html.content.apply(html, index.map(function(entry) {
+        name = normaliseString(entry.name);
+        return ["a", {href : entry.link}, ["img", {
+          id : name,
+          class : "circle",
+          src : "/icons/app-" + normaliseString(entry.name) + ".png",
+          width : size,
+          height : size
+        }]];
+      }));
+      app.send(html);
+      nodes = index.map(function(entry) {
+        return document.getElementById(normaliseString(entry.name));
+      });
+      nodes.forEach(function(node) {
+        style = node.style;
+        style.top = (Math.random() * (h - size) | 0) + "px";
+        style.left = (Math.random() * (w - size) | 0) + "px";
+      });
+    };
+    if(isBrowser) {
+      route("circles", circles);
+    };
 
 ## _
 
