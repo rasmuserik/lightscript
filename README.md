@@ -1891,7 +1891,7 @@ Generate a reverse xml entity table.
     defaultStyle = {body : {
       margin : "0",
       padding : "0",
-      fontFamily : "sans-serif"
+      fontFamily : "Ubuntu,sans-serif"
     }};
 
 ### constructor
@@ -1948,6 +1948,8 @@ TODO: refactor/remove this function when Xml-class done
         head.push(["link", {rel : "apple-touch-icon-precomposed", content : opt.icon}]);
       };
       head.push(["style", styleToText(this._style)]);
+      head.push(["style", "@font-face{font-family:Ubuntu; font-weight:400; src: url(/font/ubuntu-latin1.ttf) format(truetype);}"]);
+      head.push(["style", "@font-face{font-family:Ubuntu; font-weight:700; src: url(/font/ubuntu-bold-latin1.ttf) format(truetype);}"]);
       body = ["body"];
       body = body.concat(this._content);
       body.push(["script", {src : "/socket.io/socket.io.js"}, ""]);
@@ -2425,7 +2427,7 @@ socket.io
     index = [
       {
         "name" : "Rasmus Erik",
-        "link" : "http://www.solsort.com/rasmuserik",
+        "link" : "/rasmuserik",
         "desc" : "Contact info, and more about the creator of these things"
       },
       {
@@ -2603,6 +2605,9 @@ socket.io
       html.content(["h1", "solsort.com"], ["div", {class : "entries"}].concat(index.map(renderEntry)));
       app.done(html);
     });
+
+## circles
+
     circles = function(app) {
       w = window.innerWidth;
       h = window.innerHeight;
@@ -2611,7 +2616,7 @@ socket.io
       html.addStyle({body : {backgroundColor : "#bad"}, ".circle" : {
         borderRadius : "1000px",
         position : "absolute",
-        border : "1px solid black"
+        boxShadow : "3px 3px 10px rgba(0,0,0,0.5)"
       }});
       html.content.apply(html, index.map(function(entry) {
         name = normaliseString(entry.name);

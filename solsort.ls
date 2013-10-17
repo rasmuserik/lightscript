@@ -1753,8 +1753,8 @@ HTML.prototype.toLsXml = function() {
     head.push(["link", {rel : "apple-touch-icon-precomposed", content : opt.icon}]);
   };
   head.push(["style", styleToText(this._style)]);
-  head.push(["style","@font-face{font-family:Ubuntu; font-weight:400; src: url(/font/ubuntu-latin1.ttf) format(truetype);}"]);
-  head.push(["style","@font-face{font-family:Ubuntu; font-weight:700; src: url(/font/ubuntu-bold-latin1.ttf) format(truetype);}"]);
+  head.push(["style", "@font-face{font-family:Ubuntu; font-weight:400; src: url(/font/ubuntu-latin1.ttf) format(truetype);}"]);
+  head.push(["style", "@font-face{font-family:Ubuntu; font-weight:700; src: url(/font/ubuntu-bold-latin1.ttf) format(truetype);}"]);
   body = ["body"];
   body = body.concat(this._content);
   body.push(["script", {src : "/socket.io/socket.io.js"}, ""]);
@@ -2373,7 +2373,7 @@ circles = function(app) {
   html.addStyle({body : {backgroundColor : "#bad"}, ".circle" : {
     borderRadius : "1000px",
     position : "absolute",
-    boxShadow: "3px 3px 10px rgba(0,0,0,0.5)"
+    boxShadow : "3px 3px 10px rgba(0,0,0,0.5)"
   }});
   html.content.apply(html, index.map(function(entry) {
     name = normaliseString(entry.name);
