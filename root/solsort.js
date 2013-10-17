@@ -2,8 +2,6 @@ var gendoc;
 var renderPost;
 var loadPosts;
 var markdown2html;
-var loadjs;
-var _jsCache;
 var posts;
 var cachedRead;
 var circles;
@@ -30,6 +28,8 @@ var loadfile;
 var mtime;
 var serverPID;
 var socket;
+var loadjs;
+var _jsCache;
 var deepExtend;
 var deepCopy;
 var foreach;
@@ -1469,6 +1469,25 @@ deepExtend = function(dst, src) {
   return dst;
 };
 // files I/O {{{2
+// {{{3 loadjs 
+_jsCache = {};
+loadjs = function(modulename, callback) {
+  if(_jsCache[modulename]) {
+    return callback(null, _jsCache[modulename]);
+  };
+  loadfile("/" + modulename + ".js", function(err, src) {
+    var result;
+    var fn;
+    if(err) {
+      throw err;
+    };
+    fn = new Function("exports", src);
+    result = {};
+    fn(result);
+    _jsCache[modulename] = result;
+    callback(null, result);
+  });
+};
 // {{{3 socket.io
 if(isNode) {
   socket = require("socket.io-client").connect("http://localhost:9999");
@@ -2058,9 +2077,81 @@ Tester.prototype.deepEquals = function(a, b, msg) {
 Tester.prototype.assert = function(bool, msg) {
   this.equals(bool, true, msg || "assert error");
 };
-// {{{4 error
+// {{{3 error
 Tester.prototype.error = function(msg) {
   this.assert(false, msg || "error");
+};
+//{{{2 GraphLayout
+GraphLayout = function() {
+  this._nodes = [];
+  this._edges = [];
+  this._needsUpdate = false;
+};
+GraphLayout.prototype.addEdge = function(a, b) {
+  var found;
+  this._ensureNode(a);
+  this._ensureNode(b);
+  found = false;
+  this._edges.forEach(function(edge) {
+    if(edge.source === a && edge.target === b) {
+      found = true;
+    };
+  });
+  if(!found) {
+    this._edges.push({source : a, target : b});
+  };
+  this.start();
+};
+GraphLayout.prototype.removeEdge = function(a, b) {
+  this._edges = this._edges.filter(function(edge) {
+    return edge.source !== a || edge.target !== b;
+  });
+  this.start();
+};
+GraphLayout.prototype.clearEdges = function() {
+  this._edges = [];
+};
+GraphLayout.prototype._ensureNode = function(id) {
+  if(!this._nodes[id]) {
+    this._nodes[id] = {};
+  };
+};
+GraphLayout.prototype.getX = function(nodeId) {
+  return this._nodes[nodeId].x || 0;
+};
+GraphLayout.prototype.getY = function(nodeId) {
+  return this._nodes[nodeId].y || 0;
+};
+GraphLayout.prototype.dim = function() {
+  var maxX;
+  var maxY;
+  var minX;
+  var minY;
+  minY = minX = Number.MAX_VALUE;
+  maxY = maxX = Number.MIN_VALUE;
+  this._nodes.forEach(function(node) {
+    if(node && node.x !== undefined && node.y !== undefined) {
+      minY = Math.min(minY, node.y);
+      minX = Math.min(minX, node.x);
+      maxY = Math.max(maxY, node.y);
+      maxX = Math.max(maxX, node.x);
+    };
+  });
+  return [minX, minY, maxX, maxY];
+};
+GraphLayout.prototype.start = function() {
+  var self;
+  self = this;
+  loadjs("js/d3.v3.min", function() {
+    self.d3force = self.graph || window.d3.layout.force();
+    self.d3force.charge(- 120).linkDistance(30).nodes(self._nodes).links(self._edges);
+    self.d3force.on("tick", function() {
+      if(self.update) {
+        self.update(self);
+      };
+    });
+    self.d3force.start();
+  });
 };
 // {{{1 App Router
 // {{{2 Notes
@@ -2647,6 +2738,8 @@ route("default", function(app) {
 });
 // {{{2 circles
 circles = function(app) {
+  var i;
+  var graph;
   var nodes;
   var html;
   var size;
@@ -2682,6 +2775,23 @@ circles = function(app) {
     style.top = (Math.random() * (h - size) | 0) + "px";
     style.left = (Math.random() * (w - size) | 0) + "px";
   });
+  graph = new GraphLayout();
+  i = 1;
+  while(i < nodes.length) {
+    graph.addEdge(i - 1, i);
+    i = i + 1;
+  };
+  graph.update = function() {
+    var j;
+    var dim;
+    dim = graph.dim();
+    j = 0;
+    while(j < nodes.length) {
+      nodes[j].style.left = (graph.getX(j) - dim[0]) / (dim[2] - dim[0]) * 900 + "px";
+      nodes[j].style.top = (graph.getY(j) - dim[1]) / (dim[3] - dim[1]) * 500 + "px";
+      j = j + 1;
+    };
+  };
 };
 if(isBrowser) {
   route("circles", circles);
@@ -2728,24 +2838,6 @@ route("notes", function(app) {
     renderPost(app);
   };
 });
-_jsCache = {};
-loadjs = function(modulename, callback) {
-  if(_jsCache[modulename]) {
-    return callback(null, _jsCache[modulename]);
-  };
-  loadfile("/" + modulename + ".js", function(err, src) {
-    var result;
-    var fn;
-    if(err) {
-      throw err;
-    };
-    fn = new Function("exports", src);
-    result = {};
-    fn(result);
-    _jsCache[modulename] = result;
-    callback(null, result);
-  });
-};
 markdown2html = function(md, callback) {
   loadjs("markdown", function(err, markdown) {
     var htmlTree;
