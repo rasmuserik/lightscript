@@ -1492,7 +1492,8 @@ loadjs = function(modulename, callback) {
 if(isNode) {
   socket = require("socket.io-client").connect("http://localhost:9999");
 } else if(true) {
-  socket = window.io.connect(location.hostname === "localhost" ? "/" : "//ssl.solsort.com/");
+  /*socket = window.io.connect(location.hostname === "localhost" ? "/" : "//ssl.solsort.com/");*/
+  socket = window.io.connect("/");
   serverPID = undefined;
   socket.on("serverPID", function(pid) {
     if(serverPID && serverPID !== pid) {
@@ -2513,19 +2514,15 @@ route("server", function(app) {
 // {{{2 devserver
 route("devserver", function(app) {
   var compiling;
-  var restartServer;
-  var server;
+  var startServer;
   var spawn;
   spawn = require("child_process").spawn;
-  server = undefined;
-  restartServer = function() {
-    if(server) {
-      server.kill();
-      server = undefined;
-    };
+  startServer = function() {
+    var server;
     server = spawn("node", [__dirname + "/solsort.js", "server"]);
+    server.on("exit", startServer);
   };
-  restartServer();
+  startServer();
   compiling = false;
   require("fs").watch(__dirname + "/..", function() {
     var dst;
@@ -2548,7 +2545,7 @@ route("devserver", function(app) {
           ast = ls2ast(source);
           js = ast2js(ast);
           savefile(dst, js, function() {
-            restartServer();
+            server.kill();
             compiling = false;
           });
         });
