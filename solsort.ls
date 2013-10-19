@@ -2237,7 +2237,7 @@ route("devserver", function(app) {
   startServer = function() {
     server = spawn("node", [__dirname + "/solsort.js", "server"]);
     server.on("exit", startServer);
-  }
+  };
   startServer();
   compiling = false;
   require("fs").watch(__dirname + "/..", function() {
