@@ -1492,7 +1492,8 @@ loadjs = function(modulename, callback) {
 if(isNode) {
   socket = require("socket.io-client").connect("http://localhost:9999");
 } else if(true) {
-  socket = window.io.connect(location.hostname === "localhost" ? "/" : "//ssl.solsort.com/");
+  /*socket = window.io.connect(location.hostname === "localhost" ? "/" : "//ssl.solsort.com/");*/
+  socket = window.io.connect("/");
   serverPID = undefined;
   socket.on("serverPID", function(pid) {
     if(serverPID && serverPID !== pid) {

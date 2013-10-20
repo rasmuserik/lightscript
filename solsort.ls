@@ -15,6 +15,14 @@
 // and is written in the LightScript language itself, using a literate programming style.
 // This text is both documentation and source code.
 // 
+// {{{1 Backlog
+//
+// - lightscript: clean partition into separate backends
+// - lightscript: (){{{ }}} function syntax
+// - improve test framework
+// - debug server-crashes
+// - solsort advanced index with circle-graph
+//
 // {{{1 System
 // {{{2 addTest
 _testcases = {};
