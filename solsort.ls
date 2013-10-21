@@ -2240,8 +2240,8 @@ route("devserver", function(app) {
   };
   startServer();
   setInterval(function() {
-    server.kill()
-  }, 1000*60*25);
+    server.kill();
+  }, 1000 * 60 * 25);
   compiling = false;
   require("fs").watch(__dirname + "/..", function() {
     if(compiling) {
