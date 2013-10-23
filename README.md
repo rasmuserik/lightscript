@@ -15,6 +15,14 @@ This file contains
 and is written in the LightScript language itself, using a literate programming style.
 This text is both documentation and source code.
 
+# Backlog
+
+- lightscript: clean partition into separate backends
+- lightscript: (){{{ }}} function syntax
+- improve test framework
+- debug server-crashes
+- solsort advanced index with circle-graph
+
 # System
 ## addTest
 
@@ -1402,7 +1410,8 @@ We need to cleanup and canonise strings, if they should be used in urls.
     if(isNode) {
       socket = require("socket.io-client").connect("http://localhost:9999");
     } else if(true) {
-      socket = window.io.connect(location.hostname === "localhost" ? "/" : "//ssl.solsort.com/");
+      /*socket = window.io.connect(location.hostname === "localhost" ? "/" : "//ssl.solsort.com/");*/
+      socket = window.io.connect("/");
       serverPID = undefined;
       socket.on("serverPID", function(pid) {
         if(serverPID && serverPID !== pid) {
@@ -3381,5 +3390,27 @@ Good tools/tips:
 ## HTML5
 
 - http://solsort.com/slides/
+
+## JavaScript platform
+
+Features:
+- TypedArrays
+- SIMD: mapPar etc.
+- threads: WebWorkers
+- network: webrtc, websocket, ajax
+- graphics: canvas, webgl, dom(inkl. svg)
+- input: touch, webrtc-video-capture, geo, accel
+- performance: (hidden classes, generational GC, )
+
+Major Compilers:
+- C/C++ llvm emscripten
+- Java gwt
+
+Implementations:
+- spidermonkey+gecko
+- v8+blink|node
+- JSC+webkit
+- nashorn+java
+- chakra(ie)
 
     

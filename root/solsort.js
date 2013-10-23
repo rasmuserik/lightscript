@@ -75,6 +75,14 @@ var _testcases;
 // and is written in the LightScript language itself, using a literate programming style.
 // This text is both documentation and source code.
 // 
+// {{{1 Backlog
+//
+// - lightscript: clean partition into separate backends
+// - lightscript: (){{{ }}} function syntax
+// - improve test framework
+// - debug server-crashes
+// - solsort advanced index with circle-graph
+//
 // {{{1 System
 // {{{2 addTest
 _testcases = {};
@@ -3437,3 +3445,25 @@ gendoc = function(callback) {
 // {{{2 HTML5
 // 
 // - http://solsort.com/slides/
+//
+//{{{2 JavaScript platform
+//
+// Features:
+// - TypedArrays
+// - SIMD: mapPar etc.
+// - threads: WebWorkers
+// - network: webrtc, websocket, ajax
+// - graphics: canvas, webgl, dom(inkl. svg)
+// - input: touch, webrtc-video-capture, geo, accel
+// - performance: (hidden classes, generational GC, )
+//
+// Major Compilers:
+// - C/C++ llvm emscripten
+// - Java gwt
+//
+// Implementations:
+// - spidermonkey+gecko
+// - v8+blink|node
+// - JSC+webkit
+// - nashorn+java
+// - chakra(ie)
