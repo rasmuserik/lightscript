@@ -2569,7 +2569,7 @@ route("devserver", function(app) {
 index = [
   {
     "name" : "Rasmus Erik",
-    "link" : "/rasmuserik",
+    "link" : "/rasmuserik.html",
     "desc" : "Contact info, and more about the creator of these things"
   },
   {
