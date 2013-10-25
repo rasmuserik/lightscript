@@ -2242,15 +2242,14 @@ route("server", function(app) {
 // {{{2 devserver
 route("devserver", function(app) {
   spawn = require("child_process").spawn;
-  server = undefined;
-  restartServer = function() {
-    if(server) {
-      server.kill();
-      server = undefined;
-    };
+  startServer = function() {
     server = spawn("node", [__dirname + "/solsort.js", "server"]);
+    server.on("exit", startServer);
   };
-  restartServer();
+  startServer();
+  setInterval(function() {
+    server.kill();
+  }, 1000 * 60 * 25);
   compiling = false;
   require("fs").watch(__dirname + "/..", function() {
     if(compiling) {
@@ -2269,7 +2268,7 @@ route("devserver", function(app) {
           ast = ls2ast(source);
           js = ast2js(ast);
           savefile(dst, js, function() {
-            restartServer();
+            server.kill();
             compiling = false;
           });
         });
