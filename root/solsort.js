@@ -2574,8 +2574,16 @@ index = [
     "desc" : "Contact info, and more about the creator of these things"
   },
   {
+    "name" : "BibTekKonf BibGraph",
+    "title" : "Slides: BibTekKonf BibGraph",
+    "date" : "2013-10-26",
+    "tags" : "talk, presentation, bibtekkonf, bibgraph",
+    "link" : "/slides/bibtekkonf2013-bibgraph",
+    "desc" : "Slides fra BibTekKonf præsentation om visualisering ud fra ADHL-data"
+  },
+  {
     "name" : "Hack4dk",
-    "date" : "2013-09-??",
+    "date" : "2013-09-28",
     "tags" : "",
     "link" : "/hack4dk",
     "desc" : "Hack4dk hackathon hacks: graph visualisation from wikipedia, image recognition, and art quiz"
