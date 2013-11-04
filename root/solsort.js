@@ -1119,6 +1119,10 @@ nextTick(function() {
   //{{{3 LightScript transformations
   // Drop parenthesis in ast
   rstToAstTransform(["id", "(", "?val"], "?val");
+  // Function definitions, possibly switch to other syntax
+  rstToAstTransform(["call", "*{}", ["call", "*()", ["id", "function"], "??args"], "??body"], ["fn", "", ["block", "", "??args"], ["block", "", "??body"]]);
+  rstToAstTransform(["call", "*{}", ["call", "*()", ["id", "fn"], "??args"], "??body"], ["fn", "", ["block", "", "??args"], ["block", "", "??body"]]);
+  astToLsTransform(["fn", "", ["block", "", "??args"], ["block", "", "??body"]], ["call", "*{}", ["call", "*()", ["id", "function"], "??args"], "??body"]);
   //{{{4 ++ += -- -= *=  transformed to binop + assignment
   rstToAst.pattern(["call", "*=", "?target", "?val"], function(match, ast) {
     return rstToAst.match(ast.fromList(matchReplace(match, ["call", "=", "?target", ["call", "*", "?target", "?val"]])));
@@ -1136,6 +1140,7 @@ nextTick(function() {
     return rstToAst.match(ast.fromList(matchReplace(match, ["call", "-=", "?target", ["num", "1"]])));
   });
   //{{{3 JavaScript transform
+  astToJsTransform(["fn", "", ["block", "", "??args"], ["block", "", "??body"]], ["call", "*{}", ["call", "*()", ["id", "function"], "??args"], "??body"]);
   astToJsTransform(["call", "var", "?result"], ["call", "var", "?result"]);
   //{{{3 Common transformations for Js and Ls
   //{{{4 control flow
@@ -1151,7 +1156,6 @@ nextTick(function() {
   astTransform(["call", "=", ["id", "?name"], "?val"], ["assign", "?name", "?val"]);
   astTransform(["call", ".", "?obj", ["id", "?id"]], ["call", ".", "?obj", ["str", "?id"]]);
   //{{{4 functions, and function/method-application
-  astTransform(["call", "*{}", ["call", "*()", ["id", "function"], "??args"], "??body"], ["fn", "", ["block", "", "??args"], ["block", "", "??body"]]);
   astTransform(["call", "*()", "??args"], ["call", "*()", "??args"]);
   rstToAstTransform(["call", "*()", ["call", ".", "?obj", ["str", "?method"]], "??args"], ["call", "?method", "?obj", "??args"]);
   astToRstPattern(["call", "?method", "?obj", "??args"], function(match, ast) {
@@ -1214,7 +1218,7 @@ nextTick(function() {
     };
     return ast.fromList(["id", "{"].concat(list));
   });
-  // If-else {{{3
+  // If-else {{{4
   rstToAst.pattern(["call", "*{}", ["call", "*()", ["id", "if"], "?p"], "??body"], function(match, ast) {
     return ast.fromList(["branch", "cond", match["p"], ["block", ""].concat(match["body"].filter(notSep))]);
   });
@@ -1242,7 +1246,7 @@ nextTick(function() {
     };
     return ast.fromList(rhs);
   });
-  // Class {{{3
+  // Class {{{4
   astTransform(["call", "=", ["call", ".", ["call", ".", ["id", "?class"], ["str", "prototype"]], ["str", "?member"]], ["fn", "", ["block", "", "??args"], "?body"]], ["fn", "?member", ["block", "", ["call", ":", ["id", "this"], ["id", "?class"]], "??args"], "?body"]);
   uppercase = "QWERTYUIOPASDFGHJKLZXCVBNM";
   rstToAst.pattern(["call", "=", ["id", "?class"], ["fn", "", ["block", "", "??args"], "?body"]], function(match, ast) {
