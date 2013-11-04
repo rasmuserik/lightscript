@@ -231,9 +231,8 @@ nextTick(function() {
   // - match filter
   // refactor/cleanup, ie. id-function/filter/... in rst-ast-matcher
   //
-  // Language implementation{{{2
-  // Ast {{{3
-  // Constructor {{{4
+  // Ast {{{2
+  // Constructor {{{3
   //
   // Raw syntax tree - generic syntax, both used for parsing, and also for generating code for c-like languages.
   //
@@ -258,21 +257,21 @@ nextTick(function() {
     this.opt = {};
     this.parent = undefined;
   };
-  // Ast.create {{{4
+  // Ast.create {{{3
   Ast.prototype.create = function(kind, val, children) {
     return new Ast(kind, val, children, this.pos);
   };
-  // Ast.isa {{{4
+  // Ast.isa {{{3
   Ast.prototype.isa = function(kind, val) {
     return this.kind === kind && this.val === val;
   };
-  // Ast.deepCopy {{{4
+  // Ast.deepCopy {{{3
   Ast.prototype.deepCopy = function() {
     return new Ast(this.kind, this.val, this.children.map(function(child) {
       return child.deepCopy();
     }), this.pos);
   };
-  // Ast.toList {{{4
+  // Ast.toList {{{3
   Ast.prototype.toList = function() {
     result = this.children.map(function(node) {
       return node.toList();
@@ -281,11 +280,11 @@ nextTick(function() {
     result.unshift(this.kind);
     return result;
   };
-  // Ast.toString {{{4
+  // Ast.toString {{{3
   Ast.prototype.toString = function() {
     return pplist(this.toList());
   };
-  // Ast.fromList {{{4
+  // Ast.fromList {{{3
   Ast.prototype.fromList = function(list) {
     if(Array.isArray(list)) {
       self = this;
@@ -297,10 +296,409 @@ nextTick(function() {
     };
     return result;
   };
-  // Ast.error {{{4
+  // Ast.error {{{3
   Ast.prototype.error = function(desc) {
     throw "Error: " + desc + " at pos: " + JSON.stringify(this.pos);
   };
+  // notSep {{{3
+  notSep = function(ast) {
+    return ast.kind !== "id" || ast.val !== ";" && ast.val !== ",";
+  };
+  // Tokeniser {{{2
+  BufferPos = function(line, pos) {
+    this.line = line;
+    this.pos = pos;
+  };
+  BufferDescr = function(data, filename) {
+    this.filename = filename;
+    this.data = data;
+  };
+  TokenPos = function(start, end, buffer) {
+    this.start = start;
+    this.end = end;
+    //this.buffer = buffer;
+    };
+  tokenise = function(buffer, filename) {
+    pos = 0;
+    lineno = 1;
+    newlinePos = 0;
+    bufferDescr = new BufferDescr(buffer, filename);
+    start = new BufferPos(0, 0);
+    oneOf = function(str) {
+      return str.indexOf(peek()) !== - 1;
+    };
+    startsWith = function(str) {
+      return peek(str.length) === str;
+    };
+    peek = function(n, delta) {
+      n = n || 1;
+      delta = delta || 0;
+      return buffer.slice(pos + delta, pos + delta + n);
+    };
+    pop = function(n) {
+      lineno;
+      n = n || 1;
+      newlinePos;
+      result = buffer.slice(pos, pos + n);
+      result.split("").forEach(function(c) {
+        if(c === "\n") {
+          lineno = lineno + 1;
+          newlinePos = pos;
+        };
+      });
+      pos = pos + n;
+      return result;
+    };
+    beginToken = function() {
+      start = new BufferPos(lineno, pos - newlinePos);
+    };
+    newToken = function(kind, val) {
+      return new Ast(kind, val, [], {pos : new TokenPos(start, new BufferPos(lineno, pos - newlinePos), bufferDescr)});
+    };
+    next = function() {
+      whitespace = " \t\r\n";
+      singleSymbol = "(){}[]:;,`?";
+      joinedSymbol = "=+-*/<>%!|&^~#.@";
+      ident = "_qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM$";
+      digits = "0123456789";
+      hexdigits = digits + "abcdefABCDEF";
+      s = undefined;
+      c = undefined;
+      while(peek() && oneOf(whitespace)) {
+        pop();
+      };
+      beginToken();
+      if(peek() === "") {
+        result = undefined;
+      } else if(startsWith("//")) {
+        s = "";
+        while(peek() && peek() !== "\n") {
+          s = s + pop();
+        };
+        pop();
+        result = newToken("note", s);
+      } else if(startsWith("/*")) {
+        s = "";
+        while(peek() && peek(2) !== "*/") {
+          s = s + pop();
+        };
+        s = s + pop(2);
+        result = newToken("note", s);
+      } else if(oneOf("\"")) {
+        s = "";
+        quote = pop();
+        while(!startsWith(quote)) {
+          c = pop();
+          if(c === "\\") {
+            c = pop();
+            c = ({
+              n : "\n",
+              r : "\r",
+              t : "\t"
+            })[c] || c;
+          };
+          s = s + c;
+        };
+        pop();
+        result = newToken("str", s);
+      } else if(oneOf(digits) || peek() === "." && digits.indexOf(peek(1, 1)) !== - 1) {
+        s = pop();
+        if(peek() !== "x") {
+          while(peek() && oneOf(".e" + digits)) {
+            s = s + pop();
+          };
+        } else if(true) {
+          s = pop(2);
+          while(peek() && oneOf(hexdigits)) {
+            s = s + pop();
+          };
+        };
+        result = newToken("num", s);
+      } else if(oneOf(singleSymbol)) {
+        result = newToken("id", pop());
+      } else if(oneOf(joinedSymbol)) {
+        s = "";
+        while(peek() && oneOf(joinedSymbol)) {
+          s = s + pop();
+        };
+        result = newToken("id", s);
+      } else if(oneOf(ident)) {
+        s = "";
+        while(peek() && oneOf(ident + digits)) {
+          s = s + pop();
+        };
+        result = newToken("id", s);
+      } else if(true) {
+        throw "Tokenisation error: " + peek().charCodeAt(0) + " (" + peek() + ") at pos " + pos;
+      };
+      return result;
+    };
+    tokens = [];
+    currentToken = next();
+    while(currentToken) {
+      tokens.push(currentToken);
+      currentToken = next();
+    };
+    return tokens;
+  };
+  // Syntax (parser and prettyprinter) {{{2
+  // Syntax object {{{3
+  SyntaxObj = function(ast) {
+    this.ast = ast;
+    syntaxData = table[ast.kind + ":"] || table[ast.val] || ast.val && table[ast.val[ast.val.length - 1]] || table["default:"];
+    this.bp = syntaxData[0] || 0;
+    this.opt = syntaxData[1] || {};
+  };
+  // Parser {{{3
+  readList = function(paren, ast) {
+    while(!token.opt["rparen"]) {
+      ast.children.push(parseExpr());
+    };
+    if(token.ast.val !== paren) {
+      throw JSON.stringify({
+        err : "paren mismatch",
+        start : ast,
+        end : token.ast
+      });
+    };
+    nextToken();
+  };
+  token = undefined;
+  nextToken = undefined;
+  parseExpr = function(rbp) {
+    rbp = rbp || 0;
+    t = token;
+    nextToken();
+    t.nud();
+    left = t;
+    while(rbp < token.bp && !t.opt["sep"]) {
+      t = token;
+      nextToken();
+      t.led(left.ast);
+      left = t;
+    };
+    return left.ast;
+  };
+  parse = function(tokens) {
+    pos = 0;
+    nextToken = function() {
+      if(pos < tokens.length) {
+        ast = tokens[pos];
+        pos = pos + 1;
+      } else if(true) {
+        ast = new Ast("eof");
+      };
+      token = new SyntaxObj(ast);
+      return token;
+    };
+    nextToken();
+    result = [];
+    while(token.ast.kind !== "eof") {
+      result.push(parseExpr());
+    };
+    return result;
+  };
+  SyntaxObj.prototype.led = function(left) {
+    ast = this.ast;
+    if(this.opt["paren"]) {
+      paren = this.opt["paren"];
+      ast.val = "*" + ast.val + paren;
+      ast.children = [left];
+      readList(paren, ast);
+    } else if(this.opt["noinfix"]) {
+      throw ast + " must not occur as infix.";
+    } else if(true) {
+      ast.children = [left, parseExpr(this.bp - (this.opt["dbp"] || 0))];
+    };
+    ast.kind = "call";
+  };
+  SyntaxObj.prototype.nud = function() {
+    if(this.opt["paren"]) {
+      readList(this.opt["paren"], this.ast);
+    } else if(this.opt["noinfix"] || this.bp) {
+      this.ast.children = [parseExpr(this.bp)];
+      this.ast.kind = "call";
+    };
+  };
+  // Prettyprinter {{{3
+  PrettyPrinter = function() {
+    this.indent = - 1;
+    this.acc = [];
+    this.prevWasNewline = false;
+  };
+  PrettyPrinter.prototype.increaseIndent = function() {
+    this.indent = this.indent + 1;
+  };
+  PrettyPrinter.prototype.decreaseIndent = function() {
+    this.indent = this.indent - 1;
+  };
+  PrettyPrinter.prototype.newline = function(indent) {
+    if(!this.prevWasNewline) {
+      indent = (indent || 0) + this.indent;
+      this.str("\n");
+      while(indent > 0) {
+        this.str("  ");
+        indent = indent - 1;
+      };
+      this.prevWasNewline = true;
+    };
+  };
+  PrettyPrinter.prototype.str = function(str) {
+    this.acc.push(str);
+    this.prevWasNewline = false;
+  };
+  PrettyPrinter.prototype.pp = function(ast, bp, isLeft) {
+    bp = bp || 0;
+    syn = new SyntaxObj(ast);
+    if(syn.bp && syn.bp < bp || isLeft && syn.opt["noinfix"] && syn.bp < bp) {
+      this.str("(");
+    };
+    syn.pp(this);
+    if(syn.bp && syn.bp < bp || isLeft && syn.opt["noinfix"] && syn.bp < bp) {
+      this.str(")");
+    };
+  };
+  listpp = function(isInfix, newlineLength, prefixSpace) {
+    return function(obj, pp) {
+      ast = obj.ast;
+      if(isInfix) {
+        pp.pp(ast.children[0], obj.bp);
+        pp.str(prefixSpace);
+        pp.str(ast.val[1]);
+        list = ast.children.slice(1);
+      } else if(true) {
+        pp.str(ast.val);
+        list = ast.children;
+      };
+      if(list.length > newlineLength) {
+        pp.increaseIndent();
+      };
+      space = "";
+      list.map(function(child) {
+        return new SyntaxObj(child);
+      }).map(function(child) {
+        if(!child.opt["sep"]) {
+          if(list.length > newlineLength) {
+            pp.newline();
+          } else if(true) {
+            pp.str(space);
+            space = " ";
+          };
+        };
+        child.pp(pp);
+      });
+      if(list.length > newlineLength) {
+        pp.decreaseIndent();
+        pp.newline();
+      };
+      if(isInfix) {
+        pp.str(ast.val[2]);
+      } else if(true) {
+        pp.str(obj.opt["paren"]);
+      };
+    };
+  };
+  strpp = function(obj, pp) {
+    pp.str(JSON.stringify(obj.ast.val));
+  };
+  notepp = function(obj, pp) {
+    pp.newline();
+    pp.str(obj.ast.val);
+    pp.newline();
+  };
+  SyntaxObj.prototype.pp = function(pp) {
+    ast = this.ast;
+    children = ast.children;
+    if(this.opt["nospace"]) {
+      space = "";
+    } else if(true) {
+      space = " ";
+    };
+    if(this.opt["pp"]) {
+      this.opt["pp"](this, pp);
+    } else if(children.length === 0) {
+      pp.str(ast.val);
+    } else if(children.length === 1) {
+      pp.str(ast.val + space);
+      pp.pp(children[0], this.bp);
+    } else if(children.length === 2) {
+      pp.pp(children[0], this.bp, true);
+      pp.str(space + ast.val + space);
+      pp.pp(children[1], this.bp + 1 - (this.opt["dbp"] || 0));
+    } else if(true) {
+      pp.str("-:<");
+      pp.str(ast.kind + " " + ast.val);
+      ast.children.forEach(function(child) {
+        pp.str(" | ");
+        pp.pp(child);
+      });
+      pp.str(">:-");
+    };
+  };
+  // Syntax definition {{{3
+  table = {
+    "." : [1200, {nospace : true}],
+    "[" : [1200, {pp : listpp(false, 10, ""), paren : "]"}],
+    "*[]" : [1200, {pp : listpp(true, 10, "")}],
+    "(" : [1200, {pp : listpp(false, 1, ""), paren : ")"}],
+    "*()" : [1200, {pp : listpp(true, 20, "")}],
+    "{" : [1100, {pp : listpp(false, 4, ""), paren : "}"}],
+    "*{}" : [1200, {pp : listpp(true, 0, " ")}],
+    "#" : [1000, {nospace : true, noinfix : true}],
+    "@" : [1000, {nospace : true, noinfix : true}],
+    "++" : [1000, {nospace : true, noinfix : true}],
+    "--" : [1000, {nospace : true, noinfix : true}],
+    "!" : [1000, {nospace : true, noinfix : true}],
+    "~" : [1000, {nospace : true, noinfix : true}],
+    "`" : [1000, {nospace : true, noinfix : true}],
+    "*" : [900],
+    "/" : [900],
+    "%" : [900],
+    "-" : [800],
+    "+" : [800],
+    ">>>" : [700],
+    ">>" : [700],
+    "<<" : [700],
+    "<=" : [600],
+    ">=" : [600],
+    ">" : [600],
+    "<" : [600],
+    "==" : [500],
+    "!=" : [500],
+    "!==" : [500],
+    "===" : [500],
+    "&" : [460],
+    "^" : [430],
+    "|" : [400],
+    "&&" : [350],
+    "||" : [300],
+    ":" : [200, {dbp : 1}],
+    "?" : [200, {dbp : 1}],
+    "else" : [200, {dbp : 1}],
+    "=" : [100, {dbp : 1}],
+    "," : [0, {sep : true}],
+    ";" : [0, {sep : true}],
+    "note:" : [0, {sep : true, pp : notepp}],
+    "]" : [0, {rparen : true}],
+    ")" : [0, {rparen : true}],
+    "}" : [0, {rparen : true}],
+    "eof:" : [0, {rparen : true}],
+    "return" : [0, {noinfix : true}],
+    "throw" : [0, {noinfix : true}],
+    "new" : [0, {noinfix : true}],
+    "typeof" : [0, {noinfix : true}],
+    "var" : [0, {noinfix : true}],
+    "str:" : [0, {pp : strpp}],
+    "constructor" : [],
+    "valueOf" : [],
+    "toString" : [],
+    "toLocaleString" : [],
+    "hasOwnProperty" : [],
+    "isPrototypeOf" : [],
+    "propertyIsEnumerable" : [],
+    "default:" : []
+  };
+  // Transformations of syntax tree (RST to/from AST) {{{2
   // Ast Matcher {{{3
   //
   // Pattern matching notes:
@@ -441,461 +839,8 @@ nextTick(function() {
     }));
     return this.match(t) || t;
   };
-  // Tokeniser {{{3
-  BufferPos = function(line, pos) {
-    this.line = line;
-    this.pos = pos;
-  };
-  BufferDescr = function(data, filename) {
-    this.filename = filename;
-    this.data = data;
-  };
-  TokenPos = function(start, end, buffer) {
-    this.start = start;
-    this.end = end;
-    //this.buffer = buffer;
-    };
-  tokenise = function(buffer, filename) {
-    pos = 0;
-    lineno = 1;
-    newlinePos = 0;
-    bufferDescr = new BufferDescr(buffer, filename);
-    start = new BufferPos(0, 0);
-    oneOf = function(str) {
-      return str.indexOf(peek()) !== - 1;
-    };
-    startsWith = function(str) {
-      return peek(str.length) === str;
-    };
-    peek = function(n, delta) {
-      n = n || 1;
-      delta = delta || 0;
-      return buffer.slice(pos + delta, pos + delta + n);
-    };
-    pop = function(n) {
-      lineno;
-      n = n || 1;
-      newlinePos;
-      result = buffer.slice(pos, pos + n);
-      result.split("").forEach(function(c) {
-        if(c === "\n") {
-          lineno = lineno + 1;
-          newlinePos = pos;
-        };
-      });
-      pos = pos + n;
-      return result;
-    };
-    beginToken = function() {
-      start = new BufferPos(lineno, pos - newlinePos);
-    };
-    newToken = function(kind, val) {
-      return new Ast(kind, val, [], {pos : new TokenPos(start, new BufferPos(lineno, pos - newlinePos), bufferDescr)});
-    };
-    next = function() {
-      whitespace = " \t\r\n";
-      singleSymbol = "(){}[]:;,`?";
-      joinedSymbol = "=+-*/<>%!|&^~#.@";
-      ident = "_qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM$";
-      digits = "0123456789";
-      hexdigits = digits + "abcdefABCDEF";
-      s = undefined;
-      c = undefined;
-      while(peek() && oneOf(whitespace)) {
-        pop();
-      };
-      beginToken();
-      if(peek() === "") {
-        result = undefined;
-      } else if(startsWith("//")) {
-        s = "";
-        while(peek() && peek() !== "\n") {
-          s = s + pop();
-        };
-        pop();
-        result = newToken("note", s);
-      } else if(startsWith("/*")) {
-        s = "";
-        while(peek() && peek(2) !== "*/") {
-          s = s + pop();
-        };
-        s = s + pop(2);
-        result = newToken("note", s);
-      } else if(oneOf("\"")) {
-        s = "";
-        quote = pop();
-        while(!startsWith(quote)) {
-          c = pop();
-          if(c === "\\") {
-            c = pop();
-            c = ({
-              n : "\n",
-              r : "\r",
-              t : "\t"
-            })[c] || c;
-          };
-          s = s + c;
-        };
-        pop();
-        result = newToken("str", s);
-      } else if(oneOf(digits) || peek() === "." && digits.indexOf(peek(1, 1)) !== - 1) {
-        s = pop();
-        if(peek() !== "x") {
-          while(peek() && oneOf(".e" + digits)) {
-            s = s + pop();
-          };
-        } else if(true) {
-          s = pop(2);
-          while(peek() && oneOf(hexdigits)) {
-            s = s + pop();
-          };
-        };
-        result = newToken("num", s);
-      } else if(oneOf(singleSymbol)) {
-        result = newToken("id", pop());
-      } else if(oneOf(joinedSymbol)) {
-        s = "";
-        while(peek() && oneOf(joinedSymbol)) {
-          s = s + pop();
-        };
-        result = newToken("id", s);
-      } else if(oneOf(ident)) {
-        s = "";
-        while(peek() && oneOf(ident + digits)) {
-          s = s + pop();
-        };
-        result = newToken("id", s);
-      } else if(true) {
-        throw "Tokenisation error: " + peek().charCodeAt(0) + " (" + peek() + ") at pos " + pos;
-      };
-      return result;
-    };
-    tokens = [];
-    currentToken = next();
-    while(currentToken) {
-      tokens.push(currentToken);
-      currentToken = next();
-    };
-    return tokens;
-  };
-  // Syntax (parser and prettyprinter) {{{3
-  // Syntax object {{{4
-  SyntaxObj = function(ast) {
-    this.ast = ast;
-    syntaxData = table[ast.kind + ":"] || table[ast.val] || ast.val && table[ast.val[ast.val.length - 1]] || table["default:"];
-    this.bp = syntaxData[0] || 0;
-    this.opt = syntaxData[1] || {};
-  };
-  // Parser {{{4
-  readList = function(paren, ast) {
-    while(!token.opt["rparen"]) {
-      ast.children.push(parseExpr());
-    };
-    if(token.ast.val !== paren) {
-      throw JSON.stringify({
-        err : "paren mismatch",
-        start : ast,
-        end : token.ast
-      });
-    };
-    nextToken();
-  };
-  token = undefined;
-  nextToken = undefined;
-  parseExpr = function(rbp) {
-    rbp = rbp || 0;
-    t = token;
-    nextToken();
-    t.nud();
-    left = t;
-    while(rbp < token.bp && !t.opt["sep"]) {
-      t = token;
-      nextToken();
-      t.led(left.ast);
-      left = t;
-    };
-    return left.ast;
-  };
-  parse = function(tokens) {
-    pos = 0;
-    nextToken = function() {
-      if(pos < tokens.length) {
-        ast = tokens[pos];
-        pos = pos + 1;
-      } else if(true) {
-        ast = new Ast("eof");
-      };
-      token = new SyntaxObj(ast);
-      return token;
-    };
-    nextToken();
-    result = [];
-    while(token.ast.kind !== "eof") {
-      result.push(parseExpr());
-    };
-    return result;
-  };
-  SyntaxObj.prototype.led = function(left) {
-    ast = this.ast;
-    if(this.opt["paren"]) {
-      paren = this.opt["paren"];
-      ast.val = "*" + ast.val + paren;
-      ast.children = [left];
-      readList(paren, ast);
-    } else if(this.opt["noinfix"]) {
-      throw ast + " must not occur as infix.";
-    } else if(true) {
-      ast.children = [left, parseExpr(this.bp - (this.opt["dbp"] || 0))];
-    };
-    ast.kind = "call";
-  };
-  SyntaxObj.prototype.nud = function() {
-    if(this.opt["paren"]) {
-      readList(this.opt["paren"], this.ast);
-    } else if(this.opt["noinfix"] || this.bp) {
-      this.ast.children = [parseExpr(this.bp)];
-      this.ast.kind = "call";
-    };
-  };
-  // Prettyprinter {{{4
-  PrettyPrinter = function() {
-    this.indent = - 1;
-    this.acc = [];
-    this.prevWasNewline = false;
-  };
-  PrettyPrinter.prototype.increaseIndent = function() {
-    this.indent = this.indent + 1;
-  };
-  PrettyPrinter.prototype.decreaseIndent = function() {
-    this.indent = this.indent - 1;
-  };
-  PrettyPrinter.prototype.newline = function(indent) {
-    if(!this.prevWasNewline) {
-      indent = (indent || 0) + this.indent;
-      this.str("\n");
-      while(indent > 0) {
-        this.str("  ");
-        indent = indent - 1;
-      };
-      this.prevWasNewline = true;
-    };
-  };
-  PrettyPrinter.prototype.str = function(str) {
-    this.acc.push(str);
-    this.prevWasNewline = false;
-  };
-  PrettyPrinter.prototype.pp = function(ast, bp, isLeft) {
-    bp = bp || 0;
-    syn = new SyntaxObj(ast);
-    if(syn.bp && syn.bp < bp || isLeft && syn.opt["noinfix"] && syn.bp < bp) {
-      this.str("(");
-    };
-    syn.pp(this);
-    if(syn.bp && syn.bp < bp || isLeft && syn.opt["noinfix"] && syn.bp < bp) {
-      this.str(")");
-    };
-  };
-  listpp = function(isInfix, newlineLength, prefixSpace) {
-    return function(obj, pp) {
-      ast = obj.ast;
-      if(isInfix) {
-        pp.pp(ast.children[0], obj.bp);
-        pp.str(prefixSpace);
-        pp.str(ast.val[1]);
-        list = ast.children.slice(1);
-      } else if(true) {
-        pp.str(ast.val);
-        list = ast.children;
-      };
-      if(list.length > newlineLength) {
-        pp.increaseIndent();
-      };
-      space = "";
-      list.map(function(child) {
-        return new SyntaxObj(child);
-      }).map(function(child) {
-        if(!child.opt["sep"]) {
-          if(list.length > newlineLength) {
-            pp.newline();
-          } else if(true) {
-            pp.str(space);
-            space = " ";
-          };
-        };
-        child.pp(pp);
-      });
-      if(list.length > newlineLength) {
-        pp.decreaseIndent();
-        pp.newline();
-      };
-      if(isInfix) {
-        pp.str(ast.val[2]);
-      } else if(true) {
-        pp.str(obj.opt["paren"]);
-      };
-    };
-  };
-  strpp = function(obj, pp) {
-    pp.str(JSON.stringify(obj.ast.val));
-  };
-  notepp = function(obj, pp) {
-    pp.newline();
-    pp.str(obj.ast.val);
-    pp.newline();
-  };
-  SyntaxObj.prototype.pp = function(pp) {
-    ast = this.ast;
-    children = ast.children;
-    if(this.opt["nospace"]) {
-      space = "";
-    } else if(true) {
-      space = " ";
-    };
-    if(this.opt["pp"]) {
-      this.opt["pp"](this, pp);
-    } else if(children.length === 0) {
-      pp.str(ast.val);
-    } else if(children.length === 1) {
-      pp.str(ast.val + space);
-      pp.pp(children[0], this.bp);
-    } else if(children.length === 2) {
-      pp.pp(children[0], this.bp, true);
-      pp.str(space + ast.val + space);
-      pp.pp(children[1], this.bp + 1 - (this.opt["dbp"] || 0));
-    } else if(true) {
-      pp.str("-:<");
-      pp.str(ast.kind + " " + ast.val);
-      ast.children.forEach(function(child) {
-        pp.str(" | ");
-        pp.pp(child);
-      });
-      pp.str(">:-");
-    };
-  };
-  // Syntax definition {{{4
-  table = {
-    "." : [1200, {nospace : true}],
-    "[" : [1200, {pp : listpp(false, 10, ""), paren : "]"}],
-    "*[]" : [1200, {pp : listpp(true, 10, "")}],
-    "(" : [1200, {pp : listpp(false, 1, ""), paren : ")"}],
-    "*()" : [1200, {pp : listpp(true, 20, "")}],
-    "{" : [1100, {pp : listpp(false, 4, ""), paren : "}"}],
-    "*{}" : [1200, {pp : listpp(true, 0, " ")}],
-    "#" : [1000, {nospace : true, noinfix : true}],
-    "@" : [1000, {nospace : true, noinfix : true}],
-    "++" : [1000, {nospace : true, noinfix : true}],
-    "--" : [1000, {nospace : true, noinfix : true}],
-    "!" : [1000, {nospace : true, noinfix : true}],
-    "~" : [1000, {nospace : true, noinfix : true}],
-    "`" : [1000, {nospace : true, noinfix : true}],
-    "*" : [900],
-    "/" : [900],
-    "%" : [900],
-    "-" : [800],
-    "+" : [800],
-    ">>>" : [700],
-    ">>" : [700],
-    "<<" : [700],
-    "<=" : [600],
-    ">=" : [600],
-    ">" : [600],
-    "<" : [600],
-    "==" : [500],
-    "!=" : [500],
-    "!==" : [500],
-    "===" : [500],
-    "&" : [460],
-    "^" : [430],
-    "|" : [400],
-    "&&" : [350],
-    "||" : [300],
-    ":" : [200, {dbp : 1}],
-    "?" : [200, {dbp : 1}],
-    "else" : [200, {dbp : 1}],
-    "=" : [100, {dbp : 1}],
-    "," : [0, {sep : true}],
-    ";" : [0, {sep : true}],
-    "note:" : [0, {sep : true, pp : notepp}],
-    "]" : [0, {rparen : true}],
-    ")" : [0, {rparen : true}],
-    "}" : [0, {rparen : true}],
-    "eof:" : [0, {rparen : true}],
-    "return" : [0, {noinfix : true}],
-    "throw" : [0, {noinfix : true}],
-    "new" : [0, {noinfix : true}],
-    "typeof" : [0, {noinfix : true}],
-    "var" : [0, {noinfix : true}],
-    "str:" : [0, {pp : strpp}],
-    "constructor" : [],
-    "valueOf" : [],
-    "toString" : [],
-    "toLocaleString" : [],
-    "hasOwnProperty" : [],
-    "isPrototypeOf" : [],
-    "propertyIsEnumerable" : [],
-    "default:" : []
-  };
-  // Transformations of syntax tree (RST to/from AST) {{{3
-  // Setup {{{4
-  notSep = function(ast) {
-    return ast.kind !== "id" || ast.val !== ";" && ast.val !== ",";
-  };
-  noSeps = function(list) {
-    return list.filter(notSep);
-  };
-  matchReplace = function(match, elem, filter) {
-    filter = filter || id;
-    if(Array.isArray(elem)) {
-      tail = undefined;
-      if(elem[elem.length - 1].slice(0, 2) === "??") {
-        tail = filter(match[elem[elem.length - 1].slice(2)]);
-        elem = elem.slice(0, - 1);
-      };
-      result = elem.map(function(child) {
-        return matchReplace(match, child, filter);
-      });
-      if(tail) {
-        result = result.concat(tail);
-      };
-    } else if(typeof elem === "string" && elem[0] === "?") {
-      result = match[elem.slice(1)];
-    } else if(true) {
-      result = elem;
-    };
-    return result;
-  };
-  rstToAst = new Matcher();
-  astToLs = new Matcher();
-  astToJs = new Matcher();
-  rstToAstTransform = function(from, to, filter) {
-    filter = filter || noSeps;
-    rstToAst.pattern(from, function(match, ast) {
-      return ast.fromList(matchReplace(match, to, filter));
-    });
-  };
-  astToLsTransform = function(from, to, filter) {
-    astToLs.pattern(from, function(match, ast) {
-      return ast.fromList(matchReplace(match, to, filter));
-    });
-  };
-  astToJsTransform = function(from, to, filter) {
-    astToJs.pattern(from, function(match, ast) {
-      return ast.fromList(matchReplace(match, to, filter));
-    });
-  };
-  astToRstTransform = function(from, to, filter) {
-    astToJsTransform(from, to, filter);
-    astToLsTransform(from, to, filter);
-  };
-  astToRstPattern = function(pattern, fn) {
-    astToJs.pattern(pattern, fn);
-    astToLs.pattern(pattern, fn);
-  };
-  astTransform = function(from, to, opts) {
-    rstToAstTransform(from, to);
-    astToRstTransform(to, from);
-  };
-  // Commas and semicolons {{{4
+  // Transformation library and matcher instantations{{{3
+  // Add commas and semicolons {{{4
   addCommas = function(ast) {
     ast.children = ast.children.map(addCommas);
     sep = undefined;
@@ -944,25 +889,73 @@ nextTick(function() {
     };
     return ast;
   };
-  // transformations {{{4
-  rstToAstTransform(["call", "*{}", ["id", "module"], "??body"], ["call", "*()", ["fn", "", ["block", ""], ["block", "", "??body"]]]);
-  astTransform(["call", "||", "?p1", "?p2"], ["branch", "||", "?p1", "?p2"]);
-  astTransform(["call", "&&", "?p1", "?p2"], ["branch", "&&", "?p1", "?p2"]);
-  astTransform(["call", "=", ["call", "*[]", "?obj", "?idx"], "?val"], ["call", "*[]=", "?obj", "?idx", "?val"]);
-  astTransform(["call", "=", ["call", ".", "?obj", "?member"], "?val"], ["call", ".=", "?obj", "?member", "?val"]);
-  astTransform(["call", "throw", "?result"], ["branch", "throw", "?result"]);
-  astTransform(["call", "return", "?result"], ["branch", "return", "?result"]);
-  astTransform(["call", "typeof", "?result"], ["call", "typeof", "?result"]);
-  astTransform(["call", "var", "?result"], ["call", "var", "?result"]);
-  astTransform(["call", "*()", "??args"], ["call", "*()", "??args"]);
-  astTransform(["call", ".", "?obj", ["id", "?id"]], ["call", ".", "?obj", ["str", "?id"]]);
-  astTransform(["call", "*{}", ["call", "*()", ["id", "function"], "??args"], "??body"], ["fn", "", ["block", "", "??args"], ["block", "", "??body"]]);
-  astTransform(["call", "*{}", ["call", "*()", ["id", "while"], "?cond"], "??body"], ["branch", "for", ["block", ""], "?cond", ["block", "", "??body"]]);
-  astTransform(["call", "=", ["id", "?name"], "?val"], ["assign", "?name", "?val"]);
-  astTransform(["call", "new", ["call", "*()", "?class", "??args"]], ["call", "new", "?class", "??args"]);
-  rstToAstTransform(["call", "*()", ["call", ".", "?obj", ["str", "?method"]], "??args"], ["call", "?method", "?obj", "??args"]);
-  rstToAstTransform(["call", "var", "?val"], "?val");
+  //{{{4 noSeps utility function for filtering away separators from lists 
+  noSeps = function(list) {
+    return list.filter(notSep);
+  };
+  //{{{4 Definition of matchers: rstToAst, astToLs and astToJs
+  rstToAst = new Matcher();
+  astToLs = new Matcher();
+  astToJs = new Matcher();
+  //{{{4 structural transformations via matchReplace, and -To-Transform
+  //{{{5 matchReplace
+  matchReplace = function(match, elem, filter) {
+    filter = filter || id;
+    if(Array.isArray(elem)) {
+      tail = undefined;
+      if(elem[elem.length - 1].slice(0, 2) === "??") {
+        tail = filter(match[elem[elem.length - 1].slice(2)]);
+        elem = elem.slice(0, - 1);
+      };
+      result = elem.map(function(child) {
+        return matchReplace(match, child, filter);
+      });
+      if(tail) {
+        result = result.concat(tail);
+      };
+    } else if(typeof elem === "string" && elem[0] === "?") {
+      result = match[elem.slice(1)];
+    } else if(true) {
+      result = elem;
+    };
+    return result;
+  };
+  //{{{5 rstToAstTransform
+  rstToAstTransform = function(from, to, filter) {
+    filter = filter || noSeps;
+    rstToAst.pattern(from, function(match, ast) {
+      return ast.fromList(matchReplace(match, to, filter));
+    });
+  };
+  //{{{5 astToLsTransform
+  astToLsTransform = function(from, to, filter) {
+    astToLs.pattern(from, function(match, ast) {
+      return ast.fromList(matchReplace(match, to, filter));
+    });
+  };
+  //{{{5 astToJsTransform
+  astToJsTransform = function(from, to, filter) {
+    astToJs.pattern(from, function(match, ast) {
+      return ast.fromList(matchReplace(match, to, filter));
+    });
+  };
+  //{{{4 shorthands for defining patterns/transforms on both JS and LS
+  astToRstTransform = function(from, to, filter) {
+    astToJsTransform(from, to, filter);
+    astToLsTransform(from, to, filter);
+  };
+  astToRstPattern = function(pattern, fn) {
+    astToJs.pattern(pattern, fn);
+    astToLs.pattern(pattern, fn);
+  };
+  astTransform = function(from, to, opts) {
+    rstToAstTransform(from, to);
+    astToRstTransform(to, from);
+  };
+  //{{{3 LightScript transformations
+  // Drop parenthesis in ast
   rstToAstTransform(["id", "(", "?val"], "?val");
+  //{{{4 ++ += -- -= *=  transformed to binop + assignment
   rstToAst.pattern(["call", "*=", "?target", "?val"], function(match, ast) {
     return rstToAst.match(ast.fromList(matchReplace(match, ["call", "=", "?target", ["call", "*", "?target", "?val"]])));
   });
@@ -978,16 +971,40 @@ nextTick(function() {
   rstToAst.pattern(["call", "--", "?target"], function(match, ast) {
     return rstToAst.match(ast.fromList(matchReplace(match, ["call", "-=", "?target", ["num", "1"]])));
   });
+  //{{{3 JavaScript transform
+  astToJsTransform(["call", "var", "?result"], ["call", "var", "?result"]);
+  //{{{3 Common transformations for Js and Ls
+  //{{{4 control flow
+  astTransform(["call", "||", "?p1", "?p2"], ["branch", "||", "?p1", "?p2"]);
+  astTransform(["call", "&&", "?p1", "?p2"], ["branch", "&&", "?p1", "?p2"]);
+  astTransform(["call", "return", "?result"], ["branch", "return", "?result"]);
+  astTransform(["call", "*{}", ["call", "*()", ["id", "while"], "?cond"], "??body"], ["branch", "for", ["block", ""], "?cond", ["block", "", "??body"]]);
+  // should throw be a branch, or just a special function call?...
+  astTransform(["call", "throw", "?result"], ["branch", "throw", "?result"]);
+  //{{{4 subscripting and assignment
+  astTransform(["call", "=", ["call", "*[]", "?obj", "?idx"], "?val"], ["call", "*[]=", "?obj", "?idx", "?val"]);
+  astTransform(["call", "=", ["call", ".", "?obj", "?member"], "?val"], ["call", ".=", "?obj", "?member", "?val"]);
+  astTransform(["call", "=", ["id", "?name"], "?val"], ["assign", "?name", "?val"]);
+  astTransform(["call", ".", "?obj", ["id", "?id"]], ["call", ".", "?obj", ["str", "?id"]]);
+  //{{{4 functions, and function/method-application
+  astTransform(["call", "*{}", ["call", "*()", ["id", "function"], "??args"], "??body"], ["fn", "", ["block", "", "??args"], ["block", "", "??body"]]);
+  astTransform(["call", "*()", "??args"], ["call", "*()", "??args"]);
+  rstToAstTransform(["call", "*()", ["call", ".", "?obj", ["str", "?method"]], "??args"], ["call", "?method", "?obj", "??args"]);
   astToRstPattern(["call", "?method", "?obj", "??args"], function(match, ast) {
     prio = (table[match["method"]] || [])[0];
+    // if it has a priority in the table, it means that it is an infix JS operator, and not an ordinary method call, so for now, just emit it as an infix operator. On long term we should take type into consideration.
     if(prio) {
+      // returning undefined means no transformation done.
       result = undefined;
     } else if(true) {
       result = ast.fromList(matchReplace(match, ["call", "*()", ["call", ".", "?obj", ["id", "?method"]], "??args"], noSeps));
     };
     return result;
   });
-  // Array and HashMap Literals {{{4
+  //{{{4 builtin special "functions"
+  astTransform(["call", "typeof", "?result"], ["call", "typeof", "?result"]);
+  astTransform(["call", "new", ["call", "*()", "?class", "??args"]], ["call", "new", "?class", "??args"]);
+  //{{{4 Array Literals
   rstToAstTransform(["id", "[", "??elems"], ["call", "new", ["id", "Vector"], "??elems"]);
   astToRstPattern(["call", "new", ["id", "Vector"], "??elems"], function(match, ast) {
     elems = [];
@@ -996,6 +1013,7 @@ nextTick(function() {
     });
     return ast.fromList(["id", "["].concat(elems));
   });
+  //{{{4 Object Literals
   rstToAst.pattern(["id", "{", "??elems"], function(match, ast) {
     ok = true;
     args = [];
@@ -1023,7 +1041,7 @@ nextTick(function() {
     };
     return ast.fromList(["id", "{"].concat(list));
   });
-  // If-else {{{4
+  // If-else {{{3
   rstToAst.pattern(["call", "*{}", ["call", "*()", ["id", "if"], "?p"], "??body"], function(match, ast) {
     return ast.fromList(["branch", "cond", match["p"], ["block", ""].concat(match["body"].filter(notSep))]);
   });
@@ -1046,7 +1064,7 @@ nextTick(function() {
     };
     return ast.fromList(rhs);
   });
-  // Class {{{4
+  // Class {{{3
   astTransform(["call", "=", ["call", ".", ["call", ".", ["id", "?class"], ["str", "prototype"]], ["str", "?member"]], ["fn", "", ["block", "", "??args"], "?body"]], ["fn", "?member", ["block", "", ["call", ":", ["id", "this"], ["id", "?class"]], "??args"], "?body"]);
   uppercase = "QWERTYUIOPASDFGHJKLZXCVBNM";
   rstToAst.pattern(["call", "=", ["id", "?class"], ["fn", "", ["block", "", "??args"], "?body"]], function(match, ast) {
@@ -1057,13 +1075,13 @@ nextTick(function() {
     return result;
   });
   astToRstTransform(["fn", "new", ["block", "", ["call", ":", ["id", "this"], ["id", "?class"]], "??args"], "?body"], ["call", "=", ["id", "?class"], ["fn", "", ["block", "", "??args"], "?body"]]);
-  // Analysis {{{3
+  // Analysis {{{2
   analyse = function(node) {
-    // Accumulators {{{4
+    // Accumulators {{{3
     fns = [];
     vars = {};
     node.opt["vars"] = vars;
-    // arguments{{{4
+    // arguments{{{3
     parentFn = node.opt["parentFn"];
     if(parentFn) {
       Object.keys(parentFn.opt.vars).forEach(function(id) {
@@ -1084,7 +1102,7 @@ nextTick(function() {
         };
       });
     };
-    // Analyse subtree {{{4
+    // Analyse subtree {{{3
     subanalysis = function(node) {
       node.children.forEach(function(child) {
         child.parent = node;
@@ -1108,7 +1126,7 @@ nextTick(function() {
     node.children[1].children.forEach(function(child) {
       subanalysis(child);
     });
-    // Analyse subfunctions {{{4
+    // Analyse subfunctions {{{3
     fns.forEach(function(childFn) {
       childFn.opt["parentFn"] = node;
       analyse(childFn);

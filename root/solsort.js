@@ -187,20 +187,19 @@ ls2ast = ast2ls = ast2js = undefined;
 nextTick(function() {
   var analyse;
   var uppercase;
-  var addVars;
-  var addCommas;
   var astTransform;
   var astToRstPattern;
   var astToRstTransform;
   var astToJsTransform;
   var astToLsTransform;
   var rstToAstTransform;
+  var matchReplace;
   var astToJs;
   var astToLs;
   var rstToAst;
-  var matchReplace;
   var noSeps;
-  var notSep;
+  var addVars;
+  var addCommas;
   var table;
   var notepp;
   var strpp;
@@ -211,6 +210,7 @@ nextTick(function() {
   var token;
   var readList;
   var tokenise;
+  var notSep;
   // {{{2 Notes
   //
   // LightScript is a programming language designed for easy program transformation.
@@ -326,9 +326,8 @@ nextTick(function() {
   // - match filter
   // refactor/cleanup, ie. id-function/filter/... in rst-ast-matcher
   //
-  // Language implementation{{{2
-  // Ast {{{3
-  // Constructor {{{4
+  // Ast {{{2
+  // Constructor {{{3
   //
   // Raw syntax tree - generic syntax, both used for parsing, and also for generating code for c-like languages.
   //
@@ -353,21 +352,21 @@ nextTick(function() {
     this.opt = {};
     this.parent = undefined;
   };
-  // Ast.create {{{4
+  // Ast.create {{{3
   Ast.prototype.create = function(kind, val, children) {
     return new Ast(kind, val, children, this.pos);
   };
-  // Ast.isa {{{4
+  // Ast.isa {{{3
   Ast.prototype.isa = function(kind, val) {
     return this.kind === kind && this.val === val;
   };
-  // Ast.deepCopy {{{4
+  // Ast.deepCopy {{{3
   Ast.prototype.deepCopy = function() {
     return new Ast(this.kind, this.val, this.children.map(function(child) {
       return child.deepCopy();
     }), this.pos);
   };
-  // Ast.toList {{{4
+  // Ast.toList {{{3
   Ast.prototype.toList = function() {
     var result;
     result = this.children.map(function(node) {
@@ -377,11 +376,11 @@ nextTick(function() {
     result.unshift(this.kind);
     return result;
   };
-  // Ast.toString {{{4
+  // Ast.toString {{{3
   Ast.prototype.toString = function() {
     return pplist(this.toList());
   };
-  // Ast.fromList {{{4
+  // Ast.fromList {{{3
   Ast.prototype.fromList = function(list) {
     var result;
     var self;
@@ -395,160 +394,15 @@ nextTick(function() {
     };
     return result;
   };
-  // Ast.error {{{4
+  // Ast.error {{{3
   Ast.prototype.error = function(desc) {
     throw "Error: " + desc + " at pos: " + JSON.stringify(this.pos);
   };
-  // Ast Matcher {{{3
-  //
-  // Pattern matching notes:
-  //
-  //     matcher = new Matcher();
-  //     matcher.pattern(["id", "*{}", ["id", "*()", ["id:function"], "?a"], "??b"],  function(match) { ... });
-  //     matcher.pattern(["id", "*{}", "?a"], function(match) { ... });
-  //     matcher.pattern(["str", "?a"], function(match) { ... }); 
-  //     matcher.pattern(["id", "?operator", "?lhs", "??rhs"]: function(match, ast) {
-  //         return ast.create('call', match["operator"], [match["lhs"]].concat(match["rhs"]));
-  //     }); 
-  //     matcher.pattern(["id", "var", "?val"]: function(match, ast) {
-  //          return match["val"];
-  //     }); 
-  //
-  //     matcher.pattern(["id:=", ["id:.", ["id:.", ["id:?class"] [id:prototype]] ["id:?member"]] "?value"], function(match) {
-  //     })
-  //
-  // matcher function
-  //
-  // parameter: match object with bound vars, and match.ast = full node, match.parent = parent node
-  //
-  // try most specific match first. If result is undefined, try next match
-  //
-  // MatcherPattern {{{4
-  MatcherPattern = function(pattern) {
-    if(typeof pattern === "string") {
-      if(pattern[0] === "?") {
-        this.anyVal = pattern.slice(1);
-      } else if(true) {
-        this.str = pattern;
-      };
-    } else if(true) {
-      this.kind = new MatcherPattern(pattern[0]);
-      this.val = new MatcherPattern(pattern[1]);
-      if(pattern[pattern.length - 1].slice(0, 2) === "??") {
-        this.endglob = pattern[pattern.length - 1].slice(2);
-        this.children = pattern.slice(2, - 1);
-      } else if(true) {
-        this.children = pattern.slice(2);
-      };
-      this.children = this.children.map(function(child) {
-        return new MatcherPattern(child);
-      });
-    };
+  // notSep {{{3
+  notSep = function(ast) {
+    return ast.kind !== "id" || ast.val !== ";" && ast.val !== ",";
   };
-  MatcherPattern.prototype.match = function(ast, matchResult) {
-    var i;
-    if(this.anyVal) {
-      matchResult.capture(this.anyVal, ast);
-    } else if(this.str !== undefined) {
-      matchResult.increaseRanking();
-      if(ast !== this.str) {
-        matchResult.failure();
-      };
-    } else if(this.children.length > ast.children.length) {
-      matchResult.failure();
-    } else if(!this.endglob && this.children.length !== ast.children.length) {
-      matchResult.failure();
-    } else if(true) {
-      this.kind.match(ast.kind, matchResult);
-      this.val.match(ast.val, matchResult);
-      i = 0;
-      while(i < this.children.length) {
-        this.children[i].match(ast.children[i], matchResult);
-        i = i + 1;
-      };
-      if(this.endglob) {
-        matchResult.capture(this.endglob, ast.children.slice(i));
-      };
-    };
-    return matchResult;
-  };
-  // MatchResult {{{4
-  MatchResult = function(fn) {
-    this.captures = {};
-    this.ok = true;
-    this.rank = 0;
-    this.fn = fn;
-  };
-  MatchResult.prototype.failure = function() {
-    this.ok = false;
-  };
-  MatchResult.prototype.capture = function(key, val) {
-    this.captures[key] = val;
-  };
-  MatchResult.prototype.increaseRanking = function() {
-    this.rank = this.rank + 1;
-  };
-  // MatchEntry {{{4
-  MatchEntry = function(pattern, fn) {
-    this.pattern = new MatcherPattern(pattern);
-    this.fn = fn;
-  };
-  // Matcher {{{4
-  Matcher = function() {
-    this.table = {};
-  };
-  Matcher.prototype.pattern = function(pattern, fn) {
-    var matchers;
-    this.table[pattern[0]] = matchers = this.table[pattern[0]] || [];
-    matchers.push(new MatchEntry(pattern, fn));
-  };
-  Matcher.prototype.match = function(ast) {
-    var matchers;
-    var result;
-    result = undefined;
-    matchers = this.table[ast.kind];
-    if(matchers) {
-      matchers.map(function(matcher) {
-        return matcher.pattern.match(ast, new MatchResult(matcher.fn));
-      }).filter(function(result) {
-        return result.ok;
-      }).sort(function(a, b) {
-        return b.rank - a.rank;
-      }).forEach(function(match) {
-        if(!result) {
-          result = match.fn(match.captures, ast);
-        };
-      });
-    };
-    return result;
-  };
-  Matcher.prototype.recursiveWalk = function(ast) {
-    var self;
-    self = this;
-    ast.children.map(function(child) {
-      self.recursiveWalk(child);
-    });
-    this.match(ast);
-  };
-  Matcher.prototype.recursivePreTransform = function(ast) {
-    var self;
-    var ast;
-    self = this;
-    ast = this.match(ast) || ast;
-    return ast.create(ast.kind, ast.val, ast.children.map(function(child) {
-      return self.recursivePreTransform(child);
-    }));
-  };
-  Matcher.prototype.recursivePostTransform = function(ast) {
-    var t;
-    var self;
-    self = this;
-    t = ast.create(ast.kind, ast.val, ast.children.map(function(child) {
-      return self.recursivePostTransform(child);
-    }));
-    return this.match(t) || t;
-  };
-  // Tokeniser {{{3
+  // Tokeniser {{{2
   BufferPos = function(line, pos) {
     this.line = line;
     this.pos = pos;
@@ -713,8 +567,8 @@ nextTick(function() {
     };
     return tokens;
   };
-  // Syntax (parser and prettyprinter) {{{3
-  // Syntax object {{{4
+  // Syntax (parser and prettyprinter) {{{2
+  // Syntax object {{{3
   SyntaxObj = function(ast) {
     var syntaxData;
     this.ast = ast;
@@ -722,7 +576,7 @@ nextTick(function() {
     this.bp = syntaxData[0] || 0;
     this.opt = syntaxData[1] || {};
   };
-  // Parser {{{4
+  // Parser {{{3
   readList = function(paren, ast) {
     while(!token.opt["rparen"]) {
       ast.children.push(parseExpr());
@@ -801,7 +655,7 @@ nextTick(function() {
       this.ast.kind = "call";
     };
   };
-  // Prettyprinter {{{4
+  // Prettyprinter {{{3
   PrettyPrinter = function() {
     this.indent = - 1;
     this.acc = [];
@@ -925,7 +779,7 @@ nextTick(function() {
       pp.str(">:-");
     };
   };
-  // Syntax definition {{{4
+  // Syntax definition {{{3
   table = {
     "." : [1200, {nospace : true}],
     "[" : [1200, {pp : listpp(false, 10, ""), paren : "]"}],
@@ -988,72 +842,158 @@ nextTick(function() {
     "propertyIsEnumerable" : [],
     "default:" : []
   };
-  // Transformations of syntax tree (RST to/from AST) {{{3
-  // Setup {{{4
-  notSep = function(ast) {
-    return ast.kind !== "id" || ast.val !== ";" && ast.val !== ",";
-  };
-  noSeps = function(list) {
-    return list.filter(notSep);
-  };
-  matchReplace = function(match, elem, filter) {
-    var result;
-    var tail;
-    var filter;
-    var elem;
-    filter = filter || id;
-    if(Array.isArray(elem)) {
-      tail = undefined;
-      if(elem[elem.length - 1].slice(0, 2) === "??") {
-        tail = filter(match[elem[elem.length - 1].slice(2)]);
-        elem = elem.slice(0, - 1);
+  // Transformations of syntax tree (RST to/from AST) {{{2
+  // Ast Matcher {{{3
+  //
+  // Pattern matching notes:
+  //
+  //     matcher = new Matcher();
+  //     matcher.pattern(["id", "*{}", ["id", "*()", ["id:function"], "?a"], "??b"],  function(match) { ... });
+  //     matcher.pattern(["id", "*{}", "?a"], function(match) { ... });
+  //     matcher.pattern(["str", "?a"], function(match) { ... }); 
+  //     matcher.pattern(["id", "?operator", "?lhs", "??rhs"]: function(match, ast) {
+  //         return ast.create('call', match["operator"], [match["lhs"]].concat(match["rhs"]));
+  //     }); 
+  //     matcher.pattern(["id", "var", "?val"]: function(match, ast) {
+  //          return match["val"];
+  //     }); 
+  //
+  //     matcher.pattern(["id:=", ["id:.", ["id:.", ["id:?class"] [id:prototype]] ["id:?member"]] "?value"], function(match) {
+  //     })
+  //
+  // matcher function
+  //
+  // parameter: match object with bound vars, and match.ast = full node, match.parent = parent node
+  //
+  // try most specific match first. If result is undefined, try next match
+  //
+  // MatcherPattern {{{4
+  MatcherPattern = function(pattern) {
+    if(typeof pattern === "string") {
+      if(pattern[0] === "?") {
+        this.anyVal = pattern.slice(1);
+      } else if(true) {
+        this.str = pattern;
       };
-      result = elem.map(function(child) {
-        return matchReplace(match, child, filter);
-      });
-      if(tail) {
-        result = result.concat(tail);
-      };
-    } else if(typeof elem === "string" && elem[0] === "?") {
-      result = match[elem.slice(1)];
     } else if(true) {
-      result = elem;
+      this.kind = new MatcherPattern(pattern[0]);
+      this.val = new MatcherPattern(pattern[1]);
+      if(pattern[pattern.length - 1].slice(0, 2) === "??") {
+        this.endglob = pattern[pattern.length - 1].slice(2);
+        this.children = pattern.slice(2, - 1);
+      } else if(true) {
+        this.children = pattern.slice(2);
+      };
+      this.children = this.children.map(function(child) {
+        return new MatcherPattern(child);
+      });
+    };
+  };
+  MatcherPattern.prototype.match = function(ast, matchResult) {
+    var i;
+    if(this.anyVal) {
+      matchResult.capture(this.anyVal, ast);
+    } else if(this.str !== undefined) {
+      matchResult.increaseRanking();
+      if(ast !== this.str) {
+        matchResult.failure();
+      };
+    } else if(this.children.length > ast.children.length) {
+      matchResult.failure();
+    } else if(!this.endglob && this.children.length !== ast.children.length) {
+      matchResult.failure();
+    } else if(true) {
+      this.kind.match(ast.kind, matchResult);
+      this.val.match(ast.val, matchResult);
+      i = 0;
+      while(i < this.children.length) {
+        this.children[i].match(ast.children[i], matchResult);
+        i = i + 1;
+      };
+      if(this.endglob) {
+        matchResult.capture(this.endglob, ast.children.slice(i));
+      };
+    };
+    return matchResult;
+  };
+  // MatchResult {{{4
+  MatchResult = function(fn) {
+    this.captures = {};
+    this.ok = true;
+    this.rank = 0;
+    this.fn = fn;
+  };
+  MatchResult.prototype.failure = function() {
+    this.ok = false;
+  };
+  MatchResult.prototype.capture = function(key, val) {
+    this.captures[key] = val;
+  };
+  MatchResult.prototype.increaseRanking = function() {
+    this.rank = this.rank + 1;
+  };
+  // MatchEntry {{{4
+  MatchEntry = function(pattern, fn) {
+    this.pattern = new MatcherPattern(pattern);
+    this.fn = fn;
+  };
+  // Matcher {{{4
+  Matcher = function() {
+    this.table = {};
+  };
+  Matcher.prototype.pattern = function(pattern, fn) {
+    var matchers;
+    this.table[pattern[0]] = matchers = this.table[pattern[0]] || [];
+    matchers.push(new MatchEntry(pattern, fn));
+  };
+  Matcher.prototype.match = function(ast) {
+    var matchers;
+    var result;
+    result = undefined;
+    matchers = this.table[ast.kind];
+    if(matchers) {
+      matchers.map(function(matcher) {
+        return matcher.pattern.match(ast, new MatchResult(matcher.fn));
+      }).filter(function(result) {
+        return result.ok;
+      }).sort(function(a, b) {
+        return b.rank - a.rank;
+      }).forEach(function(match) {
+        if(!result) {
+          result = match.fn(match.captures, ast);
+        };
+      });
     };
     return result;
   };
-  rstToAst = new Matcher();
-  astToLs = new Matcher();
-  astToJs = new Matcher();
-  rstToAstTransform = function(from, to, filter) {
-    var filter;
-    filter = filter || noSeps;
-    rstToAst.pattern(from, function(match, ast) {
-      return ast.fromList(matchReplace(match, to, filter));
+  Matcher.prototype.recursiveWalk = function(ast) {
+    var self;
+    self = this;
+    ast.children.map(function(child) {
+      self.recursiveWalk(child);
     });
+    this.match(ast);
   };
-  astToLsTransform = function(from, to, filter) {
-    astToLs.pattern(from, function(match, ast) {
-      return ast.fromList(matchReplace(match, to, filter));
-    });
+  Matcher.prototype.recursivePreTransform = function(ast) {
+    var self;
+    var ast;
+    self = this;
+    ast = this.match(ast) || ast;
+    return ast.create(ast.kind, ast.val, ast.children.map(function(child) {
+      return self.recursivePreTransform(child);
+    }));
   };
-  astToJsTransform = function(from, to, filter) {
-    astToJs.pattern(from, function(match, ast) {
-      return ast.fromList(matchReplace(match, to, filter));
-    });
+  Matcher.prototype.recursivePostTransform = function(ast) {
+    var t;
+    var self;
+    self = this;
+    t = ast.create(ast.kind, ast.val, ast.children.map(function(child) {
+      return self.recursivePostTransform(child);
+    }));
+    return this.match(t) || t;
   };
-  astToRstTransform = function(from, to, filter) {
-    astToJsTransform(from, to, filter);
-    astToLsTransform(from, to, filter);
-  };
-  astToRstPattern = function(pattern, fn) {
-    astToJs.pattern(pattern, fn);
-    astToLs.pattern(pattern, fn);
-  };
-  astTransform = function(from, to, opts) {
-    rstToAstTransform(from, to);
-    astToRstTransform(to, from);
-  };
-  // Commas and semicolons {{{4
+  // Transformation library and matcher instantations{{{3
+  // Add commas and semicolons {{{4
   addCommas = function(ast) {
     var lastchild;
     var children;
@@ -1108,25 +1048,78 @@ nextTick(function() {
     };
     return ast;
   };
-  // transformations {{{4
-  rstToAstTransform(["call", "*{}", ["id", "module"], "??body"], ["call", "*()", ["fn", "", ["block", ""], ["block", "", "??body"]]]);
-  astTransform(["call", "||", "?p1", "?p2"], ["branch", "||", "?p1", "?p2"]);
-  astTransform(["call", "&&", "?p1", "?p2"], ["branch", "&&", "?p1", "?p2"]);
-  astTransform(["call", "=", ["call", "*[]", "?obj", "?idx"], "?val"], ["call", "*[]=", "?obj", "?idx", "?val"]);
-  astTransform(["call", "=", ["call", ".", "?obj", "?member"], "?val"], ["call", ".=", "?obj", "?member", "?val"]);
-  astTransform(["call", "throw", "?result"], ["branch", "throw", "?result"]);
-  astTransform(["call", "return", "?result"], ["branch", "return", "?result"]);
-  astTransform(["call", "typeof", "?result"], ["call", "typeof", "?result"]);
-  astTransform(["call", "var", "?result"], ["call", "var", "?result"]);
-  astTransform(["call", "*()", "??args"], ["call", "*()", "??args"]);
-  astTransform(["call", ".", "?obj", ["id", "?id"]], ["call", ".", "?obj", ["str", "?id"]]);
-  astTransform(["call", "*{}", ["call", "*()", ["id", "function"], "??args"], "??body"], ["fn", "", ["block", "", "??args"], ["block", "", "??body"]]);
-  astTransform(["call", "*{}", ["call", "*()", ["id", "while"], "?cond"], "??body"], ["branch", "for", ["block", ""], "?cond", ["block", "", "??body"]]);
-  astTransform(["call", "=", ["id", "?name"], "?val"], ["assign", "?name", "?val"]);
-  astTransform(["call", "new", ["call", "*()", "?class", "??args"]], ["call", "new", "?class", "??args"]);
-  rstToAstTransform(["call", "*()", ["call", ".", "?obj", ["str", "?method"]], "??args"], ["call", "?method", "?obj", "??args"]);
-  rstToAstTransform(["call", "var", "?val"], "?val");
+  //{{{4 noSeps utility function for filtering away separators from lists 
+  noSeps = function(list) {
+    return list.filter(notSep);
+  };
+  //{{{4 Definition of matchers: rstToAst, astToLs and astToJs
+  rstToAst = new Matcher();
+  astToLs = new Matcher();
+  astToJs = new Matcher();
+  //{{{4 structural transformations via matchReplace, and -To-Transform
+  //{{{5 matchReplace
+  matchReplace = function(match, elem, filter) {
+    var result;
+    var tail;
+    var filter;
+    var elem;
+    filter = filter || id;
+    if(Array.isArray(elem)) {
+      tail = undefined;
+      if(elem[elem.length - 1].slice(0, 2) === "??") {
+        tail = filter(match[elem[elem.length - 1].slice(2)]);
+        elem = elem.slice(0, - 1);
+      };
+      result = elem.map(function(child) {
+        return matchReplace(match, child, filter);
+      });
+      if(tail) {
+        result = result.concat(tail);
+      };
+    } else if(typeof elem === "string" && elem[0] === "?") {
+      result = match[elem.slice(1)];
+    } else if(true) {
+      result = elem;
+    };
+    return result;
+  };
+  //{{{5 rstToAstTransform
+  rstToAstTransform = function(from, to, filter) {
+    var filter;
+    filter = filter || noSeps;
+    rstToAst.pattern(from, function(match, ast) {
+      return ast.fromList(matchReplace(match, to, filter));
+    });
+  };
+  //{{{5 astToLsTransform
+  astToLsTransform = function(from, to, filter) {
+    astToLs.pattern(from, function(match, ast) {
+      return ast.fromList(matchReplace(match, to, filter));
+    });
+  };
+  //{{{5 astToJsTransform
+  astToJsTransform = function(from, to, filter) {
+    astToJs.pattern(from, function(match, ast) {
+      return ast.fromList(matchReplace(match, to, filter));
+    });
+  };
+  //{{{4 shorthands for defining patterns/transforms on both JS and LS
+  astToRstTransform = function(from, to, filter) {
+    astToJsTransform(from, to, filter);
+    astToLsTransform(from, to, filter);
+  };
+  astToRstPattern = function(pattern, fn) {
+    astToJs.pattern(pattern, fn);
+    astToLs.pattern(pattern, fn);
+  };
+  astTransform = function(from, to, opts) {
+    rstToAstTransform(from, to);
+    astToRstTransform(to, from);
+  };
+  //{{{3 LightScript transformations
+  // Drop parenthesis in ast
   rstToAstTransform(["id", "(", "?val"], "?val");
+  //{{{4 ++ += -- -= *=  transformed to binop + assignment
   rstToAst.pattern(["call", "*=", "?target", "?val"], function(match, ast) {
     return rstToAst.match(ast.fromList(matchReplace(match, ["call", "=", "?target", ["call", "*", "?target", "?val"]])));
   });
@@ -1142,18 +1135,42 @@ nextTick(function() {
   rstToAst.pattern(["call", "--", "?target"], function(match, ast) {
     return rstToAst.match(ast.fromList(matchReplace(match, ["call", "-=", "?target", ["num", "1"]])));
   });
+  //{{{3 JavaScript transform
+  astToJsTransform(["call", "var", "?result"], ["call", "var", "?result"]);
+  //{{{3 Common transformations for Js and Ls
+  //{{{4 control flow
+  astTransform(["call", "||", "?p1", "?p2"], ["branch", "||", "?p1", "?p2"]);
+  astTransform(["call", "&&", "?p1", "?p2"], ["branch", "&&", "?p1", "?p2"]);
+  astTransform(["call", "return", "?result"], ["branch", "return", "?result"]);
+  astTransform(["call", "*{}", ["call", "*()", ["id", "while"], "?cond"], "??body"], ["branch", "for", ["block", ""], "?cond", ["block", "", "??body"]]);
+  // should throw be a branch, or just a special function call?...
+  astTransform(["call", "throw", "?result"], ["branch", "throw", "?result"]);
+  //{{{4 subscripting and assignment
+  astTransform(["call", "=", ["call", "*[]", "?obj", "?idx"], "?val"], ["call", "*[]=", "?obj", "?idx", "?val"]);
+  astTransform(["call", "=", ["call", ".", "?obj", "?member"], "?val"], ["call", ".=", "?obj", "?member", "?val"]);
+  astTransform(["call", "=", ["id", "?name"], "?val"], ["assign", "?name", "?val"]);
+  astTransform(["call", ".", "?obj", ["id", "?id"]], ["call", ".", "?obj", ["str", "?id"]]);
+  //{{{4 functions, and function/method-application
+  astTransform(["call", "*{}", ["call", "*()", ["id", "function"], "??args"], "??body"], ["fn", "", ["block", "", "??args"], ["block", "", "??body"]]);
+  astTransform(["call", "*()", "??args"], ["call", "*()", "??args"]);
+  rstToAstTransform(["call", "*()", ["call", ".", "?obj", ["str", "?method"]], "??args"], ["call", "?method", "?obj", "??args"]);
   astToRstPattern(["call", "?method", "?obj", "??args"], function(match, ast) {
     var result;
     var prio;
     prio = (table[match["method"]] || [])[0];
+    // if it has a priority in the table, it means that it is an infix JS operator, and not an ordinary method call, so for now, just emit it as an infix operator. On long term we should take type into consideration.
     if(prio) {
+      // returning undefined means no transformation done.
       result = undefined;
     } else if(true) {
       result = ast.fromList(matchReplace(match, ["call", "*()", ["call", ".", "?obj", ["id", "?method"]], "??args"], noSeps));
     };
     return result;
   });
-  // Array and HashMap Literals {{{4
+  //{{{4 builtin special "functions"
+  astTransform(["call", "typeof", "?result"], ["call", "typeof", "?result"]);
+  astTransform(["call", "new", ["call", "*()", "?class", "??args"]], ["call", "new", "?class", "??args"]);
+  //{{{4 Array Literals
   rstToAstTransform(["id", "[", "??elems"], ["call", "new", ["id", "Vector"], "??elems"]);
   astToRstPattern(["call", "new", ["id", "Vector"], "??elems"], function(match, ast) {
     var elems;
@@ -1163,6 +1180,7 @@ nextTick(function() {
     });
     return ast.fromList(["id", "["].concat(elems));
   });
+  //{{{4 Object Literals
   rstToAst.pattern(["id", "{", "??elems"], function(match, ast) {
     var result;
     var args;
@@ -1196,7 +1214,7 @@ nextTick(function() {
     };
     return ast.fromList(["id", "{"].concat(list));
   });
-  // If-else {{{4
+  // If-else {{{3
   rstToAst.pattern(["call", "*{}", ["call", "*()", ["id", "if"], "?p"], "??body"], function(match, ast) {
     return ast.fromList(["branch", "cond", match["p"], ["block", ""].concat(match["body"].filter(notSep))]);
   });
@@ -1224,7 +1242,7 @@ nextTick(function() {
     };
     return ast.fromList(rhs);
   });
-  // Class {{{4
+  // Class {{{3
   astTransform(["call", "=", ["call", ".", ["call", ".", ["id", "?class"], ["str", "prototype"]], ["str", "?member"]], ["fn", "", ["block", "", "??args"], "?body"]], ["fn", "?member", ["block", "", ["call", ":", ["id", "this"], ["id", "?class"]], "??args"], "?body"]);
   uppercase = "QWERTYUIOPASDFGHJKLZXCVBNM";
   rstToAst.pattern(["call", "=", ["id", "?class"], ["fn", "", ["block", "", "??args"], "?body"]], function(match, ast) {
@@ -1236,17 +1254,17 @@ nextTick(function() {
     return result;
   });
   astToRstTransform(["fn", "new", ["block", "", ["call", ":", ["id", "this"], ["id", "?class"]], "??args"], "?body"], ["call", "=", ["id", "?class"], ["fn", "", ["block", "", "??args"], "?body"]]);
-  // Analysis {{{3
+  // Analysis {{{2
   analyse = function(node) {
     var subanalysis;
     var parentFn;
     var vars;
     var fns;
-    // Accumulators {{{4
+    // Accumulators {{{3
     fns = [];
     vars = {};
     node.opt["vars"] = vars;
-    // arguments{{{4
+    // arguments{{{3
     parentFn = node.opt["parentFn"];
     if(parentFn) {
       Object.keys(parentFn.opt.vars).forEach(function(id) {
@@ -1267,7 +1285,7 @@ nextTick(function() {
         };
       });
     };
-    // Analyse subtree {{{4
+    // Analyse subtree {{{3
     subanalysis = function(node) {
       node.children.forEach(function(child) {
         child.parent = node;
@@ -1291,7 +1309,7 @@ nextTick(function() {
     node.children[1].children.forEach(function(child) {
       subanalysis(child);
     });
-    // Analyse subfunctions {{{4
+    // Analyse subfunctions {{{3
     fns.forEach(function(childFn) {
       childFn.opt["parentFn"] = node;
       analyse(childFn);
