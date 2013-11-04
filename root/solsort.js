@@ -190,9 +190,13 @@ nextTick(function() {
   var addVars;
   var addCommas;
   var astTransform;
+  var astToRstPattern;
   var astToRstTransform;
+  var astToJsTransform;
+  var astToLsTransform;
   var rstToAstTransform;
-  var astToRst;
+  var astToJs;
+  var astToLs;
   var rstToAst;
   var matchReplace;
   var noSeps;
@@ -1018,7 +1022,8 @@ nextTick(function() {
     return result;
   };
   rstToAst = new Matcher();
-  astToRst = new Matcher();
+  astToLs = new Matcher();
+  astToJs = new Matcher();
   rstToAstTransform = function(from, to, filter) {
     var filter;
     filter = filter || noSeps;
@@ -1026,10 +1031,23 @@ nextTick(function() {
       return ast.fromList(matchReplace(match, to, filter));
     });
   };
-  astToRstTransform = function(from, to, filter) {
-    astToRst.pattern(from, function(match, ast) {
+  astToLsTransform = function(from, to, filter) {
+    astToLs.pattern(from, function(match, ast) {
       return ast.fromList(matchReplace(match, to, filter));
     });
+  };
+  astToJsTransform = function(from, to, filter) {
+    astToJs.pattern(from, function(match, ast) {
+      return ast.fromList(matchReplace(match, to, filter));
+    });
+  };
+  astToRstTransform = function(from, to, filter) {
+    astToJsTransform(from, to, filter);
+    astToLsTransform(from, to, filter);
+  };
+  astToRstPattern = function(pattern, fn) {
+    astToJs.pattern(pattern, fn);
+    astToLs.pattern(pattern, fn);
   };
   astTransform = function(from, to, opts) {
     rstToAstTransform(from, to);
@@ -1124,7 +1142,7 @@ nextTick(function() {
   rstToAst.pattern(["call", "--", "?target"], function(match, ast) {
     return rstToAst.match(ast.fromList(matchReplace(match, ["call", "-=", "?target", ["num", "1"]])));
   });
-  astToRst.pattern(["call", "?method", "?obj", "??args"], function(match, ast) {
+  astToRstPattern(["call", "?method", "?obj", "??args"], function(match, ast) {
     var result;
     var prio;
     prio = (table[match["method"]] || [])[0];
@@ -1137,7 +1155,7 @@ nextTick(function() {
   });
   // Array and HashMap Literals {{{4
   rstToAstTransform(["id", "[", "??elems"], ["call", "new", ["id", "Vector"], "??elems"]);
-  astToRst.pattern(["call", "new", ["id", "Vector"], "??elems"], function(match, ast) {
+  astToRstPattern(["call", "new", ["id", "Vector"], "??elems"], function(match, ast) {
     var elems;
     elems = [];
     match["elems"].forEach(function(elem) {
@@ -1165,7 +1183,7 @@ nextTick(function() {
     };
     return result;
   });
-  astToRst.pattern(["call", "new", ["id", "HashMap"], "??elems"], function(match, ast) {
+  astToRstPattern(["call", "new", ["id", "HashMap"], "??elems"], function(match, ast) {
     var i;
     var elems;
     var list;
@@ -1188,7 +1206,7 @@ nextTick(function() {
   rstToAst.pattern(["call", "else", ["branch", "cond", "??cond"], ["id", "{", "??body"]], function(match, ast) {
     return ast.fromList(["branch", "cond"].concat(match["cond"]).concat([["id", "true"], ["block", ""].concat(match["body"].filter(notSep))]));
   });
-  astToRst.pattern(["branch", "cond", "??branches"], function(match, ast) {
+  astToRstPattern(["branch", "cond", "??branches"], function(match, ast) {
     var lhs;
     var rhs;
     var cond;
@@ -1296,7 +1314,7 @@ nextTick(function() {
     ast = ast.deepCopy();
     analyse(ast);
     ast = addVars(ast);
-    ast = astToRst.recursivePreTransform(ast);
+    ast = astToJs.recursivePreTransform(ast);
     ast = addCommas(ast);
     pp = new PrettyPrinter();
     pp.pp(ast);
@@ -1307,7 +1325,7 @@ nextTick(function() {
     var pp;
     var ast;
     ast = ast.deepCopy();
-    ast = astToRst.recursivePreTransform(ast);
+    ast = astToLs.recursivePreTransform(ast);
     ast = addCommas(ast);
     pp = new PrettyPrinter();
     pp.pp(ast);

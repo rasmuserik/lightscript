@@ -918,17 +918,31 @@ this.buffer = buffer;
         return result;
       };
       rstToAst = new Matcher();
-      astToRst = new Matcher();
+      astToLs = new Matcher();
+      astToJs = new Matcher();
       rstToAstTransform = function(from, to, filter) {
         filter = filter || noSeps;
         rstToAst.pattern(from, function(match, ast) {
           return ast.fromList(matchReplace(match, to, filter));
         });
       };
-      astToRstTransform = function(from, to, filter) {
-        astToRst.pattern(from, function(match, ast) {
+      astToLsTransform = function(from, to, filter) {
+        astToLs.pattern(from, function(match, ast) {
           return ast.fromList(matchReplace(match, to, filter));
         });
+      };
+      astToJsTransform = function(from, to, filter) {
+        astToJs.pattern(from, function(match, ast) {
+          return ast.fromList(matchReplace(match, to, filter));
+        });
+      };
+      astToRstTransform = function(from, to, filter) {
+        astToJsTransform(from, to, filter);
+        astToLsTransform(from, to, filter);
+      };
+      astToRstPattern = function(pattern, fn) {
+        astToJs.pattern(pattern, fn);
+        astToLs.pattern(pattern, fn);
       };
       astTransform = function(from, to, opts) {
         rstToAstTransform(from, to);
@@ -1023,7 +1037,7 @@ this.buffer = buffer;
       rstToAst.pattern(["call", "--", "?target"], function(match, ast) {
         return rstToAst.match(ast.fromList(matchReplace(match, ["call", "-=", "?target", ["num", "1"]])));
       });
-      astToRst.pattern(["call", "?method", "?obj", "??args"], function(match, ast) {
+      astToRstPattern(["call", "?method", "?obj", "??args"], function(match, ast) {
         prio = (table[match["method"]] || [])[0];
         if(prio) {
           result = undefined;
@@ -1036,7 +1050,7 @@ this.buffer = buffer;
 ####Array and HashMap Literals 
 
       rstToAstTransform(["id", "[", "??elems"], ["call", "new", ["id", "Vector"], "??elems"]);
-      astToRst.pattern(["call", "new", ["id", "Vector"], "??elems"], function(match, ast) {
+      astToRstPattern(["call", "new", ["id", "Vector"], "??elems"], function(match, ast) {
         elems = [];
         match["elems"].forEach(function(elem) {
           elems.push(elem);
@@ -1060,7 +1074,7 @@ this.buffer = buffer;
         };
         return result;
       });
-      astToRst.pattern(["call", "new", ["id", "HashMap"], "??elems"], function(match, ast) {
+      astToRstPattern(["call", "new", ["id", "HashMap"], "??elems"], function(match, ast) {
         list = [];
         elems = match["elems"];
         i = 0;
@@ -1082,7 +1096,7 @@ this.buffer = buffer;
       rstToAst.pattern(["call", "else", ["branch", "cond", "??cond"], ["id", "{", "??body"]], function(match, ast) {
         return ast.fromList(["branch", "cond"].concat(match["cond"]).concat([["id", "true"], ["block", ""].concat(match["body"].filter(notSep))]));
       });
-      astToRst.pattern(["branch", "cond", "??branches"], function(match, ast) {
+      astToRstPattern(["branch", "cond", "??branches"], function(match, ast) {
         branches = match["branches"];
         body = branches.pop();
         cond = branches.pop();
@@ -1189,7 +1203,7 @@ this.buffer = buffer;
         ast = ast.deepCopy();
         analyse(ast);
         ast = addVars(ast);
-        ast = astToRst.recursivePreTransform(ast);
+        ast = astToJs.recursivePreTransform(ast);
         ast = addCommas(ast);
         pp = new PrettyPrinter();
         pp.pp(ast);
@@ -1197,7 +1211,7 @@ this.buffer = buffer;
       };
       ast2ls = function(ast) {
         ast = ast.deepCopy();
-        ast = astToRst.recursivePreTransform(ast);
+        ast = astToLs.recursivePreTransform(ast);
         ast = addCommas(ast);
         pp = new PrettyPrinter();
         pp.pp(ast);
@@ -2522,12 +2536,20 @@ socket.io
     index = [
       {
         "name" : "Rasmus Erik",
-        "link" : "/rasmuserik",
+        "link" : "/rasmuserik.html",
         "desc" : "Contact info, and more about the creator of these things"
       },
       {
+        "name" : "BibTekKonf BibGraph",
+        "title" : "Slides: BibTekKonf BibGraph",
+        "date" : "2013-10-26",
+        "tags" : "talk, presentation, bibtekkonf, bibgraph",
+        "link" : "/slides/bibtekkonf2013-bibgraph",
+        "desc" : "Slides fra BibTekKonf præsentation om visualisering ud fra ADHL-data"
+      },
+      {
         "name" : "Hack4dk",
-        "date" : "2013-09-??",
+        "date" : "2013-09-28",
         "tags" : "",
         "link" : "/hack4dk",
         "desc" : "Hack4dk hackathon hacks: graph visualisation from wikipedia, image recognition, and art quiz"
