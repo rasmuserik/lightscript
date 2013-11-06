@@ -1178,24 +1178,24 @@ arraycopy = function(arr) {
 //{{{3 asyncSeqMap
 asyncSeqMap = function(arr, fn, cb) {
   i = 0;
-  acc = []
+  acc = [];
   handleEntry = function() {
-    if(i>=arr.length) {
+    if(i >= arr.length) {
       cb(undefined, acc);
-    } else {
+    } else if(true) {
       fn(arr[i], function(err, data) {
-        acc.push(data)
+        acc.push(data);
         if(err) {
-          cb(err,acc);
-        } else {
-          ++i;
+          cb(err, acc);
+        } else if(true) {
+          i = i + 1;
           handleEntry();
-        }
+        };
       });
-    }
-  }
+    };
+  };
   handleEntry();
-}
+};
 // List prettyprinter{{{3
 //
 // Show a list with neat linebreakins, - this is especially useful for dumping the listified abstract syntax tree.
@@ -1341,8 +1341,8 @@ if(isNode) {
   //TODO: more features + portability
   urlGet = function(req, cb) {
     require("request")(req, cb);
-  }
-}
+  };
+};
 // {{{3 loadjs 
 _jsCache = {};
 loadjs = function(modulename, callback) {
@@ -1403,7 +1403,6 @@ loadfile = function(filename, callback) {
 };
 // loadCacheFile
 loadCacheFile = memoiseAsync(loadfile);
-
 // savefile {{{3
 savefile = function(filename, content, callback) {
   if(isNode) {
@@ -2316,30 +2315,30 @@ route("server", function(app) {
 route("uccorg", function(app) {
   if(isBrowser) {
     app.done();
-  }
+  };
   console.log(app);
-  html = new HTML()
+  html = new HTML();
   loadCacheFile("/../apikey.webuntis", function(err, apikey) {
     apikey = apikey.trim();
     if(err) {
       throw err;
-    }
-    webuntis = (function(name, cb) {
+    };
+    webuntis = function(name, cb) {
       console.log("webuntis", name);
       urlGet("https://api.webuntis.dk/api/" + name + "?api_key=" + apikey, function(err, result, content) {
         if(err) {
           return cb(err);
-        }
+        };
         cb(null, JSON.parse(content));
       });
-    });
+    };
     handleLocation = function(locId, done) {
       console.log("Location:" + locId);
-      result = {}
+      result = {};
       webuntis("locations/" + locId, function(err, data) {
         if(err) {
           return done(err);
-        }
+        };
         result.locInfo = data;
         webuntis("locations/" + locId + "/lessons", function(err, data) {
           result.lessons = [];
@@ -2354,7 +2353,7 @@ route("uccorg", function(app) {
           });
         });
       });
-    }
+    };
     webuntis("locations", function(err, data) {
       asyncSeqMap(data, function(data, cb) {
         handleLocation(data["untis_id"], cb);

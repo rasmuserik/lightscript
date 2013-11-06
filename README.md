@@ -1293,6 +1293,28 @@ Sometimes we need to create a new array, from something arraylike. Especially fo
       return Array.prototype.slice.call(arr, 0);
     };
 
+### asyncSeqMap
+
+    asyncSeqMap = function(arr, fn, cb) {
+      i = 0;
+      acc = [];
+      handleEntry = function() {
+        if(i >= arr.length) {
+          cb(undefined, acc);
+        } else if(true) {
+          fn(arr[i], function(err, data) {
+            acc.push(data);
+            if(err) {
+              cb(err, acc);
+            } else if(true) {
+              i = i + 1;
+              handleEntry();
+            };
+          });
+        };
+      };
+      handleEntry();
+    };
 
 ###List prettyprinter
 
@@ -1457,7 +1479,18 @@ We need to cleanup and canonise strings, if they should be used in urls.
       return dst;
     };
 
-##files I/O 
+##I/O 
+urlGet
+
+    if(isNode) {
+
+TODO: more features + portability
+
+      urlGet = function(req, cb) {
+        require("request")(req, cb);
+      };
+    };
+
 ### loadjs 
 
     _jsCache = {};
@@ -1525,6 +1558,10 @@ TODO: error handling
         xhr.send();
       };
     };
+
+loadCacheFile
+
+    loadCacheFile = memoiseAsync(loadfile);
 
 ###savefile 
 
@@ -2549,13 +2586,79 @@ socket.io
       });
     });
 
+## uccorg
+
+- webuntis
+  - locations: rum/lokale
+  - subjects: fag/emne (både fag og eksamener etd.)
+  - lessons: timetable-entry
+  - groups: hold+årgang
+  - evt. teachers - underviser-individ
+
+    route("uccorg", function(app) {
+      if(isBrowser) {
+        app.done();
+      };
+      console.log(app);
+      html = new HTML();
+      loadCacheFile("/../apikey.webuntis", function(err, apikey) {
+        apikey = apikey.trim();
+        if(err) {
+          throw err;
+        };
+        webuntis = function(name, cb) {
+          console.log("webuntis", name);
+          urlGet("https://api.webuntis.dk/api/" + name + "?api_key=" + apikey, function(err, result, content) {
+            if(err) {
+              return cb(err);
+            };
+            cb(null, JSON.parse(content));
+          });
+        };
+        handleLocation = function(locId, done) {
+          console.log("Location:" + locId);
+          result = {};
+          webuntis("locations/" + locId, function(err, data) {
+            if(err) {
+              return done(err);
+            };
+            result.locInfo = data;
+            webuntis("locations/" + locId + "/lessons", function(err, data) {
+              result.lessons = [];
+              asyncSeqMap(data, function(data, cb) {
+                webuntis("lessons/" + data["untis_id"], function(err, data) {
+                  console.log(data);
+                  result.lessons.push(data);
+                  cb();
+                });
+              }, function(err, data) {
+                done(err, result);
+              });
+            });
+          });
+        };
+        webuntis("locations", function(err, data) {
+          asyncSeqMap(data, function(data, cb) {
+            handleLocation(data["untis_id"], cb);
+          }, function(err, data) {
+            console.log(data);
+            html.content(["div", JSON.stringify(data)]);
+            app.done(html);
+          });
+        });
+      });
+    });
+
 ## devserver
 
     route("devserver", function(app) {
+      server = undefined;
       spawn = require("child_process").spawn;
       startServer = function() {
         server = spawn("node", [__dirname + "/solsort.js", "server"]);
         server.on("exit", startServer);
+        server.stdout.pipe(process.stdout);
+        server.stderr.pipe(process.stderr);
       };
       startServer();
       setInterval(function() {
