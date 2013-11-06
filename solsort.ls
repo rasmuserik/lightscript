@@ -1175,7 +1175,27 @@ isClass = function(obj, cls) {
 arraycopy = function(arr) {
   return Array.prototype.slice.call(arr, 0);
 };
-// 
+//{{{3 asyncSeqMap
+asyncSeqMap = function(arr, fn, cb) {
+  i = 0;
+  acc = []
+  handleEntry = function() {
+    if(i>=arr.length) {
+      cb(undefined, acc);
+    } else {
+      fn(arr[i], function(err, data) {
+        acc.push(data)
+        if(err) {
+          cb(err,acc);
+        } else {
+          ++i;
+          handleEntry();
+        }
+      });
+    }
+  }
+  handleEntry();
+}
 // List prettyprinter{{{3
 //
 // Show a list with neat linebreakins, - this is especially useful for dumping the listified abstract syntax tree.
@@ -1315,7 +1335,14 @@ deepExtend = function(dst, src) {
   });
   return dst;
 };
-// files I/O {{{2
+// I/O {{{2
+// urlGet
+if(isNode) {
+  //TODO: more features + portability
+  urlGet = function(req, cb) {
+    require("request")(req, cb);
+  }
+}
 // {{{3 loadjs 
 _jsCache = {};
 loadjs = function(modulename, callback) {
@@ -1374,6 +1401,9 @@ loadfile = function(filename, callback) {
     xhr.send();
   };
 };
+// loadCacheFile
+loadCacheFile = memoiseAsync(loadfile);
+
 // savefile {{{3
 savefile = function(filename, content, callback) {
   if(isNode) {
@@ -2275,12 +2305,76 @@ route("server", function(app) {
     });
   });
 });
+// {{{2 uccorg
+//
+// - webuntis
+//   - locations: rum/lokale
+//   - subjects: fag/emne (både fag og eksamener etd.)
+//   - lessons: timetable-entry
+//   - groups: hold+årgang
+//   - evt. teachers - underviser-individ
+route("uccorg", function(app) {
+  if(isBrowser) {
+    app.done();
+  }
+  console.log(app);
+  html = new HTML()
+  loadCacheFile("/../apikey.webuntis", function(err, apikey) {
+    apikey = apikey.trim();
+    if(err) {
+      throw err;
+    }
+    webuntis = (function(name, cb) {
+      console.log("webuntis", name);
+      urlGet("https://api.webuntis.dk/api/" + name + "?api_key=" + apikey, function(err, result, content) {
+        if(err) {
+          return cb(err);
+        }
+        cb(null, JSON.parse(content));
+      });
+    });
+    handleLocation = function(locId, done) {
+      console.log("Location:" + locId);
+      result = {}
+      webuntis("locations/" + locId, function(err, data) {
+        if(err) {
+          return done(err);
+        }
+        result.locInfo = data;
+        webuntis("locations/" + locId + "/lessons", function(err, data) {
+          result.lessons = [];
+          asyncSeqMap(data, function(data, cb) {
+            webuntis("lessons/" + data["untis_id"], function(err, data) {
+              console.log(data);
+              result.lessons.push(data);
+              cb();
+            });
+          }, function(err, data) {
+            done(err, result);
+          });
+        });
+      });
+    }
+    webuntis("locations", function(err, data) {
+      asyncSeqMap(data, function(data, cb) {
+        handleLocation(data["untis_id"], cb);
+      }, function(err, data) {
+        console.log(data);
+        html.content(["div", JSON.stringify(data)]);
+        app.done(html);
+      });
+    });
+  });
+});
 // {{{2 devserver
 route("devserver", function(app) {
+  server = undefined;
   spawn = require("child_process").spawn;
   startServer = function() {
     server = spawn("node", [__dirname + "/solsort.js", "server"]);
     server.on("exit", startServer);
+    server.stdout.pipe(process.stdout);
+    server.stderr.pipe(process.stderr);
   };
   startServer();
   setInterval(function() {
