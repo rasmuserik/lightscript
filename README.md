@@ -2601,12 +2601,12 @@ socket.io
       };
       console.log(app);
       html = new HTML();
-      loadCacheFile("/../apikey.webuntis", function(err, apikey) {
-        apikey = apikey.trim();
-        if(err) {
-          throw err;
-        };
-        webuntis = function(name, cb) {
+      webuntis = function(name, cb) {
+        loadCacheFile("/../apikey.webuntis", function(err, apikey) {
+          apikey = apikey.trim();
+          if(err) {
+            return cb(err);
+          };
           console.log("webuntis", name);
           urlGet("https://api.webuntis.dk/api/" + name + "?api_key=" + apikey, function(err, result, content) {
             if(err) {
@@ -2614,37 +2614,37 @@ socket.io
             };
             cb(null, JSON.parse(content));
           });
-        };
-        handleLocation = function(locId, done) {
-          console.log("Location:" + locId);
-          result = {};
-          webuntis("locations/" + locId, function(err, data) {
-            if(err) {
-              return done(err);
-            };
-            result.locInfo = data;
-            webuntis("locations/" + locId + "/lessons", function(err, data) {
-              result.lessons = [];
-              asyncSeqMap(data, function(data, cb) {
-                webuntis("lessons/" + data["untis_id"], function(err, data) {
-                  console.log(data);
-                  result.lessons.push(data);
-                  cb();
-                });
-              }, function(err, data) {
-                done(err, result);
+        });
+      };
+      handleLocation = function(locId, done) {
+        console.log("Location:" + locId);
+        result = {};
+        webuntis("locations/" + locId, function(err, data) {
+          if(err) {
+            return done(err);
+          };
+          result.locInfo = data;
+          webuntis("locations/" + locId + "/lessons", function(err, data) {
+            result.lessons = [];
+            asyncSeqMap(data, function(data, cb) {
+              webuntis("lessons/" + data["untis_id"], function(err, data) {
+                console.log(data);
+                result.lessons.push(data);
+                cb();
               });
+            }, function(err, data) {
+              done(err, result);
             });
           });
-        };
-        webuntis("locations", function(err, data) {
-          asyncSeqMap(data, function(data, cb) {
-            handleLocation(data["untis_id"], cb);
-          }, function(err, data) {
-            console.log(data);
-            html.content(["div", JSON.stringify(data)]);
-            app.done(html);
-          });
+        });
+      };
+      webuntis("locations", function(err, data) {
+        asyncSeqMap(data, function(data, cb) {
+          handleLocation(data["untis_id"], cb);
+        }, function(err, data) {
+          console.log(data);
+          html.content(["div", JSON.stringify(data)]);
+          app.done(html);
         });
       });
     });

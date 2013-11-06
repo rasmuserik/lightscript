@@ -2312,18 +2312,18 @@ route("server", function(app) {
 //   - lessons: timetable-entry
 //   - groups: hold+årgang
 //   - evt. teachers - underviser-individ
+//
+// Fetch/sync
 route("uccorg", function(app) {
   if(isBrowser) {
     app.done();
   };
-  console.log(app);
-  html = new HTML();
-  loadCacheFile("/../apikey.webuntis", function(err, apikey) {
-    apikey = apikey.trim();
-    if(err) {
-      throw err;
-    };
-    webuntis = function(name, cb) {
+  webuntis = function(name, cb) {
+    loadCacheFile("/../apikey.webuntis", function(err, apikey) {
+      apikey = apikey.trim();
+      if(err) {
+        return cb(err);
+      };
       console.log("webuntis", name);
       urlGet("https://api.webuntis.dk/api/" + name + "?api_key=" + apikey, function(err, result, content) {
         if(err) {
@@ -2331,39 +2331,85 @@ route("uccorg", function(app) {
         };
         cb(null, JSON.parse(content));
       });
-    };
-    handleLocation = function(locId, done) {
-      console.log("Location:" + locId);
-      result = {};
-      webuntis("locations/" + locId, function(err, data) {
+    });
+  };
+  loadCacheFile("/../webuntisdata", function(err, data) {
+    if(err) {
+      createData(processData);
+    } else {
+      processData(false, JSON.parse(data));
+    }
+  });
+  processData = function(err, data) {
+    console.log("TYPE:", typeof data)
+    savefile("/../webuntisdata", JSON.stringify(data), function() {
+      console.log(data);
+      html = new HTML();
+      html.content(["div", JSON.stringify(data)]);
+      app.done(html);
+    });
+  }
+  createData = function(dataDone) {
+    result = {
+      locations: {},
+      subjects: {},
+      lessons: {},
+      groups: {},
+      teachers: {},
+    }
+    asyncSeqMap(Object.keys(result), function(datatype, cb) {
+      webuntis(datatype, function(err, data) {
         if(err) {
-          return done(err);
-        };
-        result.locInfo = data;
-        webuntis("locations/" + locId + "/lessons", function(err, data) {
-          result.lessons = [];
-          asyncSeqMap(data, function(data, cb) {
-            webuntis("lessons/" + data["untis_id"], function(err, data) {
-              console.log(data);
-              result.lessons.push(data);
-              cb();
-            });
-          }, function(err, data) {
-            done(err, result);
+          cb(err);
+        }
+        console.log(err, data[0]["untis_id"]);
+        asyncSeqMap(data, function(obj, cb) {
+          id = obj["untis_id"];
+          webuntis(datatype + "/" + id, function(err, data) {
+            result[datatype][id] = data;
+            cb(err);
           });
+        }, function(err) {
+          cb(err)
         });
       });
-    };
-    webuntis("locations", function(err, data) {
-      asyncSeqMap(data, function(data, cb) {
-        handleLocation(data["untis_id"], cb);
-      }, function(err, data) {
-        console.log(data);
-        html.content(["div", JSON.stringify(data)]);
-        app.done(html);
+    }, function(err) {
+      dataDone(err, result);
+    })
+  };
+  handleLocation = function(locId, done) {
+    console.log("Location:" + locId);
+    result = {};
+    webuntis("locations/" + locId, function(err, data) {
+      if(err) {
+        return done(err);
+      };
+      result.locInfo = data;
+      webuntis("locations/" + locId + "/lessons", function(err, data) {
+        result.lessons = [];
+        asyncSeqMap(data, function(data, cb) {
+          webuntis("lessons/" + data["untis_id"], function(err, data) {
+            console.log(data);
+            result.lessons.push(data);
+            cb();
+          });
+        }, function(err, data) {
+          done(err, result);
+        });
       });
     });
+  };
+  /*
+  webuntis("locations", function(err, data) {
+    asyncSeqMap(data, function(data, cb) {
+      handleLocation(data["untis_id"], cb);
+    }, function(err, data) {
+      console.log(data);
+      html.content(["div", JSON.stringify(data)]);
+      app.done(html);
+    });
   });
+  */
 });
 // {{{2 devserver
 route("devserver", function(app) {
