@@ -2595,12 +2595,12 @@ socket.io
   - groups: hold+årgang
   - evt. teachers - underviser-individ
 
+Fetch/sync
+
     route("uccorg", function(app) {
       if(isBrowser) {
         app.done();
       };
-      console.log(app);
-      html = new HTML();
       webuntis = function(name, cb) {
         loadCacheFile("/../apikey.webuntis", function(err, apikey) {
           apikey = apikey.trim();
@@ -2614,6 +2614,50 @@ socket.io
             };
             cb(null, JSON.parse(content));
           });
+        });
+      };
+      loadCacheFile("/../webuntisdata", function(err, data) {
+        if(err) {
+          createData(processData);
+        } else if(true) {
+          processData(false, JSON.parse(data));
+        };
+      });
+      processData = function(err, data) {
+        console.log("TYPE:", typeof data);
+        savefile("/../webuntisdata", JSON.stringify(data), function() {
+          console.log(data);
+          html = new HTML();
+          html.content(["div", JSON.stringify(data)]);
+          app.done(html);
+        });
+      };
+      createData = function(dataDone) {
+        result = {
+          locations : {},
+          subjects : {},
+          lessons : {},
+          groups : {},
+          teachers : {}
+        };
+        asyncSeqMap(Object.keys(result), function(datatype, cb) {
+          webuntis(datatype, function(err, data) {
+            if(err) {
+              cb(err);
+            };
+            console.log(err, data[0]["untis_id"]);
+            asyncSeqMap(data, function(obj, cb) {
+              id = obj["untis_id"];
+              webuntis(datatype + "/" + id, function(err, data) {
+                result[datatype][id] = data;
+                cb(err);
+              });
+            }, function(err) {
+              cb(err);
+            });
+          });
+        }, function(err) {
+          dataDone(err, result);
         });
       };
       handleLocation = function(locId, done) {
@@ -2638,6 +2682,7 @@ socket.io
           });
         });
       };
+      /*
       webuntis("locations", function(err, data) {
         asyncSeqMap(data, function(data, cb) {
           handleLocation(data["untis_id"], cb);
@@ -2647,7 +2692,8 @@ socket.io
           app.done(html);
         });
       });
-    });
+      */
+      });
 
 ## devserver
 

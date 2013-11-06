@@ -2336,32 +2336,32 @@ route("uccorg", function(app) {
   loadCacheFile("/../webuntisdata", function(err, data) {
     if(err) {
       createData(processData);
-    } else {
+    } else if(true) {
       processData(false, JSON.parse(data));
-    }
+    };
   });
   processData = function(err, data) {
-    console.log("TYPE:", typeof data)
+    console.log("TYPE:", typeof data);
     savefile("/../webuntisdata", JSON.stringify(data), function() {
       console.log(data);
       html = new HTML();
       html.content(["div", JSON.stringify(data)]);
       app.done(html);
     });
-  }
+  };
   createData = function(dataDone) {
     result = {
-      locations: {},
-      subjects: {},
-      lessons: {},
-      groups: {},
-      teachers: {},
-    }
+      locations : {},
+      subjects : {},
+      lessons : {},
+      groups : {},
+      teachers : {}
+    };
     asyncSeqMap(Object.keys(result), function(datatype, cb) {
       webuntis(datatype, function(err, data) {
         if(err) {
           cb(err);
-        }
+        };
         console.log(err, data[0]["untis_id"]);
         asyncSeqMap(data, function(obj, cb) {
           id = obj["untis_id"];
@@ -2370,12 +2370,12 @@ route("uccorg", function(app) {
             cb(err);
           });
         }, function(err) {
-          cb(err)
+          cb(err);
         });
       });
     }, function(err) {
       dataDone(err, result);
-    })
+    });
   };
   handleLocation = function(locId, done) {
     console.log("Location:" + locId);
@@ -2410,7 +2410,7 @@ route("uccorg", function(app) {
     });
   });
   */
-});
+  });
 // {{{2 devserver
 route("devserver", function(app) {
   server = undefined;
