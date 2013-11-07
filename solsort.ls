@@ -1222,6 +1222,34 @@ pplist = function(list, indent) {
     return "[" + result.join("\n" + indent) + "]";
   };
 };
+//{{{3 binary search
+binarySearchFn = function(array, cmp) {
+  start = 0;
+  end = array.length;
+  while(start < end) {
+    mid = (start+end) >> 1;
+    result = cmp(mid);
+    if(result < 0) {
+      start = mid + 1;
+    } else {
+      end = mid;
+    }
+  }
+  return start;
+}
+addTest("binarySearchFn", function(test) {
+  arr = [0,1,2,3,4,5,6,7,8,9];
+  cmp = function(a) { 
+    return function(b) {
+      return b - a;
+    }
+  };
+  test.equals(binarySearchFn(arr, cmp(-1)), (0));
+  test.equals(binarySearchFn(arr, cmp(10)), (10));
+  test.equals(binarySearchFn(arr, cmp(5)), (5));
+  test.equals(binarySearchFn(arr, cmp(3)), (3));
+  test.done();
+});
 //
 // Function utilities {{{2
 // `id` {{{3
@@ -2304,27 +2332,32 @@ route("server", function(app) {
     });
   });
 });
-// {{{2 uccorg
+//{{{2 uccorg
+//{{{3 notes
 //
 // - webuntis
-//   - locations: rum/lokale
-//   - subjects: fag/emne (både fag og eksamener etd.)
-//   - lessons: timetable-entry
-//   - groups: hold+årgang
-//   - evt. teachers - underviser-individ
+//   - locations (36): rum/lokale
+//   - subject (700+)s: fag/emne (både fag og eksamener etd.)
+//   - lessons (28000+): timetable-entry
+//   - groups (150+): hold+årgang
+//   - evt. teachers (160+) - underviser-individ
+// - api
+//   - /activities/((new Date()).toISOString().slice(0,16))
+//   - /location
+//   - /state
+//     
 //
-// Fetch/sync
-route("uccorg", function(app) {
-  if(isBrowser) {
-    app.done();
-  };
+//{{{3 getWebuntisData
+getWebuntisData = memoiseAsync(function(processData) {
+  //{{{4 `webuntis` api call
+  untisCall = 0;
   webuntis = function(name, cb) {
     loadCacheFile("/../apikey.webuntis", function(err, apikey) {
       apikey = apikey.trim();
       if(err) {
         return cb(err);
       };
-      console.log("webuntis", name);
+      console.log("webuntis", name, ++untisCall);
       urlGet("https://api.webuntis.dk/api/" + name + "?api_key=" + apikey, function(err, result, content) {
         if(err) {
           return cb(err);
@@ -2333,29 +2366,14 @@ route("uccorg", function(app) {
       });
     });
   };
-  loadCacheFile("/../webuntisdata", function(err, data) {
-    if(err) {
-      createData(processData);
-    } else if(true) {
-      processData(false, JSON.parse(data));
-    };
-  });
-  processData = function(err, data) {
-    console.log("TYPE:", typeof data);
-    savefile("/../webuntisdata", JSON.stringify(data), function() {
-      console.log(data);
-      html = new HTML();
-      html.content(["div", JSON.stringify(data)]);
-      app.done(html);
-    });
-  };
+  //{{{4 `createData` - extract full dataset from webuntis api
   createData = function(dataDone) {
     result = {
-      locations : {},
-      subjects : {},
-      lessons : {},
-      groups : {},
-      teachers : {}
+      locations : [],
+      subjects : [],
+      lessons : [],
+      groups : [],
+      teachers : []
     };
     asyncSeqMap(Object.keys(result), function(datatype, cb) {
       webuntis(datatype, function(err, data) {
@@ -2366,7 +2384,7 @@ route("uccorg", function(app) {
         asyncSeqMap(data, function(obj, cb) {
           id = obj["untis_id"];
           webuntis(datatype + "/" + id, function(err, data) {
-            result[datatype][id] = data;
+            result[datatype].push(data);
             cb(err);
           });
         }, function(err) {
@@ -2374,43 +2392,52 @@ route("uccorg", function(app) {
         });
       });
     }, function(err) {
+      untisCmp = function(a,b) {
+        return Number(b.untisId) - Number(a.untisId);
+      }
+      result["locations"].sort(untisCmp);
+      result["subjects"].sort(untisCmp);
+      result["teachers"].sort(untisCmp);
+      result["groups"].sort(untisCmp);
+      result["lessons"].sort(function(a,b) {
+        return Number(new Date(b.start)) - Number(new Date(a.start));
+      });
       dataDone(err, result);
     });
   };
-  handleLocation = function(locId, done) {
-    console.log("Location:" + locId);
-    result = {};
-    webuntis("locations/" + locId, function(err, data) {
-      if(err) {
-        return done(err);
-      };
-      result.locInfo = data;
-      webuntis("locations/" + locId + "/lessons", function(err, data) {
-        result.lessons = [];
-        asyncSeqMap(data, function(data, cb) {
-          webuntis("lessons/" + data["untis_id"], function(err, data) {
-            console.log(data);
-            result.lessons.push(data);
-            cb();
-          });
-        }, function(err, data) {
-          done(err, result);
+  //{{{4 try load cached data from file, or otherwise call createData, and cache it
+  loadCacheFile("/../webuntisdata", function(err, data) {
+    if(err) {
+      createData(function(err, data) {
+        if(err) {
+          return processData(err, data);
+        } 
+        savefile("/../webuntisdata", JSON.stringify(data), function() {
+          processData(err, data);
         });
       });
-    });
+    } else if(true) {
+      processData(false, JSON.parse(data));
+    };
+  });
+});
+//{{{3 process raw apidata
+//{{{3 route uccorg
+route("uccorg", function(app) {
+  if(isBrowser) {
+    app.done();
   };
-  /*
-  webuntis("locations", function(err, data) {
-    asyncSeqMap(data, function(data, cb) {
-      handleLocation(data["untis_id"], cb);
-    }, function(err, data) {
-      console.log(data);
-      html.content(["div", JSON.stringify(data)]);
-      app.done(html);
+  getWebuntisData(function(err, data) {
+    result = {}
+    foreach(data, function(key, val) {
+      result[key] = Object.length;
     });
+    result = data["lessons"]
+      html = new HTML();
+      html.content(["div", JSON.stringify(result)]);
+      app.done(html);
   });
-  */
-  });
+});
 // {{{2 devserver
 route("devserver", function(app) {
   server = undefined;
