@@ -44,7 +44,7 @@ var sleep;
 var memoiseAsync;
 var memoise;
 var id;
-var binarySearch;
+var binarySearchFn;
 var pplist;
 var asyncSeqMap;
 var arraycopy;
@@ -1425,7 +1425,7 @@ pplist = function(list, indent) {
   };
 };
 //{{{3 binary search
-binarySearch = function(array, cmp) {
+binarySearchFn = function(array, cmp) {
   var result;
   var mid;
   var end;
@@ -1443,7 +1443,7 @@ binarySearch = function(array, cmp) {
   };
   return start;
 };
-addTest("binarySearch", function(test) {
+addTest("binarySearchFn", function(test) {
   var cmp;
   var arr;
   arr = [
@@ -1463,10 +1463,10 @@ addTest("binarySearch", function(test) {
       return b - a;
     };
   };
-  test.equals(binarySearch(arr, cmp(- 1)), 0);
-  test.equals(binarySearch(arr, cmp(10)), 10);
-  test.equals(binarySearch(arr, cmp(5)), 5);
-  test.equals(binarySearch(arr, cmp(3)), 3);
+  test.equals(binarySearchFn(arr, cmp(- 1)), 0);
+  test.equals(binarySearchFn(arr, cmp(10)), 10);
+  test.equals(binarySearchFn(arr, cmp(5)), 5);
+  test.equals(binarySearchFn(arr, cmp(3)), 3);
   test.done();
 });
 //

@@ -1227,27 +1227,38 @@ binarySearchFn = function(array, cmp) {
   start = 0;
   end = array.length;
   while(start < end) {
-    mid = (start+end) >> 1;
+    mid = start + end >> 1;
     result = cmp(mid);
     if(result < 0) {
       start = mid + 1;
-    } else {
+    } else if(true) {
       end = mid;
-    }
-  }
+    };
+  };
   return start;
-}
+};
 addTest("binarySearchFn", function(test) {
-  arr = [0,1,2,3,4,5,6,7,8,9];
-  cmp = function(a) { 
+  arr = [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9
+  ];
+  cmp = function(a) {
     return function(b) {
       return b - a;
-    }
+    };
   };
-  test.equals(binarySearchFn(arr, cmp(-1)), (0));
-  test.equals(binarySearchFn(arr, cmp(10)), (10));
-  test.equals(binarySearchFn(arr, cmp(5)), (5));
-  test.equals(binarySearchFn(arr, cmp(3)), (3));
+  test.equals(binarySearchFn(arr, cmp(- 1)), 0);
+  test.equals(binarySearchFn(arr, cmp(10)), 10);
+  test.equals(binarySearchFn(arr, cmp(5)), 5);
+  test.equals(binarySearchFn(arr, cmp(3)), 3);
   test.done();
 });
 //
@@ -2357,7 +2368,7 @@ getWebuntisData = memoiseAsync(function(processData) {
       if(err) {
         return cb(err);
       };
-      console.log("webuntis", name, ++untisCall);
+      console.log("webuntis", name, untisCall = untisCall + 1);
       urlGet("https://api.webuntis.dk/api/" + name + "?api_key=" + apikey, function(err, result, content) {
         if(err) {
           return cb(err);
@@ -2392,14 +2403,14 @@ getWebuntisData = memoiseAsync(function(processData) {
         });
       });
     }, function(err) {
-      untisCmp = function(a,b) {
+      untisCmp = function(a, b) {
         return Number(b.untisId) - Number(a.untisId);
-      }
+      };
       result["locations"].sort(untisCmp);
       result["subjects"].sort(untisCmp);
       result["teachers"].sort(untisCmp);
       result["groups"].sort(untisCmp);
-      result["lessons"].sort(function(a,b) {
+      result["lessons"].sort(function(a, b) {
         return Number(new Date(b.start)) - Number(new Date(a.start));
       });
       dataDone(err, result);
@@ -2411,7 +2422,7 @@ getWebuntisData = memoiseAsync(function(processData) {
       createData(function(err, data) {
         if(err) {
           return processData(err, data);
-        } 
+        };
         savefile("/../webuntisdata", JSON.stringify(data), function() {
           processData(err, data);
         });
@@ -2428,14 +2439,14 @@ route("uccorg", function(app) {
     app.done();
   };
   getWebuntisData(function(err, data) {
-    result = {}
+    result = {};
     foreach(data, function(key, val) {
       result[key] = Object.length;
     });
-    result = data["lessons"]
-      html = new HTML();
-      html.content(["div", JSON.stringify(result)]);
-      app.done(html);
+    result = data["lessons"];
+    html = new HTML();
+    html.content(["div", JSON.stringify(result)]);
+    app.done(html);
   });
 });
 // {{{2 devserver
