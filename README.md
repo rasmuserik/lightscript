@@ -2870,7 +2870,7 @@ socket.io
         "name" : "BibGraph",
         "date" : "2013-08-02",
         "tags" : "coffeescript, dbc, adhl, d3, visualisation, graph",
-        "link" : "http://bibgraph.solsort.com/",
+        "link" : "http://dbc-bibgraph.solsort.com/",
         "desc" : "Visualisation of relations between books and other library materials, generated from the ADHL statistics about danish co-loans"
       },
       {
