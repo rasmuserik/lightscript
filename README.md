@@ -1351,7 +1351,7 @@ Show a list with neat linebreakins, - this is especially useful for dumping the 
       end = array.length;
       while(start < end) {
         mid = start + end >> 1;
-        result = cmp(mid);
+        result = cmp(array[mid]);
         if(result < 0) {
           start = mid + 1;
         } else if(true) {
@@ -2637,7 +2637,7 @@ socket.io
   - groups (150+): hold+årgang
   - evt. teachers (160+) - underviser-individ
 - api
-  - /activities/((new Date()).toISOString().slice(0,16))
+  - /activities/date
   - /location
   - /state
     
@@ -2669,11 +2669,12 @@ socket.io
 
       createData = function(dataDone) {
         result = {
-          locations : [],
-          subjects : [],
-          lessons : [],
-          groups : [],
-          teachers : []
+          sync : {started : (new Date()).toISOString()},
+          locations : {},
+          subjects : {},
+          lessons : {},
+          groups : {},
+          teachers : {}
         };
         asyncSeqMap(Object.keys(result), function(datatype, cb) {
           webuntis(datatype, function(err, data) {
@@ -2684,7 +2685,7 @@ socket.io
             asyncSeqMap(data, function(obj, cb) {
               id = obj["untis_id"];
               webuntis(datatype + "/" + id, function(err, data) {
-                result[datatype].push(data);
+                result[datatype][id] = data;
                 cb(err);
               });
             }, function(err) {
@@ -2693,15 +2694,20 @@ socket.io
           });
         }, function(err) {
           untisCmp = function(a, b) {
-            return Number(b.untisId) - Number(a.untisId);
+            return Number(a.untisId) - Number(b.untisId);
           };
           result["locations"].sort(untisCmp);
           result["subjects"].sort(untisCmp);
           result["teachers"].sort(untisCmp);
           result["groups"].sort(untisCmp);
-          result["lessons"].sort(function(a, b) {
-            return Number(new Date(b.start)) - Number(new Date(a.start));
+          lessons = {};
+          foreach(result["lessons"], function(_, lesson) {
+            date = lesson.start.slice(0, 10);
+            lessons[date] = lessons[date] || [];
+            lessons[date].push(lesson);
           });
+          result["lessons"] = lessons;
+          result["sync"]["done"] = (new Date()).toISOString();
           dataDone(err, result);
         });
       };
@@ -2714,7 +2720,7 @@ socket.io
             if(err) {
               return processData(err, data);
             };
-            savefile("/../webuntisdata", JSON.stringify(data), function() {
+            savefile("/../webuntisdata", JSON.stringify(data, null, 4), function() {
               processData(err, data);
             });
           });
@@ -2725,21 +2731,62 @@ socket.io
     });
 
 ### process raw apidata
+### Dashboard
+
+    uccorgDashboard = function(app) {
+      html = new HTML();
+      html.content(["h1", "...dashboard..."]);
+      app.done(html);
+    };
+
 ### route uccorg
 
     route("uccorg", function(app) {
+      path = app.args[1];
       if(isBrowser) {
-        app.done();
+        if(path === "dashboard") {
+          return uccorgDashboard(app);
+        } else if(true) {
+          return app.done();
+        };
       };
       getWebuntisData(function(err, data) {
-        result = {};
-        foreach(data, function(key, val) {
-          result[key] = Object.length;
-        });
-        result = data["lessons"];
-        html = new HTML();
-        html.content(["div", JSON.stringify(result)]);
-        app.done(html);
+        if(app.args[1] === "activities") {
+          result = data["lessons"];
+          when = Number(new Date(app.args[2]));
+          pos = binarySearchFn(data["lessons"], function(lesson) {
+            lessonTime = Number(new Date(lesson.start));
+            return lessonTime - when;
+          });
+          result = data["lessons"].slice(pos, pos + 100);
+          result = result.map(function(lesson) {
+            return lesson.start;
+          });
+          html = new HTML();
+          html.content(["pre", JSON.stringify(result, null, 4)]);
+          app.done(html);
+        } else if(app.args[1] === "test") {
+          result = {acc : []};
+          maxtime = 0;
+          data["lessons"].forEach(function(lesson) {
+            time = Number(new Date(lesson.end)) - Number(new Date(lesson.start));
+            if(time > maxtime) {
+              maxtime = time;
+              result.lesson = lesson;
+              result.start = lesson.start;
+              result.end = lesson.end;
+              result.acc.push(maxtime + " " + lesson.start + "-" + lesson.end);
+            };
+          });
+          result["maxtime"] = maxtime;
+          html = new HTML();
+          html.content(["pre", JSON.stringify(result, null, 4)]);
+          app.done(html);
+        } else if(true) {
+          html = new HTML();
+          html.content(["h1", "API for UCC organism"]);
+          app.done(html);
+        };
       });
     });
 

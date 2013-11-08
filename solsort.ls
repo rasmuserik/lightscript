@@ -1227,27 +1227,38 @@ binarySearchFn = function(array, cmp) {
   start = 0;
   end = array.length;
   while(start < end) {
-    mid = (start+end) >> 1;
+    mid = start + end >> 1;
     result = cmp(array[mid]);
     if(result < 0) {
       start = mid + 1;
-    } else {
+    } else if(true) {
       end = mid;
-    }
-  }
+    };
+  };
   return start;
-}
+};
 addTest("binarySearchFn", function(test) {
-  arr = [0,1,2,3,4,5,6,7,8,9];
-  cmp = function(a) { 
+  arr = [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9
+  ];
+  cmp = function(a) {
     return function(b) {
       return b - a;
-    }
+    };
   };
-  test.equals(binarySearchFn(arr, cmp(-1)), (0));
-  test.equals(binarySearchFn(arr, cmp(10)), (10));
-  test.equals(binarySearchFn(arr, cmp(5)), (5));
-  test.equals(binarySearchFn(arr, cmp(3)), (3));
+  test.equals(binarySearchFn(arr, cmp(- 1)), 0);
+  test.equals(binarySearchFn(arr, cmp(10)), 10);
+  test.equals(binarySearchFn(arr, cmp(5)), 5);
+  test.equals(binarySearchFn(arr, cmp(3)), 3);
   test.done();
 });
 //
@@ -2357,7 +2368,7 @@ getWebuntisData = memoiseAsync(function(processData) {
       if(err) {
         return cb(err);
       };
-      console.log("webuntis", name, ++untisCall);
+      console.log("webuntis", name, untisCall = untisCall + 1);
       urlGet("https://api.webuntis.dk/api/" + name + "?api_key=" + apikey, function(err, result, content) {
         if(err) {
           return cb(err);
@@ -2369,7 +2380,7 @@ getWebuntisData = memoiseAsync(function(processData) {
   //{{{4 `createData` - extract full dataset from webuntis api
   createData = function(dataDone) {
     result = {
-      sync : {started: (new Date()).toISOString(); }
+      sync : {started : (new Date()).toISOString()},
       locations : {},
       subjects : {},
       lessons : {},
@@ -2393,16 +2404,16 @@ getWebuntisData = memoiseAsync(function(processData) {
         });
       });
     }, function(err) {
-      untisCmp = function(a,b) {
+      untisCmp = function(a, b) {
         return Number(a.untisId) - Number(b.untisId);
-      }
+      };
       result["locations"].sort(untisCmp);
       result["subjects"].sort(untisCmp);
       result["teachers"].sort(untisCmp);
       result["groups"].sort(untisCmp);
-      lessons = {}
+      lessons = {};
       foreach(result["lessons"], function(_, lesson) {
-        date = lesson.start.slice(0,10);
+        date = lesson.start.slice(0, 10);
         lessons[date] = lessons[date] || [];
         lessons[date].push(lesson);
       });
@@ -2417,7 +2428,7 @@ getWebuntisData = memoiseAsync(function(processData) {
       createData(function(err, data) {
         if(err) {
           return processData(err, data);
-        } 
+        };
         savefile("/../webuntisdata", JSON.stringify(data, null, 4), function() {
           processData(err, data);
         });
@@ -2430,58 +2441,57 @@ getWebuntisData = memoiseAsync(function(processData) {
 //{{{3 process raw apidata
 //{{{3 Dashboard
 uccorgDashboard = function(app) {
-      html = new HTML();
-      html.content(["h1", "...dashboard..."]);
-      app.done(html);
-}
+  html = new HTML();
+  html.content(["h1", "...dashboard..."]);
+  app.done(html);
+};
 //{{{3 route uccorg
 route("uccorg", function(app) {
   path = app.args[1];
   if(isBrowser) {
     if(path === "dashboard") {
       return uccorgDashboard(app);
-    } else {
+    } else if(true) {
       return app.done();
-    }
+    };
   };
   getWebuntisData(function(err, data) {
-      if(app.args[1] === "activities") {
-        result = data["lessons"]
-        when = Number(new Date(app.args[2]));
-        pos = binarySearchFn(data["lessons"], function(lesson) {
-          lessonTime = Number(new Date(lesson.start))
-          return lessonTime - when;
-        });
-        result = data["lessons"].slice(pos, pos+100);
-        result = result.map(function(lesson) {
-          return lesson.start
-        });
+    if(app.args[1] === "activities") {
+      result = data["lessons"];
+      when = Number(new Date(app.args[2]));
+      pos = binarySearchFn(data["lessons"], function(lesson) {
+        lessonTime = Number(new Date(lesson.start));
+        return lessonTime - when;
+      });
+      result = data["lessons"].slice(pos, pos + 100);
+      result = result.map(function(lesson) {
+        return lesson.start;
+      });
       html = new HTML();
       html.content(["pre", JSON.stringify(result, null, 4)]);
       app.done(html);
-      } else if(app.args[1] === "test") {
-        result = {acc:[]}
-        maxtime = 0;
-        data["lessons"].forEach(function(lesson) {
-          time = Number(new Date(lesson.end)) - Number(new Date(lesson.start));
-          if(time > maxtime) {
-            maxtime = time
-          result.lesson = lesson
-            result.start = lesson.start
-            result.end = lesson.end
+    } else if(app.args[1] === "test") {
+      result = {acc : []};
+      maxtime = 0;
+      data["lessons"].forEach(function(lesson) {
+        time = Number(new Date(lesson.end)) - Number(new Date(lesson.start));
+        if(time > maxtime) {
+          maxtime = time;
+          result.lesson = lesson;
+          result.start = lesson.start;
+          result.end = lesson.end;
           result.acc.push(maxtime + " " + lesson.start + "-" + lesson.end);
-          }
-        });
-result["maxtime"] = maxtime;
-        html = new HTML();
-        html.content(["pre", JSON.stringify(result, null, 4)]);
-        app.done(html);
-      } else {
+        };
+      });
+      result["maxtime"] = maxtime;
+      html = new HTML();
+      html.content(["pre", JSON.stringify(result, null, 4)]);
+      app.done(html);
+    } else if(true) {
       html = new HTML();
       html.content(["h1", "API for UCC organism"]);
       app.done(html);
-      }
-
+    };
   });
 });
 // {{{2 devserver
