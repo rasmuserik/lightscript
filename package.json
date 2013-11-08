@@ -5,6 +5,7 @@
   "homepage": "http://solsort.com/",
   "description": "the lightscript programming language and solsort web site",
   "dependencies": {
+    "request": "*",
     "async": "*",
     "gm": "*",
     "markdown": "*",
