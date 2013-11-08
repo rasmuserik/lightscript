@@ -2675,7 +2675,6 @@ getWebuntisData = memoiseAsync(function(processData) {
       console.log("webuntis", name, untisCall = untisCall + 1);
       url = "https://api.webuntis.dk/api/" + name + "?api_key=" + apikey;
       urlGet(url, function(err, result, content) {
-        console.log(url, content);
         if(err) {
           return cb(err);
         };
@@ -2717,10 +2716,6 @@ getWebuntisData = memoiseAsync(function(processData) {
       untisCmp = function(a, b) {
         return Number(a.untisId) - Number(b.untisId);
       };
-      result["locations"].sort(untisCmp);
-      result["subjects"].sort(untisCmp);
-      result["teachers"].sort(untisCmp);
-      result["groups"].sort(untisCmp);
       lessons = {};
       foreach(result["lessons"], function(_, lesson) {
         var date;
