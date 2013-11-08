@@ -2656,7 +2656,9 @@ socket.io
             return cb(err);
           };
           console.log("webuntis", name, untisCall = untisCall + 1);
-          urlGet("https://api.webuntis.dk/api/" + name + "?api_key=" + apikey, function(err, result, content) {
+          url = "https://api.webuntis.dk/api/" + name + "?api_key=" + apikey;
+          urlGet(url, function(err, result, content) {
+            console.log(url, content);
             if(err) {
               return cb(err);
             };
@@ -2668,8 +2670,8 @@ socket.io
 #### `createData` - extract full dataset from webuntis api
 
       createData = function(dataDone) {
+        startTime = (new Date()).toISOString();
         result = {
-          sync : {started : (new Date()).toISOString()},
           locations : {},
           subjects : {},
           lessons : {},
@@ -2707,7 +2709,7 @@ socket.io
             lessons[date].push(lesson);
           });
           result["lessons"] = lessons;
-          result["sync"]["done"] = (new Date()).toISOString();
+          result["sync"] = {start : startTime, done : (new Date()).toISOString()};
           dataDone(err, result);
         });
       };

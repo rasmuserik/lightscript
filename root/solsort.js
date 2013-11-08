@@ -2666,13 +2666,16 @@ getWebuntisData = memoiseAsync(function(processData) {
   untisCall = 0;
   webuntis = function(name, cb) {
     loadCacheFile("/../apikey.webuntis", function(err, apikey) {
+      var url;
       var apikey;
       apikey = apikey.trim();
       if(err) {
         return cb(err);
       };
       console.log("webuntis", name, untisCall = untisCall + 1);
-      urlGet("https://api.webuntis.dk/api/" + name + "?api_key=" + apikey, function(err, result, content) {
+      url = "https://api.webuntis.dk/api/" + name + "?api_key=" + apikey;
+      urlGet(url, function(err, result, content) {
+        console.log(url, content);
         if(err) {
           return cb(err);
         };
@@ -2683,8 +2686,9 @@ getWebuntisData = memoiseAsync(function(processData) {
   //{{{4 `createData` - extract full dataset from webuntis api
   createData = function(dataDone) {
     var result;
+    var startTime;
+    startTime = (new Date()).toISOString();
     result = {
-      sync : {started : (new Date()).toISOString()},
       locations : {},
       subjects : {},
       lessons : {},
@@ -2725,7 +2729,7 @@ getWebuntisData = memoiseAsync(function(processData) {
         lessons[date].push(lesson);
       });
       result["lessons"] = lessons;
-      result["sync"]["done"] = (new Date()).toISOString();
+      result["sync"] = {start : startTime, done : (new Date()).toISOString()};
       dataDone(err, result);
     });
   };
