@@ -2684,11 +2684,12 @@ getWebuntisData = memoiseAsync(function(processData) {
   createData = function(dataDone) {
     var result;
     result = {
-      locations : [],
-      subjects : [],
-      lessons : [],
-      groups : [],
-      teachers : []
+      sync : {started : (new Date()).toISOString()},
+      locations : {},
+      subjects : {},
+      lessons : {},
+      groups : {},
+      teachers : {}
     };
     asyncSeqMap(Object.keys(result), function(datatype, cb) {
       webuntis(datatype, function(err, data) {
@@ -2699,7 +2700,7 @@ getWebuntisData = memoiseAsync(function(processData) {
         asyncSeqMap(data, function(obj, cb) {
           id = obj["untis_id"];
           webuntis(datatype + "/" + id, function(err, data) {
-            result[datatype].push(data);
+            result[datatype][id] = data;
             cb(err);
           });
         }, function(err) {
@@ -2707,6 +2708,7 @@ getWebuntisData = memoiseAsync(function(processData) {
         });
       });
     }, function(err) {
+      var lessons;
       var untisCmp;
       untisCmp = function(a, b) {
         return Number(a.untisId) - Number(b.untisId);
@@ -2715,9 +2717,15 @@ getWebuntisData = memoiseAsync(function(processData) {
       result["subjects"].sort(untisCmp);
       result["teachers"].sort(untisCmp);
       result["groups"].sort(untisCmp);
-      result["lessons"].sort(function(a, b) {
-        return Number(new Date(a.start)) - Number(new Date(b.start));
+      lessons = {};
+      foreach(result["lessons"], function(_, lesson) {
+        var date;
+        date = lesson.start.slice(0, 10);
+        lessons[date] = lessons[date] || [];
+        lessons[date].push(lesson);
       });
+      result["lessons"] = lessons;
+      result["sync"]["done"] = (new Date()).toISOString();
       dataDone(err, result);
     });
   };
