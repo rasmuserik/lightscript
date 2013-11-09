@@ -1196,6 +1196,10 @@ asyncSeqMap = function(arr, fn, cb) {
   };
   handleEntry();
 };
+//{{{3 pickRandom
+pickRandom = function(arr) {
+  return arr[Math.random() * arr.length | 0];
+};
 // List prettyprinter{{{3
 //
 // Show a list with neat linebreakins, - this is especially useful for dumping the listified abstract syntax tree.
@@ -2349,14 +2353,43 @@ route("server", function(app) {
 // - webuntis
 //   - locations (36): rum/lokale
 //   - subject (700+)s: fag/emne (både fag og eksamener etd.)
-//   - lessons (28000+): timetable-entry
 //   - groups (150+): hold+årgang
 //   - evt. teachers (160+) - underviser-individ
+//   - lessons (28000+): timetable-entry
+//     - assumptions: at most one subject per lesson, at most one location per lesson, starts/ends same date
+//
 // - api
-//   - /activities/date
+//   - /activities/next
 //   - /location
 //   - /state
 //     
+// - data
+//   - time-sorted list of activities for today
+//     - time
+//     - subject(key)
+//     - individuals(key)
+//     - location(key)
+//   - subject-info
+//   - teacher-info
+//   - group-info
+//   - location-info
+//   - student-info
+//
+// - api
+//   - activities
+//     - previous activities
+//     - all current activities
+//     - next activities
+//   - activity/$entityId
+//     - prevActivity
+//     - currentActivity
+//     - nextActivity
+//   - subject
+//   - teacher : entity
+//   - group : entity
+//   - location : entity
+//   - student
+//     - groups
 //
 //{{{3 getWebuntisData
 getWebuntisData = memoiseAsync(function(processData) {
@@ -2452,15 +2485,64 @@ route("uccorg", function(app) {
       return app.done();
     };
   };
-  getWebuntisData(function(err, data) {
+  getWebuntisData(function(err, webuntis) {
+    //{{{4 convert webuntis data to api-data
+    lessonToActivity = function(lesson) {
+      result = {};
+      d = new Date(lesson["start"]);
+      // TODO: handle time zone
+      result["start"] = lesson["start"];
+      result["end"] = lesson["end"];
+      result["teachers"] = lesson["teachers"].map(function(teacher) {
+        teacher = webuntis["teachers"][teacher];
+        return {name : teacher["forename"]};
+      });
+      result["students"] = [];
+      /*
+      i = 0;
+      while(i<28) {
+        result["students"].push({
+          group: webuntis["groups"][pickRandom(lesson.groups)]["name"]
+        });
+        ++i;
+      }
+      */
+      result["locations"] = lesson["locations"].map(function(location) {
+        return webuntis["locations"][location]["name"];
+      });
+      result["groups"] = lesson["groups"].map(function(group) {
+        return webuntis["groups"][group]["name"];
+      });
+      if(lesson["subjects"].length) {
+        result["subject"] = webuntis["subjects"][lesson["subjects"][0]]["name"];
+      } else if(true) {
+        result["subject"] = "undefined";
+      };
+      return result;
+    };
+    //{{{4 routes
     if(app.args[1] === "activities") {
-      result = data["lessons"];
+      when = (app.args[2] ? (new Date(app.args[2])) : new Date()).toJSON();
+      day = when.slice(0, 10);
+      console.log(day);
+      activities = webuntis["lessons"][day].map(lessonToActivity).filter(function(activity) {
+        return activity.start < when && when < activity.end;
+      });
+      /*
+      html = new HTML();
+      html.content(["pre", JSON.stringify(activities, null, 4)]);
+      app.done(html);
+      */
+      console.log(activities);
+      app.done();
+    } else if(app.args[1] === "activities") {
+      result = webuntis["lessons"];
       when = Number(new Date(app.args[2]));
-      pos = binarySearchFn(data["lessons"], function(lesson) {
+      pos = binarySearchFn(webuntis["lessons"], function(lesson) {
         lessonTime = Number(new Date(lesson.start));
         return lessonTime - when;
       });
-      result = data["lessons"].slice(pos, pos + 100);
+      result = webuntis["lessons"].slice(pos, pos + 100);
       result = result.map(function(lesson) {
         return lesson.start;
       });
@@ -2468,22 +2550,18 @@ route("uccorg", function(app) {
       html.content(["pre", JSON.stringify(result, null, 4)]);
       app.done(html);
     } else if(app.args[1] === "test") {
-      result = {acc : []};
-      maxtime = 0;
-      data["lessons"].forEach(function(lesson) {
-        time = Number(new Date(lesson.end)) - Number(new Date(lesson.start));
-        if(time > maxtime) {
-          maxtime = time;
-          result.lesson = lesson;
-          result.start = lesson.start;
-          result.end = lesson.end;
-          result.acc.push(maxtime + " " + lesson.start + "-" + lesson.end);
+      allLessons = [];
+      foreach(webuntis["lessons"], function(day, lessons) {
+        lessons.forEach(function(lesson) {
+          allLessons.push(lesson);
+        });
+      });
+      allLessons.forEach(function(lesson) {
+        if(lesson["subjects"].length > 1) {
+          console.log(lesson);
         };
       });
-      result["maxtime"] = maxtime;
-      html = new HTML();
-      html.content(["pre", JSON.stringify(result, null, 4)]);
-      app.done(html);
+      app.done();
     } else if(true) {
       html = new HTML();
       html.content(["h1", "API for UCC organism"]);
