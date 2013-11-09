@@ -2793,7 +2793,7 @@ route("default", function(app) {
       marginBottom : "20px"
     }
   });
-  html.content(["h1", "solsort.com"], ["div", {class : "entries"}].concat(index.map(renderEntry)));
+  html.content(["h1", "solsort.com ApS"], ["div", {class : "entries"}].concat(index.map(renderEntry)));
   app.done(html);
 });
 // {{{2 circles
