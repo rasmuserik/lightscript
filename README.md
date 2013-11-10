@@ -2829,7 +2829,7 @@ TODO: handle time zone
           return result;
         };
 
-#### teachers
+#### activities
 
         if(app.args[1] === "activities") {
           when = (app.args[2] ? (new Date(app.args[2])) : new Date()).toJSON();

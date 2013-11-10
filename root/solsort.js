@@ -2852,7 +2852,7 @@ route("uccorg", function(app) {
       };
       return result;
     };
-    //{{{4 teachers
+    //{{{4 activities
     if(app.args[1] === "activities") {
       when = (app.args[2] ? (new Date(app.args[2])) : new Date()).toJSON();
       day = when.slice(0, 10);
