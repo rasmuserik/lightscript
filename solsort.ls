@@ -2245,6 +2245,9 @@ HttpApp.prototype.send = function(content) {
     this.content = this.content.replace(new RegExp(" href=\"http(s?)://", "g"), function(_, secure) {
       return " href=\"/_" + secure + "/";
     });
+  } else if(isObject(content)) {
+    this.headers["Content-Type"] = "application/json";
+    this.content = content;
   } else if(true) {
     this.content = content;
   };
@@ -2264,8 +2267,14 @@ HttpApp.prototype.done = function(result) {
   if(result) {
     this.send(result);
   };
-  this.res.writeHead(this.resultCode, this.headers);
-  this.res.end(this.content);
+  if(this.headers["Content-Type"] === "application/json") {
+    console.log("Sending", this.content);
+    this.res.jsonp(this.content);
+    this.res.end();
+  } else if(true) {
+    this.res.writeHead(this.resultCode, this.headers);
+    this.res.end(this.content);
+  };
   this.log("done", this.req.url, this.req.headers);
 };
 // {{{2 CallApp TODO
@@ -2495,37 +2504,31 @@ route("uccorg", function(app) {
       result["end"] = lesson["end"];
       result["teachers"] = lesson["teachers"].map(function(teacher) {
         teacher = webuntis["teachers"][teacher];
-        return {name : teacher["forename"]};
+        console.log(teacher);
+        return teacher["untis_id"];
       });
-      result["students"] = [];
-      /*
-      i = 0;
-      while(i<28) {
-        result["students"].push({
-          group: webuntis["groups"][pickRandom(lesson.groups)]["name"]
-        });
-        ++i;
-      }
-      */
       result["locations"] = lesson["locations"].map(function(location) {
         return webuntis["locations"][location]["name"];
-      });
-      result["groups"] = lesson["groups"].map(function(group) {
-        return webuntis["groups"][group]["name"];
       });
       if(lesson["subjects"].length) {
         result["subject"] = webuntis["subjects"][lesson["subjects"][0]]["name"];
       } else if(true) {
         result["subject"] = "undefined";
       };
+      result["students"] = [];
+      i = 0;
+      while(i < 25) {
+        result["students"].push(String.fromCharCode(65 + i) + webuntis["groups"][pickRandom(lesson.groups)]["untis_id"]);
+        i = i + 1;
+      };
       return result;
     };
-    //{{{4 routes
+    //{{{4 teachers
     if(app.args[1] === "activities") {
       when = (app.args[2] ? (new Date(app.args[2])) : new Date()).toJSON();
       day = when.slice(0, 10);
-      console.log(day);
-      activities = webuntis["lessons"][day].map(lessonToActivity).filter(function(activity) {
+      console.log(day, Object.keys(webuntis["lessons"]), webuntis["lessons"][day]);
+      activities = (webuntis["lessons"][day] || []).map(lessonToActivity).filter(function(activity) {
         return activity.start < when && when < activity.end;
       });
       /*
@@ -2534,22 +2537,34 @@ route("uccorg", function(app) {
       app.done(html);
       */
       console.log(activities);
-      app.done();
-    } else if(app.args[1] === "activities") {
-      result = webuntis["lessons"];
-      when = Number(new Date(app.args[2]));
-      pos = binarySearchFn(webuntis["lessons"], function(lesson) {
-        lessonTime = Number(new Date(lesson.start));
-        return lessonTime - when;
+      app.done({activities : activities});
+      //{{{4 /student
+      } else if(app.args[1] === "student") {
+      id = app.args[2];
+      group = webuntis["groups"][id.slice(1)];
+      app.done({
+        id : id,
+        group : group.name,
+        gender : "TBD",
+        longevity : "???",
+        programme : "TODO:department_" + group["department"],
+        activity : "not here, - will be implemented (not yet) in /uccorg/teacher/" + id + "/activity, to decouple dynamic data from static data"
       });
-      result = webuntis["lessons"].slice(pos, pos + 100);
-      result = result.map(function(lesson) {
-        return lesson.start;
+      //{{{4 /teacher
+      } else if(app.args[1] === "teacher") {
+      id = app.args[2];
+      teacher = webuntis["teachers"][id];
+      app.done({
+        id : id,
+        gender : "TODO derrive from name: " + teacher["forename"],
+        longevity : "???",
+        programme : teacher["departments"].map(function(id) {
+          return "TODO:department_" + id;
+        }),
+        activity : "not here, - will be implemented (not yet) in /uccorg/teacher/" + id + "/activity, to decouple dynamic data from static data"
       });
-      html = new HTML();
-      html.content(["pre", JSON.stringify(result, null, 4)]);
-      app.done(html);
-    } else if(app.args[1] === "test") {
+      //{{{4 /test
+      } else if(app.args[1] === "test") {
       allLessons = [];
       foreach(webuntis["lessons"], function(day, lessons) {
         lessons.forEach(function(lesson) {
@@ -2561,8 +2576,9 @@ route("uccorg", function(app) {
           console.log(lesson);
         };
       });
-      app.done();
-    } else if(true) {
+      app.done({foo : "bar"});
+      //{{{4 /
+      } else if(true) {
       html = new HTML();
       html.content(["h1", "API for UCC organism"]);
       app.done(html);
