@@ -2522,6 +2522,7 @@ TODO
         });
       } else if(isObject(content)) {
         this.headers["Content-Type"] = "application/json";
+        this.headers["Access-Control-Allow-Origin"] = "*";
         this.content = content;
       } else if(true) {
         this.content = content;
@@ -2543,7 +2544,10 @@ TODO
         this.send(result);
       };
       if(this.headers["Content-Type"] === "application/json") {
-        console.log("Sending", this.content);
+        self = this;
+        foreach(this.headers, function(key, val) {
+          self.res.set(key, val);
+        });
         this.res.jsonp(this.content);
         this.res.end();
       } else if(true) {
