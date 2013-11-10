@@ -2358,10 +2358,27 @@ route("server", function(app) {
     sock.on("disconnect", function() {
       app.log("socket.io disconnect", sock.id);
     });
+    // TODO: this should be an socketIoApp
+    sock.on("uccorg", function(data) {
+      uccorgIO(data, sock);
+    });
   });
 });
 //{{{2 uccorg
 //{{{3 notes
+//
+// TODO:
+// - rework daily activities:
+//   - group by location, group and teacher
+//   - add "free" activities
+//   - getActivities for group+timestamp, returning prev, current, next
+// - get departments
+// - general state info
+// - socket.io-app + implement
+// - automatic regular update of webuntis-data
+// - dashboard
+//
+// ----
 //
 // - webuntis
 //   - locations (36): rum/lokale
@@ -2370,6 +2387,7 @@ route("server", function(app) {
 //   - evt. teachers (160+) - underviser-individ
 //   - lessons (28000+): timetable-entry
 //     - assumptions: at most one subject per lesson, at most one location per lesson, starts/ends same date
+//   - departments...
 //
 // - api
 //   - /activities/next
@@ -2432,7 +2450,8 @@ getWebuntisData = memoiseAsync(function(processData) {
       subjects : {},
       lessons : {},
       groups : {},
-      teachers : {}
+      teachers : {},
+      departments : {}
     };
     asyncSeqMap(Object.keys(result), function(datatype, cb) {
       webuntis(datatype, function(err, data) {
