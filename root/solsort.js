@@ -1430,7 +1430,7 @@ pplist = function(list, indent) {
     return "[" + result.join("\n" + indent) + "]";
   };
 };
-//{{{3 binary search
+//{{{3 binarySearchFn
 binarySearchFn = function(array, cmp) {
   var result;
   var mid;
@@ -2814,12 +2814,15 @@ route("uccorg", function(app) {
   };
   getWebuntisData(function(err, webuntis) {
     var html;
+    var act;
+    var dayActivities;
     var teacher;
     var group;
     var activities;
     var day;
     var when;
     var lessonToActivity;
+    var currentActivities;
     var dayData;
     //{{{4 dayData
     dayData = function(date) {
@@ -2828,24 +2831,55 @@ route("uccorg", function(app) {
       activityList = {
         teacher : {},
         group : {},
-        location : {}
+        location : {},
+        activities : {}
       };
       activities.forEach(function(activity) {
         activity["locations"].forEach(function(loc) {
           activityList["location"][loc] = activityList["location"][loc] || [];
-          activityList["location"][loc].push(activity);
+          activityList["location"][loc].push(activity["id"]);
+          activityList.activities[activity["id"]] = activity;
         });
         activity["teachers"].forEach(function(loc) {
           console.log("LOC", loc);
           activityList["teacher"][loc] = activityList["teacher"][loc] || [];
-          activityList["teacher"][loc].push(activity);
+          activityList["teacher"][loc].push(activity["id"]);
+          activityList.activities[activity["id"]] = activity;
         });
         activity["groups"].forEach(function(loc) {
           activityList["group"][loc] = activityList["group"][loc] || [];
-          activityList["group"][loc].push(activity);
+          activityList["group"][loc].push(activity["id"]);
+          activityList.activities[activity["id"]] = activity;
         });
       });
       return activityList;
+    };
+    //{{{4 currentActivities
+    currentActivities = function(aList, aMap, date) {
+      var result;
+      var pos;
+      var datetime;
+      datetime = Number(new Date(date));
+      pos = binarySearchFn(aList, function(a) {
+        return Number(new Date(aMap[a]["end"])) - datetime;
+      });
+      result = {};
+      if(pos - 1 >= 0) {
+        result["prev"] = aList[pos - 1];
+      };
+      if(pos < aList.length) {
+        if(aMap[aList[pos]]["start"] > date) {
+          result["next"] = aList[pos];
+        } else if(true) {
+          result["current"] = aList[pos];
+          if(pos + 1 < aList.length) {
+            result["next"] = aList[pos + 1];
+          };
+        };
+      };
+      return [result, pos, aList.map(function(act) {
+        return aMap[act]["start"];
+      }), aMap[aList[pos]]];
     };
     //{{{4 convert webuntis data to api-data
     lessonToActivity = function(lesson) {
@@ -2925,7 +2959,9 @@ route("uccorg", function(app) {
       } else if(app.args[1] === "test") {
       when = (app.args[2] ? (new Date(app.args[2])) : new Date()).toJSON();
       day = when.slice(0, 10);
-      app.done(dayData(day));
+      dayActivities = dayData(day);
+      act = currentActivities(dayActivities["teacher"][6], dayActivities["activities"], when);
+      app.done({act : act, dayData : dayActivities});
       //{{{4 /
       } else if(true) {
       html = new HTML();
