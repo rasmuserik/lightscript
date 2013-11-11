@@ -2549,9 +2549,34 @@ route("uccorg", function(app) {
           };
         };
       };
+      return result;
       return [result, pos, aList.map(function(act) {
         return aMap[act]["start"];
       }), aMap[aList[pos]]];
+    };
+    //{{{4 prevNextCurrentAll
+    prevNextCurrentAll = function(when) {
+      day = when.slice(0, 10);
+      dayActivities = dayData(day);
+      result = {
+        teacher : {},
+        group : {},
+        location : {},
+        activities : {}
+      };
+      prevNextCurrentEntities = function(entity) {
+        foreach(dayActivities[entity], function(id, aList) {
+          prevNextCurrentEntry = currentActivities(aList, dayActivities["activities"], when);
+          foreach(prevNextCurrentEntry, function(_, activity) {
+            result["activities"][activity] = dayActivities["activities"][activity];
+          });
+          result[entity][id] = prevNextCurrentEntry;
+        });
+      };
+      prevNextCurrentEntities("teacher");
+      prevNextCurrentEntities("group");
+      prevNextCurrentEntities("location");
+      return result;
     };
     //{{{4 convert webuntis data to api-data
     lessonToActivity = function(lesson) {
@@ -2623,6 +2648,10 @@ route("uccorg", function(app) {
         }),
         activity : "not here, - will be implemented (not yet) in /uccorg/teacher/" + id + "/activity, to decouple dynamic data from static data"
       });
+      //{{{4 /test
+      } else if(app.args[1] === "current") {
+      when = (app.args[2] ? (new Date(app.args[2])) : new Date()).toJSON();
+      app.done(prevNextCurrentAll(when));
       //{{{4 /test
       } else if(app.args[1] === "test") {
       when = (app.args[2] ? (new Date(app.args[2])) : new Date()).toJSON();
