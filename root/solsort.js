@@ -2824,7 +2824,7 @@ route("uccorg", function(app) {
     //{{{4 dayData
     dayData = function(date) {
       var activityList;
-      activities = webuntis["lessons"].map(lessonToActivity);
+      activities = webuntis["lessons"][date].map(lessonToActivity);
       activityList = {
         teacher : {},
         group : {},
@@ -2832,16 +2832,17 @@ route("uccorg", function(app) {
       };
       activities.forEach(function(activity) {
         activity["locations"].forEach(function(loc) {
-          activityList["location"][loc.untis_id] = activityList["location"][loc.untis_id] || [];
-          activityList["location"][loc.untis_id].push(activity);
+          activityList["location"][loc] = activityList["location"][loc] || [];
+          activityList["location"][loc].push(activity);
         });
         activity["teachers"].forEach(function(loc) {
-          activityList["teacher"][loc.untis_id] = activityList["teacher"][loc.untis_id] || [];
-          activityList["teacher"][loc.untis_id].push(activity);
+          console.log("LOC", loc);
+          activityList["teacher"][loc] = activityList["teacher"][loc] || [];
+          activityList["teacher"][loc].push(activity);
         });
         activity["groups"].forEach(function(loc) {
-          activityList["group"][loc.untis_id] = activityList["group"][loc.untis_id] || [];
-          activityList["group"][loc.untis_id].push(activity);
+          activityList["group"][loc] = activityList["group"][loc] || [];
+          activityList["group"][loc].push(activity);
         });
       });
       return activityList;
@@ -2854,6 +2855,7 @@ route("uccorg", function(app) {
       result = {};
       d = new Date(lesson["start"]);
       // TODO: handle time zone
+      result["id"] = lesson["untis_id"];
       result["start"] = lesson["start"];
       result["end"] = lesson["end"];
       result["teachers"] = lesson["teachers"].map(function(teacher) {
@@ -2903,7 +2905,7 @@ route("uccorg", function(app) {
         group : group.name,
         gender : "TBD",
         longevity : "???",
-        programme : webuntis["departments"][group["department"]],
+        programme : webuntis["departments"][group["department"]]["name"],
         activity : "not here, - will be implemented (not yet) in /uccorg/teacher/" + id + "/activity, to decouple dynamic data from static data"
       });
       //{{{4 /teacher
@@ -2915,7 +2917,7 @@ route("uccorg", function(app) {
         gender : "TODO derrive from name: " + teacher["forename"],
         longevity : "???",
         programme : teacher["departments"].map(function(id) {
-          return webuntis["departments"][id];
+          return webuntis["departments"][id]["name"];
         }),
         activity : "not here, - will be implemented (not yet) in /uccorg/teacher/" + id + "/activity, to decouple dynamic data from static data"
       });
@@ -2923,7 +2925,7 @@ route("uccorg", function(app) {
       } else if(app.args[1] === "test") {
       when = (app.args[2] ? (new Date(app.args[2])) : new Date()).toJSON();
       day = when.slice(0, 10);
-      app.done(dayDate(day));
+      app.done(dayData(day));
       //{{{4 /
       } else if(true) {
       html = new HTML();

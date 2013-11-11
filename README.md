@@ -2801,7 +2801,7 @@ socket.io
 #### dayData
 
         dayData = function(date) {
-          activities = webuntis["lessons"].map(lessonToActivity);
+          activities = webuntis["lessons"][date].map(lessonToActivity);
           activityList = {
             teacher : {},
             group : {},
@@ -2809,16 +2809,17 @@ socket.io
           };
           activities.forEach(function(activity) {
             activity["locations"].forEach(function(loc) {
-              activityList["location"][loc.untis_id] = activityList["location"][loc.untis_id] || [];
-              activityList["location"][loc.untis_id].push(activity);
+              activityList["location"][loc] = activityList["location"][loc] || [];
+              activityList["location"][loc].push(activity);
             });
             activity["teachers"].forEach(function(loc) {
-              activityList["teacher"][loc.untis_id] = activityList["teacher"][loc.untis_id] || [];
-              activityList["teacher"][loc.untis_id].push(activity);
+              console.log("LOC", loc);
+              activityList["teacher"][loc] = activityList["teacher"][loc] || [];
+              activityList["teacher"][loc].push(activity);
             });
             activity["groups"].forEach(function(loc) {
-              activityList["group"][loc.untis_id] = activityList["group"][loc.untis_id] || [];
-              activityList["group"][loc.untis_id].push(activity);
+              activityList["group"][loc] = activityList["group"][loc] || [];
+              activityList["group"][loc].push(activity);
             });
           });
           return activityList;
@@ -2832,6 +2833,7 @@ socket.io
 
 TODO: handle time zone
 
+          result["id"] = lesson["untis_id"];
           result["start"] = lesson["start"];
           result["end"] = lesson["end"];
           result["teachers"] = lesson["teachers"].map(function(teacher) {
@@ -2884,7 +2886,7 @@ TODO: handle time zone
             group : group.name,
             gender : "TBD",
             longevity : "???",
-            programme : webuntis["departments"][group["department"]],
+            programme : webuntis["departments"][group["department"]]["name"],
             activity : "not here, - will be implemented (not yet) in /uccorg/teacher/" + id + "/activity, to decouple dynamic data from static data"
           });
 
@@ -2898,7 +2900,7 @@ TODO: handle time zone
             gender : "TODO derrive from name: " + teacher["forename"],
             longevity : "???",
             programme : teacher["departments"].map(function(id) {
-              return webuntis["departments"][id];
+              return webuntis["departments"][id]["name"];
             }),
             activity : "not here, - will be implemented (not yet) in /uccorg/teacher/" + id + "/activity, to decouple dynamic data from static data"
           });
@@ -2908,7 +2910,7 @@ TODO: handle time zone
           } else if(app.args[1] === "test") {
           when = (app.args[2] ? (new Date(app.args[2])) : new Date()).toJSON();
           day = when.slice(0, 10);
-          app.done(dayDate(day));
+          app.done(dayData(day));
 
 #### /
 
