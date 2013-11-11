@@ -1350,7 +1350,7 @@ Show a list with neat linebreakins, - this is especially useful for dumping the 
       };
     };
 
-### binary search
+### binarySearchFn
 
     binarySearchFn = function(array, cmp) {
       start = 0;
@@ -2818,6 +2818,90 @@ TODO:
       };
       getWebuntisData(function(err, webuntis) {
 
+#### dayData
+
+        dayData = function(date) {
+          activities = webuntis["lessons"][date].map(lessonToActivity);
+          activityList = {
+            teacher : {},
+            group : {},
+            location : {},
+            activities : {}
+          };
+          activities.forEach(function(activity) {
+            activity["locations"].forEach(function(loc) {
+              activityList["location"][loc] = activityList["location"][loc] || [];
+              activityList["location"][loc].push(activity["id"]);
+              activityList.activities[activity["id"]] = activity;
+            });
+            activity["teachers"].forEach(function(loc) {
+              console.log("LOC", loc);
+              activityList["teacher"][loc] = activityList["teacher"][loc] || [];
+              activityList["teacher"][loc].push(activity["id"]);
+              activityList.activities[activity["id"]] = activity;
+            });
+            activity["groups"].forEach(function(loc) {
+              activityList["group"][loc] = activityList["group"][loc] || [];
+              activityList["group"][loc].push(activity["id"]);
+              activityList.activities[activity["id"]] = activity;
+            });
+          });
+          return activityList;
+        };
+
+#### currentActivities
+
+        currentActivities = function(aList, aMap, date) {
+          datetime = Number(new Date(date));
+          pos = binarySearchFn(aList, function(a) {
+            return Number(new Date(aMap[a]["end"])) - datetime;
+          });
+          result = {};
+          if(pos - 1 >= 0) {
+            result["prev"] = aList[pos - 1];
+          };
+          if(pos < aList.length) {
+            if(aMap[aList[pos]]["start"] > date) {
+              result["next"] = aList[pos];
+            } else if(true) {
+              result["current"] = aList[pos];
+              if(pos + 1 < aList.length) {
+                result["next"] = aList[pos + 1];
+              };
+            };
+          };
+          return result;
+          return [result, pos, aList.map(function(act) {
+            return aMap[act]["start"];
+          }), aMap[aList[pos]]];
+        };
+
+#### prevNextCurrentAll
+
+        prevNextCurrentAll = function(when) {
+          day = when.slice(0, 10);
+          dayActivities = dayData(day);
+          result = {
+            teacher : {},
+            group : {},
+            location : {},
+            activities : {}
+          };
+          prevNextCurrentEntities = function(entity) {
+            foreach(dayActivities[entity], function(id, aList) {
+              prevNextCurrentEntry = currentActivities(aList, dayActivities["activities"], when);
+              foreach(prevNextCurrentEntry, function(_, activity) {
+                result["activities"][activity] = dayActivities["activities"][activity];
+              });
+              result[entity][id] = prevNextCurrentEntry;
+            });
+          };
+          prevNextCurrentEntities("teacher");
+          prevNextCurrentEntities("group");
+          prevNextCurrentEntities("location");
+          return result;
+        };
+
 #### convert webuntis data to api-data
 
         lessonToActivity = function(lesson) {
@@ -2826,6 +2910,7 @@ TODO:
 
 TODO: handle time zone
 
+          result["id"] = lesson["untis_id"];
           result["start"] = lesson["start"];
           result["end"] = lesson["end"];
           result["teachers"] = lesson["teachers"].map(function(teacher) {
@@ -2841,6 +2926,7 @@ TODO: handle time zone
           } else if(true) {
             result["subject"] = "undefined";
           };
+          result["groups"] = lesson["groups"];
           result["students"] = [];
           i = 0;
           while(i < 25) {
@@ -2877,7 +2963,7 @@ TODO: handle time zone
             group : group.name,
             gender : "TBD",
             longevity : "???",
-            programme : "TODO:department_" + group["department"],
+            programme : webuntis["departments"][group["department"]]["name"],
             activity : "not here, - will be implemented (not yet) in /uccorg/teacher/" + id + "/activity, to decouple dynamic data from static data"
           });
 
@@ -2891,26 +2977,25 @@ TODO: handle time zone
             gender : "TODO derrive from name: " + teacher["forename"],
             longevity : "???",
             programme : teacher["departments"].map(function(id) {
-              return "TODO:department_" + id;
+              return webuntis["departments"][id]["name"];
             }),
             activity : "not here, - will be implemented (not yet) in /uccorg/teacher/" + id + "/activity, to decouple dynamic data from static data"
           });
 
 #### /test
 
+          } else if(app.args[1] === "current") {
+          when = (app.args[2] ? (new Date(app.args[2])) : new Date()).toJSON();
+          app.done(prevNextCurrentAll(when));
+
+#### /test
+
           } else if(app.args[1] === "test") {
-          allLessons = [];
-          foreach(webuntis["lessons"], function(day, lessons) {
-            lessons.forEach(function(lesson) {
-              allLessons.push(lesson);
-            });
-          });
-          allLessons.forEach(function(lesson) {
-            if(lesson["subjects"].length > 1) {
-              console.log(lesson);
-            };
-          });
-          app.done({foo : "bar"});
+          when = (app.args[2] ? (new Date(app.args[2])) : new Date()).toJSON();
+          day = when.slice(0, 10);
+          dayActivities = dayData(day);
+          act = currentActivities(dayActivities["teacher"][6], dayActivities["activities"], when);
+          app.done({act : act, dayData : dayActivities});
 
 #### /
 
