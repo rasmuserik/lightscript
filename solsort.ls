@@ -3608,17 +3608,17 @@ gendoc = function(callback) {
 // - chakra(ie)
 // {{{2 Mikromilonga
 //
-// Du inviteres hermed til tango på ???dag den ??/12-2013 :)
+// Du inviteres hermed til en opvarmningsmilonga på lørdag den 14/12-2013 inden TABA-tango :)
 //
-// Det foregår hos Rasmus Erik, hvor stuegulvet i dagens anledning er lavet til dansegulv. Planen er:
+// - Ankomst kl 18
+// - Fri dans og socialisering
+// - Risengrød til de sultne undervejs :)
+// - Du er velkommen til at invitere venner og veninder med
+// - Fælles afgang til TABA for dem der vil danse videre
 //
-// - Ankomst kl 17:45
-// - Når alle er kommet, er der en kort workshop (<½ time) om flow på dansegulvet, floorcraft, og dans på crowded milonga
-// - Herefter fri dans og socialisering :)
-// - Der vil være lidt aftensmad(suppe) undervejs i en tilstødende stue
-// - Vi stopper kl 21 af hensyn til naboer - de der har lyst kan sammen tage ud og danse videre bagefter
+// Det forgår hos Rasmus Erik, hvor stuegulvet er lavet om til dansegulv.
 //
-// Du er velkommen til at give invitationen videre til venner og veninder som du har lyst til at ses/danse med :)
+// Begrænset antal pladser, så tilmelde dig på sms/tel.: 60703081
 //
 // Adressen er:
 //
@@ -3626,11 +3626,4 @@ gendoc = function(callback) {
 //         Tingskrivervej 21 3tv
 //         2400 København NV
 //
-// Der er begrænset plads, så derfor tilmelding på telefon: 60703081
-//
-// Hvis du er nybegynder, eller ikke har danset så meget, kan vi sagtens lave en lille tangointro umiddelbart inden milongaen, - snak med Rasmus Erik om dette når du tilmelder dig.
-//
-// Børn er også velkomne, såfremt de ikke forstyrrer dansen for meget ;)
-//
-// Værtsgave/blomster/vin frabedes, men du opfordres til i stedet at "give det videre" (gør noget, der glæder andre), og/eller give en donation til [læger uden grænser](http://msf.dk/).
-//
+// Vi ses ;-)
