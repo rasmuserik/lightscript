@@ -3606,19 +3606,15 @@ gendoc = function(callback) {
 // - JSC+webkit
 // - nashorn+java
 // - chakra(ie)
-// {{{2 Mikromilonga
+//{{{2 Tango
 //
-// Du inviteres hermed til en opvarmningsmilonga på lørdag den 14/12-2013 inden TABA-tango :)
+//{{{3 Eftermiddagsmilonga d. 4 januar 2014
 //
-// - Ankomst kl 18
-// - Fri dans og socialisering
-// - Risengrød til de sultne undervejs :)
-// - Du er velkommen til at invitere venner og veninder med
-// - Fælles afgang til TABA for dem der vil danse videre
+// Næste mikromilonga er sandsynligvis d. 4. januar, kl 15, hos Rasmus Erik.
 //
-// Det forgår hos Rasmus Erik, hvor stuegulvet er lavet om til dansegulv.
+// Dagligstuen bliver lavet om til dansegulv, og det er også muligt at sidde og snakke i det tilstødende værelse.
 //
-// Begrænset antal pladser, så tilmelde dig på sms/tel.: 60703081
+// Du er velkommen til at tage venner og veninder med, og give invitationen videre til dem som du måtte have lyst til at danse med :) 
 //
 // Adressen er:
 //
@@ -3626,4 +3622,35 @@ gendoc = function(callback) {
 //         Tingskrivervej 21 3tv
 //         2400 København NV
 //
+// Der er plads til 10-14 personer, og vi forsøger at have nogenlunde ligelig fordeling af leaders/follower, så tilmeld dig derfor på telefon/sms: 60703081
+// 
 // Vi ses ;-)
+//
+//
+// In english: private milonga at Rasmus Erik's place, on Saturday January 4., at 3'o'clock in the afternoon. Feel free to bring along friends and spread the invitation to people you want to dance with. There is limited space, and I prefer to know who are coming, so therefore sign up on sms/tel.: 60703081 See you :)
+//
+// ----
+//
+//{{{3 Dancing notes
+//
+// Just some notes on dancing that I like to keep in mind:
+//
+// - floorcraft (for leaders)
+//   - know which couples(leaders) are dancing in front and behind you, maybe get short eye contact, to tell/know that we are all dancing together
+//   - never step against the direction of the dance
+//   - move forward if there is space in front of you
+//   - dance in lanes, do not criss-cross, be polite
+//   - make space for couples entering the floor
+//   - use the space - the corners and along the side of the room
+//   - close embrace, and less fancy figures are good (especially on crowded dance floor)
+// - tangoing
+//   - impulse(leader) - intepretation(follower) - following the follower(leader)
+//   - feel every infinitesimal part of the followers continuous movement
+//   - dance with the partner, the music, the flow of the floor, the earth, the alma
+//   - there are no wrong steps in tango, - only new ones :)
+//   - learn to both lead and follow, gives much better understanding of the opposite role
+//   - kiss: keep it simple, sir
+//   - it is not about steps, it is about walking
+//   - dance with each chakra
+//   - vary intensity, speed, pause, embrace, focus, expression
+//   - posture and relaxation
