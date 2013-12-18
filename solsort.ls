@@ -3610,7 +3610,7 @@ gendoc = function(callback) {
 //
 //{{{3 Eftermiddagsmilonga d. 4 januar 2014
 //
-// Næste mikromilonga er sandsynligvis d. 4. januar, kl 15, hos Rasmus Erik.
+// Næste mikromilonga er sandsynligvis lørdag d. 4. januar, kl 15, hos Rasmus Erik.
 //
 // Dagligstuen bliver lavet om til dansegulv, og det er også muligt at sidde og snakke i det tilstødende værelse.
 //
@@ -3631,7 +3631,7 @@ gendoc = function(callback) {
 //
 // ----
 //
-//{{{3 Dancing notes
+//{{{2 Tango notes
 //
 // Just some notes on dancing that I like to keep in mind:
 //
