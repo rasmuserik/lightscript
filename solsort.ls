@@ -3610,7 +3610,7 @@ gendoc = function(callback) {
 //
 //{{{3 Eftermiddagsmilonga d. 4 januar 2014
 //
-// Næste mikromilonga er sandsynligvis lørdag d. 4. januar, kl 15, hos Rasmus Erik.
+// Næste mikromilonga er lørdag d. 4. januar, kl 15, hos Rasmus Erik.
 //
 // Dagligstuen bliver lavet om til dansegulv, og det er også muligt at sidde og snakke i det tilstødende værelse.
 //
@@ -3622,7 +3622,7 @@ gendoc = function(callback) {
 //         Tingskrivervej 21 3tv
 //         2400 København NV
 //
-// Der er plads til 10-14 personer, og vi forsøger at have nogenlunde ligelig fordeling af leaders/follower, så tilmeld dig derfor på telefon/sms: 60703081
+// Der er plads til 10-14 personer, og vi forsøger at have nogenlunde ligelig fordeling af leaders/followers, så tilmeld dig derfor på telefon/sms: 60703081
 // 
 // Vi ses ;-)
 //
