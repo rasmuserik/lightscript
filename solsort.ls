@@ -3661,7 +3661,7 @@ gendoc = function(callback) {
 // - Typical product
 //   - App, or advanced website-functionality (frontend+backend)
 //   - Deadline within weeks or months
-//   - Budget € 4.000-40.000 (DKK 30.000-300.000)
+//   - Budget € 4.000-20.000 (DKK 30.000-150.000)
 // - Target customers
 //   - Companies/organisations - improve you workflow and quality by getting IT available in the field - expert systems, checklists, digital training tools
 //   - Decision makers and management - get data analysed, visualised, available in your hands in real time.
